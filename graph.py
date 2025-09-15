@@ -45,7 +45,7 @@ def parse_md_hierarchy(filepath):
         data.append({"layer1": layer1, "layer2": layer2})
     return data
 
-def get_text_width(ax, text, fontsize=11):
+def get_text_width(ax, text, fontsize=12):
     # Draw the text invisibly, then measure its width
     t = ax.text(0, 0, text, fontsize=fontsize, visible=False)
     ax.figure.canvas.draw()
@@ -61,11 +61,18 @@ def get_text_width(ax, text, fontsize=11):
 underline_pad = 0.5
 import matplotlib.pyplot as plt
 
-fig, ax = plt.subplots(figsize=(14, 6))
-ax.axis('off')
+# --- Control variables for layout ---
+char_width = 13         # width per character for underline and spacing (human-friendly)
+base_pad = 2            # base padding for underline length (human-friendly)
+item_height = 10        # vertical distance between subitems (second layer)
 
 # Read hierarchical data from markdown file
 data = parse_md_hierarchy("data.md")
+
+# Dynamically set figure height based on number of top-level items
+fig_height = max(6, len(data) * item_height / 3)  # Increased scaling for much larger figure height
+fig, ax = plt.subplots(figsize=(14, fig_height))
+ax.axis('off')
 
 # Updated color palette: Green, Blue, Purple, Red (repeat if needed)
 base_colors = [
@@ -77,9 +84,17 @@ base_colors = [
 colors = [base_colors[i % 4] for i in range(len(data))]
 
 # --- Control variables for layout ---
+
+
 char_width = 13         # width per character for underline and spacing (human-friendly)
 base_pad = 2            # base padding for underline length (human-friendly)
 item_height = 10        # vertical distance between subitems (second layer)
+
+# Read hierarchical data from markdown file
+data = parse_md_hierarchy("data.md")
+
+# Dynamically set figure height based on number of top-level items
+ax.axis('off')
 
 coords = {}
 subnames = {}
@@ -121,16 +136,16 @@ layer2_widths = []
 layer3_widths = []
 for idx in range(len(data)):
     layer1 = data[idx]["layer1"]
-    layer1_widths.append(get_text_width(ax, layer1, fontsize=11))
+    layer1_widths.append(get_text_width(ax, layer1, fontsize=12))
     layer2_widths.append([])
     layer3_widths.append([])
     for j in range(len(data[idx]["layer2"])):
         layer2 = data[idx]["layer2"][j]["name"]
-        layer2_widths[idx].append(get_text_width(ax, layer2, fontsize=11))
+        layer2_widths[idx].append(get_text_width(ax, layer2, fontsize=12))
         layer3_widths[idx].append([])
         for k in range(len(data[idx]["layer2"][j]["layer3"])):
             layer3 = data[idx]["layer2"][j]["layer3"][k]
-            layer3_widths[idx][j].append(get_text_width(ax, layer3, fontsize=11))
+            layer3_widths[idx][j].append(get_text_width(ax, layer3, fontsize=12))
 
 # Now plot everything using precomputed widths
 for idx in range(len(data)):
@@ -139,7 +154,7 @@ for idx in range(len(data)):
     light, medium, dark = colors[idx]
     layer1_width = layer1_widths[idx]
     underline_len = layer1_width
-    ax.text(x, y, layer1, ha='left', va='center', fontsize=11, color='black')
+    ax.text(x, y, layer1, ha='left', va='center', fontsize=12, color='black')
     ax.plot([x, x+underline_len], [y-3, y-3], color=medium, lw=2)
     layer2_x = x + underline_len
     for j in range(len(data[idx]["layer2"])):
@@ -147,7 +162,7 @@ for idx in range(len(data)):
         layer2_y = y - item_height * j
         layer2_width = layer2_widths[idx][j]
         underline_len = layer2_width
-        ax.text(layer2_x, layer2_y, layer2, ha='left', va='center', fontsize=11, color='black')
+        ax.text(layer2_x, layer2_y, layer2, ha='left', va='center', fontsize=12, color='black')
         ax.plot([layer2_x, layer2_x+underline_len], [layer2_y-3, layer2_y-3], color=light, lw=2)
         layer3_x = layer2_x + underline_len
         for k in range(len(data[idx]["layer2"][j]["layer3"])):
@@ -155,7 +170,7 @@ for idx in range(len(data)):
             layer3_y = layer2_y
             layer3_width = layer3_widths[idx][j][k]
             underline_len = layer3_width
-            ax.text(layer3_x, layer3_y, layer3, ha='left', va='center', fontsize=11, color='black')
+            ax.text(layer3_x, layer3_y, layer3, ha='left', va='center', fontsize=12, color='black')
             ax.plot([layer3_x, layer3_x+underline_len], [layer3_y-3, layer3_y-3], color=dark, lw=2)
             layer3_x += underline_len
 
