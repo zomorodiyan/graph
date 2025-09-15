@@ -1,3 +1,50 @@
+def read_layers_from_md(filepath):
+    result = []
+    with open(filepath, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('# Example'):
+                continue
+            sharps = 0
+            while sharps < len(line) and line[sharps] == '#':
+                sharps += 1
+            name = line[sharps:].strip()
+            layer = sharps + 1  # layer 1 if no sharps, layer 2 if one sharp, etc.
+            result.append((name, layer))
+    return result
+
+if __name__ == "__main__":
+    data = read_layers_from_md("data.md")
+    for name, layer in data:
+        print(f"{name}: Layer {layer}")
+
+# --- Data reading and parsing ---
+def parse_md_hierarchy(filepath):
+    data = []
+    with open(filepath, 'r', encoding='utf-8') as f:
+        lines = [line.strip() for line in f if line.strip()]
+    i = 0
+    while i < len(lines):
+        if lines[i].startswith('#'):
+            i += 1
+            continue
+        layer1 = lines[i]
+        i += 1
+        layer2 = []
+        while i < len(lines) and lines[i].startswith('#'):
+            if lines[i].startswith('##'):
+                i += 1
+                continue
+            name = lines[i][1:].strip()
+            i += 1
+            layer3 = []
+            while i < len(lines) and lines[i].startswith('##'):
+                layer3.append(lines[i][2:].strip())
+                i += 1
+            layer2.append({"name": name, "layer3": layer3})
+        data.append({"layer1": layer1, "layer2": layer2})
+    return data
+
 def get_text_width(ax, text, fontsize=11):
     # Draw the text invisibly, then measure its width
     t = ax.text(0, 0, text, fontsize=fontsize, visible=False)
@@ -17,94 +64,8 @@ import matplotlib.pyplot as plt
 fig, ax = plt.subplots(figsize=(14, 6))
 ax.axis('off')
 
-# Hierarchical data structure: layer1 -> layer2 -> layer3
-data = [
-    {
-        "layer1": "ProjectAlpha",
-        "layer2": [
-            {
-                "name": "TaskA",
-                "layer3": ["SubA1", "SubA2Long"]
-            },
-            {
-                "name": "LongerTaskB", 
-                "layer3": ["SubB1", "SubB2"]
-            },
-            {
-                "name": "C",
-                "layer3": ["SubC1Longer", "SubC2"]
-            }
-        ]
-    },
-    {
-        "layer1": "ProjBetaLong",
-        "layer2": [
-            {
-                "name": "Short",
-                "layer3": ["SubS1", "SubS2"]
-            },
-            {
-                "name": "MediumLengthTask",
-                "layer3": ["SubM1Long", "SubM2"]
-            },
-            {
-                "name": "VeryLongTaskNameHere",
-                "layer3": ["SubV1", "SubV2VeryLong"]
-            }
-        ]
-    },
-    {
-        "layer1": "Gamma",
-        "layer2": [
-            {
-                "name": "X",
-                "layer3": ["SubX1", "SubX2"]
-            },
-            {
-                "name": "Y",
-                "layer3": ["SubY1Long", "SubY2"]
-            },
-            {
-                "name": "Zebra",
-                "layer3": ["SubZ1", "SubZ2"]
-            }
-        ]
-    },
-    {
-        "layer1": "DeltaProjectX",
-        "layer2": [
-            {
-                "name": "First",
-                "layer3": ["SubF1", "SubF2"]
-            },
-            {
-                "name": "Second",
-                "layer3": ["SubS1", "SubS2Longer"]
-            },
-            {
-                "name": "ThirdExtraLong",
-                "layer3": ["SubT1", "SubT2"]
-            }
-        ]
-    },
-    {
-        "layer1": "Epsilon",
-        "layer2": [
-            {
-                "name": "One",
-                "layer3": ["SubO1", "SubO2"]
-            },
-            {
-                "name": "Two",
-                "layer3": ["SubT1Long", "SubT2"]
-            },
-            {
-                "name": "Three",
-                "layer3": ["SubTh1", "SubTh2"]
-            }
-        ]
-    }
-]
+# Read hierarchical data from markdown file
+data = parse_md_hierarchy("data.md")
 
 # Updated color palette: Green, Blue, Purple, Red (repeat if needed)
 base_colors = [
