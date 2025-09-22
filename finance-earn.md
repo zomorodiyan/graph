@@ -1,0 +1,3 @@
+Earn
+Spend
+Invest

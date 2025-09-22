@@ -62,27 +62,28 @@ def get_file_association(layer1_name, layer2_name):
     associations = {
         "Body": {
             "Habits": "body-habit.md",
-            "Nutrition": "body-nutri.md",
-            "Training": "body-train.md"
+            "Nutrition": "body-nutrition.md",
+            "Train": "body-train.md"
         },
         "Mind": {
             "Mood": "mind-mood.md",
             "Rest": "mind-rest.md"
         },
-        "Leveling": {
-            "Task": "lvl-task.md",
-            "Skill": "lvl-skill.md",
-            "Goal": "lvl-goal.md"
+        "Level": {
+            "Task": "level-task.md",
+            "Skill": "level-skill.md",
+            "Goal": "level-goal.md"
         },
-        "Body": {
-            "Habits": "body-habit.md",
-            "Nutrition": "body-nutri.md",
-            "Training": "body-train.md"
+        "Interaction": {
+            "Love": "interaction-love.md",
+            "Family": "interaction-family.md",
+            "Friends": "interaction-friends.md",
+            "Community": "interaction-community.md"
         },
         "Finance": {
-            "Earn": "fin-earn.md",
-            "Spend": "fin-spend.md",
-            "Invest": "fin-invest.md"
+            "Earn": "finance-earn.md",
+            "Spend": "finance-spend.md",
+            "Invest": "finance-invest.md"
         },
         "Time": {
             "Day": "time-day.md",

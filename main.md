@@ -16,12 +16,12 @@ Body
 ##Prep
 ##Cook
 ##Eat
-#Training
+#Train
 ##Strength
 ##Cardio
 ##Flexibility
 
-Leveling
+Level
 #Task
 ##Work
 ##Study
@@ -59,10 +59,9 @@ Finance
 ##Side
 ##Passive
 #Spend
-##Needs
-##Wants
-##Subs
 ##Shop
+##Need
+##Wish
 #Invest
 ##Save
 ##Assets

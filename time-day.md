@@ -1,0 +1,3 @@
+Morning
+Afternoon
+Evening

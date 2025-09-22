@@ -1,8 +1,3 @@
-Mood
-#Stress
-#Energy
-#Focus
-Rest
-#Sleep
-#Breaks
-#Recovery
+Stress
+Energy
+Focus
