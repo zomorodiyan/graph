@@ -74,6 +74,16 @@ def get_file_association(layer1_name, layer2_name):
             "Skill": "level-skill.md",
             "Goal": "level-goal.md"
         },
+        "Work": {
+            "Go-Melt": "work-go-melt.md",
+            "ASU-Craft": "work-asu-craft.md"
+        },
+        "Study": {
+            "IIOT": "study-iiot.md"
+        },
+        "Project": {
+            "Imaginer": "project-imaginer.md"
+        },
         "Interaction": {
             "Love": "interaction-love.md",
             "Family": "interaction-family.md",
