@@ -14,7 +14,12 @@ def read_layers_from_md(filepath):
     return result
 
 if __name__ == "__main__":
-    data = read_layers_from_md("data.md")
+    import sys
+    if len(sys.argv) > 1:
+        md_file = sys.argv[1]
+    else:
+        md_file = "main.md"
+    data = read_layers_from_md(md_file)
     for name, layer in data:
         print(f"{name}: Layer {layer}")
 
@@ -67,7 +72,13 @@ base_pad = 2            # base padding for underline length (human-friendly)
 item_height = 10        # vertical distance between subitems (second layer)
 
 # Read hierarchical data from markdown file
-data = parse_md_hierarchy("data.md")
+import sys
+if len(sys.argv) > 1:
+    md_file = sys.argv[1]
+else:
+    md_file = "main.md"
+print("Reading data from:", md_file)
+data = parse_md_hierarchy(md_file)
 
 # Dynamically set figure height based on number of top-level items
 fig_height = max(6, len(data) * item_height / 3)  # Increased scaling for much larger figure height
@@ -84,14 +95,9 @@ base_colors = [
 colors = [base_colors[i % 4] for i in range(len(data))]
 
 # --- Control variables for layout ---
-
-
 char_width = 13         # width per character for underline and spacing (human-friendly)
 base_pad = 2            # base padding for underline length (human-friendly)
 item_height = 10        # vertical distance between subitems (second layer)
-
-# Read hierarchical data from markdown file
-data = parse_md_hierarchy("data.md")
 
 # Dynamically set figure height based on number of top-level items
 ax.axis('off')
@@ -123,7 +129,10 @@ for i in range(len(data)):
             layer3_len = len(layer3) * char_width + base_pad
             coords[layer3] = (layer3_x, layer2_y)
             layer3_x += layer3_len
-    lowest_sub_y = min(sub_y_positions)
+    if sub_y_positions:
+        lowest_sub_y = min(sub_y_positions)
+    else:
+        lowest_sub_y = y  # fallback to current y if no subitems
     y_positions.append((lowest_sub_y, i))
     if i < len(data) - 1:
         y = lowest_sub_y - item_height

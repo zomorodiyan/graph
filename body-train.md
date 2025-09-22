@@ -1,0 +1,3 @@
+Strength
+Cardio
+Flexibility
