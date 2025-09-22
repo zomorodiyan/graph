@@ -13,16 +13,6 @@ def read_layers_from_md(filepath):
             result.append((name, layer))
     return result
 
-if __name__ == "__main__":
-    import sys
-    if len(sys.argv) > 1:
-        md_file = sys.argv[1]
-    else:
-        md_file = "main.md"
-    data = read_layers_from_md(md_file)
-    for name, layer in data:
-        print(f"{name}: Layer {layer}")
-
 # --- Data reading and parsing ---
 def parse_md_hierarchy(filepath):
     data = []
@@ -62,27 +52,87 @@ def get_text_width(ax, text, fontsize=12):
     width = bbox_data.width
     return width
 
-# Tunable constant for underline length
-underline_pad = 0.5
+import os
+import sys
+
+# PNG caching logic
+if len(sys.argv) > 1:
+    md_file = sys.argv[1]
+else:
+    md_file = "main.md"
+
+png_dir = os.path.join(os.path.dirname(__file__), "png")
+base_name = os.path.splitext(os.path.basename(md_file))[0]
+png_path = os.path.join(png_dir, f"{base_name}.png")
+
+if os.path.exists(png_path):
+    # Only print cache info, do not print file contents or data
+    print(f"PNG cache found: {png_path}\nDisplaying cached image...")
+    from PIL import Image
+    img = Image.open(png_path)
+    img.show()
+    sys.exit(0)
+
 import matplotlib.pyplot as plt
 
 # --- Control variables for layout ---
 char_width = 13         # width per character for underline and spacing (human-friendly)
 base_pad = 2            # base padding for underline length (human-friendly)
-item_height = 10        # vertical distance between subitems (second layer)
+item_height = 6         # vertical distance between subitems (second layer)
 
-# Read hierarchical data from markdown file
-import sys
-if len(sys.argv) > 1:
-    md_file = sys.argv[1]
-else:
-    md_file = "main.md"
-print("Reading data from:", md_file)
+
+
 data = parse_md_hierarchy(md_file)
 
-# Dynamically set figure height based on number of top-level items
-fig_height = max(6, len(data) * item_height / 3)  # Increased scaling for much larger figure height
-fig, ax = plt.subplots(figsize=(14, fig_height))
+
+
+
+# Dynamically set figure height based on number of second-level items (layer2s)
+HEIGHT_COEFF = 0.5  # You can adjust this coefficient for your preferred vertical spacing
+num_second_level_items = sum(len(item["layer2"]) for item in data)
+fig_height = max(6, HEIGHT_COEFF * num_second_level_items)
+
+
+# Precompute all text widths after a canvas draw using a temporary figure
+import matplotlib.pyplot as plt
+_tmp_fig, _tmp_ax = plt.subplots(figsize=(8, 6))
+layer1_widths = []
+layer2_widths = []
+layer3_widths = []
+for idx in range(len(data)):
+    layer1 = data[idx]["layer1"]
+    layer1_widths.append(get_text_width(_tmp_ax, layer1, fontsize=12))
+    layer2_widths.append([])
+    layer3_widths.append([])
+    for j in range(len(data[idx]["layer2"])):
+        layer2 = data[idx]["layer2"][j]["name"]
+        layer2_widths[idx].append(get_text_width(_tmp_ax, layer2, fontsize=12))
+        layer3_widths[idx].append([])
+        for k in range(len(data[idx]["layer2"][j]["layer3"])):
+            layer3 = data[idx]["layer2"][j]["layer3"][k]
+            layer3_widths[idx][j].append(get_text_width(_tmp_ax, layer3, fontsize=12))
+plt.close(_tmp_fig)
+
+# Dynamically set figure width based on max width calculation
+WIDTH_COEFF = 0.5  # You can adjust this coefficient for your preferred horizontal spacing
+maxWidth = 0
+for idx in range(len(data)):
+    # Level 1 width
+    w1 = layer1_widths[idx]
+    if w1 > maxWidth:
+        maxWidth = w1
+    # Level 2 widths
+    for j in range(len(data[idx]["layer2"])):
+        w2 = layer2_widths[idx][j]
+        if w1 + w2 > maxWidth:
+            maxWidth = w1 + w2
+        # Level 3 widths (group sum)
+        group_w3 = sum(layer3_widths[idx][j]) if layer3_widths[idx][j] else 0
+        if w1 + w2 + group_w3 > maxWidth:
+            maxWidth = w1 + w2 + group_w3
+
+fig_width = max(8, WIDTH_COEFF * maxWidth / 100)  # /100 to convert from pixels to inches (matplotlib default dpi=100)
+fig, ax = plt.subplots(figsize=(fig_width, fig_height))
 ax.axis('off')
 
 # Updated color palette: Green, Blue, Purple, Red (repeat if needed)
@@ -183,5 +233,9 @@ for idx in range(len(data)):
             ax.plot([layer3_x, layer3_x+underline_len], [layer3_y-3, layer3_y-3], color=dark, lw=2)
             layer3_x += underline_len
 
+
 plt.tight_layout()
+# Save PNG to cache directory
+plt.savefig(png_path, bbox_inches='tight', dpi=150)
+print(f"Graph saved to {png_path}")
 plt.show()
