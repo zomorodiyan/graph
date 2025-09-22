@@ -1,6 +1,7 @@
-Day
-Month
+Short
+Medium
 #Article
 ##AMB25-GoMelt
 ##IIOT-litrev
-Year
+##Sintering
+Long
