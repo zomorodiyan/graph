@@ -62,23 +62,48 @@ def get_file_association(layer1_name, layer2_name):
     associations = {
         "Body": {
             "Habits": "body-habit.md",
-            "Nutrition": "body-nutri.md", 
+            "Nutrition": "body-nutri.md",
             "Training": "body-train.md"
+        },
+        "Mind": {
+            "Mood": "mind-mood.md",
+            "Rest": "mind-rest.md"
         },
         "Leveling": {
             "Task": "lvl-task.md",
             "Skill": "lvl-skill.md",
             "Goal": "lvl-goal.md"
+        },
+        "Body": {
+            "Habits": "body-habit.md",
+            "Nutrition": "body-nutri.md",
+            "Training": "body-train.md"
+        },
+        "Finance": {
+            "Earn": "fin-earn.md",
+            "Spend": "fin-spend.md",
+            "Invest": "fin-invest.md"
+        },
+        "Time": {
+            "Day": "time-day.md",
+            "Month": "time-month.md",
+            "Year": "time-year.md"
         }
     }
-    
+
     return associations.get(layer1_name, {}).get(layer2_name, None)
+
+def check_file_exists(file_path):
+    """Check if a file exists in the current directory"""
+    if not file_path:
+        return False
+    return os.path.exists(file_path)
 
 def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=None):
     """Generate an interactive HTML graph"""
     if breadcrumb_path is None:
         breadcrumb_path = []
-    
+
     # Create breadcrumb navigation
     breadcrumb_html = ""
     if breadcrumb_path:
@@ -89,14 +114,13 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
             else:
                 breadcrumb_html += f'<span class="current">{name}</span>'
         breadcrumb_html += '</div>'
-    
+
     html_content = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Graph</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -112,41 +136,81 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
         .layer1 {
             font-size: 16px;
             font-weight: bold;
-            margin-bottom: 10px;
             color: #333;
+            display: inline-block;
+            vertical-align: top;
+            margin-right: 30px;
+            min-width: 80px;
         }
         .layer2 {
             font-size: 14px;
-            margin-left: 20px;
-            margin-bottom: 8px;
+            font-weight: bold;
             cursor: pointer;
             padding: 4px 8px;
             border-radius: 4px;
             transition: background-color 0.2s;
-            display: inline-block;
-            position: relative;
+            display: block;
+            margin-bottom: 4px;
+            min-width: 80px;
         }
-        .layer2:hover {
-            background-color: #e3f2fd;
+        .layer2.color-group-green:hover {
+            background-color: #A5D6A7;
+        }
+        .layer2.color-group-blue:hover {
+            background-color: #90CAF9;
+        }
+        .layer2.color-group-purple:hover {
+            background-color: #CE93D8;
+        }
+        .layer2.color-group-red:hover {
+            background-color: #FFAB91;
         }
         .layer2.clickable {
-            border: 2px dashed #2196f3;
+            border: 0px dashed #2196f3;
         }
-        .layer2.clickable:hover {
-            background-color: #bbdefb;
-            border-color: #1976d2;
+        .layer2.clickable.color-group-green:hover {
+            background-color: #A5D6A7;
+            border-color: #388E3C;
+        }
+        .layer2.clickable.color-group-blue:hover {
+            background-color: #90CAF9;
+            border-color: #1976D2;
+        }
+        .layer2.clickable.color-group-purple:hover {
+            background-color: #CE93D8;
+            border-color: #8E24AA;
+        }
+        .layer2.clickable.color-group-red:hover {
+            background-color: #FFAB91;
+            border-color: #D84315;
+        }
+        .layer2:not(.clickable) {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .layer2:not(.clickable).color-group-green:hover {
+            background-color: #C8E6C9;
+        }
+        .layer2:not(.clickable).color-group-blue:hover {
+            background-color: #BBDEFB;
+        }
+        .layer2:not(.clickable).color-group-purple:hover {
+            background-color: #E1BEE7;
+        }
+        .layer2:not(.clickable).color-group-red:hover {
+            background-color: #FFCDD2;
         }
         .layer3 {
-            font-size: 12px;
-            margin-left: 40px;
+            font-size: 14px;
             color: #666;
             display: inline-block;
             margin-right: 15px;
+            vertical-align: top;
         }
         .underline {
             height: 2px;
             margin-top: 2px;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
@@ -161,13 +225,34 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
         .color-red-medium { background-color: #D84315; }
         .color-red-dark { background-color: #BF360C; }
         .section {
-            margin-bottom: 30px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+        .layer1-container {
+            display: flex;
+            flex-direction: column;
+            margin-right: 30px;
+            flex-shrink: 0;
+        }
+        .layer2-section {
+            display: flex;
+            flex-direction: column;
         }
         .layer2-container {
-            margin-bottom: 15px;
+            margin-bottom: 7px;
+            display: flex;
+            align-items: flex-start;
+        }
+        .layer2-content {
+            margin-right: 10px;
+            flex-shrink: 0;
         }
         .layer3-container {
-            margin-left: 20px;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
         }
         .notification {
             position: fixed;
@@ -222,7 +307,6 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
 <body>
     <div class="graph-container">
         """ + breadcrumb_html + """
-        <h1>Interactive Graph</h1>
 """
 
     # Color mapping
@@ -236,39 +320,50 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
     for idx, item in enumerate(data):
         color_name, light, medium, dark = base_colors[idx % 4]
         layer1_name = item["layer1"]
-        
+
         html_content += f"""
         <div class="section">
-            <div class="layer1">{layer1_name}</div>
-            <div class="underline color-{color_name}-medium"></div>
+            <div class="layer1-container">
+                <div class="layer1">{layer1_name}</div>
+                <div class="underline color-{color_name}-medium"></div>
+            </div>
+            <div class="layer2-section">
 """
-        
+
         for layer2_item in item["layer2"]:
             layer2_name = layer2_item["name"]
             file_path = get_file_association(layer1_name, layer2_name)
-            clickable_class = "clickable" if file_path else ""
-            
+            file_exists = check_file_exists(file_path)
+
+            # Only make clickable if file exists
+            clickable_class = "clickable" if file_exists else ""
+            onclick_handler = f"navigateToSubGraph('{file_path}', '{layer1_name}', '{layer2_name}')" if file_exists else f"showFileNotAvailable('{layer2_name}')"
+
             html_content += f"""
-            <div class="layer2-container">
-                <div class="layer2 {clickable_class}" onclick="navigateToSubGraph('{file_path}', '{layer1_name}', '{layer2_name}')">{layer2_name}</div>
-                <div class="underline color-{color_name}-light"></div>
-                <div class="layer3-container">
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 {clickable_class} color-group-{color_name}" onclick="{onclick_handler}">{layer2_name}</div>
+                        <div class="underline color-{color_name}-light"></div>
+                    </div>
+                    <div class="layer3-container">
 """
-            
+
             for layer3_item in layer2_item["layer3"]:
                 html_content += f'<span class="layer3">{layer3_item}</span>'
-            
+
             html_content += """
+                    </div>
                 </div>
-            </div>
 """
-        
-        html_content += "</div>"
+
+        html_content += """
+            </div>
+        </div>"""
 
     html_content += """
     </div>
     <div id="notification" class="notification"></div>
-    
+
     <script>
         function showNotification(message, isError = false) {
             const notification = document.getElementById('notification');
@@ -279,20 +374,24 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
                 notification.style.display = 'none';
             }, 3000);
         }
-        
+
+        function showFileNotAvailable(layer2Name) {
+            showNotification(`File not available for ${layer2Name}`, true);
+        }
+
         function navigateToSubGraph(filePath, layer1Name, layer2Name) {
             if (!filePath) {
                 showNotification(`No file associated with ${layer2Name}`, true);
                 return;
             }
-            
+
             // Generate sub-graph HTML file name
             const subGraphName = filePath.replace('.md', '.html');
-            
+
             // Navigate to the sub-graph
             window.location.href = subGraphName;
         }
-        
+
         function loadGraph(filePath) {
             window.location.href = filePath;
         }
@@ -305,26 +404,26 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
 
 def generate_all_subgraphs():
     """Generate HTML files for all available markdown files"""
-    
+
     # Get all markdown files in the current directory
     md_files = [f for f in os.listdir('.') if f.endswith('.md') and f != 'main.md']
-    
+
     html_dir = "html"
     os.makedirs(html_dir, exist_ok=True)
-    
+
     for md_file in md_files:
         try:
             data = parse_md_hierarchy(md_file)
             if data:  # Only generate if file has content
                 base_name = os.path.splitext(md_file)[0]
                 html_path = os.path.join(html_dir, f"{base_name}.html")
-                
+
                 # Create breadcrumb based on file name
                 breadcrumb = [("Main", "main.html"), (base_name.replace('-', ' ').title(), None)]
-                
+
                 generate_html_graph(data, html_path, parent_file=md_file, breadcrumb_path=breadcrumb)
                 print(f"Generated sub-graph: {html_path}")
-                
+
         except Exception as e:
             print(f"Error generating sub-graph for {md_file}: {e}")
 
@@ -338,7 +437,7 @@ if len(sys.argv) > 2 and sys.argv[2] == "subgraph":
     generate_html_graph(data, html_path, parent_file=md_file, breadcrumb_path=breadcrumb)
 else:
     generate_html_graph(data, html_path)
-    
+
     # Also generate sub-graphs for associated files
     print("Generating sub-graphs...")
     generate_all_subgraphs()
