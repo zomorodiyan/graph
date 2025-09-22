@@ -40,202 +40,311 @@ def parse_md_hierarchy(filepath):
         data.append({"layer1": layer1, "layer2": layer2})
     return data
 
-def get_text_width(ax, text, fontsize=12):
-    # Draw the text invisibly, then measure its width
-    t = ax.text(0, 0, text, fontsize=fontsize, visible=False)
-    ax.figure.canvas.draw()
-    t.set_visible(True)
-    bbox = t.get_window_extent()
-    t.remove()
-    inv = ax.transData.inverted()
-    bbox_data = bbox.transformed(inv)
-    width = bbox_data.width
-    return width
-
 import os
 import sys
 
-# PNG caching logic
+# HTML caching logic
 if len(sys.argv) > 1:
     md_file = sys.argv[1]
 else:
     md_file = "main.md"
 
-png_dir = os.path.join(os.path.dirname(__file__), "png")
+html_dir = os.path.join(os.path.dirname(__file__), "html")
 base_name = os.path.splitext(os.path.basename(md_file))[0]
-png_path = os.path.join(png_dir, f"{base_name}.png")
+html_path = os.path.join(html_dir, f"{base_name}.html")
 
-if os.path.exists(png_path):
-    # Only print cache info, do not print file contents or data
-    print(f"PNG cache found: {png_path}\nDisplaying cached image...")
-    from PIL import Image
-    img = Image.open(png_path)
-    img.show()
-    sys.exit(0)
+# Create html directory if it doesn't exist
+os.makedirs(html_dir, exist_ok=True)
 
-import matplotlib.pyplot as plt
+# Function to create file association mapping
+def get_file_association(layer1_name, layer2_name):
+    """Map layer2 items to their associated markdown files"""
+    associations = {
+        "Body": {
+            "Habits": "body-habit.md",
+            "Nutrition": "body-nutri.md", 
+            "Training": "body-train.md"
+        },
+        "Leveling": {
+            "Task": "lvl-task.md",
+            "Skill": "lvl-skill.md",
+            "Goal": "lvl-goal.md"
+        }
+    }
+    
+    return associations.get(layer1_name, {}).get(layer2_name, None)
 
-# --- Control variables for layout ---
-char_width = 13         # width per character for underline and spacing (human-friendly)
-base_pad = 2            # base padding for underline length (human-friendly)
-item_height = 6         # vertical distance between subitems (second layer)
+def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=None):
+    """Generate an interactive HTML graph"""
+    if breadcrumb_path is None:
+        breadcrumb_path = []
+    
+    # Create breadcrumb navigation
+    breadcrumb_html = ""
+    if breadcrumb_path:
+        breadcrumb_html = '<div class="breadcrumb">'
+        for i, (name, file) in enumerate(breadcrumb_path):
+            if i < len(breadcrumb_path) - 1:
+                breadcrumb_html += f'<a href="#" onclick="loadGraph(\'{file}\')">{name}</a> > '
+            else:
+                breadcrumb_html += f'<span class="current">{name}</span>'
+        breadcrumb_html += '</div>'
+    
+    html_content = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Graph</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .graph-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .layer1 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .layer2 {
+            font-size: 14px;
+            margin-left: 20px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            display: inline-block;
+            position: relative;
+        }
+        .layer2:hover {
+            background-color: #e3f2fd;
+        }
+        .layer2.clickable {
+            border: 2px dashed #2196f3;
+        }
+        .layer2.clickable:hover {
+            background-color: #bbdefb;
+            border-color: #1976d2;
+        }
+        .layer3 {
+            font-size: 12px;
+            margin-left: 40px;
+            color: #666;
+            display: inline-block;
+            margin-right: 15px;
+        }
+        .underline {
+            height: 2px;
+            margin-top: 2px;
+            margin-bottom: 8px;
+        }
+        .color-green-light { background-color: #A5D6A7; }
+        .color-green-medium { background-color: #388E3C; }
+        .color-green-dark { background-color: #1B5E20; }
+        .color-blue-light { background-color: #90CAF9; }
+        .color-blue-medium { background-color: #1976D2; }
+        .color-blue-dark { background-color: #0D47A1; }
+        .color-purple-light { background-color: #CE93D8; }
+        .color-purple-medium { background-color: #8E24AA; }
+        .color-purple-dark { background-color: #4A148C; }
+        .color-red-light { background-color: #FFAB91; }
+        .color-red-medium { background-color: #D84315; }
+        .color-red-dark { background-color: #BF360C; }
+        .section {
+            margin-bottom: 30px;
+        }
+        .layer2-container {
+            margin-bottom: 15px;
+        }
+        .layer3-container {
+            margin-left: 20px;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: none;
+            z-index: 1000;
+        }
+        .notification.error {
+            background: #f44336;
+        }
+        .breadcrumb {
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .breadcrumb a {
+            color: #1976d2;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        .breadcrumb .current {
+            font-weight: bold;
+            color: #333;
+        }
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 8px 16px;
+            background: #1976d2;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+        }
+        .back-button:hover {
+            background: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="graph-container">
+        """ + breadcrumb_html + """
+        <h1>Interactive Graph</h1>
+"""
 
+    # Color mapping
+    base_colors = [
+        ("green", "#A5D6A7", "#388E3C", "#1B5E20"),
+        ("blue", "#90CAF9", "#1976D2", "#0D47A1"),
+        ("purple", "#CE93D8", "#8E24AA", "#4A148C"),
+        ("red", "#FFAB91", "#D84315", "#BF360C"),
+    ]
 
+    for idx, item in enumerate(data):
+        color_name, light, medium, dark = base_colors[idx % 4]
+        layer1_name = item["layer1"]
+        
+        html_content += f"""
+        <div class="section">
+            <div class="layer1">{layer1_name}</div>
+            <div class="underline color-{color_name}-medium"></div>
+"""
+        
+        for layer2_item in item["layer2"]:
+            layer2_name = layer2_item["name"]
+            file_path = get_file_association(layer1_name, layer2_name)
+            clickable_class = "clickable" if file_path else ""
+            
+            html_content += f"""
+            <div class="layer2-container">
+                <div class="layer2 {clickable_class}" onclick="navigateToSubGraph('{file_path}', '{layer1_name}', '{layer2_name}')">{layer2_name}</div>
+                <div class="underline color-{color_name}-light"></div>
+                <div class="layer3-container">
+"""
+            
+            for layer3_item in layer2_item["layer3"]:
+                html_content += f'<span class="layer3">{layer3_item}</span>'
+            
+            html_content += """
+                </div>
+            </div>
+"""
+        
+        html_content += "</div>"
 
+    html_content += """
+    </div>
+    <div id="notification" class="notification"></div>
+    
+    <script>
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification' + (isError ? ' error' : '');
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        function navigateToSubGraph(filePath, layer1Name, layer2Name) {
+            if (!filePath) {
+                showNotification(`No file associated with ${layer2Name}`, true);
+                return;
+            }
+            
+            // Generate sub-graph HTML file name
+            const subGraphName = filePath.replace('.md', '.html');
+            
+            // Navigate to the sub-graph
+            window.location.href = subGraphName;
+        }
+        
+        function loadGraph(filePath) {
+            window.location.href = filePath;
+        }
+    </script>
+</body>
+</html>"""
+
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(html_content)
+
+def generate_all_subgraphs():
+    """Generate HTML files for all available markdown files"""
+    
+    # Get all markdown files in the current directory
+    md_files = [f for f in os.listdir('.') if f.endswith('.md') and f != 'main.md']
+    
+    html_dir = "html"
+    os.makedirs(html_dir, exist_ok=True)
+    
+    for md_file in md_files:
+        try:
+            data = parse_md_hierarchy(md_file)
+            if data:  # Only generate if file has content
+                base_name = os.path.splitext(md_file)[0]
+                html_path = os.path.join(html_dir, f"{base_name}.html")
+                
+                # Create breadcrumb based on file name
+                breadcrumb = [("Main", "main.html"), (base_name.replace('-', ' ').title(), None)]
+                
+                generate_html_graph(data, html_path, parent_file=md_file, breadcrumb_path=breadcrumb)
+                print(f"Generated sub-graph: {html_path}")
+                
+        except Exception as e:
+            print(f"Error generating sub-graph for {md_file}: {e}")
+
+# Generate HTML graph
 data = parse_md_hierarchy(md_file)
 
+# Check if this is a sub-graph request
+if len(sys.argv) > 2 and sys.argv[2] == "subgraph":
+    parent_name = sys.argv[3] if len(sys.argv) > 3 else "Main"
+    breadcrumb = [("Main", "main.html"), (parent_name, None)]
+    generate_html_graph(data, html_path, parent_file=md_file, breadcrumb_path=breadcrumb)
+else:
+    generate_html_graph(data, html_path)
+    
+    # Also generate sub-graphs for associated files
+    print("Generating sub-graphs...")
+    generate_all_subgraphs()
 
+print(f"Interactive graph saved to {html_path}")
 
-
-# Dynamically set figure height based on number of second-level items (layer2s)
-HEIGHT_COEFF = 0.5  # You can adjust this coefficient for your preferred vertical spacing
-num_second_level_items = sum(len(item["layer2"]) for item in data)
-fig_height = max(6, HEIGHT_COEFF * num_second_level_items)
-
-
-# Precompute all text widths after a canvas draw using a temporary figure
-import matplotlib.pyplot as plt
-_tmp_fig, _tmp_ax = plt.subplots(figsize=(8, 6))
-layer1_widths = []
-layer2_widths = []
-layer3_widths = []
-for idx in range(len(data)):
-    layer1 = data[idx]["layer1"]
-    layer1_widths.append(get_text_width(_tmp_ax, layer1, fontsize=12))
-    layer2_widths.append([])
-    layer3_widths.append([])
-    for j in range(len(data[idx]["layer2"])):
-        layer2 = data[idx]["layer2"][j]["name"]
-        layer2_widths[idx].append(get_text_width(_tmp_ax, layer2, fontsize=12))
-        layer3_widths[idx].append([])
-        for k in range(len(data[idx]["layer2"][j]["layer3"])):
-            layer3 = data[idx]["layer2"][j]["layer3"][k]
-            layer3_widths[idx][j].append(get_text_width(_tmp_ax, layer3, fontsize=12))
-plt.close(_tmp_fig)
-
-# Dynamically set figure width based on max width calculation
-WIDTH_COEFF = 0.5  # You can adjust this coefficient for your preferred horizontal spacing
-maxWidth = 0
-for idx in range(len(data)):
-    # Level 1 width
-    w1 = layer1_widths[idx]
-    if w1 > maxWidth:
-        maxWidth = w1
-    # Level 2 widths
-    for j in range(len(data[idx]["layer2"])):
-        w2 = layer2_widths[idx][j]
-        if w1 + w2 > maxWidth:
-            maxWidth = w1 + w2
-        # Level 3 widths (group sum)
-        group_w3 = sum(layer3_widths[idx][j]) if layer3_widths[idx][j] else 0
-        if w1 + w2 + group_w3 > maxWidth:
-            maxWidth = w1 + w2 + group_w3
-
-fig_width = max(8, WIDTH_COEFF * maxWidth / 100)  # /100 to convert from pixels to inches (matplotlib default dpi=100)
-fig, ax = plt.subplots(figsize=(fig_width, fig_height))
-ax.axis('off')
-
-# Updated color palette: Green, Blue, Purple, Red (repeat if needed)
-base_colors = [
-    ("#A5D6A7", "#388E3C", "#1B5E20"),  # Green shades
-    ("#90CAF9", "#1976D2", "#0D47A1"),  # Blue shades
-    ("#CE93D8", "#8E24AA", "#4A148C"),  # Purple shades
-    ("#FFAB91", "#D84315", "#BF360C"),  # Red shades
-]
-colors = [base_colors[i % 4] for i in range(len(data))]
-
-# --- Control variables for layout ---
-char_width = 13         # width per character for underline and spacing (human-friendly)
-base_pad = 2            # base padding for underline length (human-friendly)
-item_height = 10        # vertical distance between subitems (second layer)
-
-# Dynamically set figure height based on number of top-level items
-ax.axis('off')
-
-coords = {}
-subnames = {}
-y_positions = []
-
-y = 0
-for i in range(len(data)):
-    layer1 = data[i]["layer1"]
-    coords[layer1] = (0, y)
-    sub_y_positions = []
-    layer1_end_x = len(layer1) * char_width + base_pad
-    layer2_start_x = layer1_end_x
-    for j in range(len(data[i]["layer2"])):
-        layer2 = data[i]["layer2"][j]["name"]
-        layer2_len = len(layer2) * char_width + base_pad
-        layer2_x = layer2_start_x
-        layer2_y = y - item_height * j
-        coords[layer2] = (layer2_x, layer2_y)
-        subnames[layer2] = data[i]["layer2"][j]["layer3"]
-        sub_y_positions.append(layer2_y)
-        # Layer3 items side by side, no extra gap
-        layer2_end_x = layer2_x + max(layer2_len, base_pad + len(layer2) * char_width)
-        layer3_x = layer2_end_x
-        for k in range(len(data[i]["layer2"][j]["layer3"])):
-            layer3 = data[i]["layer2"][j]["layer3"][k]
-            layer3_len = len(layer3) * char_width + base_pad
-            coords[layer3] = (layer3_x, layer2_y)
-            layer3_x += layer3_len
-    if sub_y_positions:
-        lowest_sub_y = min(sub_y_positions)
-    else:
-        lowest_sub_y = y  # fallback to current y if no subitems
-    y_positions.append((lowest_sub_y, i))
-    if i < len(data) - 1:
-        y = lowest_sub_y - item_height
-
-
-
-# Precompute all text widths after a canvas draw
-layer1_widths = []
-layer2_widths = []
-layer3_widths = []
-for idx in range(len(data)):
-    layer1 = data[idx]["layer1"]
-    layer1_widths.append(get_text_width(ax, layer1, fontsize=12))
-    layer2_widths.append([])
-    layer3_widths.append([])
-    for j in range(len(data[idx]["layer2"])):
-        layer2 = data[idx]["layer2"][j]["name"]
-        layer2_widths[idx].append(get_text_width(ax, layer2, fontsize=12))
-        layer3_widths[idx].append([])
-        for k in range(len(data[idx]["layer2"][j]["layer3"])):
-            layer3 = data[idx]["layer2"][j]["layer3"][k]
-            layer3_widths[idx][j].append(get_text_width(ax, layer3, fontsize=12))
-
-# Now plot everything using precomputed widths
-for idx in range(len(data)):
-    layer1 = data[idx]["layer1"]
-    x, y = coords[layer1]
-    light, medium, dark = colors[idx]
-    layer1_width = layer1_widths[idx]
-    underline_len = layer1_width
-    ax.text(x, y, layer1, ha='left', va='center', fontsize=12, color='black')
-    ax.plot([x, x+underline_len], [y-3, y-3], color=medium, lw=2)
-    layer2_x = x + underline_len
-    for j in range(len(data[idx]["layer2"])):
-        layer2 = data[idx]["layer2"][j]["name"]
-        layer2_y = y - item_height * j
-        layer2_width = layer2_widths[idx][j]
-        underline_len = layer2_width
-        ax.text(layer2_x, layer2_y, layer2, ha='left', va='center', fontsize=12, color='black')
-        ax.plot([layer2_x, layer2_x+underline_len], [layer2_y-3, layer2_y-3], color=light, lw=2)
-        layer3_x = layer2_x + underline_len
-        for k in range(len(data[idx]["layer2"][j]["layer3"])):
-            layer3 = data[idx]["layer2"][j]["layer3"][k]
-            layer3_y = layer2_y
-            layer3_width = layer3_widths[idx][j][k]
-            underline_len = layer3_width
-            ax.text(layer3_x, layer3_y, layer3, ha='left', va='center', fontsize=12, color='black')
-            ax.plot([layer3_x, layer3_x+underline_len], [layer3_y-3, layer3_y-3], color=dark, lw=2)
-            layer3_x += underline_len
-
-
-plt.tight_layout()
-# Save PNG to cache directory
-plt.savefig(png_path, bbox_inches='tight', dpi=150)
-print(f"Graph saved to {png_path}")
-plt.show()
+# Open the HTML file in default browser
+import webbrowser
+webbrowser.open('file://' + os.path.abspath(html_path))
