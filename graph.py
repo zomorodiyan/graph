@@ -75,11 +75,11 @@ def get_file_association(layer1_name, layer2_name):
             "Goal": "level-goal.md"
         },
         "Work": {
-            "Go-Melt": "work-go-melt.md",
-            "ASU-Craft": "work-asu-craft.md"
+            "Go-Melt": "work-go-melt.md"
         },
         "Study": {
-            "IIOT": "study-iiot.md"
+            "IIOT": "study-iiot.md",
+            "ASU-Craft": "study-asu-craft.md"
         },
         "Project": {
             "Imaginer": "project-imaginer.md"
@@ -413,6 +413,69 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
 
+def get_parent_file_info(file_name):
+    """Determine parent file and navigation info based on file name"""
+    base_name = os.path.splitext(file_name)[0]
+
+    # Define parent relationships
+    parent_mapping = {
+        # Work items parent is level-task
+        "work-go-melt": ("level-task.html", "Level Task"),
+
+        # Study items parent is level-task
+        "study-iiot": ("level-task.html", "Level Task"),
+        "study-asu-craft": ("level-task.html", "Level Task"),
+
+        # Project items parent is level-task
+        "project-imaginer": ("level-task.html", "Level Task"),
+
+        # Level items parent is main
+        "level-task": ("main.html", "Main"),
+        "level-skill": ("main.html", "Main"),
+        "level-goal": ("main.html", "Main"),
+
+        # Body items parent is main
+        "body-habit": ("main.html", "Main"),
+        "body-nutrition": ("main.html", "Main"),
+        "body-train": ("main.html", "Main"),
+
+        # Mind items parent is main
+        "mind-mood": ("main.html", "Main"),
+        "mind-rest": ("main.html", "Main"),
+
+        # Other items parent is main (you can extend this)
+        "interaction-love": ("main.html", "Main"),
+        "interaction-family": ("main.html", "Main"),
+        "interaction-friends": ("main.html", "Main"),
+        "interaction-community": ("main.html", "Main"),
+        "finance-earn": ("main.html", "Main"),
+        "finance-spend": ("main.html", "Main"),
+        "finance-invest": ("main.html", "Main"),
+        "time-day": ("main.html", "Main"),
+        "time-month": ("main.html", "Main"),
+        "time-year": ("main.html", "Main"),
+    }
+
+    if base_name in parent_mapping:
+        parent_file, parent_name = parent_mapping[base_name]
+
+        # Create breadcrumb path
+        if parent_file == "main.html":
+            # Direct child of main
+            breadcrumb = [("Main", "main.html"), (base_name.replace('-', ' ').title(), None)]
+        else:
+            # Child of a sub-page (two levels deep)
+            breadcrumb = [
+                ("Main", "main.html"),
+                (parent_name, parent_file),
+                (base_name.replace('-', ' ').title(), None)
+            ]
+
+        return breadcrumb
+    else:
+        # Default: direct child of main
+        return [("Main", "main.html"), (base_name.replace('-', ' ').title(), None)]
+
 def generate_all_subgraphs():
     """Generate HTML files for all available markdown files"""
 
@@ -429,8 +492,8 @@ def generate_all_subgraphs():
                 base_name = os.path.splitext(md_file)[0]
                 html_path = os.path.join(html_dir, f"{base_name}.html")
 
-                # Create breadcrumb based on file name
-                breadcrumb = [("Main", "main.html"), (base_name.replace('-', ' ').title(), None)]
+                # Create proper breadcrumb navigation
+                breadcrumb = get_parent_file_info(md_file)
 
                 generate_html_graph(data, html_path, parent_file=md_file, breadcrumb_path=breadcrumb)
                 print(f"Generated sub-graph: {html_path}")
