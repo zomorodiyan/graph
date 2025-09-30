@@ -1,7 +1,3 @@
-Morning
-#Bath
-#Room
-#Dish
-
-Evening
-#Bath
+Habit
+#Morning
+#Evening

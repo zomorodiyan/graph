@@ -1,6 +1,4 @@
-Professional
-#Resume
-#LinkedIn
-Creative
-#Blender
-Practical
+Skill
+#Professional
+#Creative
+#Practical

@@ -1,3 +1,4 @@
-shop
-need
-wish
+Spend
+#Shop
+#Need
+#Wish

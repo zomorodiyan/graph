@@ -18,26 +18,25 @@ def parse_md_hierarchy(filepath):
     data = []
     with open(filepath, 'r', encoding='utf-8') as f:
         lines = [line.strip() for line in f if line.strip()]
-    i = 0
-    while i < len(lines):
-        if lines[i].startswith('#'):
-            i += 1
-            continue
-        layer1 = lines[i]
-        i += 1
-        layer2 = []
-        while i < len(lines) and lines[i].startswith('#'):
-            if lines[i].startswith('##'):
-                i += 1
-                continue
-            name = lines[i][1:].strip()
-            i += 1
-            layer3 = []
-            while i < len(lines) and lines[i].startswith('##'):
-                layer3.append(lines[i][2:].strip())
-                i += 1
-            layer2.append({"name": name, "layer3": layer3})
+    
+    if not lines:
+        return data
+    
+    # First line is the parent (layer1) without # prefix
+    layer1 = lines[0]
+    layer2 = []
+    
+    # Process remaining lines as layer2 items (with # prefix)
+    for i in range(1, len(lines)):
+        line = lines[i]
+        if line.startswith('#') and not line.startswith('##'):
+            # This is a layer2 item
+            name = line[1:].strip()
+            layer2.append({"name": name, "layer3": []})
+    
+    if layer2:  # Only add if there are subitems
         data.append({"layer1": layer1, "layer2": layer2})
+    
     return data
 
 import os
@@ -60,19 +59,32 @@ os.makedirs(html_dir, exist_ok=True)
 def get_file_association(layer1_name, layer2_name):
     """Map layer2 items to their associated markdown files"""
     associations = {
-        "Body": {
-            "Habits": "body-habit.md",
-            "Nutrition": "body-nutrition.md",
-            "Train": "body-train.md"
+        "Main": {
+            "Mind": "mind.md",
+            "Body": "body.md", 
+            "Level": "level.md",
+            "Interaction": "interaction.md",
+            "Finance": "finance.md",
+            "Time": "time.md"
         },
         "Mind": {
             "Mood": "mind-mood.md",
             "Rest": "mind-rest.md"
         },
+        "Body": {
+            "Habit": "body-habit.md",
+            "Nutrition": "body-nutrition.md",
+            "Train": "body-train.md"
+        },
         "Level": {
             "Task": "level-task.md",
             "Skill": "level-skill.md",
             "Goal": "level-goal.md"
+        },
+        "Task": {
+            "Work": "work.md",
+            "Study": "study.md",
+            "Project": "project.md"
         },
         "Work": {
             "Go-Melt": "work-go-melt.md"
@@ -83,6 +95,25 @@ def get_file_association(layer1_name, layer2_name):
         },
         "Project": {
             "Imaginer": "project-imaginer.md"
+        },
+        "Go-Melt": {
+            "Run": "work-go-melt-run.md",
+            "Theory": "work-go-melt-theory.md",
+            "Code": "work-go-melt-code.md"
+        },
+        "IIOT": {
+            "Homework": "study-iiot-homework.md",
+            "TermPaper": "study-iiot-termpaper.md",
+            "GroupProject": "study-iiot-groupproject.md"
+        },
+        "ASU-Craft": {
+            "Meetings": "study-asu-craft-meetings.md",
+            "Documentation": "study-asu-craft-documentation.md"
+        },
+        "Imaginer": {
+            "Prototype": "project-imaginer-prototype.md",
+            "Planning": "project-imaginer-planning.md",
+            "Implementation": "project-imaginer-implementation.md"
         },
         "Interaction": {
             "Love": "interaction-love.md",
@@ -419,57 +450,152 @@ def get_parent_file_info(file_name):
 
     # Define parent relationships
     parent_mapping = {
-        # Work items parent is level-task
-        "work-go-melt": ("level-task.html", "Level Task"),
+        # Level 1 files - parent is main
+        "mind": ("main.html", "Main"),
+        "body": ("main.html", "Main"),
+        "level": ("main.html", "Main"),
+        "interaction": ("main.html", "Main"),
+        "finance": ("main.html", "Main"),
+        "time": ("main.html", "Main"),
 
-        # Study items parent is level-task
-        "study-iiot": ("level-task.html", "Level Task"),
-        "study-asu-craft": ("level-task.html", "Level Task"),
+        # Level 2 files - mind items
+        "mind-mood": ("mind.html", "Mind"),
+        "mind-rest": ("mind.html", "Mind"),
 
-        # Project items parent is level-task
-        "project-imaginer": ("level-task.html", "Level Task"),
+        # Level 2 files - body items
+        "body-habit": ("body.html", "Body"),
+        "body-nutrition": ("body.html", "Body"),
+        "body-train": ("body.html", "Body"),
 
-        # Level items parent is main
-        "level-task": ("main.html", "Main"),
-        "level-skill": ("main.html", "Main"),
-        "level-goal": ("main.html", "Main"),
+        # Level 2 files - level items
+        "level-task": ("level.html", "Level"),
+        "level-skill": ("level.html", "Level"),
+        "level-goal": ("level.html", "Level"),
 
-        # Body items parent is main
-        "body-habit": ("main.html", "Main"),
-        "body-nutrition": ("main.html", "Main"),
-        "body-train": ("main.html", "Main"),
+        # Level 2 files - interaction items
+        "interaction-love": ("interaction.html", "Interaction"),
+        "interaction-family": ("interaction.html", "Interaction"),
+        "interaction-friends": ("interaction.html", "Interaction"),
+        "interaction-community": ("interaction.html", "Interaction"),
 
-        # Mind items parent is main
-        "mind-mood": ("main.html", "Main"),
-        "mind-rest": ("main.html", "Main"),
+        # Level 2 files - finance items
+        "finance-earn": ("finance.html", "Finance"),
+        "finance-spend": ("finance.html", "Finance"),
+        "finance-invest": ("finance.html", "Finance"),
 
-        # Other items parent is main (you can extend this)
-        "interaction-love": ("main.html", "Main"),
-        "interaction-family": ("main.html", "Main"),
-        "interaction-friends": ("main.html", "Main"),
-        "interaction-community": ("main.html", "Main"),
-        "finance-earn": ("main.html", "Main"),
-        "finance-spend": ("main.html", "Main"),
-        "finance-invest": ("main.html", "Main"),
-        "time-day": ("main.html", "Main"),
-        "time-month": ("main.html", "Main"),
-        "time-year": ("main.html", "Main"),
+        # Level 2 files - time items
+        "time-day": ("time.html", "Time"),
+        "time-month": ("time.html", "Time"),
+        "time-year": ("time.html", "Time"),
+
+        # Level 3 files - task items
+        "work": ("level-task.html", "Task"),
+        "study": ("level-task.html", "Task"),
+        "project": ("level-task.html", "Task"),
+
+        # Level 4 files - work items
+        "work-go-melt": ("work.html", "Work"),
+
+        # Level 4 files - study items
+        "study-iiot": ("study.html", "Study"),
+        "study-asu-craft": ("study.html", "Study"),
+
+        # Level 4 files - project items
+        "project-imaginer": ("project.html", "Project"),
+
+        # Level 5 files - go-melt items
+        "work-go-melt-run": ("work-go-melt.html", "Go-Melt"),
+        "work-go-melt-theory": ("work-go-melt.html", "Go-Melt"),
+        "work-go-melt-code": ("work-go-melt.html", "Go-Melt"),
+
+        # Level 5 files - iiot items
+        "study-iiot-homework": ("study-iiot.html", "IIOT"),
+        "study-iiot-termpaper": ("study-iiot.html", "IIOT"),
+        "study-iiot-groupproject": ("study-iiot.html", "IIOT"),
+
+        # Level 5 files - asu-craft items
+        "study-asu-craft-meetings": ("study-asu-craft.html", "ASU-Craft"),
+        "study-asu-craft-documentation": ("study-asu-craft.html", "ASU-Craft"),
+
+        # Level 5 files - imaginer items
+        "project-imaginer-prototype": ("project-imaginer.html", "Imaginer"),
+        "project-imaginer-planning": ("project-imaginer.html", "Imaginer"),
+        "project-imaginer-implementation": ("project-imaginer.html", "Imaginer"),
     }
 
     if base_name in parent_mapping:
         parent_file, parent_name = parent_mapping[base_name]
 
-        # Create breadcrumb path
+        # Create breadcrumb path based on hierarchy depth
         if parent_file == "main.html":
-            # Direct child of main
+            # Level 1: Direct child of main
             breadcrumb = [("Main", "main.html"), (base_name.replace('-', ' ').title(), None)]
-        else:
-            # Child of a sub-page (two levels deep)
+        elif parent_name in ["Mind", "Body", "Level", "Interaction", "Finance", "Time"]:
+            # Level 2: Child of level 1 items
+            parent_base = parent_name.lower()
             breadcrumb = [
                 ("Main", "main.html"),
-                (parent_name, parent_file),
+                (parent_name, f"{parent_base}.html"),
                 (base_name.replace('-', ' ').title(), None)
             ]
+        elif parent_name == "Task":
+            # Level 3: Child of Task
+            breadcrumb = [
+                ("Main", "main.html"),
+                ("Level", "level.html"),
+                ("Task", "level-task.html"),
+                (base_name.replace('-', ' ').title(), None)
+            ]
+        elif parent_name in ["Work", "Study", "Project"]:
+            # Level 4: Child of Work/Study/Project
+            breadcrumb = [
+                ("Main", "main.html"),
+                ("Level", "level.html"),
+                ("Task", "level-task.html"),
+                (parent_name, f"{parent_name.lower()}.html"),
+                (base_name.replace('-', ' ').title(), None)
+            ]
+        elif parent_name in ["Go-Melt", "IIOT", "ASU-Craft", "Imaginer"]:
+            # Level 5: Child of specific items
+            if parent_name == "Go-Melt":
+                breadcrumb = [
+                    ("Main", "main.html"),
+                    ("Level", "level.html"),
+                    ("Task", "level-task.html"),
+                    ("Work", "work.html"),
+                    ("Go-Melt", "work-go-melt.html"),
+                    (base_name.replace('-', ' ').title(), None)
+                ]
+            elif parent_name == "IIOT":
+                breadcrumb = [
+                    ("Main", "main.html"),
+                    ("Level", "level.html"),
+                    ("Task", "level-task.html"),
+                    ("Study", "study.html"),
+                    ("IIOT", "study-iiot.html"),
+                    (base_name.replace('-', ' ').title(), None)
+                ]
+            elif parent_name == "ASU-Craft":
+                breadcrumb = [
+                    ("Main", "main.html"),
+                    ("Level", "level.html"),
+                    ("Task", "level-task.html"),
+                    ("Study", "study.html"),
+                    ("ASU-Craft", "study-asu-craft.html"),
+                    (base_name.replace('-', ' ').title(), None)
+                ]
+            elif parent_name == "Imaginer":
+                breadcrumb = [
+                    ("Main", "main.html"),
+                    ("Level", "level.html"),
+                    ("Task", "level-task.html"),
+                    ("Project", "project.html"),
+                    ("Imaginer", "project-imaginer.html"),
+                    (base_name.replace('-', ' ').title(), None)
+                ]
+        else:
+            # Default: treat as level 2
+            breadcrumb = [("Main", "main.html"), (base_name.replace('-', ' ').title(), None)]
 
         return breadcrumb
     else:

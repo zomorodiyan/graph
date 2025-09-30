@@ -1,3 +1,4 @@
 Earn
-Spend
-Invest
+#Job
+#Side
+#Passive
