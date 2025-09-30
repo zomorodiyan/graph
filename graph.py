@@ -68,18 +68,18 @@ def get_file_association(layer1_name, layer2_name):
             "Time": "time.md"
         },
         "Mind": {
-            "Mood": "mind-mood.md",
-            "Rest": "mind-rest.md"
+            "Mood": "mind_mood.md",
+            "Rest": "mind_rest.md"
         },
         "Body": {
-            "Habit": "body-habit.md",
-            "Nutrition": "body-nutrition.md",
-            "Train": "body-train.md"
+            "Habit": "body_habit.md",
+            "Nutrition": "body_nutrition.md",
+            "Train": "body_train.md"
         },
         "Level": {
-            "Task": "level-task.md",
-            "Skill": "level-skill.md",
-            "Goal": "level-goal.md"
+            "Task": "level_task.md",
+            "Skill": "level_skill.md",
+            "Goal": "level_goal.md"
         },
         "Task": {
             "Work": "work.md",
@@ -87,49 +87,49 @@ def get_file_association(layer1_name, layer2_name):
             "Project": "project.md"
         },
         "Work": {
-            "Go-Melt": "work-go-melt.md"
+            "Go-Melt": "work_go-melt.md"
         },
         "Study": {
-            "IIOT": "study-iiot.md",
-            "ASU-Craft": "study-asu-craft.md"
+            "IIOT": "study_iiot.md",
+            "ASU-Craft": "study_asu_craft.md"
         },
         "Project": {
-            "Imaginer": "project-imaginer.md"
+            "Imaginer": "project_imaginer.md"
         },
         "Go-Melt": {
-            "Run": "work-go-melt-run.md",
-            "Theory": "work-go-melt-theory.md",
-            "Code": "work-go-melt-code.md"
+            "Run": "work_go-melt_run.md",
+            "Theory": "work_go-melt_theory.md",
+            "Code": "work_go-melt_code.md"
         },
         "IIOT": {
-            "Homework": "study-iiot-homework.md",
-            "TermPaper": "study-iiot-termpaper.md",
-            "GroupProject": "study-iiot-groupproject.md"
+            "Homework": "study_iiot_homework.md",
+            "TermPaper": "study_iiot_termpaper.md",
+            "GroupProject": "study_iiot_groupproject.md"
         },
         "ASU-Craft": {
-            "Meetings": "study-asu-craft-meetings.md",
-            "Documentation": "study-asu-craft-documentation.md"
+            "Meetings": "study_asu_craft_meetings.md",
+            "Documentation": "study_asu_craft_documentation.md"
         },
         "Imaginer": {
-            "Prototype": "project-imaginer-prototype.md",
-            "Planning": "project-imaginer-planning.md",
-            "Implementation": "project-imaginer-implementation.md"
+            "Prototype": "project_imaginer_prototype.md",
+            "Planning": "project_imaginer_planning.md",
+            "Implementation": "project_imaginer_implementation.md"
         },
         "Interaction": {
-            "Love": "interaction-love.md",
-            "Family": "interaction-family.md",
-            "Friends": "interaction-friends.md",
-            "Community": "interaction-community.md"
+            "Love": "interaction_love.md",
+            "Family": "interaction_family.md",
+            "Friends": "interaction_friends.md",
+            "Community": "interaction_community.md"
         },
         "Finance": {
-            "Earn": "finance-earn.md",
-            "Spend": "finance-spend.md",
-            "Invest": "finance-invest.md"
+            "Earn": "finance_earn.md",
+            "Spend": "finance_spend.md",
+            "Invest": "finance_invest.md"
         },
         "Time": {
-            "Day": "time-day.md",
-            "Month": "time-month.md",
-            "Year": "time-year.md"
+            "Day": "time_day.md",
+            "Month": "time_month.md",
+            "Year": "time_year.md"
         }
     }
 
@@ -459,68 +459,68 @@ def get_parent_file_info(file_name):
         "time": ("main.html", "Main"),
 
         # Level 2 files - mind items
-        "mind-mood": ("mind.html", "Mind"),
-        "mind-rest": ("mind.html", "Mind"),
+        "mind_mood": ("mind.html", "Mind"),
+        "mind_rest": ("mind.html", "Mind"),
 
         # Level 2 files - body items
-        "body-habit": ("body.html", "Body"),
-        "body-nutrition": ("body.html", "Body"),
-        "body-train": ("body.html", "Body"),
+        "body_habit": ("body.html", "Body"),
+        "body_nutrition": ("body.html", "Body"),
+        "body_train": ("body.html", "Body"),
 
         # Level 2 files - level items
-        "level-task": ("level.html", "Level"),
-        "level-skill": ("level.html", "Level"),
-        "level-goal": ("level.html", "Level"),
+        "level_task": ("level.html", "Level"),
+        "level_skill": ("level.html", "Level"),
+        "level_goal": ("level.html", "Level"),
 
         # Level 2 files - interaction items
-        "interaction-love": ("interaction.html", "Interaction"),
-        "interaction-family": ("interaction.html", "Interaction"),
-        "interaction-friends": ("interaction.html", "Interaction"),
-        "interaction-community": ("interaction.html", "Interaction"),
+        "interaction_love": ("interaction.html", "Interaction"),
+        "interaction_family": ("interaction.html", "Interaction"),
+        "interaction_friends": ("interaction.html", "Interaction"),
+        "interaction_community": ("interaction.html", "Interaction"),
 
         # Level 2 files - finance items
-        "finance-earn": ("finance.html", "Finance"),
-        "finance-spend": ("finance.html", "Finance"),
-        "finance-invest": ("finance.html", "Finance"),
+        "finance_earn": ("finance.html", "Finance"),
+        "finance_spend": ("finance.html", "Finance"),
+        "finance_invest": ("finance.html", "Finance"),
 
         # Level 2 files - time items
-        "time-day": ("time.html", "Time"),
-        "time-month": ("time.html", "Time"),
-        "time-year": ("time.html", "Time"),
+        "time_day": ("time.html", "Time"),
+        "time_month": ("time.html", "Time"),
+        "time_year": ("time.html", "Time"),
 
         # Level 3 files - task items
-        "work": ("level-task.html", "Task"),
-        "study": ("level-task.html", "Task"),
-        "project": ("level-task.html", "Task"),
+        "work": ("level_task.html", "Task"),
+        "study": ("level_task.html", "Task"),
+        "project": ("level_task.html", "Task"),
 
         # Level 4 files - work items
-        "work-go-melt": ("work.html", "Work"),
+        "work_go-melt": ("work.html", "Work"),
 
         # Level 4 files - study items
-        "study-iiot": ("study.html", "Study"),
-        "study-asu-craft": ("study.html", "Study"),
+        "study_iiot": ("study.html", "Study"),
+        "study_asu_craft": ("study.html", "Study"),
 
         # Level 4 files - project items
-        "project-imaginer": ("project.html", "Project"),
+        "project_imaginer": ("project.html", "Project"),
 
         # Level 5 files - go-melt items
-        "work-go-melt-run": ("work-go-melt.html", "Go-Melt"),
-        "work-go-melt-theory": ("work-go-melt.html", "Go-Melt"),
-        "work-go-melt-code": ("work-go-melt.html", "Go-Melt"),
+        "work_go-melt_run": ("work_go-melt.html", "Go-Melt"),
+        "work_go-melt_theory": ("work_go-melt.html", "Go-Melt"),
+        "work_go-melt_code": ("work_go-melt.html", "Go-Melt"),
 
         # Level 5 files - iiot items
-        "study-iiot-homework": ("study-iiot.html", "IIOT"),
-        "study-iiot-termpaper": ("study-iiot.html", "IIOT"),
-        "study-iiot-groupproject": ("study-iiot.html", "IIOT"),
+        "study_iiot_homework": ("study_iiot.html", "IIOT"),
+        "study_iiot_termpaper": ("study_iiot.html", "IIOT"),
+        "study_iiot_groupproject": ("study_iiot.html", "IIOT"),
 
-        # Level 5 files - asu-craft items
-        "study-asu-craft-meetings": ("study-asu-craft.html", "ASU-Craft"),
-        "study-asu-craft-documentation": ("study-asu-craft.html", "ASU-Craft"),
+        # Level 5 files - asu_craft items
+        "study_asu_craft_meetings": ("study_asu_craft.html", "ASU-Craft"),
+        "study_asu_craft_documentation": ("study_asu_craft.html", "ASU-Craft"),
 
         # Level 5 files - imaginer items
-        "project-imaginer-prototype": ("project-imaginer.html", "Imaginer"),
-        "project-imaginer-planning": ("project-imaginer.html", "Imaginer"),
-        "project-imaginer-implementation": ("project-imaginer.html", "Imaginer"),
+        "project_imaginer_prototype": ("project_imaginer.html", "Imaginer"),
+        "project_imaginer_planning": ("project_imaginer.html", "Imaginer"),
+        "project_imaginer_implementation": ("project_imaginer.html", "Imaginer"),
     }
 
     if base_name in parent_mapping:
@@ -536,24 +536,24 @@ def get_parent_file_info(file_name):
             breadcrumb = [
                 ("Main", "main.html"),
                 (parent_name, f"{parent_base}.html"),
-                (base_name.replace('-', ' ').title(), None)
+                (base_name.replace('_', ' ').title(), None)
             ]
         elif parent_name == "Task":
             # Level 3: Child of Task
             breadcrumb = [
                 ("Main", "main.html"),
                 ("Level", "level.html"),
-                ("Task", "level-task.html"),
-                (base_name.replace('-', ' ').title(), None)
+                ("Task", "level_task.html"),
+                (base_name.replace('_', ' ').title(), None)
             ]
         elif parent_name in ["Work", "Study", "Project"]:
             # Level 4: Child of Work/Study/Project
             breadcrumb = [
                 ("Main", "main.html"),
                 ("Level", "level.html"),
-                ("Task", "level-task.html"),
+                ("Task", "level_task.html"),
                 (parent_name, f"{parent_name.lower()}.html"),
-                (base_name.replace('-', ' ').title(), None)
+                (base_name.replace('_', ' ').title(), None)
             ]
         elif parent_name in ["Go-Melt", "IIOT", "ASU-Craft", "Imaginer"]:
             # Level 5: Child of specific items
@@ -561,46 +561,46 @@ def get_parent_file_info(file_name):
                 breadcrumb = [
                     ("Main", "main.html"),
                     ("Level", "level.html"),
-                    ("Task", "level-task.html"),
+                    ("Task", "level_task.html"),
                     ("Work", "work.html"),
-                    ("Go-Melt", "work-go-melt.html"),
-                    (base_name.replace('-', ' ').title(), None)
+                    ("Go-Melt", "work_go-melt.html"),
+                    (base_name.replace('_', ' ').title(), None)
                 ]
             elif parent_name == "IIOT":
                 breadcrumb = [
                     ("Main", "main.html"),
                     ("Level", "level.html"),
-                    ("Task", "level-task.html"),
+                    ("Task", "level_task.html"),
                     ("Study", "study.html"),
-                    ("IIOT", "study-iiot.html"),
-                    (base_name.replace('-', ' ').title(), None)
+                    ("IIOT", "study_iiot.html"),
+                    (base_name.replace('_', ' ').title(), None)
                 ]
             elif parent_name == "ASU-Craft":
                 breadcrumb = [
                     ("Main", "main.html"),
                     ("Level", "level.html"),
-                    ("Task", "level-task.html"),
+                    ("Task", "level_task.html"),
                     ("Study", "study.html"),
-                    ("ASU-Craft", "study-asu-craft.html"),
-                    (base_name.replace('-', ' ').title(), None)
+                    ("ASU-Craft", "study_asu_craft.html"),
+                    (base_name.replace('_', ' ').title(), None)
                 ]
             elif parent_name == "Imaginer":
                 breadcrumb = [
                     ("Main", "main.html"),
                     ("Level", "level.html"),
-                    ("Task", "level-task.html"),
+                    ("Task", "level_task.html"),
                     ("Project", "project.html"),
-                    ("Imaginer", "project-imaginer.html"),
-                    (base_name.replace('-', ' ').title(), None)
+                    ("Imaginer", "project_imaginer.html"),
+                    (base_name.replace('_', ' ').title(), None)
                 ]
         else:
             # Default: treat as level 2
-            breadcrumb = [("Main", "main.html"), (base_name.replace('-', ' ').title(), None)]
+            breadcrumb = [("Main", "main.html"), (base_name.replace('_', ' ').title(), None)]
 
         return breadcrumb
     else:
         # Default: direct child of main
-        return [("Main", "main.html"), (base_name.replace('-', ' ').title(), None)]
+        return [("Main", "main.html"), (base_name.replace('_', ' ').title(), None)]
 
 def generate_all_subgraphs():
     """Generate HTML files for all available markdown files"""
