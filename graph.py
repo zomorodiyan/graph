@@ -13,29 +13,107 @@ def read_layers_from_md(filepath):
             result.append((name, layer))
     return result
 
-# --- Data reading and parsing ---
+# --- Dynamic hierarchy building based on file names ---
+def get_file_hierarchy_level(filename):
+    """Determine hierarchy level based on underscore count in filename"""
+    base_name = os.path.splitext(filename)[0]
+    if base_name == 'main':
+        return 0
+    return base_name.count('_') + 1
+
+def get_parent_name_from_filename(filename):
+    """Extract parent name from filename based on underscore pattern"""
+    base_name = os.path.splitext(filename)[0]
+    if base_name == 'main':
+        return None
+    
+    # Remove the last part after underscore to get parent
+    parts = base_name.split('_')
+    if len(parts) == 1:
+        return 'main'  # Level 1 files have main as parent
+    else:
+        return '_'.join(parts[:-1])  # Remove last part
+
+def build_hierarchy_from_files():
+    """Build complete hierarchy structure from markdown files in directory"""
+    # Get all markdown files
+    md_files = [f for f in os.listdir('.') if f.endswith('.md')]
+    
+    # Create hierarchy mapping
+    hierarchy = {}
+    
+    for md_file in md_files:
+        base_name = os.path.splitext(md_file)[0]
+        level = get_file_hierarchy_level(md_file)
+        parent_name = get_parent_name_from_filename(md_file)
+        
+        # Initialize parent if not exists
+        if parent_name and parent_name not in hierarchy:
+            hierarchy[parent_name] = {'children': [], 'level': level - 1, 'filename': f"{parent_name}.md"}
+        
+        # Add current file to hierarchy
+        if base_name not in hierarchy:
+            hierarchy[base_name] = {'children': [], 'level': level, 'filename': md_file}
+        
+        # Establish parent-child relationship
+        if parent_name and parent_name in hierarchy:
+            if base_name not in [child['name'] for child in hierarchy[parent_name]['children']]:
+                hierarchy[parent_name]['children'].append({
+                    'name': base_name,
+                    'display_name': base_name.split('_')[-1].replace('-', ' ').title(),
+                    'filename': md_file,
+                    'level': level
+                })
+    
+    return hierarchy
+
+def get_children_for_display(node_name, hierarchy):
+    """Get children of a node formatted for display"""
+    if node_name not in hierarchy:
+        return []
+    
+    children = []
+    for child in hierarchy[node_name]['children']:
+        # Get grandchildren for this child
+        grandchildren = []
+        if child['name'] in hierarchy:
+            for grandchild in hierarchy[child['name']]['children']:
+                grandchildren.append(grandchild['display_name'])
+        
+        children.append({
+            "name": child['display_name'],
+            "filename": child['filename'],
+            "layer3": grandchildren
+        })
+    
+    return children
+
 def parse_md_hierarchy(filepath):
+    """Parse markdown file and build hierarchy data for display"""
+    base_name = os.path.splitext(os.path.basename(filepath))[0]
+    
+    # Build complete hierarchy from files
+    hierarchy = build_hierarchy_from_files()
+    
     data = []
-    with open(filepath, 'r', encoding='utf-8') as f:
-        lines = [line.strip() for line in f if line.strip()]
     
-    if not lines:
-        return data
-    
-    # First line is the parent (layer1) without # prefix
-    layer1 = lines[0]
-    layer2 = []
-    
-    # Process remaining lines as layer2 items (with # prefix)
-    for i in range(1, len(lines)):
-        line = lines[i]
-        if line.startswith('#') and not line.startswith('##'):
-            # This is a layer2 item
-            name = line[1:].strip()
-            layer2.append({"name": name, "layer3": []})
-    
-    if layer2:  # Only add if there are subitems
-        data.append({"layer1": layer1, "layer2": layer2})
+    if base_name == 'main':
+        # For main file, show all level 1 items
+        main_children = get_children_for_display('main', hierarchy)
+        if main_children:
+            data.append({
+                "layer1": "Main",
+                "layer2": main_children
+            })
+    else:
+        # For other files, show their children
+        children = get_children_for_display(base_name, hierarchy)
+        if children:
+            display_name = base_name.split('_')[-1].replace('-', ' ').title()
+            data.append({
+                "layer1": display_name,
+                "layer2": children
+            })
     
     return data
 
@@ -55,85 +133,27 @@ html_path = os.path.join(html_dir, f"{base_name}.html")
 # Create html directory if it doesn't exist
 os.makedirs(html_dir, exist_ok=True)
 
-# Function to create file association mapping
-def get_file_association(layer1_name, layer2_name):
-    """Map layer2 items to their associated markdown files"""
-    associations = {
-        "Main": {
-            "Mind": "mind.md",
-            "Body": "body.md", 
-            "Level": "level.md",
-            "Interaction": "interaction.md",
-            "Finance": "finance.md",
-            "Time": "time.md"
-        },
-        "Mind": {
-            "Mood": "mind_mood.md",
-            "Rest": "mind_rest.md"
-        },
-        "Body": {
-            "Habit": "body_habit.md",
-            "Nutrition": "body_nutrition.md",
-            "Train": "body_train.md"
-        },
-        "Level": {
-            "Task": "level_task.md",
-            "Skill": "level_skill.md",
-            "Goal": "level_goal.md"
-        },
-        "Task": {
-            "Work": "work.md",
-            "Study": "study.md",
-            "Project": "project.md"
-        },
-        "Work": {
-            "Go-Melt": "work_go-melt.md"
-        },
-        "Study": {
-            "IIOT": "study_iiot.md",
-            "ASU-Craft": "study_asu_craft.md"
-        },
-        "Project": {
-            "Imaginer": "project_imaginer.md"
-        },
-        "Go-Melt": {
-            "Run": "work_go-melt_run.md",
-            "Theory": "work_go-melt_theory.md",
-            "Code": "work_go-melt_code.md"
-        },
-        "IIOT": {
-            "Homework": "study_iiot_homework.md",
-            "TermPaper": "study_iiot_termpaper.md",
-            "GroupProject": "study_iiot_groupproject.md"
-        },
-        "ASU-Craft": {
-            "Meetings": "study_asu_craft_meetings.md",
-            "Documentation": "study_asu_craft_documentation.md"
-        },
-        "Imaginer": {
-            "Prototype": "project_imaginer_prototype.md",
-            "Planning": "project_imaginer_planning.md",
-            "Implementation": "project_imaginer_implementation.md"
-        },
-        "Interaction": {
-            "Love": "interaction_love.md",
-            "Family": "interaction_family.md",
-            "Friends": "interaction_friends.md",
-            "Community": "interaction_community.md"
-        },
-        "Finance": {
-            "Earn": "finance_earn.md",
-            "Spend": "finance_spend.md",
-            "Invest": "finance_invest.md"
-        },
-        "Time": {
-            "Day": "time_day.md",
-            "Month": "time_month.md",
-            "Year": "time_year.md"
-        }
-    }
-
-    return associations.get(layer1_name, {}).get(layer2_name, None)
+# Function to create file association mapping dynamically
+def get_file_association_dynamic(layer1_name, layer2_name, current_file):
+    """Dynamically map layer2 items to their associated markdown files based on current context"""
+    hierarchy = build_hierarchy_from_files()
+    base_name = os.path.splitext(os.path.basename(current_file))[0]
+    
+    # If we're at main level, find the file for the layer2 item
+    if base_name == 'main':
+        # Look for direct children of main that match layer2_name
+        if 'main' in hierarchy:
+            for child in hierarchy['main']['children']:
+                if child['display_name'].lower() == layer2_name.lower():
+                    return child['filename']
+    else:
+        # Look for children of current file that match layer2_name
+        if base_name in hierarchy:
+            for child in hierarchy[base_name]['children']:
+                if child['display_name'].lower() == layer2_name.lower():
+                    return child['filename']
+    
+    return None
 
 def check_file_exists(file_path):
     """Check if a file exists in the current directory"""
@@ -374,7 +394,8 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
 
         for layer2_item in item["layer2"]:
             layer2_name = layer2_item["name"]
-            file_path = get_file_association(layer1_name, layer2_name)
+            # Use the filename directly from the layer2_item if available
+            file_path = layer2_item.get("filename") or get_file_association_dynamic(layer1_name, layer2_name, parent_file or "main.md")
             file_exists = check_file_exists(file_path)
 
             # Only make clickable if file exists
@@ -444,163 +465,40 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
 
-def get_parent_file_info(file_name):
-    """Determine parent file and navigation info based on file name"""
+def get_parent_file_info_dynamic(file_name):
+    """Dynamically determine parent file and navigation info based on file name hierarchy"""
     base_name = os.path.splitext(file_name)[0]
-
-    # Define parent relationships
-    parent_mapping = {
-        # Level 1 files - parent is main
-        "mind": ("main.html", "Main"),
-        "body": ("main.html", "Main"),
-        "level": ("main.html", "Main"),
-        "interaction": ("main.html", "Main"),
-        "finance": ("main.html", "Main"),
-        "time": ("main.html", "Main"),
-
-        # Level 2 files - mind items
-        "mind_mood": ("mind.html", "Mind"),
-        "mind_rest": ("mind.html", "Mind"),
-
-        # Level 2 files - body items
-        "body_habit": ("body.html", "Body"),
-        "body_nutrition": ("body.html", "Body"),
-        "body_train": ("body.html", "Body"),
-
-        # Level 2 files - level items
-        "level_task": ("level.html", "Level"),
-        "level_skill": ("level.html", "Level"),
-        "level_goal": ("level.html", "Level"),
-
-        # Level 2 files - interaction items
-        "interaction_love": ("interaction.html", "Interaction"),
-        "interaction_family": ("interaction.html", "Interaction"),
-        "interaction_friends": ("interaction.html", "Interaction"),
-        "interaction_community": ("interaction.html", "Interaction"),
-
-        # Level 2 files - finance items
-        "finance_earn": ("finance.html", "Finance"),
-        "finance_spend": ("finance.html", "Finance"),
-        "finance_invest": ("finance.html", "Finance"),
-
-        # Level 2 files - time items
-        "time_day": ("time.html", "Time"),
-        "time_month": ("time.html", "Time"),
-        "time_year": ("time.html", "Time"),
-
-        # Level 3 files - task items
-        "work": ("level_task.html", "Task"),
-        "study": ("level_task.html", "Task"),
-        "project": ("level_task.html", "Task"),
-
-        # Level 4 files - work items
-        "work_go-melt": ("work.html", "Work"),
-
-        # Level 4 files - study items
-        "study_iiot": ("study.html", "Study"),
-        "study_asu_craft": ("study.html", "Study"),
-
-        # Level 4 files - project items
-        "project_imaginer": ("project.html", "Project"),
-
-        # Level 5 files - go-melt items
-        "work_go-melt_run": ("work_go-melt.html", "Go-Melt"),
-        "work_go-melt_theory": ("work_go-melt.html", "Go-Melt"),
-        "work_go-melt_code": ("work_go-melt.html", "Go-Melt"),
-
-        # Level 5 files - iiot items
-        "study_iiot_homework": ("study_iiot.html", "IIOT"),
-        "study_iiot_termpaper": ("study_iiot.html", "IIOT"),
-        "study_iiot_groupproject": ("study_iiot.html", "IIOT"),
-
-        # Level 5 files - asu_craft items
-        "study_asu_craft_meetings": ("study_asu_craft.html", "ASU-Craft"),
-        "study_asu_craft_documentation": ("study_asu_craft.html", "ASU-Craft"),
-
-        # Level 5 files - imaginer items
-        "project_imaginer_prototype": ("project_imaginer.html", "Imaginer"),
-        "project_imaginer_planning": ("project_imaginer.html", "Imaginer"),
-        "project_imaginer_implementation": ("project_imaginer.html", "Imaginer"),
-    }
-
-    if base_name in parent_mapping:
-        parent_file, parent_name = parent_mapping[base_name]
-
-        # Create breadcrumb path based on hierarchy depth
-        if parent_file == "main.html":
-            # Level 1: Direct child of main
-            breadcrumb = [("Main", "main.html"), (base_name.replace('-', ' ').title(), None)]
-        elif parent_name in ["Mind", "Body", "Level", "Interaction", "Finance", "Time"]:
-            # Level 2: Child of level 1 items
-            parent_base = parent_name.lower()
-            breadcrumb = [
-                ("Main", "main.html"),
-                (parent_name, f"{parent_base}.html"),
-                (base_name.replace('_', ' ').title(), None)
-            ]
-        elif parent_name == "Task":
-            # Level 3: Child of Task
-            breadcrumb = [
-                ("Main", "main.html"),
-                ("Level", "level.html"),
-                ("Task", "level_task.html"),
-                (base_name.replace('_', ' ').title(), None)
-            ]
-        elif parent_name in ["Work", "Study", "Project"]:
-            # Level 4: Child of Work/Study/Project
-            breadcrumb = [
-                ("Main", "main.html"),
-                ("Level", "level.html"),
-                ("Task", "level_task.html"),
-                (parent_name, f"{parent_name.lower()}.html"),
-                (base_name.replace('_', ' ').title(), None)
-            ]
-        elif parent_name in ["Go-Melt", "IIOT", "ASU-Craft", "Imaginer"]:
-            # Level 5: Child of specific items
-            if parent_name == "Go-Melt":
-                breadcrumb = [
-                    ("Main", "main.html"),
-                    ("Level", "level.html"),
-                    ("Task", "level_task.html"),
-                    ("Work", "work.html"),
-                    ("Go-Melt", "work_go-melt.html"),
-                    (base_name.replace('_', ' ').title(), None)
-                ]
-            elif parent_name == "IIOT":
-                breadcrumb = [
-                    ("Main", "main.html"),
-                    ("Level", "level.html"),
-                    ("Task", "level_task.html"),
-                    ("Study", "study.html"),
-                    ("IIOT", "study_iiot.html"),
-                    (base_name.replace('_', ' ').title(), None)
-                ]
-            elif parent_name == "ASU-Craft":
-                breadcrumb = [
-                    ("Main", "main.html"),
-                    ("Level", "level.html"),
-                    ("Task", "level_task.html"),
-                    ("Study", "study.html"),
-                    ("ASU-Craft", "study_asu_craft.html"),
-                    (base_name.replace('_', ' ').title(), None)
-                ]
-            elif parent_name == "Imaginer":
-                breadcrumb = [
-                    ("Main", "main.html"),
-                    ("Level", "level.html"),
-                    ("Task", "level_task.html"),
-                    ("Project", "project.html"),
-                    ("Imaginer", "project_imaginer.html"),
-                    (base_name.replace('_', ' ').title(), None)
-                ]
+    
+    if base_name == 'main':
+        return [("Main", None)]
+    
+    # Build breadcrumb by walking up the hierarchy
+    breadcrumb = []
+    current = base_name
+    
+    # Walk up the hierarchy by removing underscores
+    hierarchy_path = []
+    while current and current != 'main':
+        parts = current.split('_')
+        display_name = parts[-1].replace('-', ' ').title()
+        hierarchy_path.append((display_name, f"{current}.html"))
+        
+        if len(parts) == 1:
+            # This is a level 1 file, parent is main
+            hierarchy_path.append(("Main", "main.html"))
+            break
         else:
-            # Default: treat as level 2
-            breadcrumb = [("Main", "main.html"), (base_name.replace('_', ' ').title(), None)]
-
-        return breadcrumb
-    else:
-        # Default: direct child of main
-        return [("Main", "main.html"), (base_name.replace('_', ' ').title(), None)]
+            # Move up one level
+            current = '_'.join(parts[:-1])
+    
+    # Reverse to get correct order (from root to current)
+    hierarchy_path.reverse()
+    
+    # Remove the last item (current file) as it shouldn't be clickable
+    if hierarchy_path:
+        hierarchy_path[-1] = (hierarchy_path[-1][0], None)
+    
+    return hierarchy_path if hierarchy_path else [("Main", "main.html"), (base_name.replace('_', ' ').title(), None)]
 
 def generate_all_subgraphs():
     """Generate HTML files for all available markdown files"""
@@ -618,8 +516,8 @@ def generate_all_subgraphs():
                 base_name = os.path.splitext(md_file)[0]
                 html_path = os.path.join(html_dir, f"{base_name}.html")
 
-                # Create proper breadcrumb navigation
-                breadcrumb = get_parent_file_info(md_file)
+                # Create proper breadcrumb navigation using dynamic function
+                breadcrumb = get_parent_file_info_dynamic(md_file)
 
                 generate_html_graph(data, html_path, parent_file=md_file, breadcrumb_path=breadcrumb)
                 print(f"Generated sub-graph: {html_path}")

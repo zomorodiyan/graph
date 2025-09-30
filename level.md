@@ -1,4 +1,6 @@
 Level
-#Task
+#Work
+#Study
+#Project
 #Skill
 #Goal
