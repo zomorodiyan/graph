@@ -1,4 +1,0 @@
-Prototype
-#Design
-#Development
-#Testing

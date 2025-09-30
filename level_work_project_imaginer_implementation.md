@@ -1,4 +1,0 @@
-Implementation
-#Coding
-#Integration
-#Deployment

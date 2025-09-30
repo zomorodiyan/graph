@@ -8,9 +8,11 @@ def read_layers_from_md(filepath):
             sharps = 0
             while sharps < len(line) and line[sharps] == '#':
                 sharps += 1
-            name = line[sharps:].strip()
-            layer = sharps + 1  # layer 1 if no sharps, layer 2 if one sharp, etc.
-            result.append((name, layer))
+            
+            if sharps > 0:  # Only process lines with # symbols
+                name = line[sharps:].strip()
+                layer = sharps  # layer 1 if one sharp, layer 2 if two sharps, etc.
+                result.append((name, layer))
     return result
 
 # --- Dynamic hierarchy building based on file names ---
@@ -89,30 +91,71 @@ def get_children_for_display(node_name, hierarchy):
     return children
 
 def parse_md_hierarchy(filepath):
-    """Parse markdown file and build hierarchy data for display"""
+    """Parse markdown file and build 3-level hierarchy data for display"""
     base_name = os.path.splitext(os.path.basename(filepath))[0]
     
-    # Build complete hierarchy from files
-    hierarchy = build_hierarchy_from_files()
+    # Read the content from the markdown file
+    layers = read_layers_from_md(filepath)
+    
+    # Build complete hierarchy from files for navigation
+    file_hierarchy = build_hierarchy_from_files()
     
     data = []
     
-    if base_name == 'main':
-        # For main file, show all level 1 items
-        main_children = get_children_for_display('main', hierarchy)
-        if main_children:
+    # Group layers by level
+    level1_items = [item for item in layers if item[1] == 1]  # # items
+    
+    for level1_name, _ in level1_items:
+        # Find corresponding file for this level1 item
+        level1_file = None
+        if base_name == 'main':
+            # For main, look for direct child files
+            if 'main' in file_hierarchy:
+                for child in file_hierarchy['main']['children']:
+                    if child['display_name'].lower() == level1_name.lower():
+                        level1_file = child['filename']
+                        break
+        else:
+            # For other files, look for child files
+            if base_name in file_hierarchy:
+                for child in file_hierarchy[base_name]['children']:
+                    if child['display_name'].lower() == level1_name.lower():
+                        level1_file = child['filename']
+                        break
+        
+        # Get level 2 items (from the child file)
+        level2_items = []
+        if level1_file and os.path.exists(level1_file):
+            level1_layers = read_layers_from_md(level1_file)
+            level2_content = [item for item in level1_layers if item[1] == 1]  # # items from child file
+            
+            for level2_name, _ in level2_content:
+                # Find corresponding file for this level2 item
+                level2_file = None
+                level1_base = os.path.splitext(level1_file)[0]
+                if level1_base in file_hierarchy:
+                    for child in file_hierarchy[level1_base]['children']:
+                        if child['display_name'].lower() == level2_name.lower():
+                            level2_file = child['filename']
+                            break
+                
+                # Get level 3 items (from the grandchild file)
+                level3_items = []
+                if level2_file and os.path.exists(level2_file):
+                    level2_layers = read_layers_from_md(level2_file)
+                    level3_content = [item[0] for item in level2_layers if item[1] == 1]  # # items from grandchild file
+                    level3_items = level3_content
+                
+                level2_items.append({
+                    "name": level2_name,
+                    "filename": level2_file,
+                    "layer3": level3_items
+                })
+        
+        if level2_items:  # Only add if we have content
             data.append({
-                "layer1": "Main",
-                "layer2": main_children
-            })
-    else:
-        # For other files, show their children
-        children = get_children_for_display(base_name, hierarchy)
-        if children:
-            display_name = base_name.split('_')[-1].replace('-', ' ').title()
-            data.append({
-                "layer1": display_name,
-                "layer2": children
+                "layer1": level1_name,
+                "layer2": level2_items
             })
     
     return data

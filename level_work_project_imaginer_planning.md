@@ -1,4 +1,0 @@
-Planning
-#Requirements
-#Timeline
-#Resources
