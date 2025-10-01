@@ -4,12 +4,12 @@ Cook
 ##Cheese+walnut+bread+tea
 ##Milk+rice+Golab+jam
 ##Bacon+eggs
+
 #Snack
 ##Banana
 ##PotatoChips
 ##ProteinBars
 #Meals
-##PulledPork
 ##BeefStroganoff
 ##Lasagna
 ##Tacos
@@ -22,6 +22,7 @@ Cook
 ##HerbFrittata
 ##FavaDillRice+LambShank
 ##AshReshteh
+
 #Side
 ##GreekSalad
 Eat

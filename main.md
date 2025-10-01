@@ -9,7 +9,6 @@ Mind
 ##Recovery
 
 Body
-#Habits
 ##Morning
 ##Evening
 #Nutrition
@@ -68,16 +67,7 @@ Finance
 ##Education
 
 Time
-#Day
-##Morning
-##Afternoon
-##Evening
-#Month
-##Plan
-##Review
-##Events
-#Year
-##Vision
-##Milestone
-##Reflect
+#Calendar
+#Habit
+#Milestone
 
