@@ -105,58 +105,80 @@ def parse_md_hierarchy(filepath):
     # Group layers by level
     level1_items = [item for item in layers if item[1] == 1]  # # items
     
-    for level1_name, _ in level1_items:
-        # Find corresponding file for this level1 item
-        level1_file = None
-        if base_name == 'main':
-            # For main, look for direct child files
-            if 'main' in file_hierarchy:
-                for child in file_hierarchy['main']['children']:
-                    if child['display_name'].lower() == level1_name.lower():
-                        level1_file = child['filename']
-                        break
-        else:
-            # For other files, look for child files
-            if base_name in file_hierarchy:
-                for child in file_hierarchy[base_name]['children']:
-                    if child['display_name'].lower() == level1_name.lower():
-                        level1_file = child['filename']
-                        break
+    # Check if this is a leaf file (has no children in file hierarchy)
+    is_leaf_file = base_name not in file_hierarchy or not file_hierarchy[base_name]['children']
+    
+    if is_leaf_file and level1_items:
+        # For leaf files, display the items directly as level 2 items under a single group
+        # Use the file title as the layer1 name
+        file_title = base_name.split('_')[-1].replace('-', ' ').title()
         
-        # Get level 2 items (from the child file)
         level2_items = []
-        if level1_file and os.path.exists(level1_file):
-            level1_layers = read_layers_from_md(level1_file)
-            level2_content = [item for item in level1_layers if item[1] == 1]  # # items from child file
-            
-            for level2_name, _ in level2_content:
-                # Find corresponding file for this level2 item
-                level2_file = None
-                level1_base = os.path.splitext(level1_file)[0]
-                if level1_base in file_hierarchy:
-                    for child in file_hierarchy[level1_base]['children']:
-                        if child['display_name'].lower() == level2_name.lower():
-                            level2_file = child['filename']
-                            break
-                
-                # Get level 3 items (from the grandchild file)
-                level3_items = []
-                if level2_file and os.path.exists(level2_file):
-                    level2_layers = read_layers_from_md(level2_file)
-                    level3_content = [item[0] for item in level2_layers if item[1] == 1]  # # items from grandchild file
-                    level3_items = level3_content
-                
-                level2_items.append({
-                    "name": level2_name,
-                    "filename": level2_file,
-                    "layer3": level3_items
-                })
-        
-        if level2_items:  # Only add if we have content
-            data.append({
-                "layer1": level1_name,
-                "layer2": level2_items
+        for level1_name, _ in level1_items:
+            level2_items.append({
+                "name": level1_name,
+                "filename": None,  # No sub-file for leaf items
+                "layer3": []  # No sub-sub items for leaf files
             })
+        
+        data.append({
+            "layer1": file_title,
+            "layer2": level2_items
+        })
+    else:
+        # Original logic for non-leaf files
+        for level1_name, _ in level1_items:
+            # Find corresponding file for this level1 item
+            level1_file = None
+            if base_name == 'main':
+                # For main, look for direct child files
+                if 'main' in file_hierarchy:
+                    for child in file_hierarchy['main']['children']:
+                        if child['display_name'].lower() == level1_name.lower():
+                            level1_file = child['filename']
+                            break
+            else:
+                # For other files, look for child files
+                if base_name in file_hierarchy:
+                    for child in file_hierarchy[base_name]['children']:
+                        if child['display_name'].lower() == level1_name.lower():
+                            level1_file = child['filename']
+                            break
+            
+            # Get level 2 items (from the child file)
+            level2_items = []
+            if level1_file and os.path.exists(level1_file):
+                level1_layers = read_layers_from_md(level1_file)
+                level2_content = [item for item in level1_layers if item[1] == 1]  # # items from child file
+                
+                for level2_name, _ in level2_content:
+                    # Find corresponding file for this level2 item
+                    level2_file = None
+                    level1_base = os.path.splitext(level1_file)[0]
+                    if level1_base in file_hierarchy:
+                        for child in file_hierarchy[level1_base]['children']:
+                            if child['display_name'].lower() == level2_name.lower():
+                                level2_file = child['filename']
+                                break
+                    
+                    # Get level 3 items (from the grandchild file)
+                    level3_items = []
+                    if level2_file and os.path.exists(level2_file):
+                        level2_layers = read_layers_from_md(level2_file)
+                        level3_content = [item[0] for item in level2_layers if item[1] == 1]  # # items from grandchild file
+                        level3_items = level3_content
+                    
+                    level2_items.append({
+                        "name": level2_name,
+                        "filename": level2_file,
+                        "layer3": level3_items
+                    })
+            
+            if level2_items:  # Only add if we have content
+                data.append({
+                    "layer1": level1_name,
+                    "layer2": level2_items
+                })
     
     return data
 
