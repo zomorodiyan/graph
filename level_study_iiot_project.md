@@ -1,4 +1,0 @@
-GroupProject
-#Planning
-#Implementation
-#Presentation

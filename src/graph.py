@@ -36,26 +36,57 @@ def get_parent_name_from_filename(filename):
     else:
         return '_'.join(parts[:-1])  # Remove last part
 
+def get_markdown_files_from_directories():
+    """Get all markdown files from both data and pdata directories"""
+    md_files = []
+    search_dirs = ['../data', '../pdata']
+    
+    for dir_path in search_dirs:
+        if os.path.exists(dir_path):
+            for f in os.listdir(dir_path):
+                if f.endswith('.md'):
+                    # Add the relative path from current working directory
+                    relative_path = os.path.join(dir_path, f)
+                    md_files.append(relative_path)
+    
+    return md_files
+
+def find_file_in_directories(filename):
+    """Find a markdown file in data or pdata directories"""
+    search_dirs = ['../data', '../pdata']
+    
+    for dir_path in search_dirs:
+        if os.path.exists(dir_path):
+            file_path = os.path.join(dir_path, filename)
+            if os.path.exists(file_path):
+                return file_path
+    
+    return None
+
 def build_hierarchy_from_files():
-    """Build complete hierarchy structure from markdown files in directory"""
-    # Get all markdown files
-    md_files = [f for f in os.listdir('.') if f.endswith('.md')]
+    """Build complete hierarchy structure from markdown files in data and pdata directories"""
+    # Get all markdown files from both directories
+    md_files = get_markdown_files_from_directories()
     
     # Create hierarchy mapping
     hierarchy = {}
     
-    for md_file in md_files:
+    for md_file_path in md_files:
+        # Extract just the filename for processing
+        md_file = os.path.basename(md_file_path)
         base_name = os.path.splitext(md_file)[0]
         level = get_file_hierarchy_level(md_file)
         parent_name = get_parent_name_from_filename(md_file)
         
         # Initialize parent if not exists
         if parent_name and parent_name not in hierarchy:
-            hierarchy[parent_name] = {'children': [], 'level': level - 1, 'filename': f"{parent_name}.md"}
+            # Find the parent file path
+            parent_file_path = find_file_in_directories(f"{parent_name}.md")
+            hierarchy[parent_name] = {'children': [], 'level': level - 1, 'filename': parent_file_path or f"{parent_name}.md"}
         
         # Add current file to hierarchy
         if base_name not in hierarchy:
-            hierarchy[base_name] = {'children': [], 'level': level, 'filename': md_file}
+            hierarchy[base_name] = {'children': [], 'level': level, 'filename': md_file_path}
         
         # Establish parent-child relationship
         if parent_name and parent_name in hierarchy:
@@ -63,7 +94,7 @@ def build_hierarchy_from_files():
                 hierarchy[parent_name]['children'].append({
                     'name': base_name,
                     'display_name': base_name.split('_')[-1].replace('-', ' ').title(),
-                    'filename': md_file,
+                    'filename': md_file_path,
                     'level': level
                 })
     
@@ -132,7 +163,7 @@ def parse_md_hierarchy(filepath):
             for level2_name, _ in level2_content:
                 # Find corresponding file for this level2 item
                 level2_file = None
-                level1_base = os.path.splitext(level1_file)[0]
+                level1_base = os.path.splitext(os.path.basename(level1_file))[0]
                 if level1_base in file_hierarchy:
                     for child in file_hierarchy[level1_base]['children']:
                         if child['display_name'].lower() == level2_name.lower():
@@ -149,7 +180,7 @@ def parse_md_hierarchy(filepath):
                     for level3_name in level3_content:
                         # Find corresponding file for this level3 item
                         level3_file = None
-                        level2_base = os.path.splitext(level2_file)[0]
+                        level2_base = os.path.splitext(os.path.basename(level2_file))[0]
                         if level2_base in file_hierarchy:
                             for child in file_hierarchy[level2_base]['children']:
                                 if child['display_name'].lower() == level3_name.lower():
@@ -183,9 +214,9 @@ import sys
 if len(sys.argv) > 1:
     md_file = sys.argv[1]
 else:
-    md_file = "main.md"
+    md_file = "../data/main.md"
 
-html_dir = os.path.join(os.path.dirname(__file__), "html")
+html_dir = "../html"
 base_name = os.path.splitext(os.path.basename(md_file))[0]
 html_path = os.path.join(html_dir, f"{base_name}.html")
 
@@ -215,10 +246,17 @@ def get_file_association_dynamic(layer1_name, layer2_name, current_file):
     return None
 
 def check_file_exists(file_path):
-    """Check if a file exists in the current directory"""
+    """Check if a file exists in data or pdata directories"""
     if not file_path:
         return False
-    return os.path.exists(file_path)
+    
+    # If it's already a full path (contains ../), use it directly
+    if '../' in file_path:
+        return os.path.exists(file_path)
+    
+    # Otherwise, search in both directories
+    found_path = find_file_in_directories(file_path)
+    return found_path is not None
 
 def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=None):
     """Generate an interactive HTML graph"""
@@ -541,10 +579,11 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
                 return;
             }
 
-            // Generate sub-graph HTML file name
-            const subGraphName = filePath.replace('.md', '.html');
+            // Extract just the filename from the path and convert to HTML
+            const fileName = filePath.split('/').pop(); // Get filename from full path
+            const subGraphName = fileName.replace('.md', '.html');
 
-            // Navigate to the sub-graph
+            // Navigate to the sub-graph in the html directory
             window.location.href = subGraphName;
         }
 
@@ -596,15 +635,21 @@ def get_parent_file_info_dynamic(file_name):
 def generate_all_subgraphs():
     """Generate HTML files for all available markdown files"""
 
-    # Get all markdown files in the current directory
-    md_files = [f for f in os.listdir('.') if f.endswith('.md') and f != 'main.md']
+    # Get all markdown files from both data and pdata directories
+    md_file_paths = get_markdown_files_from_directories()
+    
+    # Filter out main.md
+    md_file_paths = [f for f in md_file_paths if not f.endswith('main.md')]
 
-    html_dir = "html"
+    html_dir = "../html"
     os.makedirs(html_dir, exist_ok=True)
 
-    for md_file in md_files:
+    for md_file_path in md_file_paths:
         try:
-            data = parse_md_hierarchy(md_file)
+            # Extract just the filename for certain operations
+            md_file = os.path.basename(md_file_path)
+            
+            data = parse_md_hierarchy(md_file_path)
             if data:  # Only generate if file has content
                 base_name = os.path.splitext(md_file)[0]
                 html_path = os.path.join(html_dir, f"{base_name}.html")
@@ -616,7 +661,7 @@ def generate_all_subgraphs():
                 print(f"Generated sub-graph: {html_path}")
 
         except Exception as e:
-            print(f"Error generating sub-graph for {md_file}: {e}")
+            print(f"Error generating sub-graph for {md_file_path}: {e}")
 
 # Generate HTML graph
 data = parse_md_hierarchy(md_file)

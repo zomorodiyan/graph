@@ -1,0 +1,20 @@
+# Generated HTML files
+html/
+
+# Private data directory (will be a submodule)
+pdata/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Server logs
+server.log
+
+# VS Code settings (optional)
+.vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db
