@@ -1,9 +1,6 @@
 # Generated HTML files
 html/
 
-# Private data directory (will be a submodule)
-pdata/
-
 # Python cache
 __pycache__/
 *.pyc
