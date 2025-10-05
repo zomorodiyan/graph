@@ -1,0 +1,17 @@
+# Generated HTML files
+html/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Server logs
+server.log
+
+# VS Code settings (optional)
+.vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db

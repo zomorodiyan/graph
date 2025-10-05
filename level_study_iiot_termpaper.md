@@ -1,4 +1,0 @@
-TermPaper
-#Research
-#Writing
-#Citation

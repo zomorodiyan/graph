@@ -1,4 +1,0 @@
-Run
-#Execute
-#Debug
-#Deploy
