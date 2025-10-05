@@ -1,4 +1,0 @@
-Meetings
-#Daily
-#Weekly
-#Monthly

@@ -36,26 +36,57 @@ def get_parent_name_from_filename(filename):
     else:
         return '_'.join(parts[:-1])  # Remove last part
 
+def get_markdown_files_from_directories():
+    """Get all markdown files from both data and pdata directories"""
+    md_files = []
+    search_dirs = ['../data', '../pdata']
+    
+    for dir_path in search_dirs:
+        if os.path.exists(dir_path):
+            for f in os.listdir(dir_path):
+                if f.endswith('.md'):
+                    # Add the relative path from current working directory
+                    relative_path = os.path.join(dir_path, f)
+                    md_files.append(relative_path)
+    
+    return md_files
+
+def find_file_in_directories(filename):
+    """Find a markdown file in data or pdata directories"""
+    search_dirs = ['../data', '../pdata']
+    
+    for dir_path in search_dirs:
+        if os.path.exists(dir_path):
+            file_path = os.path.join(dir_path, filename)
+            if os.path.exists(file_path):
+                return file_path
+    
+    return None
+
 def build_hierarchy_from_files():
-    """Build complete hierarchy structure from markdown files in directory"""
-    # Get all markdown files
-    md_files = [f for f in os.listdir('.') if f.endswith('.md')]
+    """Build complete hierarchy structure from markdown files in data and pdata directories"""
+    # Get all markdown files from both directories
+    md_files = get_markdown_files_from_directories()
     
     # Create hierarchy mapping
     hierarchy = {}
     
-    for md_file in md_files:
+    for md_file_path in md_files:
+        # Extract just the filename for processing
+        md_file = os.path.basename(md_file_path)
         base_name = os.path.splitext(md_file)[0]
         level = get_file_hierarchy_level(md_file)
         parent_name = get_parent_name_from_filename(md_file)
         
         # Initialize parent if not exists
         if parent_name and parent_name not in hierarchy:
-            hierarchy[parent_name] = {'children': [], 'level': level - 1, 'filename': f"{parent_name}.md"}
+            # Find the parent file path
+            parent_file_path = find_file_in_directories(f"{parent_name}.md")
+            hierarchy[parent_name] = {'children': [], 'level': level - 1, 'filename': parent_file_path or f"{parent_name}.md"}
         
         # Add current file to hierarchy
         if base_name not in hierarchy:
-            hierarchy[base_name] = {'children': [], 'level': level, 'filename': md_file}
+            hierarchy[base_name] = {'children': [], 'level': level, 'filename': md_file_path}
         
         # Establish parent-child relationship
         if parent_name and parent_name in hierarchy:
@@ -63,7 +94,7 @@ def build_hierarchy_from_files():
                 hierarchy[parent_name]['children'].append({
                     'name': base_name,
                     'display_name': base_name.split('_')[-1].replace('-', ' ').title(),
-                    'filename': md_file,
+                    'filename': md_file_path,
                     'level': level
                 })
     
@@ -105,80 +136,74 @@ def parse_md_hierarchy(filepath):
     # Group layers by level
     level1_items = [item for item in layers if item[1] == 1]  # # items
     
-    # Check if this is a leaf file (has no children in file hierarchy)
-    is_leaf_file = base_name not in file_hierarchy or not file_hierarchy[base_name]['children']
-    
-    if is_leaf_file and level1_items:
-        # For leaf files, display the items directly as level 2 items under a single group
-        # Use the file title as the layer1 name
-        file_title = base_name.split('_')[-1].replace('-', ' ').title()
+    for level1_name, _ in level1_items:
+        # Find corresponding file for this level1 item
+        level1_file = None
+        if base_name == 'main':
+            # For main, look for direct child files
+            if 'main' in file_hierarchy:
+                for child in file_hierarchy['main']['children']:
+                    if child['display_name'].lower() == level1_name.lower():
+                        level1_file = child['filename']
+                        break
+        else:
+            # For other files, look for child files
+            if base_name in file_hierarchy:
+                for child in file_hierarchy[base_name]['children']:
+                    if child['display_name'].lower() == level1_name.lower():
+                        level1_file = child['filename']
+                        break
         
+        # Get level 2 items (from the child file)
         level2_items = []
-        for level1_name, _ in level1_items:
-            level2_items.append({
-                "name": level1_name,
-                "filename": None,  # No sub-file for leaf items
-                "layer3": []  # No sub-sub items for leaf files
-            })
+        if level1_file and os.path.exists(level1_file):
+            level1_layers = read_layers_from_md(level1_file)
+            level2_content = [item for item in level1_layers if item[1] == 1]  # # items from child file
+            
+            for level2_name, _ in level2_content:
+                # Find corresponding file for this level2 item
+                level2_file = None
+                level1_base = os.path.splitext(os.path.basename(level1_file))[0]
+                if level1_base in file_hierarchy:
+                    for child in file_hierarchy[level1_base]['children']:
+                        if child['display_name'].lower() == level2_name.lower():
+                            level2_file = child['filename']
+                            break
+                
+                # Get level 3 items (from the grandchild file)
+                level3_items = []
+                if level2_file and os.path.exists(level2_file):
+                    level2_layers = read_layers_from_md(level2_file)
+                    level3_content = [item[0] for item in level2_layers if item[1] == 1]  # # items from grandchild file
+                    
+                    # Build level3 items with file information
+                    for level3_name in level3_content:
+                        # Find corresponding file for this level3 item
+                        level3_file = None
+                        level2_base = os.path.splitext(os.path.basename(level2_file))[0]
+                        if level2_base in file_hierarchy:
+                            for child in file_hierarchy[level2_base]['children']:
+                                if child['display_name'].lower() == level3_name.lower():
+                                    level3_file = child['filename']
+                                    break
+                        
+                        level3_items.append({
+                            "name": level3_name,
+                            "filename": level3_file
+                        })
+                
+                level2_items.append({
+                    "name": level2_name,
+                    "filename": level2_file,
+                    "layer3": level3_items
+                })
         
+        # Add the level1 item even if it has no children (but include file info)
         data.append({
-            "layer1": file_title,
+            "layer1": level1_name,
+            "layer1_filename": level1_file,
             "layer2": level2_items
         })
-    else:
-        # Original logic for non-leaf files
-        for level1_name, _ in level1_items:
-            # Find corresponding file for this level1 item
-            level1_file = None
-            if base_name == 'main':
-                # For main, look for direct child files
-                if 'main' in file_hierarchy:
-                    for child in file_hierarchy['main']['children']:
-                        if child['display_name'].lower() == level1_name.lower():
-                            level1_file = child['filename']
-                            break
-            else:
-                # For other files, look for child files
-                if base_name in file_hierarchy:
-                    for child in file_hierarchy[base_name]['children']:
-                        if child['display_name'].lower() == level1_name.lower():
-                            level1_file = child['filename']
-                            break
-            
-            # Get level 2 items (from the child file)
-            level2_items = []
-            if level1_file and os.path.exists(level1_file):
-                level1_layers = read_layers_from_md(level1_file)
-                level2_content = [item for item in level1_layers if item[1] == 1]  # # items from child file
-                
-                for level2_name, _ in level2_content:
-                    # Find corresponding file for this level2 item
-                    level2_file = None
-                    level1_base = os.path.splitext(level1_file)[0]
-                    if level1_base in file_hierarchy:
-                        for child in file_hierarchy[level1_base]['children']:
-                            if child['display_name'].lower() == level2_name.lower():
-                                level2_file = child['filename']
-                                break
-                    
-                    # Get level 3 items (from the grandchild file)
-                    level3_items = []
-                    if level2_file and os.path.exists(level2_file):
-                        level2_layers = read_layers_from_md(level2_file)
-                        level3_content = [item[0] for item in level2_layers if item[1] == 1]  # # items from grandchild file
-                        level3_items = level3_content
-                    
-                    level2_items.append({
-                        "name": level2_name,
-                        "filename": level2_file,
-                        "layer3": level3_items
-                    })
-            
-            if level2_items:  # Only add if we have content
-                data.append({
-                    "layer1": level1_name,
-                    "layer2": level2_items
-                })
     
     return data
 
@@ -189,9 +214,9 @@ import sys
 if len(sys.argv) > 1:
     md_file = sys.argv[1]
 else:
-    md_file = "main.md"
+    md_file = "../data/main.md"
 
-html_dir = os.path.join(os.path.dirname(__file__), "html")
+html_dir = "../html"
 base_name = os.path.splitext(os.path.basename(md_file))[0]
 html_path = os.path.join(html_dir, f"{base_name}.html")
 
@@ -221,10 +246,17 @@ def get_file_association_dynamic(layer1_name, layer2_name, current_file):
     return None
 
 def check_file_exists(file_path):
-    """Check if a file exists in the current directory"""
+    """Check if a file exists in data or pdata directories"""
     if not file_path:
         return False
-    return os.path.exists(file_path)
+    
+    # If it's already a full path (contains ../), use it directly
+    if '../' in file_path:
+        return os.path.exists(file_path)
+    
+    # Otherwise, search in both directories
+    found_path = find_file_in_directories(file_path)
+    return found_path is not None
 
 def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=None):
     """Generate an interactive HTML graph"""
@@ -268,10 +300,20 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
             vertical-align: top;
             margin-right: 30px;
             min-width: 80px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .layer1.clickable:hover {
+            background-color: #e0e0e0;
+        }
+        .layer1:not(.clickable) {
+            cursor: default;
         }
         .layer2 {
             font-size: 14px;
-            font-weight: bold;
+            font-weight: normal;
             cursor: pointer;
             padding: 4px 8px;
             border-radius: 4px;
@@ -279,6 +321,9 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
             display: block;
             margin-bottom: 4px;
             min-width: 80px;
+        }
+        .layer2.clickable {
+            font-weight: bold;
         }
         .layer2.color-group-green:hover {
             background-color: #A5D6A7;
@@ -312,27 +357,32 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
             border-color: #D84315;
         }
         .layer2:not(.clickable) {
-            opacity: 0.6;
-            cursor: not-allowed;
+            cursor: default;
         }
-        .layer2:not(.clickable).color-group-green:hover {
-            background-color: #C8E6C9;
-        }
-        .layer2:not(.clickable).color-group-blue:hover {
-            background-color: #BBDEFB;
-        }
-        .layer2:not(.clickable).color-group-purple:hover {
-            background-color: #E1BEE7;
-        }
-        .layer2:not(.clickable).color-group-red:hover {
-            background-color: #FFCDD2;
+        .layer2:not(.clickable):hover {
+            background-color: transparent;
         }
         .layer3 {
             font-size: 14px;
-            color: #666;
+            color: #333;
+            font-weight: normal;
             display: inline-block;
             margin-right: 15px;
             vertical-align: top;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        .layer3.clickable {
+            font-weight: bold;
+        }
+        .layer3.clickable:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .layer3:not(.clickable) {
+            cursor: default;
         }
         .underline {
             height: 2px;
@@ -447,11 +497,17 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
     for idx, item in enumerate(data):
         color_name, light, medium, dark = base_colors[idx % 4]
         layer1_name = item["layer1"]
+        layer1_filename = item.get("layer1_filename")
+        layer1_file_exists = check_file_exists(layer1_filename)
+        
+        # Make layer1 clickable if file exists
+        layer1_clickable_class = "clickable" if layer1_file_exists else ""
+        layer1_onclick = f"onclick=\"navigateToSubGraph('{layer1_filename}', '', '{layer1_name}')\"" if layer1_file_exists else ""
 
         html_content += f"""
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1">{layer1_name}</div>
+                <div class="layer1 {layer1_clickable_class}" {layer1_onclick}>{layer1_name}</div>
                 <div class="underline color-{color_name}-medium"></div>
             </div>
             <div class="layer2-section">
@@ -465,19 +521,29 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
 
             # Only make clickable if file exists
             clickable_class = "clickable" if file_exists else ""
-            onclick_handler = f"navigateToSubGraph('{file_path}', '{layer1_name}', '{layer2_name}')" if file_exists else f"showFileNotAvailable('{layer2_name}')"
+            onclick_handler = f"onclick=\"navigateToSubGraph('{file_path}', '{layer1_name}', '{layer2_name}')\"" if file_exists else ""
 
             html_content += f"""
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 {clickable_class} color-group-{color_name}" onclick="{onclick_handler}">{layer2_name}</div>
+                        <div class="layer2 {clickable_class} color-group-{color_name}" {onclick_handler}>{layer2_name}</div>
                         <div class="underline color-{color_name}-light"></div>
                     </div>
                     <div class="layer3-container">
 """
 
             for layer3_item in layer2_item["layer3"]:
-                html_content += f'<span class="layer3">{layer3_item}</span>'
+                if isinstance(layer3_item, dict):
+                    # New structure with filename
+                    layer3_name = layer3_item["name"]
+                    layer3_filename = layer3_item.get("filename")
+                    layer3_file_exists = check_file_exists(layer3_filename)
+                    layer3_clickable_class = "clickable" if layer3_file_exists else ""
+                    layer3_onclick = f"onclick=\"navigateToSubGraph('{layer3_filename}', '{layer2_name}', '{layer3_name}')\"" if layer3_file_exists else ""
+                    html_content += f'<span class="layer3 {layer3_clickable_class}" {layer3_onclick}>{layer3_name}</span>'
+                else:
+                    # Old structure (string only) - keep for backward compatibility
+                    html_content += f'<span class="layer3">{layer3_item}</span>'
 
             html_content += """
                     </div>
@@ -513,10 +579,11 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
                 return;
             }
 
-            // Generate sub-graph HTML file name
-            const subGraphName = filePath.replace('.md', '.html');
+            // Extract just the filename from the path and convert to HTML
+            const fileName = filePath.split('/').pop(); // Get filename from full path
+            const subGraphName = fileName.replace('.md', '.html');
 
-            // Navigate to the sub-graph
+            // Navigate to the sub-graph in the html directory
             window.location.href = subGraphName;
         }
 
@@ -568,15 +635,21 @@ def get_parent_file_info_dynamic(file_name):
 def generate_all_subgraphs():
     """Generate HTML files for all available markdown files"""
 
-    # Get all markdown files in the current directory
-    md_files = [f for f in os.listdir('.') if f.endswith('.md') and f != 'main.md']
+    # Get all markdown files from both data and pdata directories
+    md_file_paths = get_markdown_files_from_directories()
+    
+    # Filter out main.md
+    md_file_paths = [f for f in md_file_paths if not f.endswith('main.md')]
 
-    html_dir = "html"
+    html_dir = "../html"
     os.makedirs(html_dir, exist_ok=True)
 
-    for md_file in md_files:
+    for md_file_path in md_file_paths:
         try:
-            data = parse_md_hierarchy(md_file)
+            # Extract just the filename for certain operations
+            md_file = os.path.basename(md_file_path)
+            
+            data = parse_md_hierarchy(md_file_path)
             if data:  # Only generate if file has content
                 base_name = os.path.splitext(md_file)[0]
                 html_path = os.path.join(html_dir, f"{base_name}.html")
@@ -588,7 +661,7 @@ def generate_all_subgraphs():
                 print(f"Generated sub-graph: {html_path}")
 
         except Exception as e:
-            print(f"Error generating sub-graph for {md_file}: {e}")
+            print(f"Error generating sub-graph for {md_file_path}: {e}")
 
 # Generate HTML graph
 data = parse_md_hierarchy(md_file)
