@@ -1,19 +1,38 @@
 def read_layers_from_md(filepath):
+    """Read markdown file and extract layers with their hierarchy levels"""
     result = []
+    
     with open(filepath, 'r', encoding='utf-8') as f:
         for line in f:
             line = line.strip()
-            if not line or line.startswith('# Example'):
-                continue
-            sharps = 0
-            while sharps < len(line) and line[sharps] == '#':
-                sharps += 1
-            
-            if sharps > 0:  # Only process lines with # symbols
-                name = line[sharps:].strip()
-                layer = sharps  # layer 1 if one sharp, layer 2 if two sharps, etc.
-                result.append((name, layer))
+            if line.startswith('#'):
+                # Count the number of # symbols to determine level
+                level = len(line) - len(line.lstrip('#'))
+                # Extract the text after #
+                text = line.lstrip('#').strip()
+                result.append((text, level))
+    
     return result
+
+def extract_deadline_from_md(filepath):
+    """Extract deadline text from markdown file comments"""
+    if not filepath or not os.path.exists(filepath):
+        return None
+        
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Look for deadline comment pattern: <!-- deadline: text -->
+        import re
+        deadline_match = re.search(r'<!--\s*deadline:\s*([^-]+?)\s*-->', content, re.IGNORECASE)
+        if deadline_match:
+            return deadline_match.group(1).strip()
+            
+    except Exception as e:
+        print(f"Error reading deadline from {filepath}: {e}")
+        
+    return None
 
 # --- Dynamic hierarchy building based on file names ---
 def get_markdown_files_from_directories():
@@ -232,12 +251,14 @@ def parse_md_hierarchy(filepath):
                         
                         level3_items.append({
                             "name": level3_name,
-                            "filename": level3_file
+                            "filename": level3_file,
+                            "deadline": extract_deadline_from_md(level3_file)
                         })
                 
                 level2_items.append({
                     "name": level2_name,
                     "filename": level2_file,
+                    "deadline": extract_deadline_from_md(level2_file),
                     "layer3": level3_items
                 })
         
@@ -245,6 +266,7 @@ def parse_md_hierarchy(filepath):
         data.append({
             "layer1": level1_name,
             "layer1_filename": level1_file,
+            "layer1_deadline": extract_deadline_from_md(level1_file),
             "layer2": level2_items
         })
     
@@ -405,6 +427,20 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
         .layer2:not(.clickable):hover {
             background-color: transparent;
         }
+        .deadline {
+            color: #000;
+            font-style: italic;
+            margin-top: 2px;
+            padding: 2px 8px;
+            display: block;
+            font-weight: normal;
+        }
+        .layer1-deadline {
+            font-size: 13px;
+        }
+        .layer2-deadline {
+            font-size: 12px;
+        }
         .layer3 {
             font-size: 14px;
             color: #333;
@@ -547,10 +583,15 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
         layer1_clickable_class = "clickable" if layer1_file_exists else ""
         layer1_onclick = f"onclick=\"navigateToSubGraph('{layer1_filename}', '', '{layer1_name}')\"" if layer1_file_exists else ""
 
+        # Get layer1 deadline
+        layer1_deadline = item.get("layer1_deadline")
+        layer1_deadline_html = f'<div class="deadline layer1-deadline">{layer1_deadline}</div>' if layer1_deadline else ""
+
         html_content += f"""
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1 {layer1_clickable_class}" {layer1_onclick}>{layer1_name}</div>
+                {layer1_deadline_html}
                 <div class="underline color-{color_name}-medium"></div>
             </div>
             <div class="layer2-section">
@@ -565,11 +606,16 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
             # Only make clickable if file exists
             clickable_class = "clickable" if file_exists else ""
             onclick_handler = f"onclick=\"navigateToSubGraph('{file_path}', '{layer1_name}', '{layer2_name}')\"" if file_exists else ""
+            
+            # Get layer2 deadline
+            layer2_deadline = layer2_item.get("deadline")
+            layer2_deadline_html = f'<div class="deadline layer2-deadline">{layer2_deadline}</div>' if layer2_deadline else ""
 
             html_content += f"""
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 {clickable_class} color-group-{color_name}" {onclick_handler}>{layer2_name}</div>
+                        {layer2_deadline_html}
                         <div class="underline color-{color_name}-light"></div>
                     </div>
                     <div class="layer3-container">
