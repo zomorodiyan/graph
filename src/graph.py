@@ -139,18 +139,21 @@ def parse_md_hierarchy(filepath):
     for level1_name, _ in level1_items:
         # Find corresponding file for this level1 item
         level1_file = None
+        # Normalize the level1_name the same way as display_name is created
+        normalized_level1 = level1_name.replace('-', ' ').lower()
+        
         if base_name == 'main':
             # For main, look for direct child files
             if 'main' in file_hierarchy:
                 for child in file_hierarchy['main']['children']:
-                    if child['display_name'].lower() == level1_name.lower():
+                    if child['display_name'].lower() == normalized_level1:
                         level1_file = child['filename']
                         break
         else:
             # For other files, look for child files
             if base_name in file_hierarchy:
                 for child in file_hierarchy[base_name]['children']:
-                    if child['display_name'].lower() == level1_name.lower():
+                    if child['display_name'].lower() == normalized_level1:
                         level1_file = child['filename']
                         break
         
@@ -165,8 +168,10 @@ def parse_md_hierarchy(filepath):
                 level2_file = None
                 level1_base = os.path.splitext(os.path.basename(level1_file))[0]
                 if level1_base in file_hierarchy:
+                    # Normalize the level2_name the same way as display_name is created
+                    normalized_level2 = level2_name.replace('-', ' ').lower()
                     for child in file_hierarchy[level1_base]['children']:
-                        if child['display_name'].lower() == level2_name.lower():
+                        if child['display_name'].lower() == normalized_level2:
                             level2_file = child['filename']
                             break
                 
@@ -182,8 +187,10 @@ def parse_md_hierarchy(filepath):
                         level3_file = None
                         level2_base = os.path.splitext(os.path.basename(level2_file))[0]
                         if level2_base in file_hierarchy:
+                            # Normalize the level3_name the same way as display_name is created
+                            normalized_level3 = level3_name.replace('-', ' ').lower()
                             for child in file_hierarchy[level2_base]['children']:
-                                if child['display_name'].lower() == level3_name.lower():
+                                if child['display_name'].lower() == normalized_level3:
                                     level3_file = child['filename']
                                     break
                         
