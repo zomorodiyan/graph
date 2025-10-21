@@ -16,87 +16,105 @@ def read_layers_from_md(filepath):
     return result
 
 # --- Dynamic hierarchy building based on file names ---
-def get_file_hierarchy_level(filename):
-    """Determine hierarchy level based on underscore count in filename"""
-    base_name = os.path.splitext(filename)[0]
-    if base_name == 'main':
-        return 0
-    return base_name.count('_') + 1
-
-def get_parent_name_from_filename(filename):
-    """Extract parent name from filename based on underscore pattern"""
-    base_name = os.path.splitext(filename)[0]
-    if base_name == 'main':
-        return None
-    
-    # Remove the last part after underscore to get parent
-    parts = base_name.split('_')
-    if len(parts) == 1:
-        return 'main'  # Level 1 files have main as parent
-    else:
-        return '_'.join(parts[:-1])  # Remove last part
-
 def get_markdown_files_from_directories():
-    """Get all markdown files from both data and pdata directories"""
+    """Get all markdown files from both data and pdata directories recursively"""
     md_files = []
     search_dirs = ['../data', '../pdata']
     
     for dir_path in search_dirs:
         if os.path.exists(dir_path):
-            for f in os.listdir(dir_path):
-                if f.endswith('.md'):
-                    # Add the relative path from current working directory
-                    relative_path = os.path.join(dir_path, f)
-                    md_files.append(relative_path)
+            for root, dirs, files in os.walk(dir_path):
+                for f in files:
+                    if f.endswith('.md'):
+                        full_path = os.path.join(root, f)
+                        md_files.append(full_path)
     
     return md_files
 
-def find_file_in_directories(filename):
+def find_file_in_directories(filename_or_path):
     """Find a markdown file in data or pdata directories"""
     search_dirs = ['../data', '../pdata']
     
     for dir_path in search_dirs:
         if os.path.exists(dir_path):
-            file_path = os.path.join(dir_path, filename)
-            if os.path.exists(file_path):
-                return file_path
+            for root, dirs, files in os.walk(dir_path):
+                # Check both exact filename and path matches
+                if filename_or_path in files:
+                    return os.path.join(root, filename_or_path)
+                
+                # Also check if the full path matches
+                full_path = os.path.join(root, filename_or_path)
+                if os.path.exists(full_path):
+                    return full_path
     
     return None
 
 def build_hierarchy_from_files():
-    """Build complete hierarchy structure from markdown files in data and pdata directories"""
+    """Build complete hierarchy structure from directory-based markdown files"""
     # Get all markdown files from both directories
-    md_files = get_markdown_files_from_directories()
+    md_file_paths = get_markdown_files_from_directories()
     
-    # Create hierarchy mapping
+    # Create hierarchy mapping based on directory structure
     hierarchy = {}
     
-    for md_file_path in md_files:
-        # Extract just the filename for processing
-        md_file = os.path.basename(md_file_path)
-        base_name = os.path.splitext(md_file)[0]
-        level = get_file_hierarchy_level(md_file)
-        parent_name = get_parent_name_from_filename(md_file)
+    for md_file_path in md_file_paths:
+        # Convert file path to hierarchy key
+        # Remove the base directory (../data/ or ../pdata/)
+        if md_file_path.startswith('../data/'):
+            relative_path = md_file_path[8:]  # Remove '../data/'
+        elif md_file_path.startswith('../pdata/'):
+            relative_path = md_file_path[9:]  # Remove '../pdata/'
+        else:
+            continue
+            
+        # Remove .md extension and split by directory separators
+        path_without_ext = os.path.splitext(relative_path)[0]
+        path_parts = path_without_ext.split('/')
         
-        # Initialize parent if not exists
-        if parent_name and parent_name not in hierarchy:
-            # Find the parent file path
-            parent_file_path = find_file_in_directories(f"{parent_name}.md")
-            hierarchy[parent_name] = {'children': [], 'level': level - 1, 'filename': parent_file_path or f"{parent_name}.md"}
+        # Create hierarchy entry for this file
+        hierarchy_key = '/'.join(path_parts)
+        hierarchy[hierarchy_key] = {
+            'children': [],
+            'level': len(path_parts),
+            'filename': md_file_path,
+            'directory': os.path.dirname(md_file_path)
+        }
+    
+    # Now establish parent-child relationships
+    for hierarchy_key, entry in hierarchy.items():
+        path_parts = hierarchy_key.split('/')
         
-        # Add current file to hierarchy
-        if base_name not in hierarchy:
-            hierarchy[base_name] = {'children': [], 'level': level, 'filename': md_file_path}
+        # If this file has a parent directory, establish parent-child relationship
+        if len(path_parts) > 1:
+            parent_key = '/'.join(path_parts[:-1])
+            child_name = path_parts[-1]
+            
+            # Add child relationship if parent exists
+            if parent_key in hierarchy:
+                # Check if this child already exists
+                existing_child = next((child for child in hierarchy[parent_key]['children'] 
+                                     if child['name'] == hierarchy_key), None)
+                if not existing_child:
+                    hierarchy[parent_key]['children'].append({
+                        'name': hierarchy_key,
+                        'display_name': child_name.replace('-', ' ').title(),
+                        'filename': entry['filename'],
+                        'level': len(path_parts)
+                    })
         
-        # Establish parent-child relationship
-        if parent_name and parent_name in hierarchy:
-            if base_name not in [child['name'] for child in hierarchy[parent_name]['children']]:
-                hierarchy[parent_name]['children'].append({
-                    'name': base_name,
-                    'display_name': base_name.split('_')[-1].replace('-', ' ').title(),
-                    'filename': md_file_path,
-                    'level': level
-                })
+        # Special case: top-level files (like 'level', 'body', etc.) should be children of 'main'
+        elif len(path_parts) == 1 and hierarchy_key != 'main':
+            if 'main' in hierarchy:
+                # Check if this child already exists
+                existing_child = next((child for child in hierarchy['main']['children'] 
+                                     if child['name'] == hierarchy_key), None)
+                if not existing_child:
+                    hierarchy['main']['children'].append({
+                        'name': hierarchy_key,
+                        'display_name': hierarchy_key.replace('-', ' ').title(),
+                        'filename': entry['filename'],
+                        'level': 1
+                    })
     
     return hierarchy
 
@@ -123,7 +141,17 @@ def get_children_for_display(node_name, hierarchy):
 
 def parse_md_hierarchy(filepath):
     """Parse markdown file and build 3-level hierarchy data for display"""
-    base_name = os.path.splitext(os.path.basename(filepath))[0]
+    # Convert file path to hierarchy key
+    if filepath.startswith('../data/'):
+        relative_path = filepath[8:]  # Remove '../data/'
+    elif filepath.startswith('../pdata/'):
+        relative_path = filepath[9:]  # Remove '../pdata/'
+    else:
+        relative_path = filepath
+    
+    # Remove .md extension and use as hierarchy key
+    hierarchy_key = os.path.splitext(relative_path)[0]
+    base_name = os.path.basename(hierarchy_key)
     
     # Read the content from the markdown file
     layers = read_layers_from_md(filepath)
@@ -142,20 +170,12 @@ def parse_md_hierarchy(filepath):
         # Normalize the level1_name the same way as display_name is created
         normalized_level1 = level1_name.replace('-', ' ').lower()
         
-        if base_name == 'main':
-            # For main, look for direct child files
-            if 'main' in file_hierarchy:
-                for child in file_hierarchy['main']['children']:
-                    if child['display_name'].lower() == normalized_level1:
-                        level1_file = child['filename']
-                        break
-        else:
-            # For other files, look for child files
-            if base_name in file_hierarchy:
-                for child in file_hierarchy[base_name]['children']:
-                    if child['display_name'].lower() == normalized_level1:
-                        level1_file = child['filename']
-                        break
+        # Look for matching child in the hierarchy
+        if hierarchy_key in file_hierarchy:
+            for child in file_hierarchy[hierarchy_key]['children']:
+                if child['display_name'].lower() == normalized_level1:
+                    level1_file = child['filename']
+                    break
         
         # Get level 2 items (from the child file)
         level2_items = []
@@ -163,14 +183,22 @@ def parse_md_hierarchy(filepath):
             level1_layers = read_layers_from_md(level1_file)
             level2_content = [item for item in level1_layers if item[1] == 1]  # # items from child file
             
+            # Convert level1_file to hierarchy key for child lookup
+            if level1_file.startswith('../data/'):
+                level1_relative = level1_file[8:]
+            elif level1_file.startswith('../pdata/'):
+                level1_relative = level1_file[9:]
+            else:
+                level1_relative = level1_file
+            level1_hierarchy_key = os.path.splitext(level1_relative)[0]
+            
             for level2_name, _ in level2_content:
                 # Find corresponding file for this level2 item
                 level2_file = None
-                level1_base = os.path.splitext(os.path.basename(level1_file))[0]
-                if level1_base in file_hierarchy:
+                if level1_hierarchy_key in file_hierarchy:
                     # Normalize the level2_name the same way as display_name is created
                     normalized_level2 = level2_name.replace('-', ' ').lower()
-                    for child in file_hierarchy[level1_base]['children']:
+                    for child in file_hierarchy[level1_hierarchy_key]['children']:
                         if child['display_name'].lower() == normalized_level2:
                             level2_file = child['filename']
                             break
@@ -181,15 +209,23 @@ def parse_md_hierarchy(filepath):
                     level2_layers = read_layers_from_md(level2_file)
                     level3_content = [item[0] for item in level2_layers if item[1] == 1]  # # items from grandchild file
                     
+                    # Convert level2_file to hierarchy key for child lookup
+                    if level2_file.startswith('../data/'):
+                        level2_relative = level2_file[8:]
+                    elif level2_file.startswith('../pdata/'):
+                        level2_relative = level2_file[9:]
+                    else:
+                        level2_relative = level2_file
+                    level2_hierarchy_key = os.path.splitext(level2_relative)[0]
+                    
                     # Build level3 items with file information
                     for level3_name in level3_content:
                         # Find corresponding file for this level3 item
                         level3_file = None
-                        level2_base = os.path.splitext(os.path.basename(level2_file))[0]
-                        if level2_base in file_hierarchy:
+                        if level2_hierarchy_key in file_hierarchy:
                             # Normalize the level3_name the same way as display_name is created
                             normalized_level3 = level3_name.replace('-', ' ').lower()
-                            for child in file_hierarchy[level2_base]['children']:
+                            for child in file_hierarchy[level2_hierarchy_key]['children']:
                                 if child['display_name'].lower() == normalized_level3:
                                     level3_file = child['filename']
                                     break
@@ -686,7 +722,3 @@ else:
     generate_all_subgraphs()
 
 print(f"Interactive graph saved to {html_path}")
-
-# Open the HTML file in default browser
-import webbrowser
-webbrowser.open('file://' + os.path.abspath(html_path))

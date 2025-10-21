@@ -1,4 +1,4 @@
 Finance
-#Earn
-#Spend
-#Invest
+#earn
+#spend
+#invest
