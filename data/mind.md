@@ -1,3 +1,3 @@
 Mind
-#Mood
-#Rest
+#mood
+#rest

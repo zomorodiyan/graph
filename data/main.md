@@ -1,8 +1,8 @@
 Main
-#Mind
-#Body
-#Level
-#Interaction
-#Finance
-#Time
+#mind
+#body
+#level
+#interaction
+#finance
+#time
 

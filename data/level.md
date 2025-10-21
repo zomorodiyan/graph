@@ -1,6 +1,5 @@
 Level
-#Work
-#Study
-#Project
-#Skill
-#Goal
+#work
+#study
+#goal
+#skill
