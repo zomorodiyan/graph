@@ -46,7 +46,8 @@ def get_markdown_files_from_directories():
                 for f in files:
                     if f.endswith('.md'):
                         full_path = os.path.join(root, f)
-                        md_files.append(full_path)
+                        # Normalize path separators for consistency
+                        md_files.append(full_path.replace('\\', '/'))
     
     return md_files
 
@@ -59,12 +60,15 @@ def find_file_in_directories(filename_or_path):
             for root, dirs, files in os.walk(dir_path):
                 # Check both exact filename and path matches
                 if filename_or_path in files:
-                    return os.path.join(root, filename_or_path)
+                    found_path = os.path.join(root, filename_or_path)
+                    # Normalize path separators for consistency
+                    return found_path.replace('\\', '/')
                 
                 # Also check if the full path matches
                 full_path = os.path.join(root, filename_or_path)
                 if os.path.exists(full_path):
-                    return full_path
+                    # Normalize path separators for consistency
+                    return full_path.replace('\\', '/')
     
     return None
 
@@ -77,15 +81,14 @@ def build_hierarchy_from_files():
     hierarchy = {}
     
     for md_file_path in md_file_paths:
-        # Convert file path to hierarchy key
-        # Remove the base directory (cross-platform)
-        data_path = os.path.join('..', 'data')
-        pdata_path = os.path.join('..', 'pdata')
+        # Convert file path to hierarchy key (robust cross-platform)
+        # Normalize path separators to forward slashes for consistency
+        normalized_path = md_file_path.replace('\\', '/')
         
-        if md_file_path.startswith(data_path + os.sep) or md_file_path.startswith('../data/'):
-            relative_path = md_file_path[len(data_path) + 1:] if md_file_path.startswith(data_path + os.sep) else md_file_path[8:]
-        elif md_file_path.startswith(pdata_path + os.sep) or md_file_path.startswith('../pdata/'):
-            relative_path = md_file_path[len(pdata_path) + 1:] if md_file_path.startswith(pdata_path + os.sep) else md_file_path[9:]
+        if normalized_path.startswith('../data/'):
+            relative_path = normalized_path[8:]  # Remove '../data/'
+        elif normalized_path.startswith('../pdata/'):
+            relative_path = normalized_path[9:]  # Remove '../pdata/'
         else:
             continue
             
@@ -588,7 +591,9 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
         
         # Make layer1 clickable if file exists
         layer1_clickable_class = "clickable" if layer1_file_exists else ""
-        layer1_onclick = f"onclick=\"navigateToSubGraph('{layer1_filename}', '', '{layer1_name}')\"" if layer1_file_exists else ""
+        # Normalize path for JavaScript (use forward slashes)
+        normalized_layer1_filename = layer1_filename.replace('\\', '/') if layer1_filename else ''
+        layer1_onclick = f"onclick=\"navigateToSubGraph('{normalized_layer1_filename}', '', '{layer1_name}')\"" if layer1_file_exists else ""
 
         # Get layer1 deadline
         layer1_deadline = item.get("layer1_deadline")
@@ -612,7 +617,9 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
 
             # Only make clickable if file exists
             clickable_class = "clickable" if file_exists else ""
-            onclick_handler = f"onclick=\"navigateToSubGraph('{file_path}', '{layer1_name}', '{layer2_name}')\"" if file_exists else ""
+            # Normalize path for JavaScript (use forward slashes)
+            normalized_file_path = file_path.replace('\\', '/') if file_path else ''
+            onclick_handler = f"onclick=\"navigateToSubGraph('{normalized_file_path}', '{layer1_name}', '{layer2_name}')\"" if file_exists else ""
             
             # Get layer2 deadline
             layer2_deadline = layer2_item.get("deadline")
@@ -635,7 +642,9 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
                     layer3_filename = layer3_item.get("filename")
                     layer3_file_exists = check_file_exists(layer3_filename)
                     layer3_clickable_class = "clickable" if layer3_file_exists else ""
-                    layer3_onclick = f"onclick=\"navigateToSubGraph('{layer3_filename}', '{layer2_name}', '{layer3_name}')\"" if layer3_file_exists else ""
+                    # Normalize path for JavaScript (use forward slashes)
+                    normalized_layer3_filename = layer3_filename.replace('\\', '/') if layer3_filename else ''
+                    layer3_onclick = f"onclick=\"navigateToSubGraph('{normalized_layer3_filename}', '{layer2_name}', '{layer3_name}')\"" if layer3_file_exists else ""
                     html_content += f'<span class="layer3 {layer3_clickable_class}" {layer3_onclick}>{layer3_name}</span>'
                 else:
                     # Old structure (string only) - keep for backward compatibility
