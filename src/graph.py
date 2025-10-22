@@ -675,8 +675,8 @@ def generate_html_graph(data, output_path, parent_file=None, breadcrumb_path=Non
                 return;
             }
 
-            // Extract just the filename from the path and convert to HTML
-            const fileName = filePath.split('/').pop(); // Get filename from full path
+            // Extract just the filename from the path and convert to HTML (cross-platform)
+            const fileName = filePath.replace(/\\\\/g, '/').split('/').pop(); // Handle both / and \\ separators
             const subGraphName = fileName.replace('.md', '.html');
 
             // Navigate to the sub-graph in the html directory
