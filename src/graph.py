@@ -38,7 +38,7 @@ def extract_deadline_from_md(filepath):
 def get_markdown_files_from_directories():
     """Get all markdown files from both data and pdata directories recursively"""
     md_files = []
-    search_dirs = ['../data', '../pdata']
+    search_dirs = [os.path.join('..', 'data'), os.path.join('..', 'pdata')]
     
     for dir_path in search_dirs:
         if os.path.exists(dir_path):
@@ -52,7 +52,7 @@ def get_markdown_files_from_directories():
 
 def find_file_in_directories(filename_or_path):
     """Find a markdown file in data or pdata directories"""
-    search_dirs = ['../data', '../pdata']
+    search_dirs = [os.path.join('..', 'data'), os.path.join('..', 'pdata')]
     
     for dir_path in search_dirs:
         if os.path.exists(dir_path):
@@ -78,17 +78,21 @@ def build_hierarchy_from_files():
     
     for md_file_path in md_file_paths:
         # Convert file path to hierarchy key
-        # Remove the base directory (../data/ or ../pdata/)
-        if md_file_path.startswith('../data/'):
-            relative_path = md_file_path[8:]  # Remove '../data/'
-        elif md_file_path.startswith('../pdata/'):
-            relative_path = md_file_path[9:]  # Remove '../pdata/'
+        # Remove the base directory (cross-platform)
+        data_path = os.path.join('..', 'data')
+        pdata_path = os.path.join('..', 'pdata')
+        
+        if md_file_path.startswith(data_path + os.sep) or md_file_path.startswith('../data/'):
+            relative_path = md_file_path[len(data_path) + 1:] if md_file_path.startswith(data_path + os.sep) else md_file_path[8:]
+        elif md_file_path.startswith(pdata_path + os.sep) or md_file_path.startswith('../pdata/'):
+            relative_path = md_file_path[len(pdata_path) + 1:] if md_file_path.startswith(pdata_path + os.sep) else md_file_path[9:]
         else:
             continue
             
-        # Remove .md extension and split by directory separators
+        # Remove .md extension and split by directory separators (cross-platform)
         path_without_ext = os.path.splitext(relative_path)[0]
-        path_parts = path_without_ext.split('/')
+        # Use os.sep for cross-platform path separation
+        path_parts = path_without_ext.replace('\\', '/').split('/')
         
         # Create hierarchy entry for this file
         hierarchy_key = '/'.join(path_parts)
@@ -101,7 +105,7 @@ def build_hierarchy_from_files():
     
     # Now establish parent-child relationships
     for hierarchy_key, entry in hierarchy.items():
-        path_parts = hierarchy_key.split('/')
+        path_parts = hierarchy_key.replace('\\', '/').split('/')
         
         # If this file has a parent directory, establish parent-child relationship
         if len(path_parts) > 1:
@@ -160,11 +164,14 @@ def get_children_for_display(node_name, hierarchy):
 
 def parse_md_hierarchy(filepath):
     """Parse markdown file and build 3-level hierarchy data for display"""
-    # Convert file path to hierarchy key
-    if filepath.startswith('../data/'):
-        relative_path = filepath[8:]  # Remove '../data/'
-    elif filepath.startswith('../pdata/'):
-        relative_path = filepath[9:]  # Remove '../pdata/'
+    # Convert file path to hierarchy key (cross-platform)
+    data_path = os.path.join('..', 'data')
+    pdata_path = os.path.join('..', 'pdata')
+    
+    if filepath.startswith(data_path + os.sep) or filepath.startswith('../data/'):
+        relative_path = filepath[len(data_path) + 1:] if filepath.startswith(data_path + os.sep) else filepath[8:]
+    elif filepath.startswith(pdata_path + os.sep) or filepath.startswith('../pdata/'):
+        relative_path = filepath[len(pdata_path) + 1:] if filepath.startswith(pdata_path + os.sep) else filepath[9:]
     else:
         relative_path = filepath
     
@@ -202,14 +209,14 @@ def parse_md_hierarchy(filepath):
             level1_layers = read_layers_from_md(level1_file)
             level2_content = [item for item in level1_layers if item[1] == 1]  # # items from child file
             
-            # Convert level1_file to hierarchy key for child lookup
-            if level1_file.startswith('../data/'):
-                level1_relative = level1_file[8:]
-            elif level1_file.startswith('../pdata/'):
-                level1_relative = level1_file[9:]
+            # Convert level1_file to hierarchy key for child lookup (cross-platform)
+            if level1_file.startswith(data_path + os.sep) or level1_file.startswith('../data/'):
+                level1_relative = level1_file[len(data_path) + 1:] if level1_file.startswith(data_path + os.sep) else level1_file[8:]
+            elif level1_file.startswith(pdata_path + os.sep) or level1_file.startswith('../pdata/'):
+                level1_relative = level1_file[len(pdata_path) + 1:] if level1_file.startswith(pdata_path + os.sep) else level1_file[9:]
             else:
                 level1_relative = level1_file
-            level1_hierarchy_key = os.path.splitext(level1_relative)[0]
+            level1_hierarchy_key = os.path.splitext(level1_relative.replace('\\', '/'))[0]
             
             for level2_name, _ in level2_content:
                 # Find corresponding file for this level2 item
@@ -228,14 +235,14 @@ def parse_md_hierarchy(filepath):
                     level2_layers = read_layers_from_md(level2_file)
                     level3_content = [item[0] for item in level2_layers if item[1] == 1]  # # items from grandchild file
                     
-                    # Convert level2_file to hierarchy key for child lookup
-                    if level2_file.startswith('../data/'):
-                        level2_relative = level2_file[8:]
-                    elif level2_file.startswith('../pdata/'):
-                        level2_relative = level2_file[9:]
+                    # Convert level2_file to hierarchy key for child lookup (cross-platform)
+                    if level2_file.startswith(data_path + os.sep) or level2_file.startswith('../data/'):
+                        level2_relative = level2_file[len(data_path) + 1:] if level2_file.startswith(data_path + os.sep) else level2_file[8:]
+                    elif level2_file.startswith(pdata_path + os.sep) or level2_file.startswith('../pdata/'):
+                        level2_relative = level2_file[len(pdata_path) + 1:] if level2_file.startswith(pdata_path + os.sep) else level2_file[9:]
                     else:
                         level2_relative = level2_file
-                    level2_hierarchy_key = os.path.splitext(level2_relative)[0]
+                    level2_hierarchy_key = os.path.splitext(level2_relative.replace('\\', '/'))[0]
                     
                     # Build level3 items with file information
                     for level3_name in level3_content:
@@ -279,7 +286,7 @@ import sys
 if len(sys.argv) > 1:
     md_file = sys.argv[1]
 else:
-    md_file = "../data/main.md"
+    md_file = os.path.join("..", "data", "main.md")
 
 html_dir = "../html"
 base_name = os.path.splitext(os.path.basename(md_file))[0]
