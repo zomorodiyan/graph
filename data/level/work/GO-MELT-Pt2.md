@@ -1,4 +1,3 @@
 GO-MELT-Pt2
-#OpenFOAM
 #GO-MELT
-#RenderLPBF
+#OpenFOAM
