@@ -149,7 +149,7 @@ class HierarchyBuilder:
         return {
             "layer1": level1_name,
             "layer1_filename": level1_file,
-            "layer1_deadline": self.file_utils.extract_deadline_from_md(level1_file),
+            "layer1_context": self.file_utils.extract_context_from_md(level1_file),
             "layer2": level2_items
         }
     
@@ -175,7 +175,7 @@ class HierarchyBuilder:
             level2_items.append({
                 "name": level2_name,
                 "filename": level2_file,
-                "deadline": self.file_utils.extract_deadline_from_md(level2_file),
+                "context": self.file_utils.extract_context_from_md(level2_file),
                 "layer3": level3_items
             })
         
@@ -198,7 +198,7 @@ class HierarchyBuilder:
             level3_items.append({
                 "name": level3_name,
                 "filename": level3_file,
-                "deadline": self.file_utils.extract_deadline_from_md(level3_file)
+                "context": self.file_utils.extract_context_from_md(level3_file)
             })
         
         return level3_items

@@ -149,7 +149,7 @@ class HTMLGenerator:
         .layer2:not(.clickable):hover {
             background-color: transparent;
         }
-        .deadline {
+        .context {
             color: #000;
             font-style: italic;
             margin-top: 2px;
@@ -157,10 +157,10 @@ class HTMLGenerator:
             display: block;
             font-weight: normal;
         }
-        .layer1-deadline {
+        .layer1-context {
             font-size: 13px;
         }
-        .layer2-deadline {
+        .layer2-context {
             font-size: 12px;
         }
         .layer3 {
@@ -348,15 +348,15 @@ class HTMLGenerator:
         normalized_layer1_filename = self.file_utils.normalize_path(layer1_filename) if layer1_filename else ''
         layer1_onclick = f"onclick=\"navigateToSubGraph('{normalized_layer1_filename}', '', '{layer1_name}')\"" if layer1_file_exists else ""
 
-        # Get layer1 deadline
-        layer1_deadline = item.get("layer1_deadline")
-        layer1_deadline_html = f'<div class="deadline layer1-deadline">{layer1_deadline}</div>' if layer1_deadline else ""
+        # Get layer1 context
+        layer1_context = item.get("layer1_context")
+        layer1_context_html = f'<div class="context layer1-context">{layer1_context}</div>' if layer1_context else ""
 
         content = f"""
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1 {layer1_clickable_class}" {layer1_onclick}>{layer1_name}</div>
-                {layer1_deadline_html}
+                {layer1_context_html}
                 <div class="underline color-{color_name}-medium"></div>
             </div>
             <div class="layer2-section">
@@ -384,15 +384,15 @@ class HTMLGenerator:
         normalized_file_path = self.file_utils.normalize_path(file_path) if file_path else ''
         onclick_handler = f"onclick=\"navigateToSubGraph('{normalized_file_path}', '{layer1_name}', '{layer2_name}')\"" if file_exists else ""
         
-        # Get layer2 deadline
-        layer2_deadline = layer2_item.get("deadline")
-        layer2_deadline_html = f'<div class="deadline layer2-deadline">{layer2_deadline}</div>' if layer2_deadline else ""
+        # Get layer2 context
+        layer2_context = layer2_item.get("context")
+        layer2_context_html = f'<div class="context layer2-context">{layer2_context}</div>' if layer2_context else ""
 
         content = f"""
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 {clickable_class} color-group-{color_name}" {onclick_handler}>{layer2_name}</div>
-                        {layer2_deadline_html}
+                        {layer2_context_html}
                         <div class="underline color-{color_name}-light"></div>
                     </div>
                     <div class="layer3-container">

@@ -85,8 +85,8 @@ class FileUtils:
         return result
     
     @staticmethod
-    def extract_deadline_from_md(filepath):
-        """Extract deadline text from markdown file comments."""
+    def extract_context_from_md(filepath):
+        """Extract context text from markdown file comments."""
         if not filepath or not os.path.exists(filepath):
             return None
             
@@ -94,13 +94,13 @@ class FileUtils:
             with open(filepath, 'r', encoding='utf-8') as f:
                 content = f.read()
                 
-            # Look for deadline comment pattern: <!-- deadline: text -->
-            deadline_match = re.search(r'<!--\s*deadline:\s*([^-]+?)\s*-->', content, re.IGNORECASE)
-            if deadline_match:
-                return deadline_match.group(1).strip()
+            # Look for context comment pattern: <!-- context: text -->
+            context_match = re.search(r'<!--\s*context:\s*([^-]+?)\s*-->', content, re.IGNORECASE)
+            if context_match:
+                return context_match.group(1).strip()
                 
         except Exception as e:
-            print(f"Error reading deadline from {filepath}: {e}")
+            print(f"Error reading context from {filepath}: {e}")
             
         return None
     

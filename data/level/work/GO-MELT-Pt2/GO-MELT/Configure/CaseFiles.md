@@ -1,5 +1,5 @@
 CaseFiles
-<!-- deadline: October 28 -->
+<!-- context: October 28 -->
 #SquareSlow
 #SquareFast
 #RectangleSlow
