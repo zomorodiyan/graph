@@ -1,6 +1,6 @@
 # Graph Visualization
 
-A simple tool to visualize hierarchical markdown files as interactive HTML graphs.
+A directory-based tool to visualize hierarchical markdown files as interactive HTML graphs with a local web server.
 
 ## Live Demo
 
@@ -10,50 +10,75 @@ A simple tool to visualize hierarchical markdown files as interactive HTML graph
 
 ## What it does
 
-Converts markdown files with headers into a 3-level interactive visualization:
+Converts directory-structured markdown files into a 3-level interactive visualization:
 - **Level 1**: Main categories (Mind, Body, Finance, etc.)
-- **Level 2**: Subcategories (Mood, Rest, Earn, Spend, etc.) 
+- **Level 2**: Subcategories organized in subdirectories
 - **Level 3**: Individual items within each subcategory
+
+The system automatically detects directory structure and generates corresponding HTML files with breadcrumb navigation.
 
 ## Quick Start
 
 ```bash
-# Generate interactive graph
-python3 run.py
+# Start local server and open visualization
+python run.py
 
-# View specific file
-python3 run.py data/finance.md
+# The server will automatically:
+# 1. Generate HTML files for all markdown files
+# 2. Start a local web server (usually on port 8080)
+# 3. Open your browser to the main visualization
 ```
-
-Opens `html/main.html` in your browser with clickable navigation between sections.
 
 ## File Structure
 
 ```
-data/     # Public markdown files
-pdata/    # Private markdown files (git submodule)
-html/     # Generated HTML files
-src/      # Source code
+data/           # Markdown files
+  main.md       # Root level with main categories
+  body/         # Body-related files
+    habit.md
+    nutrition.md
+  finance/      # Finance-related files
+    earn.md
+    spend.md
+html/           # Generated HTML files (auto-created)
+src/            # Source code
+  graph.py      # Main graph generation
+  file_utils.py # File operations
+  hierarchy_builder.py # Directory hierarchy parsing
+  html_generator.py    # HTML generation
 ```
 
-## Markdown Format
+## Directory-Based Hierarchy
 
-Files use underscore-based hierarchy:
-- `main.md` → Root
-- `finance.md` → Level 1
-- `finance_invest.md` → Level 2
-- `finance_invest_stocks.md` → Level 3
+The system uses actual directory structure instead of file naming:
+- `data/main.md` → Root level
+- `data/finance.md` → Level 1 category
+- `data/finance/invest.md` → Level 2 subcategory
+- `data/finance/invest/stocks.md` → Level 3 items
 
-Headers in files become clickable items:
+Headers in markdown files become clickable navigation items:
 ```markdown
-# Investment
-# Savings
-# Budget
+# Investment Strategies
+# Portfolio Management
+# Risk Assessment
+```
+
+## Context Support
+
+Add context to any markdown file using HTML comments:
+```markdown
+<!-- context: This file contains investment strategies for long-term growth -->
+
+# Growth Stocks
+# Value Investing
 ```
 
 ## Features
 
-- **Click to navigate** between related files
-- **Automatic file detection** and linking
-- **Public/private data separation** via git submodule
-- **Clean HTML output** with color-coded sections
+- **Local web server** with automatic port detection
+- **Directory-based hierarchy** with automatic file discovery
+- **Breadcrumb navigation** between levels
+- **Context extraction** from markdown comments
+- **Automatic HTML generation** for all markdown files
+- **Clean, responsive HTML output** with color-coded sections
+- **Cross-platform support** with proper path handling

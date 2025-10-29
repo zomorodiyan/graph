@@ -56,7 +56,7 @@ class GraphApp:
     
     def generate_all_subgraphs(self):
         """Generate HTML files for all available markdown files."""
-        # Get all markdown files from both data and pdata directories
+        # Get all markdown files from data directory
         md_file_paths = self.file_utils.get_markdown_files_from_directories()
         
         # Filter out main.md
