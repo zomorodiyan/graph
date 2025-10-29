@@ -2,6 +2,12 @@
 
 A simple tool to visualize hierarchical markdown files as interactive HTML graphs.
 
+## Live Demo
+
+🔗 **[View Live Demo](https://raw.githack.com/zomorodiyan/graph/main/html/main.html)**
+
+*Interactive visualization of the markdown hierarchy - click around to explore!*
+
 ## What it does
 
 Converts markdown files with headers into a 3-level interactive visualization:
