@@ -1,5 +1,5 @@
 Configure
-<!-- deadline: October 29 -->
+<!-- context: October 29 -->
 #Domain
 #ToolPath
 #CaseFiles

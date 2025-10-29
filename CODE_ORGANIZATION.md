@@ -8,7 +8,7 @@
 - Directory traversal (`get_markdown_files_from_directories()`)
 - File discovery (`find_file_in_directories()`)
 - File existence checking (`check_file_exists()`)
-- Markdown parsing (`read_layers_from_md()`, `extract_deadline_from_md()`)
+- Markdown parsing (`read_layers_from_md()`, `extract_context_from_md()`)
 - Path component extraction (`get_path_components_from_file_path()`)
 
 ## src/hierarchy_builder.py

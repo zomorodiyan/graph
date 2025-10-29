@@ -1,5 +1,5 @@
 GO-MELT
-<!-- deadline: October 31 -->
+<!-- context: October 31 -->
 #Configure
 #Run
 #PostProcess
