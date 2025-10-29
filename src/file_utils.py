@@ -18,9 +18,9 @@ class FileUtils:
     
     @staticmethod
     def get_markdown_files_from_directories():
-        """Get all markdown files from both data and pdata directories recursively."""
+        """Get all markdown files from data directory recursively."""
         md_files = []
-        search_dirs = [os.path.join('..', 'data'), os.path.join('..', 'pdata')]
+        search_dirs = [os.path.join('..', 'data')]
         
         for dir_path in search_dirs:
             if os.path.exists(dir_path):
@@ -35,8 +35,8 @@ class FileUtils:
     
     @staticmethod
     def find_file_in_directories(filename_or_path):
-        """Find a markdown file in data or pdata directories."""
-        search_dirs = [os.path.join('..', 'data'), os.path.join('..', 'pdata')]
+        """Find a markdown file in data directory."""
+        search_dirs = [os.path.join('..', 'data')]
         
         for dir_path in search_dirs:
             if os.path.exists(dir_path):
@@ -55,7 +55,7 @@ class FileUtils:
     
     @staticmethod
     def check_file_exists(file_path):
-        """Check if a file exists in data or pdata directories."""
+        """Check if a file exists in data directory."""
         if not file_path:
             return False
         
@@ -63,7 +63,7 @@ class FileUtils:
         if '../' in file_path:
             return os.path.exists(file_path)
         
-        # Otherwise, search in both directories
+        # Otherwise, search in data directory
         found_path = FileUtils.find_file_in_directories(file_path)
         return found_path is not None
     
@@ -112,8 +112,6 @@ class FileUtils:
         
         if normalized_path.startswith('../data/'):
             relative_path = normalized_path[8:]  # Remove '../data/'
-        elif normalized_path.startswith('../pdata/'):
-            relative_path = normalized_path[9:]  # Remove '../pdata/'
         else:
             return None
         
