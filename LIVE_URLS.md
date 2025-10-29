@@ -1,25 +1,18 @@
-# Live URLs
+# Live Interactive Demo
 
-## Main Entry Point
-- **Main Dashboard**: https://raw.githack.com/zomorodiyan/graph/main/html/main.html
+🔗 **[Main Dashboard](https://raw.githack.com/zomorodiyan/graph/main/html/main.html)** - Start here to explore the interactive hierarchy
+
+## How to Use
+- Click on any section to navigate deeper into the hierarchy
+- The visualization shows your personal knowledge structure with clickable navigation
 
 ## Key Sections
-- **Body**: https://raw.githack.com/zomorodiyan/graph/main/html/body.html
-- **Finance**: https://raw.githack.com/zomorodiyan/graph/main/html/finance.html
-- **Interaction**: https://raw.githack.com/zomorodiyan/graph/main/html/interaction.html
-- **Level/Work**: https://raw.githack.com/zomorodiyan/graph/main/html/level.html
-- **Mind**: https://raw.githack.com/zomorodiyan/graph/main/html/mind.html
-- **Time**: https://raw.githack.com/zomorodiyan/graph/main/html/time.html
+- **[Mind](https://raw.githack.com/zomorodiyan/graph/main/html/mind.html)** - Mood, rest, mental health
+- **[Body](https://raw.githack.com/zomorodiyan/graph/main/html/body.html)** - Health, habits, nutrition, training
+- **[Level](https://raw.githack.com/zomorodiyan/graph/main/html/level.html)** - Work projects, study, goals, skills
+- **[Interaction](https://raw.githack.com/zomorodiyan/graph/main/html/interaction.html)** - Family, friends, community, relationships
+- **[Finance](https://raw.githack.com/zomorodiyan/graph/main/html/finance.html)** - Earning, spending, investing
+- **[Time](https://raw.githack.com/zomorodiyan/graph/main/html/time.html)** - Calendar, daily/monthly/yearly planning
 
-## Development Workflow
-1. Update markdown files in `data/` directory
-2. Run `python3 run.py` to regenerate HTML
-3. Commit and push changes
-4. URLs automatically reflect updates (development URLs - no caching)
-
-## URL Pattern
-```
-https://raw.githack.com/zomorodiyan/graph/main/html/{filename}.html
-```
-
-*Note: Using development URLs for instant updates when content changes*
+## About This Project
+This is a personal knowledge management system that converts hierarchical markdown files into interactive HTML visualizations. The live demo reflects the current state of the repository's data files.
