@@ -219,6 +219,20 @@
             background: #1565c0;
         }
         
+        /* Responsive layout for narrow screens */
+        @media (max-width: 500px) {
+            .section {
+                flex-direction: column;
+            }
+            .layer1-container {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+            .layer2-section {
+                width: 100%;
+            }
+        }
+        
     </style>
 </head>
 <body>
@@ -227,7 +241,7 @@
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/level/work/HighSpeed/ImageJ.md', '', 'ImageJ')">ImageJ</div>
+                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/level/work/HighSpeed/GenerateVideo.md', '', 'GenerateVideo')">GenerateVideo</div>
                 <div class="context layer1-context">November 14</div>
                 <div class="underline color-green-medium"></div>
             </div>
@@ -235,7 +249,7 @@
 
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToSubGraph('../data/level/work/HighSpeed/ImageJ/TestFilters.md', 'ImageJ', 'TestFilters')">TestFilters</div>
+                        <div class="layer2 clickable color-group-green" onclick="navigateToSubGraph('../data/level/work/HighSpeed/GenerateVideo/TestFilters.md', 'GenerateVideo', 'TestFilters')">TestFilters</div>
                         
                         <div class="underline color-green-light"></div>
                     </div>

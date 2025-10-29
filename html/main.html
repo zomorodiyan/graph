@@ -219,6 +219,20 @@
             background: #1565c0;
         }
         
+        /* Responsive layout for narrow screens */
+        @media (max-width: 500px) {
+            .section {
+                flex-direction: column;
+            }
+            .layer1-container {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+            .layer2-section {
+                width: 100%;
+            }
+        }
+        
     </style>
 </head>
 <body>
@@ -315,7 +329,7 @@
                         <div class="underline color-purple-light"></div>
                     </div>
                     <div class="layer3-container">
-<span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/HighSpeed.md', 'work', 'HighSpeed')">HighSpeed</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/GO-MELT-Pt2.md', 'work', 'GO-MELT-Pt2')">GO-MELT-Pt2</span><span class="layer3 " >Multiphysics</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/SintherSimulation.md', 'work', 'SintherSimulation')">SintherSimulation</span>
+<span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/GO-MELT-Pt2.md', 'work', 'GO-MELT-Pt2')">GO-MELT-Pt2</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/HighSpeed.md', 'work', 'HighSpeed')">HighSpeed</span><span class="layer3 " >Multiphysics</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/SintherSimulation.md', 'work', 'SintherSimulation')">SintherSimulation</span>
                     </div>
                 </div>
 

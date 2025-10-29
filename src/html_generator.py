@@ -280,6 +280,20 @@ class HTMLGenerator:
         .back-button:hover {
             background: #1565c0;
         }
+        
+        /* Responsive layout for narrow screens */
+        @media (max-width: 500px) {
+            .section {
+                flex-direction: column;
+            }
+            .layer1-container {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+            .layer2-section {
+                width: 100%;
+            }
+        }
         """
     
     def _get_javascript_functions(self):
