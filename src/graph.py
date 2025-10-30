@@ -41,10 +41,8 @@ class GraphApp:
         html_dir = self.file_utils.ensure_html_directory_exists()
         html_path = os.path.join(html_dir, f"{base_name}.html")
         
-        # Create breadcrumb
-        breadcrumb = [("Main", "main.html")]
-        if parent_name:
-            breadcrumb.append((parent_name, None))
+        # Create breadcrumb using directory structure
+        breadcrumb = self.hierarchy_builder.get_breadcrumb_for_file(md_file_path)
         
         # Generate HTML with breadcrumb
         self.html_generator.generate_html_graph(
@@ -74,8 +72,8 @@ class GraphApp:
                     base_name = os.path.splitext(md_file)[0]
                     html_path = os.path.join(html_dir, f"{base_name}.html")
 
-                    # Create proper breadcrumb navigation using dynamic function
-                    breadcrumb = self.html_generator.get_parent_file_info_dynamic(md_file)
+                    # Create proper breadcrumb navigation using directory structure
+                    breadcrumb = self.hierarchy_builder.get_breadcrumb_for_file(md_file_path)
 
                     self.html_generator.generate_html_graph(
                         data, html_path, 

@@ -237,7 +237,7 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('main.html')">Main</a> > <span class="current">Rest</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('main.html')">Main</a> > <span class="current">Mind</span></div>
         
         <div class="section">
             <div class="layer1-container">
@@ -273,13 +273,6 @@
     <div id="notification" class="notification"></div>
     <script>
         
-        function getCacheBustingUrl(url) {
-            // Add timestamp-based cache busting parameter
-            const timestamp = new Date().getTime();
-            const separator = url.includes('?') ? '&' : '?';
-            return url + separator + 'cb=' + timestamp;
-        }
-
         function showNotification(message, isError = false) {
             const notification = document.getElementById('notification');
             notification.textContent = message;
@@ -304,22 +297,14 @@
             const fileName = filePath.replace(/\\/g, '/').split('/').pop(); // Handle both / and \\ separators
             const subGraphName = fileName.replace('.md', '.html');
 
-            // Navigate to the sub-graph with cache busting
-            const cacheBustedUrl = getCacheBustingUrl(subGraphName);
-            window.location.href = cacheBustedUrl;
+            // Navigate to the sub-graph
+            window.location.href = subGraphName;
         }
 
         function loadGraph(filePath) {
-            // Add cache busting to breadcrumb navigation
-            const cacheBustedUrl = getCacheBustingUrl(filePath);
-            window.location.href = cacheBustedUrl;
+            // Navigate to breadcrumb target
+            window.location.href = filePath;
         }
-
-        // Force cache refresh for current page on load
-        window.addEventListener('load', function() {
-            // Store in session that this page was loaded with cache busting
-            sessionStorage.setItem('cacheBusted_' + window.location.pathname, new Date().getTime());
-        });
         
     </script>
 </body>

@@ -299,13 +299,6 @@ class HTMLGenerator:
     def _get_javascript_functions(self):
         """Get JavaScript functions for the HTML page."""
         return """
-        function getCacheBustingUrl(url) {
-            // Add timestamp-based cache busting parameter
-            const timestamp = new Date().getTime();
-            const separator = url.includes('?') ? '&' : '?';
-            return url + separator + 'cb=' + timestamp;
-        }
-
         function showNotification(message, isError = false) {
             const notification = document.getElementById('notification');
             notification.textContent = message;
@@ -330,22 +323,14 @@ class HTMLGenerator:
             const fileName = filePath.replace(/\\\\/g, '/').split('/').pop(); // Handle both / and \\\\ separators
             const subGraphName = fileName.replace('.md', '.html');
 
-            // Navigate to the sub-graph with cache busting
-            const cacheBustedUrl = getCacheBustingUrl(subGraphName);
-            window.location.href = cacheBustedUrl;
+            // Navigate to the sub-graph
+            window.location.href = subGraphName;
         }
 
         function loadGraph(filePath) {
-            // Add cache busting to breadcrumb navigation
-            const cacheBustedUrl = getCacheBustingUrl(filePath);
-            window.location.href = cacheBustedUrl;
+            // Navigate to breadcrumb target
+            window.location.href = filePath;
         }
-
-        // Force cache refresh for current page on load
-        window.addEventListener('load', function() {
-            // Store in session that this page was loaded with cache busting
-            sessionStorage.setItem('cacheBusted_' + window.location.pathname, new Date().getTime());
-        });
         """
     
     def _build_content_sections(self, data, parent_file):
@@ -452,37 +437,3 @@ class HTMLGenerator:
         else:
             # Old structure (string only) - keep for backward compatibility
             return f'<span class="layer3">{layer3_item}</span>'
-    
-    def get_parent_file_info_dynamic(self, file_name):
-        """Dynamically determine parent file and navigation info based on file name hierarchy."""
-        base_name = os.path.splitext(file_name)[0]
-        
-        if base_name == 'main':
-            return [("Main", None)]
-        
-        # Build breadcrumb by walking up the hierarchy
-        hierarchy_path = []
-        current = base_name
-        
-        # Walk up the hierarchy by removing underscores
-        while current and current != 'main':
-            parts = current.split('_')
-            display_name = parts[-1].replace('-', ' ').title()
-            hierarchy_path.append((display_name, f"{current}.html"))
-            
-            if len(parts) == 1:
-                # This is a level 1 file, parent is main
-                hierarchy_path.append(("Main", "main.html"))
-                break
-            else:
-                # Move up one level
-                current = '_'.join(parts[:-1])
-        
-        # Reverse to get correct order (from root to current)
-        hierarchy_path.reverse()
-        
-        # Remove the last item (current file) as it shouldn't be clickable
-        if hierarchy_path:
-            hierarchy_path[-1] = (hierarchy_path[-1][0], None)
-        
-        return hierarchy_path if hierarchy_path else [("Main", "main.html"), (base_name.replace('_', ' ').title(), None)]

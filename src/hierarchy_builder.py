@@ -12,6 +12,24 @@ class HierarchyBuilder:
     def __init__(self):
         self.file_utils = FileUtils()
     
+    def get_breadcrumb_for_file(self, file_path):
+        """Generate breadcrumb navigation for a file based on its directory structure."""
+        # Get path components from the file path
+        path_parts = self.file_utils.get_path_components_from_file_path(file_path)
+        
+        if not path_parts:
+            return [("Main", "main.html")]
+        
+        breadcrumb = [("Main", "main.html")]
+        
+        # Build breadcrumb by walking through directory levels
+        for i, part in enumerate(path_parts[:-1]):  # Exclude the current file
+            display_name = part.replace('-', ' ').title()
+            html_name = f"{'/'.join(path_parts[:i+1])}.html"
+            breadcrumb.append((display_name, html_name))
+        
+        return breadcrumb
+
     def build_hierarchy_from_files(self):
         """Build complete hierarchy structure from directory-based markdown files."""
         # Get all markdown files from both directories
