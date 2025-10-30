@@ -375,7 +375,7 @@ class HTMLGenerator:
                 <div class="underline color-{color_name}-medium"></div>
             </div>
             <div class="layer2-section">
-"""
+        """
 
         for layer2_item in item["layer2"]:
             content += self._build_layer2_section(layer2_item, layer1_name, color_name, parent_file)
@@ -411,7 +411,7 @@ class HTMLGenerator:
                         <div class="underline color-{color_name}-light"></div>
                     </div>
                     <div class="layer3-container">
-"""
+        """
 
         for layer3_item in layer2_item["layer3"]:
             content += self._build_layer3_item(layer3_item, layer2_name)
@@ -419,7 +419,7 @@ class HTMLGenerator:
         content += """
                     </div>
                 </div>
-"""
+        """
         return content
     
     def _build_layer3_item(self, layer3_item, layer2_name):
