@@ -1,5 +1,4 @@
-
-# New File Structure
+# File Structure
 
 ## src/file_utils.py
 **Purpose**: File operations and path handling utilities
@@ -29,16 +28,27 @@
 - Breadcrumb navigation (`_create_breadcrumb_html()`)
 - Layer-specific section builders
 
-## src/graph.py (New)
-**Purpose**: Main application coordination
-- `GraphApp` class as the main orchestrator
-- Simplified public interface methods
+## src/graph.py
+**Purpose**: Core graph generation engine
+- `GraphApp` class as the main HTML generation orchestrator
 - Coordinates between file utils, hierarchy builder, and HTML generator
-- Clean entry point (`main()`)
+- Command-line interface for direct generation
+- Supports subgraph generation and breadcrumb navigation
+- Development tool for testing and debugging
+
+## run.py
+**Purpose**: Complete application launcher and web server
+- User-friendly entry point for the entire application
+- Subprocess execution of graph.py for HTML generation
+- Built-in HTTP server with automatic port detection
+- Browser auto-launch functionality
+- Development server with live viewing capabilities
+- Production-ready user experience
 
 # Usage
-The application usagee:
+## Two Different Approaches:
+
 ```bash
-python3 run.py                    # Generate main visualization
-python3 src/graph.py             # Direct script usage
+python run.py                   # Complete application: Generate + Web Serve + View
+python src/graph.py             # Generator only: Generate HTML files only
 ```
