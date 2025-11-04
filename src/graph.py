@@ -43,20 +43,20 @@ class GraphApp:
         return html_path
     
     def generate_all_graphs(self):
-        """Generate HTML files for all items in the YAML structure."""
+        """Generate HTML files for all non-leaf items in the YAML structure."""
         print("Generating graphs from YAML structure...")
         
-        # Get all items from the structure
-        all_items = self.file_utils.get_all_items()
+        # Get only non-leaf items from the structure
+        all_non_leaf_items = self.file_utils.get_all_non_leaf_items()
         html_dir = self.file_utils.ensure_html_directory_exists()
         
         # Generate main data view
         main_html_path = self.generate_graph_for_item("data")
         print(f"Generated main view: {main_html_path}")
         
-        # Generate views for all individual items
+        # Generate views for all non-leaf items
         generated_count = 0
-        for item in all_items:
+        for item in all_non_leaf_items:
             item_id = item.get('id')
             if item_id and item_id != "data":
                 try:
@@ -66,7 +66,7 @@ class GraphApp:
                 except Exception as e:
                     print(f"Error generating graph for {item_id}: {e}")
         
-        print(f"Generated {generated_count} individual item views")
+        print(f"Generated {generated_count} individual item views (leaf nodes excluded)")
         return main_html_path
     
     def search_items(self, query):

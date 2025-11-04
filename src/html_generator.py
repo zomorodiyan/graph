@@ -113,6 +113,9 @@ class HTMLGenerator:
         .layer2.clickable {
             font-weight: bold;
         }
+        .layer2.leaf {
+            font-weight: bold;
+        }
         .layer2.color-group-green:hover {
             background-color: #A5D6A7;
         }
@@ -186,6 +189,10 @@ class HTMLGenerator:
         .layer3:not(.clickable) {
             cursor: default;
         }
+        .layer3.color-green { color: #1B5E20; }
+        .layer3.color-blue { color: #0D47A1; }
+        .layer3.color-purple { color: #4A148C; }
+        .layer3.color-red { color: #BF360C; }
         .underline {
             height: 2px;
             margin-top: 2px;
@@ -351,9 +358,10 @@ class HTMLGenerator:
         layer1_id = item.get("layer1_id", "")
         layer1_has_children = len(item.get("layer2", [])) > 0
         
-        # Make layer1 clickable if it has children or is a valid item
-        layer1_clickable_class = "clickable" if layer1_has_children else ""
-        layer1_onclick = f"onclick=\"navigateToItem('{layer1_id}')\"" if layer1_id else ""
+        # Make layer1 clickable only if it has children (is not a leaf node)
+        layer1_is_leaf = self.file_utils.is_leaf_node(layer1_id) if layer1_id else True
+        layer1_clickable_class = "clickable" if layer1_has_children and not layer1_is_leaf else ""
+        layer1_onclick = f"onclick=\"navigateToItem('{layer1_id}')\"" if layer1_id and not layer1_is_leaf else ""
 
         # Get layer1 context
         layer1_context = item.get("layer1_context")
@@ -383,9 +391,21 @@ class HTMLGenerator:
         layer2_name = layer2_item["name"]
         layer2_id = layer2_item.get("id", "")
 
-        # Only make clickable if it has an ID
-        clickable_class = "clickable" if layer2_id else ""
-        onclick_handler = f"onclick=\"navigateToItem('{layer2_id}')\"" if layer2_id else ""
+        # Only make clickable if it has an ID and is not a leaf node
+        layer2_is_leaf = self.file_utils.is_leaf_node(layer2_id) if layer2_id else True
+        
+        # Determine CSS classes
+        css_classes = [f"color-group-{color_name}"]
+        if layer2_id and not layer2_is_leaf:
+            css_classes.append("clickable")
+            onclick_handler = f"onclick=\"navigateToItem('{layer2_id}')\""
+        elif layer2_is_leaf:
+            css_classes.append("leaf")
+            onclick_handler = ""
+        else:
+            onclick_handler = ""
+        
+        layer2_class = " ".join(css_classes)
         
         # Get layer2 context
         layer2_context = layer2_item.get("context")
@@ -394,7 +414,7 @@ class HTMLGenerator:
         content = f"""
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 {clickable_class} color-group-{color_name}" {onclick_handler}>{layer2_name}</div>
+                        <div class="layer2 {layer2_class}" {onclick_handler}>{layer2_name}</div>
                         {layer2_context_html}
                         <div class="underline color-{color_name}-light"></div>
                     </div>
@@ -402,7 +422,7 @@ class HTMLGenerator:
         """
 
         for layer3_item in layer2_item.get("layer3", []):
-            content += self._build_layer3_item(layer3_item)
+            content += self._build_layer3_item(layer3_item, color_name)
 
         content += """
                     </div>
@@ -410,15 +430,19 @@ class HTMLGenerator:
         """
         return content
     
-    def _build_layer3_item(self, layer3_item):
+    def _build_layer3_item(self, layer3_item, color_name):
         """Build a single layer3 item."""
         if isinstance(layer3_item, dict):
             # New structure with ID
             layer3_name = layer3_item["name"]
             layer3_id = layer3_item.get("id", "")
-            layer3_clickable_class = "clickable" if layer3_id else ""
-            layer3_onclick = f"onclick=\"navigateToItem('{layer3_id}')\"" if layer3_id else ""
-            return f'<span class="layer3 {layer3_clickable_class}" {layer3_onclick}>{layer3_name}</span>'
+            
+            # Only make clickable if it has an ID and is not a leaf node
+            layer3_is_leaf = self.file_utils.is_leaf_node(layer3_id) if layer3_id else True
+            layer3_clickable_class = "clickable" if layer3_id and not layer3_is_leaf else ""
+            layer3_onclick = f"onclick=\"navigateToItem('{layer3_id}')\"" if layer3_id and not layer3_is_leaf else ""
+            
+            return f'<span class="layer3 {layer3_clickable_class} color-{color_name}" {layer3_onclick}>{layer3_name}</span>'
         else:
-            # Old structure (string only) - keep for backward compatibility
-            return f'<span class="layer3">{layer3_item}</span>'
+            # Old structure (string only) - keep for backward compatibility, but make non-clickable since it's a leaf
+            return f'<span class="layer3 color-{color_name}">{layer3_item}</span>'
