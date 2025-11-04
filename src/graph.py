@@ -18,12 +18,17 @@ class GraphApp:
         self.html_generator = HTMLGenerator()
     
     def generate_graph_for_file(self, md_file_path):
-        """Generate HTML graph for a specific markdown file."""
-        # Parse hierarchy for the file
+        """Generate HTML graph for a specific markdown file or directory."""
+        # Parse hierarchy for the file or directory
         data = self.hierarchy_builder.parse_md_hierarchy(md_file_path)
         
         # Determine output path
-        base_name = os.path.splitext(os.path.basename(md_file_path))[0]
+        if os.path.isdir(md_file_path):
+            # For directory (data/), use "data" as the base name
+            base_name = "data"
+        else:
+            base_name = os.path.splitext(os.path.basename(md_file_path))[0]
+        
         html_dir = self.file_utils.ensure_html_directory_exists()
         html_path = os.path.join(html_dir, f"{base_name}.html")
         
@@ -33,21 +38,32 @@ class GraphApp:
     
     def generate_graph_with_breadcrumb(self, md_file_path, parent_name=None):
         """Generate HTML graph with breadcrumb navigation."""
-        # Parse hierarchy for the file
+        # Parse hierarchy for the file or directory
         data = self.hierarchy_builder.parse_md_hierarchy(md_file_path)
         
         # Determine output path
-        base_name = os.path.splitext(os.path.basename(md_file_path))[0]
+        if os.path.isdir(md_file_path):
+            # For directory (data/), use "data" as the base name
+            base_name = "data"
+            parent_file = "data"
+        else:
+            base_name = os.path.splitext(os.path.basename(md_file_path))[0]
+            parent_file = os.path.basename(md_file_path)
+        
         html_dir = self.file_utils.ensure_html_directory_exists()
         html_path = os.path.join(html_dir, f"{base_name}.html")
         
         # Create breadcrumb using directory structure
-        breadcrumb = self.hierarchy_builder.get_breadcrumb_for_file(md_file_path)
+        if os.path.isdir(md_file_path):
+            # For data directory, create simple breadcrumb
+            breadcrumb = [("Data", None)]
+        else:
+            breadcrumb = self.hierarchy_builder.get_breadcrumb_for_file(md_file_path)
         
         # Generate HTML with breadcrumb
         self.html_generator.generate_html_graph(
             data, html_path, 
-            parent_file=os.path.basename(md_file_path), 
+            parent_file=parent_file, 
             breadcrumb_path=breadcrumb
         )
         return html_path
@@ -57,7 +73,7 @@ class GraphApp:
         # Get all markdown files from data directory
         md_file_paths = self.file_utils.get_markdown_files_from_directories()
         
-        # Filter out main.md
+        # Filter out main.md (no longer exists) - all data comes from filesystem
         md_file_paths = [f for f in md_file_paths if not f.endswith('main.md')]
 
         html_dir = self.file_utils.ensure_html_directory_exists()
@@ -94,11 +110,12 @@ def main():
     if len(sys.argv) > 1:
         md_file = sys.argv[1]
     else:
-        md_file = os.path.join("..", "data", "main.md")
+        # Use data directory as root instead of main.md
+        md_file = os.path.join("..", "data")
     
     # Check if this is a sub-graph request
     if len(sys.argv) > 2 and sys.argv[2] == "subgraph":
-        parent_name = sys.argv[3] if len(sys.argv) > 3 else "Main"
+        parent_name = sys.argv[3] if len(sys.argv) > 3 else "Data"
         html_path = app.generate_graph_with_breadcrumb(md_file, parent_name)
     else:
         html_path = app.generate_graph_for_file(md_file)

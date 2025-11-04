@@ -1,4 +1,1 @@
 Mood
-#Stress
-#Energy
-#Focus
