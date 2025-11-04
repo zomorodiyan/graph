@@ -159,19 +159,20 @@ class FileUtils:
             return False
     
     def get_all_items(self):
-        """Get all items in the structure."""
+        """Get all items in the structure (supports unlimited depth)."""
         structure = self.load_yaml_structure()
         items = []
         
-        for level1_key, level1_item in structure['structure'].items():
-            items.append({**level1_item, 'level': 1})
-            
-            for level2_key, level2_item in level1_item.get('children', {}).items():
-                items.append({**level2_item, 'level': 2})
+        def collect_items_recursive(items_dict, depth=1):
+            for key, item in items_dict.items():
+                # Add level information for backwards compatibility
+                item_with_level = {**item, 'level': depth}
+                items.append(item_with_level)
                 
-                for level3_key, level3_item in level2_item.get('children', {}).items():
-                    items.append({**level3_item, 'level': 3})
+                if 'children' in item:
+                    collect_items_recursive(item['children'], depth + 1)
         
+        collect_items_recursive(structure['structure'])
         return items
     
     def search_items(self, query):

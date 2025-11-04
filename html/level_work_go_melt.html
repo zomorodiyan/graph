@@ -238,250 +238,35 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('level.html')">Level</a> > <a href="#" onclick="loadGraph('level_work.html')">Work</a> > <span class="current">GO-MELT</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('level.html')">Level</a> > <span class="current">Work</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('body')">Body</div>
-                <div class="context layer1-context">Physical health and wellness</div>
+                <div class="layer1 clickable" onclick="navigateToItem('level_work_go_melt')">GO-MELT</div>
+                <div class="context layer1-context">GO-MELT project work and development</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_habit')">Habit</div>
-                        <div class="context layer2-context">Daily routines and healthy habits</div>
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_work_go_melt_simulation')">Simulation</div>
+                        <div class="context layer2-context">Simulation setup and execution</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('body_habit_evening')">Evening</span><span class="layer3 clickable" onclick="navigateToItem('body_habit_morning')">Morning</span>
+        <span class="layer3 clickable" onclick="navigateToItem('level_work_go_melt_simulation_preprocessing')">Preprocessing</span><span class="layer3 clickable" onclick="navigateToItem('level_work_go_melt_simulation_solver')">Solver</span><span class="layer3 clickable" onclick="navigateToItem('level_work_go_melt_simulation_postprocessing')">Postprocessing</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_nutrition')">Nutrition</div>
-                        <div class="context layer2-context">Diet, eating habits, and nutritional planning</div>
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('body_nutrition_cook')">Cook</span><span class="layer3 clickable" onclick="navigateToItem('body_nutrition_eat')">Eat</span><span class="layer3 clickable" onclick="navigateToItem('body_nutrition_prep')">Prep</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_train')">Train</div>
-                        <div class="context layer2-context">Physical exercise and fitness training</div>
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('body_train_cardio')">Cardio</span><span class="layer3 clickable" onclick="navigateToItem('body_train_flexibility')">Flexibility</span><span class="layer3 clickable" onclick="navigateToItem('body_train_strength')">Strength</span>
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('finance')">Finance</div>
-                <div class="context layer1-context">Financial planning and money management</div>
-                <div class="underline color-blue-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('finance_earn')">Earn</div>
-                        <div class="context layer2-context">Income generation and career development</div>
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('finance_earn_job')">Job</span><span class="layer3 clickable" onclick="navigateToItem('finance_earn_passive')">Passive</span><span class="layer3 clickable" onclick="navigateToItem('finance_earn_side')">Side</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('finance_invest')">Invest</div>
-                        <div class="context layer2-context">Investment strategies and wealth building</div>
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('finance_invest_assets')">Assets</span><span class="layer3 clickable" onclick="navigateToItem('finance_invest_education')">Education</span><span class="layer3 clickable" onclick="navigateToItem('finance_invest_save')">Save</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('finance_spend')">Spend</div>
-                        <div class="context layer2-context">Spending habits and budget management</div>
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('finance_spend_need')">Need</span><span class="layer3 clickable" onclick="navigateToItem('finance_spend_shop')">Shop</span><span class="layer3 clickable" onclick="navigateToItem('finance_spend_wish')">Wish</span>
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('interaction')">Interaction</div>
-                <div class="context layer1-context">Social relationships and communication</div>
-                <div class="underline color-purple-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('interaction_community')">Community</div>
-                        <div class="context layer2-context">Community involvement and social groups</div>
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('interaction_community_groups')">Groups</span><span class="layer3 clickable" onclick="navigateToItem('interaction_community_local')">Local</span><span class="layer3 clickable" onclick="navigateToItem('interaction_community_online')">Online</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('interaction_family')">Family</div>
-                        <div class="context layer2-context">Family relationships and connections</div>
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('interaction_family_extended')">Extended</span><span class="layer3 clickable" onclick="navigateToItem('interaction_family_parents')">Parents</span><span class="layer3 clickable" onclick="navigateToItem('interaction_family_siblings')">Siblings</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('interaction_friends')">Friends</div>
-                        <div class="context layer2-context">Friendships and social connections</div>
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('interaction_friends_close')">Close</span><span class="layer3 clickable" onclick="navigateToItem('interaction_friends_social')">Social</span><span class="layer3 clickable" onclick="navigateToItem('interaction_friends_work')">Work</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('interaction_love')">Love</div>
-                        <div class="context layer2-context">Romantic relationships and partnerships</div>
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('interaction_love_dating')">Dating</span><span class="layer3 clickable" onclick="navigateToItem('interaction_love_intimacy')">Intimacy</span><span class="layer3 clickable" onclick="navigateToItem('interaction_love_partner')">Partner</span>
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('level')">Level</div>
-                <div class="context layer1-context">Personal development and skill advancement</div>
-                <div class="underline color-red-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('level_goal')">Goal</div>
-                        <div class="context layer2-context">Goal setting and achievement planning</div>
-                        <div class="underline color-red-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('level_goal_long')">Long</span><span class="layer3 clickable" onclick="navigateToItem('level_goal_medium')">Medium</span><span class="layer3 clickable" onclick="navigateToItem('level_goal_short')">Short</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('level_skill')">Skill</div>
-                        <div class="context layer2-context">Skill development and learning</div>
-                        <div class="underline color-red-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('level_skill_creative')">Creative</span><span class="layer3 clickable" onclick="navigateToItem('level_skill_practical')">Practical</span><span class="layer3 clickable" onclick="navigateToItem('level_skill_professional')">Professional</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('level_study')">Study</div>
-                        <div class="context layer2-context">Learning and educational pursuits</div>
-                        <div class="underline color-red-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('level_study_asu_craft')">ASU Craft</span><span class="layer3 clickable" onclick="navigateToItem('level_study_iiot')">IIOT</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('level_work')">Work</div>
-                        <div class="context layer2-context">Professional work and projects</div>
-                        <div class="underline color-red-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('level_work_go_melt')">GO-MELT</span><span class="layer3 clickable" onclick="navigateToItem('level_work_high_speed')">HighSpeed</span><span class="layer3 clickable" onclick="navigateToItem('level_work_inherent_strain')">InherentStrain</span><span class="layer3 clickable" onclick="navigateToItem('level_work_project')">Project</span>
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('mind')">Mind</div>
-                <div class="context layer1-context">Mental health and cognitive wellness</div>
-                <div class="underline color-green-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('mind_mood')">Mood</div>
-                        <div class="context layer2-context">Emotional regulation and mood management</div>
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_work_go_melt_documentation')">Documentation</div>
+                        <div class="context layer2-context">Project documentation and reports</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
         
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('mind_rest')">Rest</div>
-                        <div class="context layer2-context">Mental rest, relaxation, and stress management</div>
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('time')">Time</div>
-                <div class="context layer1-context">Time management and scheduling</div>
-                <div class="underline color-blue-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('time_calendar')">Calendar</div>
-                        <div class="context layer2-context">Calendar management and time planning</div>
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('time_calendar_day')">Day</span><span class="layer3 clickable" onclick="navigateToItem('time_calendar_month')">Month</span><span class="layer3 clickable" onclick="navigateToItem('time_calendar_year')">Year</span>
                     </div>
                 </div>
         
