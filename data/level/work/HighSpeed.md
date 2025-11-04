@@ -1,4 +1,0 @@
-HighSpeed
-#ImageJ
-#GraphPV
-#Trace

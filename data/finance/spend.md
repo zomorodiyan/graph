@@ -1,4 +1,0 @@
-Spend
-#Shop
-#Need
-#Wish

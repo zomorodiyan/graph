@@ -1,4 +1,0 @@
-Friends
-#Close
-#Social
-#Work

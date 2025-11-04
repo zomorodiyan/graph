@@ -1,4 +1,0 @@
-Goal
-#Short
-#Medium
-#Long

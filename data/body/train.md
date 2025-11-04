@@ -1,4 +1,0 @@
-Train
-#Strength
-#Cardio
-#Flexibility

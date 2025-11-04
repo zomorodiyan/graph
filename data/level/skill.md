@@ -1,4 +1,0 @@
-Skill
-#Professional
-#Creative
-#Practical
