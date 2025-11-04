@@ -2,7 +2,6 @@
 YAML-based hierarchy builder for the graph application.
 Handles building and managing hierarchy structure from a YAML configuration file.
 """
-import os
 import yaml
 
 
@@ -29,18 +28,18 @@ class HierarchyBuilder:
         """Generate breadcrumb navigation for an item based on its ID (supports unlimited depth)."""
         structure = self._load_yaml_structure()
         
+        # No breadcrumb for data.html (root page)
+        if item_id == "data":
+            return []
+        
         # Find the item and build its path
         path = self._find_item_path(structure, item_id)
         
-        # Convert path to breadcrumb
+        # Convert path to breadcrumb - include all items in the path
         breadcrumb = [("Data", "data.html")]
         
-        for i, item in enumerate(path):
-            if i == len(path) - 1:
-                # Last item - don't include in clickable breadcrumb (it's the current page)
-                continue
-            else:
-                breadcrumb.append((item['title'], f"{item['id']}.html"))
+        for item in path:
+            breadcrumb.append((item['title'], f"{item['id']}.html"))
         
         return breadcrumb
     
@@ -111,9 +110,17 @@ class HierarchyBuilder:
         return data
     
     def _build_levels_from_item(self, item, levels_to_show):
-        """Build view starting from a specific item."""
-        # The item itself becomes layer1, its children become layer2, etc.
-        return [self._build_item_with_children(item, levels_to_show - 1)]
+        """Build view starting from a specific item's children."""
+        # Show the item's children as layer1, their children as layer2, etc.
+        data = []
+        
+        # If the item has children, show them as the top level
+        if 'children' in item:
+            for child_key, child_item in item['children'].items():
+                layer_data = self._build_item_with_children(child_item, levels_to_show - 1)
+                data.append(layer_data)
+        
+        return data
     
     def _build_item_with_children(self, item, remaining_levels):
         """Recursively build an item with its children up to specified depth."""
