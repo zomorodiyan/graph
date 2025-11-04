@@ -1,3 +1,1 @@
 Time
-#calendar
-#day
