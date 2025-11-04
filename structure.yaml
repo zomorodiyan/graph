@@ -8,12 +8,10 @@ structure:
   body:
     title: Body
     id: body
-    context: Physical health and wellness
     children:
       habit:
         title: Habit
         id: body_habit
-        context: Daily routines and healthy habits
         children:
           evening:
             title: Evening
@@ -26,7 +24,6 @@ structure:
       nutrition:
         title: Nutrition
         id: body_nutrition
-        context: Diet, eating habits, and nutritional planning
         children:
           cook:
             title: Cook
@@ -43,7 +40,6 @@ structure:
       train:
         title: Train
         id: body_train
-        context: Physical exercise and fitness training
         children:
           cardio:
             title: Cardio
@@ -61,12 +57,10 @@ structure:
   finance:
     title: Finance
     id: finance
-    context: Financial planning and money management
     children:
       earn:
         title: Earn
         id: finance_earn
-        context: Income generation and career development
         children:
           job:
             title: Job
@@ -83,7 +77,6 @@ structure:
       invest:
         title: Invest
         id: finance_invest
-        context: Investment strategies and wealth building
         children:
           assets:
             title: Assets
@@ -100,7 +93,6 @@ structure:
       spend:
         title: Spend
         id: finance_spend
-        context: Spending habits and budget management
         children:
           need:
             title: Need
@@ -118,12 +110,10 @@ structure:
   interaction:
     title: Interaction
     id: interaction
-    context: Social relationships and communication
     children:
       community:
         title: Community
         id: interaction_community
-        context: Community involvement and social groups
         children:
           groups:
             title: Groups
@@ -140,7 +130,6 @@ structure:
       family:
         title: Family
         id: interaction_family
-        context: Family relationships and connections
         children:
           extended:
             title: Extended
@@ -157,7 +146,6 @@ structure:
       friends:
         title: Friends
         id: interaction_friends
-        context: Friendships and social connections
         children:
           close:
             title: Close
@@ -174,7 +162,6 @@ structure:
       love:
         title: Love
         id: interaction_love
-        context: Romantic relationships and partnerships
         children:
           dating:
             title: Dating
@@ -192,12 +179,10 @@ structure:
   level:
     title: Level
     id: level
-    context: Personal development and skill advancement
     children:
       goal:
         title: Goal
         id: level_goal
-        context: Goal setting and achievement planning
         children:
           long:
             title: Long
@@ -214,7 +199,6 @@ structure:
       skill:
         title: Skill
         id: level_skill
-        context: Skill development and learning
         children:
           creative:
             title: Creative
@@ -231,7 +215,6 @@ structure:
       study:
         title: Study
         id: level_study
-        context: Learning and educational pursuits
         children:
           asu_craft:
             title: ASU Craft
@@ -244,17 +227,14 @@ structure:
       work:
         title: Work
         id: level_work
-        context: Professional work and projects
         children:
           go_melt:
             title: GO-MELT
             id: level_work_go_melt
-            context: GO-MELT project work and development
             children:
               simulation:
                 title: Simulation
                 id: level_work_go_melt_simulation
-                context: Simulation setup and execution
                 children:
                   preprocessing:
                     title: Preprocessing
@@ -271,45 +251,36 @@ structure:
               documentation:
                 title: Documentation
                 id: level_work_go_melt_documentation
-                context: Project documentation and reports
           high_speed:
             title: HighSpeed
             id: level_work_high_speed
-            context: High-speed manufacturing and processing projects
           inherent_strain:
             title: InherentStrain
             id: level_work_inherent_strain
-            context: Inherent strain analysis and simulation work
           project:
             title: Project
             id: level_work_project
-            context: General project management and execution
 
   mind:
     title: Mind
     id: mind
-    context: Mental health and cognitive wellness
     children:
       mood:
         title: Mood
         id: mind_mood
-        context: Emotional regulation and mood management
         children: {}
       rest:
         title: Rest
         id: mind_rest
-        context: Mental rest, relaxation, and stress management
         children: {}
 
   time:
     title: Time
     id: time
-    context: Time management and scheduling
     children:
       calendar:
         title: Calendar
         id: time_calendar
-        context: Calendar management and time planning
         children:
           day:
             title: Day
