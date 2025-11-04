@@ -231,6 +231,7 @@ structure:
           go_melt:
             title: GO-MELT
             id: level_work_go_melt
+            context: November 7
             children:
               simulation:
                 title: Simulation
@@ -248,9 +249,9 @@ structure:
                     title: Postprocessing
                     id: level_work_go_melt_simulation_postprocessing
                     context: Results analysis and visualization
-              documentation:
-                title: Documentation
-                id: level_work_go_melt_documentation
+              slides:
+                title: Slides
+                id: level_work_go_melt_slides
           high_speed:
             title: HighSpeed
             id: level_work_high_speed

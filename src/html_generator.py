@@ -56,7 +56,7 @@ class HTMLGenerator:
 <body>
     <div class="graph-container">
         {breadcrumb_html}
-        {self._build_content_sections(data, current_item_id)}
+        {self._build_content_sections(data)}
     </div>
     <div id="notification" class="notification"></div>
     <script>
@@ -327,7 +327,7 @@ class HTMLGenerator:
         }
         """
     
-    def _build_content_sections(self, data, current_item_id):
+    def _build_content_sections(self, data):
         """Build the main content sections of the HTML."""
         content = ""
         
@@ -340,12 +340,12 @@ class HTMLGenerator:
         ]
 
         for idx, item in enumerate(data):
-            color_name, light, medium, dark = base_colors[idx % 4]
-            content += self._build_layer1_section(item, color_name, current_item_id)
+            color_name = base_colors[idx % 4][0]  # Only get the color name
+            content += self._build_layer1_section(item, color_name)
 
         return content
     
-    def _build_layer1_section(self, item, color_name, current_item_id):
+    def _build_layer1_section(self, item, color_name):
         """Build a layer1 section with all its children."""
         layer1_name = item["layer1"]
         layer1_id = item.get("layer1_id", "")
@@ -370,7 +370,7 @@ class HTMLGenerator:
         """
 
         for layer2_item in item.get("layer2", []):
-            content += self._build_layer2_section(layer2_item, layer1_name, color_name, current_item_id)
+            content += self._build_layer2_section(layer2_item, color_name)
 
         content += """
             </div>
@@ -378,11 +378,10 @@ class HTMLGenerator:
         
         return content
     
-    def _build_layer2_section(self, layer2_item, layer1_name, color_name, current_item_id):
+    def _build_layer2_section(self, layer2_item, color_name):
         """Build a layer2 section with its layer3 children."""
         layer2_name = layer2_item["name"]
         layer2_id = layer2_item.get("id", "")
-        layer2_has_children = len(layer2_item.get("layer3", [])) > 0
 
         # Only make clickable if it has an ID
         clickable_class = "clickable" if layer2_id else ""
@@ -403,7 +402,7 @@ class HTMLGenerator:
         """
 
         for layer3_item in layer2_item.get("layer3", []):
-            content += self._build_layer3_item(layer3_item, layer2_name)
+            content += self._build_layer3_item(layer3_item)
 
         content += """
                     </div>
@@ -411,7 +410,7 @@ class HTMLGenerator:
         """
         return content
     
-    def _build_layer3_item(self, layer3_item, layer2_name):
+    def _build_layer3_item(self, layer3_item):
         """Build a single layer3 item."""
         if isinstance(layer3_item, dict):
             # New structure with ID
