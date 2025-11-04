@@ -69,23 +69,6 @@ class GraphApp:
         print(f"Generated {generated_count} individual item views")
         return main_html_path
     
-    def get_structure_summary(self):
-        """Get a summary of the structure for diagnostics."""
-        try:
-            all_items = self.file_utils.get_all_items()
-            
-            summary = {
-                "total_items": len(all_items),
-                "level_1_items": len([i for i in all_items if i.get('level') == 1]),
-                "level_2_items": len([i for i in all_items if i.get('level') == 2]),
-                "level_3_items": len([i for i in all_items if i.get('level') == 3]),
-                "metadata": self.file_utils.get_structure_metadata()
-            }
-            
-            return summary
-        except Exception as e:
-            return {"error": str(e)}
-    
     def search_items(self, query):
         """Search for items matching a query."""
         try:
@@ -94,37 +77,6 @@ class GraphApp:
             print(f"Error searching items: {e}")
             return []
     
-    def validate_structure(self):
-        """Validate the YAML structure for common issues."""
-        issues = []
-        
-        try:
-            all_items = self.file_utils.get_all_items()
-            
-            # Check for duplicate IDs
-            ids_seen = set()
-            for item in all_items:
-                item_id = item.get('id')
-                if item_id in ids_seen:
-                    issues.append(f"Duplicate ID found: {item_id}")
-                else:
-                    ids_seen.add(item_id)
-            
-            # Check for missing titles
-            for item in all_items:
-                if not item.get('title'):
-                    issues.append(f"Missing title for ID: {item.get('id', 'unknown')}")
-            
-            # Check for missing IDs
-            for item in all_items:
-                if not item.get('id'):
-                    issues.append(f"Missing ID for title: {item.get('title', 'unknown')}")
-            
-            return issues
-        
-        except Exception as e:
-            return [f"Error validating structure: {e}"]
-
 
 def main():
     """Main entry point for the graph generation script."""
@@ -134,27 +86,7 @@ def main():
     if len(sys.argv) > 1:
         command = sys.argv[1].lower()
         
-        if command == "summary":
-            # Show structure summary
-            summary = app.get_structure_summary()
-            print("=== Structure Summary ===")
-            for key, value in summary.items():
-                print(f"{key}: {value}")
-            return
-        
-        elif command == "validate":
-            # Validate structure
-            issues = app.validate_structure()
-            print("=== Structure Validation ===")
-            if issues:
-                print("Issues found:")
-                for issue in issues:
-                    print(f"- {issue}")
-            else:
-                print("No issues found. Structure is valid.")
-            return
-        
-        elif command == "search":
+        if command == "search":
             # Search for items
             if len(sys.argv) > 2:
                 query = " ".join(sys.argv[2:])
@@ -178,30 +110,13 @@ def main():
         
         else:
             print(f"Unknown command: {command}")
-            print("Available commands: summary, validate, search <query>, item:<id>")
+            print("Available commands: search <query>, item:<id>")
             return
     
     # Default behavior: generate all graphs
     try:
         main_html_path = app.generate_all_graphs()
-        
-        # Show summary
-        summary = app.get_structure_summary()
-        print("\n=== Generation Summary ===")
-        print(f"Total items processed: {summary.get('total_items', 0)}")
-        print(f"Level 1 categories: {summary.get('level_1_items', 0)}")
-        print(f"Level 2 subcategories: {summary.get('level_2_items', 0)}")
-        print(f"Level 3 items: {summary.get('level_3_items', 0)}")
-        print(f"Main HTML file: {main_html_path}")
-        
-        # Validate structure
-        issues = app.validate_structure()
-        if issues:
-            print("\n=== Validation Issues ===")
-            for issue in issues:
-                print(f"Warning: {issue}")
-        else:
-            print("\nStructure validation passed")
+        print(f"\nMain HTML file: {main_html_path}")
         
     except Exception as e:
         print(f"Error during graph generation: {e}")

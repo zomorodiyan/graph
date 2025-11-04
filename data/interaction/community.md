@@ -1,4 +1,0 @@
-Community
-#Local
-#Online
-#Groups

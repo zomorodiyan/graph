@@ -1,4 +1,0 @@
-Earn
-#Job
-#Side
-#Passive

@@ -99,31 +99,6 @@ def main():
         except Exception as e:
             print(f"Error running graph.py: {e}")
             return
-    
-    elif command == "summary":
-        # Show structure summary
-        print("Getting structure summary...")
-        try:
-            result = subprocess.run([python_cmd, 'graph.py', 'summary'], 
-                                  capture_output=True, text=True, cwd=src_dir)
-            print(result.stdout)
-            if result.stderr:
-                print(f"Warnings: {result.stderr}")
-        except Exception as e:
-            print(f"Error getting summary: {e}")
-    
-    elif command == "validate":
-        # Validate structure
-        print("Validating YAML structure...")
-        try:
-            result = subprocess.run([python_cmd, 'graph.py', 'validate'], 
-                                  capture_output=True, text=True, cwd=src_dir)
-            print(result.stdout)
-            if result.stderr:
-                print(f"Errors: {result.stderr}")
-        except Exception as e:
-            print(f"Error validating structure: {e}")
-    
     elif command.startswith("search:"):
         # Search for items
         query = command[7:]  # Remove "search:" prefix
@@ -147,15 +122,12 @@ def main():
         print("Commands:")
         print("  serve          Generate HTML files and start web server (default)")
         print("  generate       Generate HTML files only")
-        print("  summary        Show structure summary")
-        print("  validate       Validate YAML structure")
         print("  search:<query> Search for items matching query")
         print("  help           Show this help message")
         print()
         print("Examples:")
         print("  python run.py")
         print("  python run.py generate")
-        print("  python run.py summary")
         print("  python run.py search:finance")
         print()
         print("The structure is defined in structure.yaml")

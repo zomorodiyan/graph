@@ -1,4 +1,0 @@
-Love
-#Partner
-#Dating
-#Intimacy

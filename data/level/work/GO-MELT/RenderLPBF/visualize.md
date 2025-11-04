@@ -1,4 +1,0 @@
-Visualize
-#Paraview
-#Blender
-#Final

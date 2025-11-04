@@ -1,4 +1,0 @@
-Day
-#Morning
-#Afternoon
-#Evening
