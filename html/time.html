@@ -238,11 +238,11 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><span class="current">Data</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Time</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('time')">Time</div>
+                <div class="layer1 clickable" onclick="navigateToItem('time_calendar')">Calendar</div>
                 
                 <div class="underline color-green-medium"></div>
             </div>
@@ -250,12 +250,34 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('time_calendar')">Calendar</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('time_calendar_day')">Day</div>
+                        <div class="context layer2-context">Daily planning and time management</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('time_calendar_day')">Day</span><span class="layer3 clickable" onclick="navigateToItem('time_calendar_month')">Month</span><span class="layer3 clickable" onclick="navigateToItem('time_calendar_year')">Year</span>
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('time_calendar_month')">Month</div>
+                        <div class="context layer2-context">Monthly planning and goal tracking</div>
+                        <div class="underline color-green-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('time_calendar_year')">Year</div>
+                        <div class="context layer2-context">Annual planning and long-term scheduling</div>
+                        <div class="underline color-green-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
                     </div>
                 </div>
         

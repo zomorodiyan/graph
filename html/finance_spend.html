@@ -238,48 +238,35 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Finance</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('finance.html')">Finance</a> > <span class="current">Spend</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('finance_spend')">Spend</div>
-                
+                <div class="layer1 " onclick="navigateToItem('finance_spend_need')">Need</div>
+                <div class="context layer1-context">Essential expenses and necessities</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
         
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('finance_spend_need')">Need</div>
-                        <div class="context layer2-context">Essential expenses and necessities</div>
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " onclick="navigateToItem('finance_spend_shop')">Shop</div>
+                <div class="context layer1-context">Shopping strategies and smart purchasing</div>
+                <div class="underline color-blue-medium"></div>
+            </div>
+            <div class="layer2-section">
         
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('finance_spend_shop')">Shop</div>
-                        <div class="context layer2-context">Shopping strategies and smart purchasing</div>
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('finance_spend_wish')">Wish</div>
-                        <div class="context layer2-context">Wants and discretionary spending</div>
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " onclick="navigateToItem('finance_spend_wish')">Wish</div>
+                <div class="context layer1-context">Wants and discretionary spending</div>
+                <div class="underline color-purple-medium"></div>
+            </div>
+            <div class="layer2-section">
         
             </div>
         </div>

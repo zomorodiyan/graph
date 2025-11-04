@@ -238,30 +238,30 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Level</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('level.html')">Level</a> > <span class="current">Work</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('level_work')">Work</div>
-                
+                <div class="layer1 clickable" onclick="navigateToItem('level_work_go_melt')">GO-MELT</div>
+                <div class="context layer1-context">November 7</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_work_go_melt')">GO-MELT</div>
-                        <div class="context layer2-context">November 7</div>
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_work_go_melt_simulation')">Simulation</div>
+                        
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('level_work_go_melt_simulation')">Simulation</span><span class="layer3 clickable" onclick="navigateToItem('level_work_go_melt_slides')">Slides</span>
+        <span class="layer3 clickable" onclick="navigateToItem('level_work_go_melt_simulation_preprocessing')">Preprocessing</span><span class="layer3 clickable" onclick="navigateToItem('level_work_go_melt_simulation_solver')">Solver</span><span class="layer3 clickable" onclick="navigateToItem('level_work_go_melt_simulation_postprocessing')">Postprocessing</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_work_high_speed')">HighSpeed</div>
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_work_go_melt_slides')">Slides</div>
                         
                         <div class="underline color-green-light"></div>
                     </div>
@@ -270,27 +270,35 @@
                     </div>
                 </div>
         
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_work_inherent_strain')">InherentStrain</div>
-                        
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " onclick="navigateToItem('level_work_high_speed')">HighSpeed</div>
+                
+                <div class="underline color-blue-medium"></div>
+            </div>
+            <div class="layer2-section">
         
-                    </div>
-                </div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " onclick="navigateToItem('level_work_inherent_strain')">InherentStrain</div>
+                
+                <div class="underline color-purple-medium"></div>
+            </div>
+            <div class="layer2-section">
         
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_work_project')">Project</div>
-                        
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " onclick="navigateToItem('level_work_project')">Project</div>
+                
+                <div class="underline color-red-medium"></div>
+            </div>
+            <div class="layer2-section">
         
             </div>
         </div>

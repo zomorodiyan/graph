@@ -238,11 +238,11 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><span class="current">Data</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Interaction</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('interaction')">Interaction</div>
+                <div class="layer1 clickable" onclick="navigateToItem('interaction_community')">Community</div>
                 
                 <div class="underline color-green-medium"></div>
             </div>
@@ -250,45 +250,163 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_community')">Community</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_community_groups')">Groups</div>
+                        <div class="context layer2-context">Interest groups and social organizations</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('interaction_community_groups')">Groups</span><span class="layer3 clickable" onclick="navigateToItem('interaction_community_local')">Local</span><span class="layer3 clickable" onclick="navigateToItem('interaction_community_online')">Online</span>
+        
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_family')">Family</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_community_local')">Local</div>
+                        <div class="context layer2-context">Local community engagement and events</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('interaction_family_extended')">Extended</span><span class="layer3 clickable" onclick="navigateToItem('interaction_family_parents')">Parents</span><span class="layer3 clickable" onclick="navigateToItem('interaction_family_siblings')">Siblings</span>
+        
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_friends')">Friends</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_community_online')">Online</div>
+                        <div class="context layer2-context">Online communities and digital social spaces</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('interaction_friends_close')">Close</span><span class="layer3 clickable" onclick="navigateToItem('interaction_friends_social')">Social</span><span class="layer3 clickable" onclick="navigateToItem('interaction_friends_work')">Work</span>
+        
+                    </div>
+                </div>
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 clickable" onclick="navigateToItem('interaction_family')">Family</div>
+                
+                <div class="underline color-blue-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('interaction_family_extended')">Extended</div>
+                        <div class="context layer2-context">Extended family relationships and gatherings</div>
+                        <div class="underline color-blue-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_love')">Love</div>
-                        
-                        <div class="underline color-green-light"></div>
+                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('interaction_family_parents')">Parents</div>
+                        <div class="context layer2-context">Relationship with parents and caregivers</div>
+                        <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('interaction_love_dating')">Dating</span><span class="layer3 clickable" onclick="navigateToItem('interaction_love_intimacy')">Intimacy</span><span class="layer3 clickable" onclick="navigateToItem('interaction_love_partner')">Partner</span>
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('interaction_family_siblings')">Siblings</div>
+                        <div class="context layer2-context">Sibling relationships and connections</div>
+                        <div class="underline color-blue-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 clickable" onclick="navigateToItem('interaction_friends')">Friends</div>
+                
+                <div class="underline color-purple-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('interaction_friends_close')">Close</div>
+                        <div class="context layer2-context">Close friendships and intimate connections</div>
+                        <div class="underline color-purple-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('interaction_friends_social')">Social</div>
+                        <div class="context layer2-context">Social circles and acquaintances</div>
+                        <div class="underline color-purple-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('interaction_friends_work')">Work</div>
+                        <div class="context layer2-context">Professional relationships and workplace friendships</div>
+                        <div class="underline color-purple-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 clickable" onclick="navigateToItem('interaction_love')">Love</div>
+                
+                <div class="underline color-red-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('interaction_love_dating')">Dating</div>
+                        <div class="context layer2-context">Dating experiences and relationship building</div>
+                        <div class="underline color-red-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('interaction_love_intimacy')">Intimacy</div>
+                        <div class="context layer2-context">Emotional and physical intimacy</div>
+                        <div class="underline color-red-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('interaction_love_partner')">Partner</div>
+                        <div class="context layer2-context">Long-term partnership and commitment</div>
+                        <div class="underline color-red-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
                     </div>
                 </div>
         

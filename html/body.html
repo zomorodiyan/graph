@@ -238,11 +238,11 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><span class="current">Data</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Body</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('body')">Body</div>
+                <div class="layer1 clickable" onclick="navigateToItem('body_habit')">Habit</div>
                 
                 <div class="underline color-green-medium"></div>
             </div>
@@ -250,34 +250,109 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_habit')">Habit</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_habit_evening')">Evening</div>
+                        <div class="context layer2-context">Evening routine and wind-down activities</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('body_habit_evening')">Evening</span><span class="layer3 clickable" onclick="navigateToItem('body_habit_morning')">Morning</span>
+        
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_nutrition')">Nutrition</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_habit_morning')">Morning</div>
+                        <div class="context layer2-context">Morning routine and energy-building activities</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('body_nutrition_cook')">Cook</span><span class="layer3 clickable" onclick="navigateToItem('body_nutrition_eat')">Eat</span><span class="layer3 clickable" onclick="navigateToItem('body_nutrition_prep')">Prep</span>
+        
+                    </div>
+                </div>
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 clickable" onclick="navigateToItem('body_nutrition')">Nutrition</div>
+                
+                <div class="underline color-blue-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('body_nutrition_cook')">Cook</div>
+                        <div class="context layer2-context">Meal preparation and cooking skills</div>
+                        <div class="underline color-blue-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_train')">Train</div>
-                        
-                        <div class="underline color-green-light"></div>
+                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('body_nutrition_eat')">Eat</div>
+                        <div class="context layer2-context">Eating habits and mindful consumption</div>
+                        <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('body_train_cardio')">Cardio</span><span class="layer3 clickable" onclick="navigateToItem('body_train_flexibility')">Flexibility</span><span class="layer3 clickable" onclick="navigateToItem('body_train_strength')">Strength</span>
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('body_nutrition_prep')">Prep</div>
+                        <div class="context layer2-context">Meal planning and preparation strategies</div>
+                        <div class="underline color-blue-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 clickable" onclick="navigateToItem('body_train')">Train</div>
+                
+                <div class="underline color-purple-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('body_train_cardio')">Cardio</div>
+                        <div class="context layer2-context">Cardiovascular fitness and endurance training</div>
+                        <div class="underline color-purple-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('body_train_flexibility')">Flexibility</div>
+                        <div class="context layer2-context">Stretching, yoga, and mobility work</div>
+                        <div class="underline color-purple-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('body_train_strength')">Strength</div>
+                        <div class="context layer2-context">Weight training and muscle building</div>
+                        <div class="underline color-purple-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
                     </div>
                 </div>
         

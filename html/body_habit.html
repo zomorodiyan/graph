@@ -238,37 +238,25 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Body</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('body.html')">Body</a> > <span class="current">Habit</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('body_habit')">Habit</div>
-                
+                <div class="layer1 " onclick="navigateToItem('body_habit_evening')">Evening</div>
+                <div class="context layer1-context">Evening routine and wind-down activities</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
         
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_habit_evening')">Evening</div>
-                        <div class="context layer2-context">Evening routine and wind-down activities</div>
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_habit_morning')">Morning</div>
-                        <div class="context layer2-context">Morning routine and energy-building activities</div>
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " onclick="navigateToItem('body_habit_morning')">Morning</div>
+                <div class="context layer1-context">Morning routine and energy-building activities</div>
+                <div class="underline color-blue-medium"></div>
+            </div>
+            <div class="layer2-section">
         
             </div>
         </div>
