@@ -5,6 +5,18 @@ metadata:
   updated_at: '2025-11-04T14:00:00.000000'
 
 structure:
+  mind:
+    title: Mind
+    id: mind
+    children:
+      mood:
+        title: Mood
+        id: mind_mood
+        children: {}
+      rest:
+        title: Rest
+        id: mind_rest
+        children: {}
   body:
     title: Body
     id: body
@@ -180,38 +192,6 @@ structure:
     title: Level
     id: level
     children:
-      goal:
-        title: Goal
-        id: level_goal
-        children:
-          long:
-            title: Long
-            id: level_goal_long
-            context: Long-term goals and life vision
-          medium:
-            title: Medium
-            id: level_goal_medium
-            context: Medium-term objectives and milestones
-          short:
-            title: Short
-            id: level_goal_short
-            context: Short-term goals and immediate actions
-      skill:
-        title: Skill
-        id: level_skill
-        children:
-          creative:
-            title: Creative
-            id: level_skill_creative
-            context: Creative skills and artistic abilities
-          practical:
-            title: Practical
-            id: level_skill_practical
-            context: Practical life skills and everyday competencies
-          professional:
-            title: Professional
-            id: level_skill_professional
-            context: Professional skills and career development
       study:
         title: Study
         id: level_study
@@ -219,11 +199,24 @@ structure:
           asu_craft:
             title: ASU Craft
             id: level_study_asu_craft
-            context: ASU craft program and related studies
+            context: meet w. Xavier & Zixun
           iiot:
-            title: IIOT
+            title: IIoT
             id: level_study_iiot
-            context: Industrial Internet of Things learning and applications
+            context: Industrial Internet of Things
+            children:
+              termpaper:
+                title: Term paper
+                id: level_work_go_melt_simulation_termpaper
+                context:  Due past 
+              groupProject:
+                title: Group Project
+                id: level_work_go_melt_simulation_groupProject
+                context:  Meet Ryan wednesday 3:30pm
+              Discussion:
+                title: Discussion
+                id: level_work_go_melt_simulation_Discussion
+                context:  Wednesday 4:30-6:45pm
       work:
         title: Work
         id: level_work
@@ -237,43 +230,32 @@ structure:
                 title: Simulation
                 id: level_work_go_melt_simulation
                 children:
-                  preprocessing:
-                    title: Preprocessing
-                    id: level_work_go_melt_simulation_preprocessing
-                    context: Data preprocessing and mesh generation
-                  solver:
-                    title: Solver
-                    id: level_work_go_melt_simulation_solver
-                    context: Solver configuration and execution
-                  postprocessing:
-                    title: Postprocessing
-                    id: level_work_go_melt_simulation_postprocessing
-                    context: Results analysis and visualization
+                  setup:
+                    title: Setup
+                    id: level_work_go_melt_simulation_setup
+                    context: AMBench 2025 challenge 7
+                  refinement:
+                    title: Refinement
+                    id: level_work_go_melt_simulation_refinement  
+                    context: Costs for 3 levels
               slides:
                 title: Slides
                 id: level_work_go_melt_slides
+                context: GO-MELT vs AMB
           high_speed:
             title: HighSpeed
             id: level_work_high_speed
           inherent_strain:
             title: InherentStrain
             id: level_work_inherent_strain
-          project:
-            title: Project
-            id: level_work_project
+            context: November 10
+      goal:
+        title: Goal
+        id: level_goal
+      skill:
+        title: Skill
+        id: level_skill
 
-  mind:
-    title: Mind
-    id: mind
-    children:
-      mood:
-        title: Mood
-        id: mind_mood
-        children: {}
-      rest:
-        title: Rest
-        id: mind_rest
-        children: {}
 
   time:
     title: Time
@@ -286,12 +268,9 @@ structure:
           day:
             title: Day
             id: time_calendar_day
-            context: Daily planning and time management
           month:
             title: Month
             id: time_calendar_month
-            context: Monthly planning and goal tracking
           year:
             title: Year
             id: time_calendar_year
-            context: Annual planning and long-term scheduling

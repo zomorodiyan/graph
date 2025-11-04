@@ -51,6 +51,9 @@
         .layer2.clickable {
             font-weight: bold;
         }
+        .layer2.leaf {
+            font-weight: bold;
+        }
         .layer2.color-group-green:hover {
             background-color: #A5D6A7;
         }
@@ -124,6 +127,10 @@
         .layer3:not(.clickable) {
             cursor: default;
         }
+        .layer3.color-green { color: #1B5E20; }
+        .layer3.color-blue { color: #0D47A1; }
+        .layer3.color-purple { color: #4A148C; }
+        .layer3.color-red { color: #BF360C; }
         .underline {
             height: 2px;
             margin-top: 2px;
@@ -238,8 +245,38 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('level.html')">Level</a> > <a href="#" onclick="loadGraph('level_study.html')">Study</a> > <span class="current">IIOT</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('level.html')">Level</a> > <a href="#" onclick="loadGraph('level_study.html')">Study</a> > <span class="current">IIoT</span></div>
         
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >Term paper</div>
+                <div class="context layer1-context">Due past</div>
+                <div class="underline color-green-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >Group Project</div>
+                <div class="context layer1-context">Meet Ryan wednesday 3:30pm</div>
+                <div class="underline color-blue-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >Discussion</div>
+                <div class="context layer1-context">Wednesday 4:30-6:45pm</div>
+                <div class="underline color-purple-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

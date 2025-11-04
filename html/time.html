@@ -51,6 +51,9 @@
         .layer2.clickable {
             font-weight: bold;
         }
+        .layer2.leaf {
+            font-weight: bold;
+        }
         .layer2.color-group-green:hover {
             background-color: #A5D6A7;
         }
@@ -124,6 +127,10 @@
         .layer3:not(.clickable) {
             cursor: default;
         }
+        .layer3.color-green { color: #1B5E20; }
+        .layer3.color-blue { color: #0D47A1; }
+        .layer3.color-purple { color: #4A148C; }
+        .layer3.color-red { color: #BF360C; }
         .underline {
             height: 2px;
             margin-top: 2px;
@@ -250,8 +257,8 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('time_calendar_day')">Day</div>
-                        <div class="context layer2-context">Daily planning and time management</div>
+                        <div class="layer2 color-group-green leaf" >Day</div>
+                        
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -261,8 +268,8 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('time_calendar_month')">Month</div>
-                        <div class="context layer2-context">Monthly planning and goal tracking</div>
+                        <div class="layer2 color-group-green leaf" >Month</div>
+                        
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -272,8 +279,8 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('time_calendar_year')">Year</div>
-                        <div class="context layer2-context">Annual planning and long-term scheduling</div>
+                        <div class="layer2 color-group-green leaf" >Year</div>
+                        
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">

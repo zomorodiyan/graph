@@ -51,6 +51,9 @@
         .layer2.clickable {
             font-weight: bold;
         }
+        .layer2.leaf {
+            font-weight: bold;
+        }
         .layer2.color-group-green:hover {
             background-color: #A5D6A7;
         }
@@ -124,6 +127,10 @@
         .layer3:not(.clickable) {
             cursor: default;
         }
+        .layer3.color-green { color: #1B5E20; }
+        .layer3.color-blue { color: #0D47A1; }
+        .layer3.color-purple { color: #4A148C; }
+        .layer3.color-red { color: #BF360C; }
         .underline {
             height: 2px;
             margin-top: 2px;
@@ -250,7 +257,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_community_groups')">Groups</div>
+                        <div class="layer2 color-group-green leaf" >Groups</div>
                         <div class="context layer2-context">Interest groups and social organizations</div>
                         <div class="underline color-green-light"></div>
                     </div>
@@ -261,7 +268,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_community_local')">Local</div>
+                        <div class="layer2 color-group-green leaf" >Local</div>
                         <div class="context layer2-context">Local community engagement and events</div>
                         <div class="underline color-green-light"></div>
                     </div>
@@ -272,7 +279,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_community_online')">Online</div>
+                        <div class="layer2 color-group-green leaf" >Online</div>
                         <div class="context layer2-context">Online communities and digital social spaces</div>
                         <div class="underline color-green-light"></div>
                     </div>
@@ -293,7 +300,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('interaction_family_extended')">Extended</div>
+                        <div class="layer2 color-group-blue leaf" >Extended</div>
                         <div class="context layer2-context">Extended family relationships and gatherings</div>
                         <div class="underline color-blue-light"></div>
                     </div>
@@ -304,7 +311,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('interaction_family_parents')">Parents</div>
+                        <div class="layer2 color-group-blue leaf" >Parents</div>
                         <div class="context layer2-context">Relationship with parents and caregivers</div>
                         <div class="underline color-blue-light"></div>
                     </div>
@@ -315,7 +322,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('interaction_family_siblings')">Siblings</div>
+                        <div class="layer2 color-group-blue leaf" >Siblings</div>
                         <div class="context layer2-context">Sibling relationships and connections</div>
                         <div class="underline color-blue-light"></div>
                     </div>
@@ -336,7 +343,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('interaction_friends_close')">Close</div>
+                        <div class="layer2 color-group-purple leaf" >Close</div>
                         <div class="context layer2-context">Close friendships and intimate connections</div>
                         <div class="underline color-purple-light"></div>
                     </div>
@@ -347,7 +354,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('interaction_friends_social')">Social</div>
+                        <div class="layer2 color-group-purple leaf" >Social</div>
                         <div class="context layer2-context">Social circles and acquaintances</div>
                         <div class="underline color-purple-light"></div>
                     </div>
@@ -358,7 +365,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('interaction_friends_work')">Work</div>
+                        <div class="layer2 color-group-purple leaf" >Work</div>
                         <div class="context layer2-context">Professional relationships and workplace friendships</div>
                         <div class="underline color-purple-light"></div>
                     </div>
@@ -379,7 +386,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('interaction_love_dating')">Dating</div>
+                        <div class="layer2 color-group-red leaf" >Dating</div>
                         <div class="context layer2-context">Dating experiences and relationship building</div>
                         <div class="underline color-red-light"></div>
                     </div>
@@ -390,7 +397,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('interaction_love_intimacy')">Intimacy</div>
+                        <div class="layer2 color-group-red leaf" >Intimacy</div>
                         <div class="context layer2-context">Emotional and physical intimacy</div>
                         <div class="underline color-red-light"></div>
                     </div>
@@ -401,7 +408,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('interaction_love_partner')">Partner</div>
+                        <div class="layer2 color-group-red leaf" >Partner</div>
                         <div class="context layer2-context">Long-term partnership and commitment</div>
                         <div class="underline color-red-light"></div>
                     </div>

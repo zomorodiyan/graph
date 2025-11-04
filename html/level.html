@@ -51,6 +51,9 @@
         .layer2.clickable {
             font-weight: bold;
         }
+        .layer2.leaf {
+            font-weight: bold;
+        }
         .layer2.color-group-green:hover {
             background-color: #A5D6A7;
         }
@@ -124,6 +127,10 @@
         .layer3:not(.clickable) {
             cursor: default;
         }
+        .layer3.color-green { color: #1B5E20; }
+        .layer3.color-blue { color: #0D47A1; }
+        .layer3.color-purple { color: #4A148C; }
+        .layer3.color-red { color: #BF360C; }
         .underline {
             height: 2px;
             margin-top: 2px;
@@ -242,7 +249,7 @@
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('level_goal')">Goal</div>
+                <div class="layer1 clickable" onclick="navigateToItem('level_study')">Study</div>
                 
                 <div class="underline color-green-medium"></div>
             </div>
@@ -250,8 +257,8 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_goal_long')">Long</div>
-                        <div class="context layer2-context">Long-term goals and life vision</div>
+                        <div class="layer2 color-group-green leaf" >ASU Craft</div>
+                        <div class="context layer2-context">meet w. Xavier & Zixun</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -261,98 +268,12 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_goal_medium')">Medium</div>
-                        <div class="context layer2-context">Medium-term objectives and milestones</div>
+                        <div class="layer2 color-group-green clickable" onclick="navigateToItem('level_study_iiot')">IIoT</div>
+                        <div class="context layer2-context">Industrial Internet of Things</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_goal_short')">Short</div>
-                        <div class="context layer2-context">Short-term goals and immediate actions</div>
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('level_skill')">Skill</div>
-                
-                <div class="underline color-blue-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('level_skill_creative')">Creative</div>
-                        <div class="context layer2-context">Creative skills and artistic abilities</div>
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('level_skill_practical')">Practical</div>
-                        <div class="context layer2-context">Practical life skills and everyday competencies</div>
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-blue" onclick="navigateToItem('level_skill_professional')">Professional</div>
-                        <div class="context layer2-context">Professional skills and career development</div>
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('level_study')">Study</div>
-                
-                <div class="underline color-purple-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('level_study_asu_craft')">ASU Craft</div>
-                        <div class="context layer2-context">ASU craft program and related studies</div>
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-purple" onclick="navigateToItem('level_study_iiot')">IIOT</div>
-                        <div class="context layer2-context">Industrial Internet of Things learning and applications</div>
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
+        <span class="layer3  color-green" >Term paper</span><span class="layer3  color-green" >Group Project</span><span class="layer3  color-green" >Discussion</span>
                     </div>
                 </div>
         
@@ -362,37 +283,26 @@
             <div class="layer1-container">
                 <div class="layer1 clickable" onclick="navigateToItem('level_work')">Work</div>
                 
-                <div class="underline color-red-medium"></div>
+                <div class="underline color-blue-medium"></div>
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('level_work_go_melt')">GO-MELT</div>
+                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_go_melt')">GO-MELT</div>
                         <div class="context layer2-context">November 7</div>
-                        <div class="underline color-red-light"></div>
+                        <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToItem('level_work_go_melt_simulation')">Simulation</span><span class="layer3 clickable" onclick="navigateToItem('level_work_go_melt_slides')">Slides</span>
+        <span class="layer3 clickable color-blue" onclick="navigateToItem('level_work_go_melt_simulation')">Simulation</span><span class="layer3  color-blue" >Slides</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('level_work_high_speed')">HighSpeed</div>
+                        <div class="layer2 color-group-blue leaf" >HighSpeed</div>
                         
-                        <div class="underline color-red-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('level_work_inherent_strain')">InherentStrain</div>
-                        
-                        <div class="underline color-red-light"></div>
+                        <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
         
@@ -401,14 +311,34 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToItem('level_work_project')">Project</div>
-                        
-                        <div class="underline color-red-light"></div>
+                        <div class="layer2 color-group-blue leaf" >InherentStrain</div>
+                        <div class="context layer2-context">November 10</div>
+                        <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
         
                     </div>
                 </div>
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >Goal</div>
+                
+                <div class="underline color-purple-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >Skill</div>
+                
+                <div class="underline color-red-medium"></div>
+            </div>
+            <div class="layer2-section">
         
             </div>
         </div>

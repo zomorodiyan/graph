@@ -51,6 +51,9 @@
         .layer2.clickable {
             font-weight: bold;
         }
+        .layer2.leaf {
+            font-weight: bold;
+        }
         .layer2.color-group-green:hover {
             background-color: #A5D6A7;
         }
@@ -124,6 +127,10 @@
         .layer3:not(.clickable) {
             cursor: default;
         }
+        .layer3.color-green { color: #1B5E20; }
+        .layer3.color-blue { color: #0D47A1; }
+        .layer3.color-purple { color: #4A148C; }
+        .layer3.color-red { color: #BF360C; }
         .underline {
             height: 2px;
             margin-top: 2px;
@@ -242,8 +249,8 @@
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 " onclick="navigateToItem('level_study_asu_craft')">ASU Craft</div>
-                <div class="context layer1-context">ASU craft program and related studies</div>
+                <div class="layer1 " >ASU Craft</div>
+                <div class="context layer1-context">meet w. Xavier & Zixun</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
@@ -252,11 +259,44 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 " onclick="navigateToItem('level_study_iiot')">IIOT</div>
-                <div class="context layer1-context">Industrial Internet of Things learning and applications</div>
+                <div class="layer1 clickable" onclick="navigateToItem('level_study_iiot')">IIoT</div>
+                <div class="context layer1-context">Industrial Internet of Things</div>
                 <div class="underline color-blue-medium"></div>
             </div>
             <div class="layer2-section">
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-blue leaf" >Term paper</div>
+                        <div class="context layer2-context">Due past</div>
+                        <div class="underline color-blue-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-blue leaf" >Group Project</div>
+                        <div class="context layer2-context">Meet Ryan wednesday 3:30pm</div>
+                        <div class="underline color-blue-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-blue leaf" >Discussion</div>
+                        <div class="context layer2-context">Wednesday 4:30-6:45pm</div>
+                        <div class="underline color-blue-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
         
             </div>
         </div>
