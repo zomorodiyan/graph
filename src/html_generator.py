@@ -1,5 +1,5 @@
 """
-HTML generator for the graph application.
+HTML generator for the YAML-based graph application.
 Handles HTML generation, styling, and JavaScript functionality.
 """
 import os
@@ -7,12 +7,12 @@ from file_utils import FileUtils
 
 
 class HTMLGenerator:
-    """Generates interactive HTML graphs from hierarchy data."""
+    """Generates interactive HTML graphs from YAML-based hierarchy data."""
     
     def __init__(self):
         self.file_utils = FileUtils()
     
-    def generate_html_graph(self, data, output_path, parent_file=None, breadcrumb_path=None):
+    def generate_html_graph(self, data, output_path, current_item_id="data", breadcrumb_path=None):
         """Generate an interactive HTML graph."""
         if breadcrumb_path is None:
             breadcrumb_path = []
@@ -21,7 +21,7 @@ class HTMLGenerator:
         breadcrumb_html = self._create_breadcrumb_html(breadcrumb_path)
         
         # Generate the complete HTML content
-        html_content = self._build_html_structure(data, breadcrumb_html, parent_file)
+        html_content = self._build_html_structure(data, breadcrumb_html, current_item_id)
         
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
@@ -40,7 +40,7 @@ class HTMLGenerator:
         breadcrumb_html += '</div>'
         return breadcrumb_html
     
-    def _build_html_structure(self, data, breadcrumb_html, parent_file):
+    def _build_html_structure(self, data, breadcrumb_html, current_item_id):
         """Build the complete HTML structure."""
         html_content = f"""
 <!DOCTYPE html>
@@ -48,6 +48,7 @@ class HTMLGenerator:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph - {current_item_id.replace('_', ' ').title()}</title>
     <style>
         {self._get_css_styles()}
     </style>
@@ -55,7 +56,7 @@ class HTMLGenerator:
 <body>
     <div class="graph-container">
         {breadcrumb_html}
-        {self._build_content_sections(data, parent_file)}
+        {self._build_content_sections(data, current_item_id)}
     </div>
     <div id="notification" class="notification"></div>
     <script>
@@ -309,22 +310,15 @@ class HTMLGenerator:
             }, 3000);
         }
 
-        function showFileNotAvailable(layer2Name) {
-            showNotification(`File not available for ${layer2Name}`, true);
-        }
-
-        function navigateToSubGraph(filePath, layer1Name, layer2Name) {
-            if (!filePath) {
-                showNotification(`No file associated with ${layer2Name}`, true);
+        function navigateToItem(itemId) {
+            if (!itemId) {
+                showNotification('No item ID provided', true);
                 return;
             }
 
-            // Extract just the filename from the path and convert to HTML (cross-platform)
-            const fileName = filePath.replace(/\\\\/g, '/').split('/').pop(); // Handle both / and \\\\ separators
-            const subGraphName = fileName.replace('.md', '.html');
-
-            // Navigate to the sub-graph
-            window.location.href = subGraphName;
+            // Navigate to the item's HTML page
+            const htmlFileName = itemId + '.html';
+            window.location.href = htmlFileName;
         }
 
         function loadGraph(filePath) {
@@ -333,7 +327,7 @@ class HTMLGenerator:
         }
         """
     
-    def _build_content_sections(self, data, parent_file):
+    def _build_content_sections(self, data, current_item_id):
         """Build the main content sections of the HTML."""
         content = ""
         
@@ -347,21 +341,19 @@ class HTMLGenerator:
 
         for idx, item in enumerate(data):
             color_name, light, medium, dark = base_colors[idx % 4]
-            content += self._build_layer1_section(item, color_name, parent_file)
+            content += self._build_layer1_section(item, color_name, current_item_id)
 
         return content
     
-    def _build_layer1_section(self, item, color_name, parent_file):
+    def _build_layer1_section(self, item, color_name, current_item_id):
         """Build a layer1 section with all its children."""
         layer1_name = item["layer1"]
-        layer1_filename = item.get("layer1_filename")
-        layer1_file_exists = self.file_utils.check_file_exists(layer1_filename)
+        layer1_id = item.get("layer1_id", "")
+        layer1_has_children = len(item.get("layer2", [])) > 0
         
-        # Make layer1 clickable if file exists
-        layer1_clickable_class = "clickable" if layer1_file_exists else ""
-        # Normalize path for JavaScript (use forward slashes)
-        normalized_layer1_filename = self.file_utils.normalize_path(layer1_filename) if layer1_filename else ''
-        layer1_onclick = f"onclick=\"navigateToSubGraph('{normalized_layer1_filename}', '', '{layer1_name}')\"" if layer1_file_exists else ""
+        # Make layer1 clickable if it has children or is a valid item
+        layer1_clickable_class = "clickable" if layer1_has_children else ""
+        layer1_onclick = f"onclick=\"navigateToItem('{layer1_id}')\"" if layer1_id else ""
 
         # Get layer1 context
         layer1_context = item.get("layer1_context")
@@ -377,8 +369,8 @@ class HTMLGenerator:
             <div class="layer2-section">
         """
 
-        for layer2_item in item["layer2"]:
-            content += self._build_layer2_section(layer2_item, layer1_name, color_name, parent_file)
+        for layer2_item in item.get("layer2", []):
+            content += self._build_layer2_section(layer2_item, layer1_name, color_name, current_item_id)
 
         content += """
             </div>
@@ -386,18 +378,15 @@ class HTMLGenerator:
         
         return content
     
-    def _build_layer2_section(self, layer2_item, layer1_name, color_name, parent_file):
+    def _build_layer2_section(self, layer2_item, layer1_name, color_name, current_item_id):
         """Build a layer2 section with its layer3 children."""
         layer2_name = layer2_item["name"]
-        # Use the filename directly from the layer2_item if available
-        file_path = layer2_item.get("filename")
-        file_exists = self.file_utils.check_file_exists(file_path)
+        layer2_id = layer2_item.get("id", "")
+        layer2_has_children = len(layer2_item.get("layer3", [])) > 0
 
-        # Only make clickable if file exists
-        clickable_class = "clickable" if file_exists else ""
-        # Normalize path for JavaScript (use forward slashes)
-        normalized_file_path = self.file_utils.normalize_path(file_path) if file_path else ''
-        onclick_handler = f"onclick=\"navigateToSubGraph('{normalized_file_path}', '{layer1_name}', '{layer2_name}')\"" if file_exists else ""
+        # Only make clickable if it has an ID
+        clickable_class = "clickable" if layer2_id else ""
+        onclick_handler = f"onclick=\"navigateToItem('{layer2_id}')\"" if layer2_id else ""
         
         # Get layer2 context
         layer2_context = layer2_item.get("context")
@@ -413,7 +402,7 @@ class HTMLGenerator:
                     <div class="layer3-container">
         """
 
-        for layer3_item in layer2_item["layer3"]:
+        for layer3_item in layer2_item.get("layer3", []):
             content += self._build_layer3_item(layer3_item, layer2_name)
 
         content += """
@@ -425,14 +414,11 @@ class HTMLGenerator:
     def _build_layer3_item(self, layer3_item, layer2_name):
         """Build a single layer3 item."""
         if isinstance(layer3_item, dict):
-            # New structure with filename
+            # New structure with ID
             layer3_name = layer3_item["name"]
-            layer3_filename = layer3_item.get("filename")
-            layer3_file_exists = self.file_utils.check_file_exists(layer3_filename)
-            layer3_clickable_class = "clickable" if layer3_file_exists else ""
-            # Normalize path for JavaScript (use forward slashes)
-            normalized_layer3_filename = self.file_utils.normalize_path(layer3_filename) if layer3_filename else ''
-            layer3_onclick = f"onclick=\"navigateToSubGraph('{normalized_layer3_filename}', '{layer2_name}', '{layer3_name}')\"" if layer3_file_exists else ""
+            layer3_id = layer3_item.get("id", "")
+            layer3_clickable_class = "clickable" if layer3_id else ""
+            layer3_onclick = f"onclick=\"navigateToItem('{layer3_id}')\"" if layer3_id else ""
             return f'<span class="layer3 {layer3_clickable_class}" {layer3_onclick}>{layer3_name}</span>'
         else:
             # Old structure (string only) - keep for backward compatibility

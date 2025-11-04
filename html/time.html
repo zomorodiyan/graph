@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph - Time</title>
     <style>
         
         body {
@@ -237,46 +238,24 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><span class="current">Data</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Time</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/time/calendar.md', '', 'calendar')">calendar</div>
-                
+                <div class="layer1 clickable" onclick="navigateToItem('time')">Time</div>
+                <div class="context layer1-context">Time management and scheduling</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToSubGraph('../data/time/calendar/day.md', 'calendar', 'day')">day</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('time_calendar')">Calendar</div>
+                        <div class="context layer2-context">Calendar management and time planning</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToSubGraph('../data/time/calendar/day.md', 'day', 'Afternoon')">Afternoon</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/time/calendar/day.md', 'day', 'Evening')">Evening</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/time/calendar/day.md', 'day', 'Morning')">Morning</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToSubGraph('../data/time/calendar/month.md', 'calendar', 'month')">month</div>
-                        
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToSubGraph('../data/time/calendar/month.md', 'month', 'Week1')">Week1</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/time/calendar/month.md', 'month', 'Week2')">Week2</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/time/calendar/month.md', 'month', 'Week3')">Week3</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/time/calendar/month.md', 'month', 'Week4')">Week4</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-green" onclick="navigateToSubGraph('../data/time/calendar/year.md', 'calendar', 'year')">year</div>
-                        
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('time_calendar_day')">Day</span><span class="layer3 clickable" onclick="navigateToItem('time_calendar_month')">Month</span><span class="layer3 clickable" onclick="navigateToItem('time_calendar_year')">Year</span>
                     </div>
                 </div>
         
@@ -296,22 +275,15 @@
             }, 3000);
         }
 
-        function showFileNotAvailable(layer2Name) {
-            showNotification(`File not available for ${layer2Name}`, true);
-        }
-
-        function navigateToSubGraph(filePath, layer1Name, layer2Name) {
-            if (!filePath) {
-                showNotification(`No file associated with ${layer2Name}`, true);
+        function navigateToItem(itemId) {
+            if (!itemId) {
+                showNotification('No item ID provided', true);
                 return;
             }
 
-            // Extract just the filename from the path and convert to HTML (cross-platform)
-            const fileName = filePath.replace(/\\/g, '/').split('/').pop(); // Handle both / and \\ separators
-            const subGraphName = fileName.replace('.md', '.html');
-
-            // Navigate to the sub-graph
-            window.location.href = subGraphName;
+            // Navigate to the item's HTML page
+            const htmlFileName = itemId + '.html';
+            window.location.href = htmlFileName;
         }
 
         function loadGraph(filePath) {

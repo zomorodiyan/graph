@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph - Interaction</title>
     <style>
         
         body {
@@ -237,175 +238,57 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><span class="current">Data</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Interaction</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/interaction/community.md', '', 'community')">community</div>
-                
+                <div class="layer1 clickable" onclick="navigateToItem('interaction')">Interaction</div>
+                <div class="context layer1-context">Social relationships and communication</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-green" >Groups</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_community')">Community</div>
+                        <div class="context layer2-context">Community involvement and social groups</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('interaction_community_groups')">Groups</span><span class="layer3 clickable" onclick="navigateToItem('interaction_community_local')">Local</span><span class="layer3 clickable" onclick="navigateToItem('interaction_community_online')">Online</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-green" >Local</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_family')">Family</div>
+                        <div class="context layer2-context">Family relationships and connections</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('interaction_family_extended')">Extended</span><span class="layer3 clickable" onclick="navigateToItem('interaction_family_parents')">Parents</span><span class="layer3 clickable" onclick="navigateToItem('interaction_family_siblings')">Siblings</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-green" >Online</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_friends')">Friends</div>
+                        <div class="context layer2-context">Friendships and social connections</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/interaction/family.md', '', 'family')">family</div>
-                
-                <div class="underline color-blue-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-blue" >Extended</div>
-                        
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('interaction_friends_close')">Close</span><span class="layer3 clickable" onclick="navigateToItem('interaction_friends_social')">Social</span><span class="layer3 clickable" onclick="navigateToItem('interaction_friends_work')">Work</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-blue" >Parents</div>
-                        
-                        <div class="underline color-blue-light"></div>
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('interaction_love')">Love</div>
+                        <div class="context layer2-context">Romantic relationships and partnerships</div>
+                        <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-blue" >Siblings</div>
-                        
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/interaction/friends.md', '', 'friends')">friends</div>
-                
-                <div class="underline color-purple-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-purple" >Close</div>
-                        
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-purple" >Social</div>
-                        
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-purple" >Work</div>
-                        
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/interaction/love.md', '', 'love')">love</div>
-                
-                <div class="underline color-red-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-red" >Dating</div>
-                        
-                        <div class="underline color-red-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-red" >Intimacy</div>
-                        
-                        <div class="underline color-red-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-red" >Partner</div>
-                        
-                        <div class="underline color-red-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('interaction_love_dating')">Dating</span><span class="layer3 clickable" onclick="navigateToItem('interaction_love_intimacy')">Intimacy</span><span class="layer3 clickable" onclick="navigateToItem('interaction_love_partner')">Partner</span>
                     </div>
                 </div>
         
@@ -425,22 +308,15 @@
             }, 3000);
         }
 
-        function showFileNotAvailable(layer2Name) {
-            showNotification(`File not available for ${layer2Name}`, true);
-        }
-
-        function navigateToSubGraph(filePath, layer1Name, layer2Name) {
-            if (!filePath) {
-                showNotification(`No file associated with ${layer2Name}`, true);
+        function navigateToItem(itemId) {
+            if (!itemId) {
+                showNotification('No item ID provided', true);
                 return;
             }
 
-            // Extract just the filename from the path and convert to HTML (cross-platform)
-            const fileName = filePath.replace(/\\/g, '/').split('/').pop(); // Handle both / and \\ separators
-            const subGraphName = fileName.replace('.md', '.html');
-
-            // Navigate to the sub-graph
-            window.location.href = subGraphName;
+            // Navigate to the item's HTML page
+            const htmlFileName = itemId + '.html';
+            window.location.href = htmlFileName;
         }
 
         function loadGraph(filePath) {

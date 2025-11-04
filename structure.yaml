@@ -1,0 +1,303 @@
+metadata:
+  title: Personal Knowledge Graph
+  description: Hierarchical structure of personal development data
+  version: 2.0
+  updated_at: '2025-11-04T14:00:00.000000'
+
+structure:
+  body:
+    title: Body
+    id: body
+    context: Physical health and wellness
+    children:
+      habit:
+        title: Habit
+        id: body_habit
+        context: Daily routines and healthy habits
+        children:
+          evening:
+            title: Evening
+            id: body_habit_evening
+            context: Evening routine and wind-down activities
+          morning:
+            title: Morning
+            id: body_habit_morning
+            context: Morning routine and energy-building activities
+      nutrition:
+        title: Nutrition
+        id: body_nutrition
+        context: Diet, eating habits, and nutritional planning
+        children:
+          cook:
+            title: Cook
+            id: body_nutrition_cook
+            context: Meal preparation and cooking skills
+          eat:
+            title: Eat
+            id: body_nutrition_eat
+            context: Eating habits and mindful consumption
+          prep:
+            title: Prep
+            id: body_nutrition_prep
+            context: Meal planning and preparation strategies
+      train:
+        title: Train
+        id: body_train
+        context: Physical exercise and fitness training
+        children:
+          cardio:
+            title: Cardio
+            id: body_train_cardio
+            context: Cardiovascular fitness and endurance training
+          flexibility:
+            title: Flexibility
+            id: body_train_flexibility
+            context: Stretching, yoga, and mobility work
+          strength:
+            title: Strength
+            id: body_train_strength
+            context: Weight training and muscle building
+
+  finance:
+    title: Finance
+    id: finance
+    context: Financial planning and money management
+    children:
+      earn:
+        title: Earn
+        id: finance_earn
+        context: Income generation and career development
+        children:
+          job:
+            title: Job
+            id: finance_earn_job
+            context: Primary employment and career advancement
+          passive:
+            title: Passive
+            id: finance_earn_passive
+            context: Passive income streams and investments
+          side:
+            title: Side
+            id: finance_earn_side
+            context: Side hustles and additional income sources
+      invest:
+        title: Invest
+        id: finance_invest
+        context: Investment strategies and wealth building
+        children:
+          assets:
+            title: Assets
+            id: finance_invest_assets
+            context: Real estate, stocks, and other asset investments
+          education:
+            title: Education
+            id: finance_invest_education
+            context: Learning about investing and financial literacy
+          save:
+            title: Save
+            id: finance_invest_save
+            context: Savings strategies and emergency funds
+      spend:
+        title: Spend
+        id: finance_spend
+        context: Spending habits and budget management
+        children:
+          need:
+            title: Need
+            id: finance_spend_need
+            context: Essential expenses and necessities
+          shop:
+            title: Shop
+            id: finance_spend_shop
+            context: Shopping strategies and smart purchasing
+          wish:
+            title: Wish
+            id: finance_spend_wish
+            context: Wants and discretionary spending
+
+  interaction:
+    title: Interaction
+    id: interaction
+    context: Social relationships and communication
+    children:
+      community:
+        title: Community
+        id: interaction_community
+        context: Community involvement and social groups
+        children:
+          groups:
+            title: Groups
+            id: interaction_community_groups
+            context: Interest groups and social organizations
+          local:
+            title: Local
+            id: interaction_community_local
+            context: Local community engagement and events
+          online:
+            title: Online
+            id: interaction_community_online
+            context: Online communities and digital social spaces
+      family:
+        title: Family
+        id: interaction_family
+        context: Family relationships and connections
+        children:
+          extended:
+            title: Extended
+            id: interaction_family_extended
+            context: Extended family relationships and gatherings
+          parents:
+            title: Parents
+            id: interaction_family_parents
+            context: Relationship with parents and caregivers
+          siblings:
+            title: Siblings
+            id: interaction_family_siblings
+            context: Sibling relationships and connections
+      friends:
+        title: Friends
+        id: interaction_friends
+        context: Friendships and social connections
+        children:
+          close:
+            title: Close
+            id: interaction_friends_close
+            context: Close friendships and intimate connections
+          social:
+            title: Social
+            id: interaction_friends_social
+            context: Social circles and acquaintances
+          work:
+            title: Work
+            id: interaction_friends_work
+            context: Professional relationships and workplace friendships
+      love:
+        title: Love
+        id: interaction_love
+        context: Romantic relationships and partnerships
+        children:
+          dating:
+            title: Dating
+            id: interaction_love_dating
+            context: Dating experiences and relationship building
+          intimacy:
+            title: Intimacy
+            id: interaction_love_intimacy
+            context: Emotional and physical intimacy
+          partner:
+            title: Partner
+            id: interaction_love_partner
+            context: Long-term partnership and commitment
+
+  level:
+    title: Level
+    id: level
+    context: Personal development and skill advancement
+    children:
+      goal:
+        title: Goal
+        id: level_goal
+        context: Goal setting and achievement planning
+        children:
+          long:
+            title: Long
+            id: level_goal_long
+            context: Long-term goals and life vision
+          medium:
+            title: Medium
+            id: level_goal_medium
+            context: Medium-term objectives and milestones
+          short:
+            title: Short
+            id: level_goal_short
+            context: Short-term goals and immediate actions
+      skill:
+        title: Skill
+        id: level_skill
+        context: Skill development and learning
+        children:
+          creative:
+            title: Creative
+            id: level_skill_creative
+            context: Creative skills and artistic abilities
+          practical:
+            title: Practical
+            id: level_skill_practical
+            context: Practical life skills and everyday competencies
+          professional:
+            title: Professional
+            id: level_skill_professional
+            context: Professional skills and career development
+      study:
+        title: Study
+        id: level_study
+        context: Learning and educational pursuits
+        children:
+          asu_craft:
+            title: ASU Craft
+            id: level_study_asu_craft
+            context: ASU craft program and related studies
+          iiot:
+            title: IIOT
+            id: level_study_iiot
+            context: Industrial Internet of Things learning and applications
+      work:
+        title: Work
+        id: level_work
+        context: Professional work and projects
+        children:
+          go_melt:
+            title: GO-MELT
+            id: level_work_go_melt
+            context: GO-MELT project work and development
+          high_speed:
+            title: HighSpeed
+            id: level_work_high_speed
+            context: High-speed manufacturing and processing projects
+          inherent_strain:
+            title: InherentStrain
+            id: level_work_inherent_strain
+            context: Inherent strain analysis and simulation work
+          project:
+            title: Project
+            id: level_work_project
+            context: General project management and execution
+
+  mind:
+    title: Mind
+    id: mind
+    context: Mental health and cognitive wellness
+    children:
+      mood:
+        title: Mood
+        id: mind_mood
+        context: Emotional regulation and mood management
+        children: {}
+      rest:
+        title: Rest
+        id: mind_rest
+        context: Mental rest, relaxation, and stress management
+        children: {}
+
+  time:
+    title: Time
+    id: time
+    context: Time management and scheduling
+    children:
+      calendar:
+        title: Calendar
+        id: time_calendar
+        context: Calendar management and time planning
+        children:
+          day:
+            title: Day
+            id: time_calendar_day
+            context: Daily planning and time management
+          month:
+            title: Month
+            id: time_calendar_month
+            context: Monthly planning and goal tracking
+          year:
+            title: Year
+            id: time_calendar_year
+            context: Annual planning and long-term scheduling

@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph - Level</title>
     <style>
         
         body {
@@ -237,186 +238,57 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><span class="current">Data</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Level</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/level/goal.md', '', 'goal')">goal</div>
-                
+                <div class="layer1 clickable" onclick="navigateToItem('level')">Level</div>
+                <div class="context layer1-context">Personal development and skill advancement</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-green" >Long</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_goal')">Goal</div>
+                        <div class="context layer2-context">Goal setting and achievement planning</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('level_goal_long')">Long</span><span class="layer3 clickable" onclick="navigateToItem('level_goal_medium')">Medium</span><span class="layer3 clickable" onclick="navigateToItem('level_goal_short')">Short</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-green" >Medium</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_skill')">Skill</div>
+                        <div class="context layer2-context">Skill development and learning</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('level_skill_creative')">Creative</span><span class="layer3 clickable" onclick="navigateToItem('level_skill_practical')">Practical</span><span class="layer3 clickable" onclick="navigateToItem('level_skill_professional')">Professional</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-green" >Short</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_study')">Study</div>
+                        <div class="context layer2-context">Learning and educational pursuits</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/level/skill.md', '', 'skill')">skill</div>
-                
-                <div class="underline color-blue-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-blue" >Creative</div>
-                        
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('level_study_asu_craft')">ASU Craft</span><span class="layer3 clickable" onclick="navigateToItem('level_study_iiot')">IIOT</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-blue" >Practical</div>
-                        
-                        <div class="underline color-blue-light"></div>
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('level_work')">Work</div>
+                        <div class="context layer2-context">Professional work and projects</div>
+                        <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-blue" >Professional</div>
-                        
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/level/study.md', '', 'study')">study</div>
-                
-                <div class="underline color-purple-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-purple" >ASU-Craft</div>
-                        
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-purple" onclick="navigateToSubGraph('../data/level/study/iiot.md', 'study', 'IIOT')">IIOT</div>
-                        
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/study/iiot.md', 'IIOT', 'GroupProject')">GroupProject</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/study/iiot.md', 'IIOT', 'Homework')">Homework</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/study/iiot.md', 'IIOT', 'TermPaper')">TermPaper</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-purple" onclick="navigateToSubGraph('../data/level/study/iiot.md', 'study', 'iiot')">iiot</div>
-                        
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/study/iiot.md', 'iiot', 'GroupProject')">GroupProject</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/study/iiot.md', 'iiot', 'Homework')">Homework</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/study/iiot.md', 'iiot', 'TermPaper')">TermPaper</span>
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/level/work.md', '', 'work')">work</div>
-                
-                <div class="underline color-red-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToSubGraph('../data/level/work/GO-MELT.md', 'work', 'GO-MELT')">GO-MELT</div>
-                        
-                        <div class="underline color-red-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/GO-MELT/GO-MELT.md', 'GO-MELT', 'GO-MELT')">GO-MELT</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/GO-MELT/OpenFOAM.md', 'GO-MELT', 'OpenFOAM')">OpenFOAM</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/GO-MELT/RenderLPBF.md', 'GO-MELT', 'RenderLPBF')">RenderLPBF</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToSubGraph('../data/level/work/HighSpeed.md', 'work', 'HighSpeed')">HighSpeed</div>
-                        
-                        <div class="underline color-red-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/HighSpeed.md', 'HighSpeed', 'GraphPV')">GraphPV</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/HighSpeed/ImageJ.md', 'HighSpeed', 'ImageJ')">ImageJ</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/HighSpeed.md', 'HighSpeed', 'Trace')">Trace</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToSubGraph('../data/level/work/InherentStrain.md', 'work', 'InherentStrain')">InherentStrain</div>
-                        
-                        <div class="underline color-red-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/InherentStrain/InherentStrainTheory.md', 'InherentStrain', 'InherentStrainTheory')">InherentStrainTheory</span><span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/InherentStrain/ResidualStressSimulation.md', 'InherentStrain', 'ResidualStressSimulation')">ResidualStressSimulation</span>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 clickable color-group-red" onclick="navigateToSubGraph('../data/level/work/project.md', 'work', 'project')">project</div>
-                        
-                        <div class="underline color-red-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <span class="layer3 clickable" onclick="navigateToSubGraph('../data/level/work/project.md', 'project', 'Imaginer')">Imaginer</span>
+        <span class="layer3 clickable" onclick="navigateToItem('level_work_go_melt')">GO-MELT</span><span class="layer3 clickable" onclick="navigateToItem('level_work_high_speed')">HighSpeed</span><span class="layer3 clickable" onclick="navigateToItem('level_work_inherent_strain')">InherentStrain</span><span class="layer3 clickable" onclick="navigateToItem('level_work_project')">Project</span>
                     </div>
                 </div>
         
@@ -436,22 +308,15 @@
             }, 3000);
         }
 
-        function showFileNotAvailable(layer2Name) {
-            showNotification(`File not available for ${layer2Name}`, true);
-        }
-
-        function navigateToSubGraph(filePath, layer1Name, layer2Name) {
-            if (!filePath) {
-                showNotification(`No file associated with ${layer2Name}`, true);
+        function navigateToItem(itemId) {
+            if (!itemId) {
+                showNotification('No item ID provided', true);
                 return;
             }
 
-            // Extract just the filename from the path and convert to HTML (cross-platform)
-            const fileName = filePath.replace(/\\/g, '/').split('/').pop(); // Handle both / and \\ separators
-            const subGraphName = fileName.replace('.md', '.html');
-
-            // Navigate to the sub-graph
-            window.location.href = subGraphName;
+            // Navigate to the item's HTML page
+            const htmlFileName = itemId + '.html';
+            window.location.href = htmlFileName;
         }
 
         function loadGraph(filePath) {

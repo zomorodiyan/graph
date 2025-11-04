@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph - Body</title>
     <style>
         
         body {
@@ -237,121 +238,46 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><span class="current">Data</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Body</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/body/habit.md', '', 'habit')">habit</div>
-                
+                <div class="layer1 clickable" onclick="navigateToItem('body')">Body</div>
+                <div class="context layer1-context">Physical health and wellness</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-green" >Evening</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_habit')">Habit</div>
+                        <div class="context layer2-context">Daily routines and healthy habits</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('body_habit_evening')">Evening</span><span class="layer3 clickable" onclick="navigateToItem('body_habit_morning')">Morning</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-green" >Morning</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_nutrition')">Nutrition</div>
+                        <div class="context layer2-context">Diet, eating habits, and nutritional planning</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/body/nutrition.md', '', 'nutrition')">nutrition</div>
-                
-                <div class="underline color-blue-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-blue" >Cook</div>
-                        
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('body_nutrition_cook')">Cook</span><span class="layer3 clickable" onclick="navigateToItem('body_nutrition_eat')">Eat</span><span class="layer3 clickable" onclick="navigateToItem('body_nutrition_prep')">Prep</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-blue" >Eat</div>
-                        
-                        <div class="underline color-blue-light"></div>
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('body_train')">Train</div>
+                        <div class="context layer2-context">Physical exercise and fitness training</div>
+                        <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-blue" >Prep</div>
-                        
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/body/train.md', '', 'train')">train</div>
-                
-                <div class="underline color-purple-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-purple" >Cardio</div>
-                        
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-purple" >Flexibility</div>
-                        
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-purple" >Strength</div>
-                        
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('body_train_cardio')">Cardio</span><span class="layer3 clickable" onclick="navigateToItem('body_train_flexibility')">Flexibility</span><span class="layer3 clickable" onclick="navigateToItem('body_train_strength')">Strength</span>
                     </div>
                 </div>
         
@@ -371,22 +297,15 @@
             }, 3000);
         }
 
-        function showFileNotAvailable(layer2Name) {
-            showNotification(`File not available for ${layer2Name}`, true);
-        }
-
-        function navigateToSubGraph(filePath, layer1Name, layer2Name) {
-            if (!filePath) {
-                showNotification(`No file associated with ${layer2Name}`, true);
+        function navigateToItem(itemId) {
+            if (!itemId) {
+                showNotification('No item ID provided', true);
                 return;
             }
 
-            // Extract just the filename from the path and convert to HTML (cross-platform)
-            const fileName = filePath.replace(/\\/g, '/').split('/').pop(); // Handle both / and \\ separators
-            const subGraphName = fileName.replace('.md', '.html');
-
-            // Navigate to the sub-graph
-            window.location.href = subGraphName;
+            // Navigate to the item's HTML page
+            const htmlFileName = itemId + '.html';
+            window.location.href = htmlFileName;
         }
 
         function loadGraph(filePath) {

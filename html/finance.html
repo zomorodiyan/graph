@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph - Finance</title>
     <style>
         
         body {
@@ -237,132 +238,46 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><span class="current">Data</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Finance</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/finance/earn.md', '', 'earn')">earn</div>
-                
+                <div class="layer1 clickable" onclick="navigateToItem('finance')">Finance</div>
+                <div class="context layer1-context">Financial planning and money management</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-green" >Job</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('finance_earn')">Earn</div>
+                        <div class="context layer2-context">Income generation and career development</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('finance_earn_job')">Job</span><span class="layer3 clickable" onclick="navigateToItem('finance_earn_passive')">Passive</span><span class="layer3 clickable" onclick="navigateToItem('finance_earn_side')">Side</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-green" >Passive</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('finance_invest')">Invest</div>
+                        <div class="context layer2-context">Investment strategies and wealth building</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('finance_invest_assets')">Assets</span><span class="layer3 clickable" onclick="navigateToItem('finance_invest_education')">Education</span><span class="layer3 clickable" onclick="navigateToItem('finance_invest_save')">Save</span>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2  color-group-green" >Side</div>
-                        
+                        <div class="layer2 clickable color-group-green" onclick="navigateToItem('finance_spend')">Spend</div>
+                        <div class="context layer2-context">Spending habits and budget management</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/finance/invest.md', '', 'invest')">invest</div>
-                
-                <div class="underline color-blue-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-blue" >Assets</div>
-                        
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-blue" >Educatione</div>
-                        
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-blue" >Save</div>
-                        
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToSubGraph('../data/finance/spend.md', '', 'spend')">spend</div>
-                
-                <div class="underline color-purple-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-purple" >Need</div>
-                        
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-purple" >Shop</div>
-                        
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2  color-group-purple" >Wish</div>
-                        
-                        <div class="underline color-purple-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
+        <span class="layer3 clickable" onclick="navigateToItem('finance_spend_need')">Need</span><span class="layer3 clickable" onclick="navigateToItem('finance_spend_shop')">Shop</span><span class="layer3 clickable" onclick="navigateToItem('finance_spend_wish')">Wish</span>
                     </div>
                 </div>
         
@@ -382,22 +297,15 @@
             }, 3000);
         }
 
-        function showFileNotAvailable(layer2Name) {
-            showNotification(`File not available for ${layer2Name}`, true);
-        }
-
-        function navigateToSubGraph(filePath, layer1Name, layer2Name) {
-            if (!filePath) {
-                showNotification(`No file associated with ${layer2Name}`, true);
+        function navigateToItem(itemId) {
+            if (!itemId) {
+                showNotification('No item ID provided', true);
                 return;
             }
 
-            // Extract just the filename from the path and convert to HTML (cross-platform)
-            const fileName = filePath.replace(/\\/g, '/').split('/').pop(); // Handle both / and \\ separators
-            const subGraphName = fileName.replace('.md', '.html');
-
-            // Navigate to the sub-graph
-            window.location.href = subGraphName;
+            // Navigate to the item's HTML page
+            const htmlFileName = itemId + '.html';
+            window.location.href = htmlFileName;
         }
 
         function loadGraph(filePath) {
