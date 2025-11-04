@@ -189,10 +189,10 @@ class HTMLGenerator:
         .layer3:not(.clickable) {
             cursor: default;
         }
-        .layer3.color-green { color: #1B5E20; }
-        .layer3.color-blue { color: #0D47A1; }
-        .layer3.color-purple { color: #4A148C; }
-        .layer3.color-red { color: #BF360C; }
+        .layer3.color-green { color: #0D4F14; }
+        .layer3.color-blue { color: #063A85; }
+        .layer3.color-purple { color: #3A0F6E; }
+        .layer3.color-red { color: #A12F08; }
         .underline {
             height: 2px;
             margin-top: 2px;
