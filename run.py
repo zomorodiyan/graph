@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Simple launcher script for the graph visualization application.
-Usage: python run.py [filename]
+Simple launcher script for the YAML-based graph visualization application.
+Usage: python run.py [command]
 """
 
 import os
@@ -47,67 +47,171 @@ def start_server(port):
     except Exception as e:
         print(f"Server error: {e}")
 
+def check_yaml_file():
+    """Check if the structure.yaml file exists"""
+    yaml_path = os.path.join(os.path.dirname(__file__), 'structure.yaml')
+    if not os.path.exists(yaml_path):
+        print("Error: structure.yaml file not found!")
+        print("Please ensure the structure.yaml file exists in the project root.")
+        return False
+    return True
+
+def get_python_command():
+    """Get the appropriate Python command"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Check for virtual environment
+    venv_python_win = os.path.join(script_dir, '.venv', 'Scripts', 'python.exe')
+    venv_python_unix = os.path.join(script_dir, '.venv', 'bin', 'python')
+    
+    if os.path.exists(venv_python_win):
+        return venv_python_win
+    elif os.path.exists(venv_python_unix):
+        return venv_python_unix
+    else:
+        return 'python3'
+
 def main():
+    """Main entry point for the launcher."""
     # Change to the project root directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(script_dir)
     
-    # Use virtual environment Python if available, otherwise python3
-    venv_python = os.path.join(script_dir, '.venv', 'bin', 'python')
-    if os.path.exists(venv_python):
-        python_cmd = venv_python
-    else:
-        python_cmd = 'python3'
+    # Check if structure.yaml exists
+    if not check_yaml_file():
+        return
     
-    # Generate the visualization
-    print("Generating visualization...")
-    try:
-        # Change to src directory and run graph.py from there
-        src_dir = os.path.join(script_dir, 'src')
-        result = subprocess.run([python_cmd, 'graph.py'], 
-                              capture_output=True, text=True, cwd=src_dir)
-        if result.returncode != 0:
-            print(f"Error generating visualization: {result.stderr}")
+    # Handle command line arguments
+    command = sys.argv[1] if len(sys.argv) > 1 else "serve"
+    python_cmd = get_python_command()
+    src_dir = os.path.join(script_dir, 'src')
+    
+    if command == "generate":
+        # Just generate HTML files without starting server
+        print("Generating visualization from YAML structure...")
+        try:
+            result = subprocess.run([python_cmd, 'graph.py'], 
+                                  capture_output=True, text=True, cwd=src_dir)
+            if result.returncode != 0:
+                print(f"Error generating visualization: {result.stderr}")
+                return
+            print("Visualization generated successfully!")
+        except Exception as e:
+            print(f"Error running graph.py: {e}")
             return
-        print("Visualization generated successfully!")
-    except Exception as e:
-        print(f"Error running graph.py: {e}")
-        return
     
-    # Find a free port
-    port = find_free_port(8080)
-    if not port:
-        print("Could not find a free port. Please close other servers and try again.")
-        print("You can kill existing servers with: pkill -f 'python.*http.server'")
-        return
+    elif command == "summary":
+        # Show structure summary
+        print("Getting structure summary...")
+        try:
+            result = subprocess.run([python_cmd, 'graph.py', 'summary'], 
+                                  capture_output=True, text=True, cwd=src_dir)
+            print(result.stdout)
+            if result.stderr:
+                print(f"Warnings: {result.stderr}")
+        except Exception as e:
+            print(f"Error getting summary: {e}")
     
-    if port != 8080:
-        print(f"Port 8080 was busy, using port {port} instead")
+    elif command == "validate":
+        # Validate structure
+        print("Validating YAML structure...")
+        try:
+            result = subprocess.run([python_cmd, 'graph.py', 'validate'], 
+                                  capture_output=True, text=True, cwd=src_dir)
+            print(result.stdout)
+            if result.stderr:
+                print(f"Errors: {result.stderr}")
+        except Exception as e:
+            print(f"Error validating structure: {e}")
     
-    # Start server in background thread
-    server_thread = threading.Thread(target=start_server, args=(port,), daemon=True)
-    server_thread.start()
+    elif command.startswith("search:"):
+        # Search for items
+        query = command[7:]  # Remove "search:" prefix
+        print(f"Searching for '{query}'...")
+        try:
+            result = subprocess.run([python_cmd, 'graph.py', 'search', query], 
+                                  capture_output=True, text=True, cwd=src_dir)
+            print(result.stdout)
+            if result.stderr:
+                print(f"Errors: {result.stderr}")
+        except Exception as e:
+            print(f"Error searching: {e}")
     
-    # Give server time to start
-    time.sleep(2)
+    elif command == "help":
+        # Show help
+        print("YAML-based Knowledge Graph Launcher")
+        print("===================================")
+        print()
+        print("Usage: python run.py [command]")
+        print()
+        print("Commands:")
+        print("  serve          Generate HTML files and start web server (default)")
+        print("  generate       Generate HTML files only")
+        print("  summary        Show structure summary")
+        print("  validate       Validate YAML structure")
+        print("  search:<query> Search for items matching query")
+        print("  help           Show this help message")
+        print()
+        print("Examples:")
+        print("  python run.py")
+        print("  python run.py generate")
+        print("  python run.py summary")
+        print("  python run.py search:finance")
+        print()
+        print("The structure is defined in structure.yaml")
     
-    # Open browser
-    url = f"http://localhost:{port}/data.html"
-    try:
-        webbrowser.open(url)
-        print(f"Opening browser to {url}")
-    except Exception as e:
-        print(f"Could not open browser: {e}")
-        print(f"Please manually open: {url}")
+    elif command == "serve" or len(sys.argv) == 1:
+        # Default: generate and serve
+        print("Generating visualization from YAML structure...")
+        try:
+            result = subprocess.run([python_cmd, 'graph.py'], 
+                                  capture_output=True, text=True, cwd=src_dir, encoding='utf-8', errors='replace')
+            if result.returncode != 0:
+                print(f"Error generating visualization: {result.stderr}")
+                return
+            print("Visualization generated successfully!")
+        except Exception as e:
+            print(f"Error running graph.py: {e}")
+            return
+        
+        # Find a free port
+        port = find_free_port(8080)
+        if not port:
+            print("Could not find a free port. Please close other servers and try again.")
+            return
+        
+        if port != 8080:
+            print(f"Port 8080 was busy, using port {port} instead")
+        
+        # Start server in background thread
+        server_thread = threading.Thread(target=start_server, args=(port,), daemon=True)
+        server_thread.start()
+        
+        # Give server time to start
+        time.sleep(2)
+        
+        # Open browser
+        url = f"http://localhost:{port}/data.html"
+        try:
+            webbrowser.open(url)
+            print(f"Opening browser to {url}")
+        except Exception as e:
+            print(f"Could not open browser: {e}")
+            print(f"Please manually open: {url}")
+        
+        # Keep main thread alive
+        try:
+            print("Server running... Press Ctrl+C to stop")
+            print("Edit structure.yaml to modify the knowledge graph")
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\nShutting down server...")
+            sys.exit(0)
     
-    # Keep main thread alive
-    try:
-        print("Server running... Press Ctrl+C to stop")
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print("\nShutting down server...")
-        sys.exit(0)
+    else:
+        print(f"Unknown command: {command}")
+        print("Use 'python run.py help' for available commands")
 
 if __name__ == "__main__":
     main()

@@ -1,13 +1,16 @@
 """
-File utilities for the graph application.
-Handles file operations, path normalization, and directory traversal.
+File utilities for the YAML-based graph application.
+Handles YAML operations and utility functions.
 """
 import os
-import re
+import yaml
 
 
 class FileUtils:
-    """Utility class for file operations and path handling."""
+    """Utility class for YAML operations and path handling."""
+    
+    def __init__(self, yaml_file_path="../structure.yaml"):
+        self.yaml_file_path = yaml_file_path
     
     @staticmethod
     def normalize_path(path):
@@ -16,108 +19,174 @@ class FileUtils:
             return path
         return path.replace('\\', '/')
     
-    @staticmethod
-    def get_markdown_files_from_directories():
-        """Get all markdown files from data directory recursively."""
-        md_files = []
-        search_dirs = [os.path.join('..', 'data')]
-        
-        for dir_path in search_dirs:
-            if os.path.exists(dir_path):
-                for root, dirs, files in os.walk(dir_path):
-                    for f in files:
-                        if f.endswith('.md'):
-                            full_path = os.path.join(root, f)
-                            # Normalize path separators for consistency
-                            md_files.append(FileUtils.normalize_path(full_path))
-        
-        return md_files
+    def load_yaml_structure(self):
+        """Load structure from YAML file."""
+        try:
+            with open(self.yaml_file_path, 'r', encoding='utf-8') as f:
+                return yaml.safe_load(f)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Structure file not found: {self.yaml_file_path}")
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing YAML file: {e}")
     
-    @staticmethod
-    def find_file_in_directories(filename_or_path):
-        """Find a markdown file in data directory."""
-        search_dirs = [os.path.join('..', 'data')]
-        
-        for dir_path in search_dirs:
-            if os.path.exists(dir_path):
-                for root, dirs, files in os.walk(dir_path):
-                    # Check both exact filename and path matches
-                    if filename_or_path in files:
-                        found_path = os.path.join(root, filename_or_path)
-                        return FileUtils.normalize_path(found_path)
-                    
-                    # Also check if the full path matches
-                    full_path = os.path.join(root, filename_or_path)
-                    if os.path.exists(full_path):
-                        return FileUtils.normalize_path(full_path)
-        
-        return None
+    def save_yaml_structure(self, data):
+        """Save structure to YAML file."""
+        try:
+            with open(self.yaml_file_path, 'w', encoding='utf-8') as f:
+                yaml.dump(data, f, default_flow_style=False, allow_unicode=True, indent=2)
+            return True
+        except Exception as e:
+            print(f"Error saving YAML file: {e}")
+            return False
     
-    @staticmethod
-    def check_file_exists(file_path):
-        """Check if a file exists in data directory."""
-        if not file_path:
+    def item_exists(self, item_id):
+        """Check if an item exists by its ID."""
+        structure = self.load_yaml_structure()
+        id_parts = item_id.split('_')
+        
+        try:
+            if len(id_parts) == 1:
+                return id_parts[0] in structure['structure']
+            elif len(id_parts) == 2:
+                return (id_parts[0] in structure['structure'] and 
+                        id_parts[1] in structure['structure'][id_parts[0]].get('children', {}))
+            elif len(id_parts) == 3:
+                return (id_parts[0] in structure['structure'] and 
+                        id_parts[1] in structure['structure'][id_parts[0]].get('children', {}) and
+                        id_parts[2] in structure['structure'][id_parts[0]]['children'][id_parts[1]].get('children', {}))
+        except (KeyError, TypeError):
             return False
         
-        # If it's already a full path (contains ../), use it directly
-        if '../' in file_path:
-            return os.path.exists(file_path)
-        
-        # Otherwise, search in data directory
-        found_path = FileUtils.find_file_in_directories(file_path)
-        return found_path is not None
+        return False
     
-    @staticmethod
-    def read_layers_from_md(filepath):
-        """Read markdown file and extract layers with their hierarchy levels."""
-        result = []
+    def get_item_by_id(self, item_id):
+        """Get a specific item by its ID."""
+        structure = self.load_yaml_structure()
+        id_parts = item_id.split('_')
         
-        with open(filepath, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith('#'):
-                    # Count the number of # symbols to determine level
-                    level = len(line) - len(line.lstrip('#'))
-                    # Extract the text after #
-                    text = line.lstrip('#').strip()
-                    result.append((text, level))
-        
-        return result
-    
-    @staticmethod
-    def extract_context_from_md(filepath):
-        """Extract context text from markdown file comments."""
-        if not filepath or not os.path.exists(filepath):
-            return None
-            
         try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                content = f.read()
-                
-            # Look for context comment pattern: <!-- context: text -->
-            context_match = re.search(r'<!--\s*context:\s*([^-]+?)\s*-->', content, re.IGNORECASE)
-            if context_match:
-                return context_match.group(1).strip()
-                
-        except Exception as e:
-            print(f"Error reading context from {filepath}: {e}")
-            
+            if len(id_parts) == 1:
+                return structure['structure'][id_parts[0]]
+            elif len(id_parts) == 2:
+                return structure['structure'][id_parts[0]]['children'][id_parts[1]]
+            elif len(id_parts) == 3:
+                return structure['structure'][id_parts[0]]['children'][id_parts[1]]['children'][id_parts[2]]
+        except KeyError:
+            return None
+        
         return None
     
-    @staticmethod
-    def get_path_components_from_file_path(file_path):
-        """Convert file path to hierarchy components, removing base directory and extension."""
-        # Normalize path separators to forward slashes for consistency
-        normalized_path = FileUtils.normalize_path(file_path)
+    def update_item(self, item_id, updates):
+        """Update an item's properties."""
+        structure = self.load_yaml_structure()
+        id_parts = item_id.split('_')
         
-        if normalized_path.startswith('../data/'):
-            relative_path = normalized_path[8:]  # Remove '../data/'
-        else:
-            return None
+        try:
+            # Navigate to the item
+            if len(id_parts) == 1:
+                item = structure['structure'][id_parts[0]]
+            elif len(id_parts) == 2:
+                item = structure['structure'][id_parts[0]]['children'][id_parts[1]]
+            elif len(id_parts) == 3:
+                item = structure['structure'][id_parts[0]]['children'][id_parts[1]]['children'][id_parts[2]]
+            else:
+                return False
+            
+            # Apply updates
+            for key, value in updates.items():
+                item[key] = value
+            
+            # Save the updated structure
+            return self.save_yaml_structure(structure)
         
-        # Remove .md extension and split by directory separators
-        path_without_ext = os.path.splitext(relative_path)[0]
-        return path_without_ext.split('/')
+        except KeyError:
+            return False
+    
+    def add_item(self, parent_id, item_data):
+        """Add a new item under a parent."""
+        structure = self.load_yaml_structure()
+        
+        try:
+            if parent_id == "root":
+                # Add to root level
+                structure['structure'][item_data['id']] = item_data
+            else:
+                parent_id_parts = parent_id.split('_')
+                
+                # Navigate to parent
+                if len(parent_id_parts) == 1:
+                    parent = structure['structure'][parent_id_parts[0]]
+                elif len(parent_id_parts) == 2:
+                    parent = structure['structure'][parent_id_parts[0]]['children'][parent_id_parts[1]]
+                else:
+                    return False
+                
+                # Ensure children dict exists
+                if 'children' not in parent:
+                    parent['children'] = {}
+                
+                # Add the new item
+                parent['children'][item_data['id'].split('_')[-1]] = item_data
+            
+            # Save the updated structure
+            return self.save_yaml_structure(structure)
+        
+        except KeyError:
+            return False
+    
+    def remove_item(self, item_id):
+        """Remove an item from the structure."""
+        structure = self.load_yaml_structure()
+        id_parts = item_id.split('_')
+        
+        try:
+            if len(id_parts) == 1:
+                # Remove from root level
+                del structure['structure'][id_parts[0]]
+            elif len(id_parts) == 2:
+                # Remove from level 1 children
+                del structure['structure'][id_parts[0]]['children'][id_parts[1]]
+            elif len(id_parts) == 3:
+                # Remove from level 2 children
+                del structure['structure'][id_parts[0]]['children'][id_parts[1]]['children'][id_parts[2]]
+            else:
+                return False
+            
+            # Save the updated structure
+            return self.save_yaml_structure(structure)
+        
+        except KeyError:
+            return False
+    
+    def get_all_items(self):
+        """Get all items in the structure."""
+        structure = self.load_yaml_structure()
+        items = []
+        
+        for level1_key, level1_item in structure['structure'].items():
+            items.append({**level1_item, 'level': 1})
+            
+            for level2_key, level2_item in level1_item.get('children', {}).items():
+                items.append({**level2_item, 'level': 2})
+                
+                for level3_key, level3_item in level2_item.get('children', {}).items():
+                    items.append({**level3_item, 'level': 3})
+        
+        return items
+    
+    def search_items(self, query):
+        """Search for items matching a query."""
+        all_items = self.get_all_items()
+        query_lower = query.lower()
+        
+        matching_items = []
+        for item in all_items:
+            if (query_lower in item.get('title', '').lower() or 
+                query_lower in item.get('context', '').lower() or
+                query_lower in item.get('id', '').lower()):
+                matching_items.append(item)
+        
+        return matching_items
     
     @staticmethod
     def ensure_html_directory_exists():
@@ -125,3 +194,18 @@ class FileUtils:
         html_dir = "../html"
         os.makedirs(html_dir, exist_ok=True)
         return html_dir
+    
+    def get_structure_metadata(self):
+        """Get metadata from the structure file."""
+        structure = self.load_yaml_structure()
+        return structure.get('metadata', {})
+    
+    def update_metadata(self, metadata_updates):
+        """Update metadata in the structure file."""
+        structure = self.load_yaml_structure()
+        
+        if 'metadata' not in structure:
+            structure['metadata'] = {}
+        
+        structure['metadata'].update(metadata_updates)
+        return self.save_yaml_structure(structure)
