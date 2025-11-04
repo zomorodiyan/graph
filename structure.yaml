@@ -250,6 +250,28 @@ structure:
             title: GO-MELT
             id: level_work_go_melt
             context: GO-MELT project work and development
+            children:
+              simulation:
+                title: Simulation
+                id: level_work_go_melt_simulation
+                context: Simulation setup and execution
+                children:
+                  preprocessing:
+                    title: Preprocessing
+                    id: level_work_go_melt_simulation_preprocessing
+                    context: Data preprocessing and mesh generation
+                  solver:
+                    title: Solver
+                    id: level_work_go_melt_simulation_solver
+                    context: Solver configuration and execution
+                  postprocessing:
+                    title: Postprocessing
+                    id: level_work_go_melt_simulation_postprocessing
+                    context: Results analysis and visualization
+              documentation:
+                title: Documentation
+                id: level_work_go_melt_documentation
+                context: Project documentation and reports
           high_speed:
             title: HighSpeed
             id: level_work_high_speed

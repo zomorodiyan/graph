@@ -26,49 +26,144 @@ class HierarchyBuilder:
         return self._structure_data
     
     def get_breadcrumb_for_item(self, item_id):
-        """Generate breadcrumb navigation for an item based on its ID."""
+        """Generate breadcrumb navigation for an item based on its ID (supports unlimited depth)."""
         structure = self._load_yaml_structure()
         
-        # Parse the item ID to build breadcrumb path
-        id_parts = item_id.split('_')
+        # Find the item and build its path
+        path = self._find_item_path(structure, item_id)
+        
+        # Convert path to breadcrumb
         breadcrumb = [("Data", "data.html")]
         
-        if len(id_parts) >= 1:
-            # Level 1
-            level1_key = id_parts[0]
-            if level1_key in structure['structure']:
-                level1_item = structure['structure'][level1_key]
-                breadcrumb.append((level1_item['title'], f"{level1_key}.html"))
-        
-        if len(id_parts) >= 2:
-            # Level 2
-            level2_key = id_parts[1]
-            level1_item = structure['structure'][id_parts[0]]
-            if level2_key in level1_item.get('children', {}):
-                level2_item = level1_item['children'][level2_key]
-                breadcrumb.append((level2_item['title'], f"{id_parts[0]}_{level2_key}.html"))
-        
-        if len(id_parts) >= 3:
-            # Level 3 - the key might contain underscores, so join everything after the first two parts
-            level3_key = '_'.join(id_parts[2:])  # For level_work_go_melt, this gives 'go_melt'
-            level1_item = structure['structure'][id_parts[0]]
-            level2_item = level1_item.get('children', {}).get(id_parts[1], {})
-            if level3_key in level2_item.get('children', {}):
-                level3_item = level2_item['children'][level3_key]
-                breadcrumb.append((level3_item['title'], f"{item_id}.html"))
+        for i, item in enumerate(path):
+            if i == len(path) - 1:
+                # Last item - don't include in clickable breadcrumb (it's the current page)
+                continue
+            else:
+                breadcrumb.append((item['title'], f"{item['id']}.html"))
         
         return breadcrumb
     
+    def _find_item_path(self, structure, target_id):
+        """Find the full path to an item by its ID."""
+        def search_recursive(items, current_path=[]):
+            for key, item in items.items():
+                new_path = current_path + [item]
+                
+                if item.get('id') == target_id:
+                    return new_path
+                
+                if 'children' in item:
+                    result = search_recursive(item['children'], new_path)
+                    if result:
+                        return result
+            return None
+        
+        return search_recursive(structure['structure']) or []
+    
     def parse_structure_for_display(self, target_id="data"):
-        """Parse YAML structure and build 3-level hierarchy data for display."""
+        """Parse YAML structure and build 3-level hierarchy data for display from any starting point."""
         structure = self._load_yaml_structure()
         
         if target_id == "data":
-            # Return top-level view
-            return self._build_top_level_view(structure)
+            # Return top-level view (show first 3 levels)
+            return self._build_dynamic_view(structure, None, 3)
         else:
-            # Return specific item view
-            return self._build_item_view(structure, target_id)
+            # Find the target item and show 3 levels below it
+            target_item = self._find_item_by_id(structure, target_id)
+            if target_item:
+                return self._build_dynamic_view(structure, target_item, 3)
+            else:
+                # Fallback to top-level view
+                return self._build_dynamic_view(structure, None, 3)
+    
+    def _find_item_by_id(self, structure, target_id):
+        """Recursively find an item by its ID in the structure."""
+        def search_recursive(items, depth=0):
+            for key, item in items.items():
+                if item.get('id') == target_id:
+                    return item
+                if 'children' in item:
+                    result = search_recursive(item['children'], depth + 1)
+                    if result:
+                        return result
+            return None
+        
+        return search_recursive(structure['structure'])
+    
+    def _build_dynamic_view(self, structure, start_item=None, levels_to_show=3):
+        """Build a dynamic view showing specified number of levels from a starting point."""
+        if start_item is None:
+            # Start from root - show top-level items
+            return self._build_levels_from_root(structure, levels_to_show)
+        else:
+            # Start from specific item - show its children
+            return self._build_levels_from_item(start_item, levels_to_show)
+    
+    def _build_levels_from_root(self, structure, levels_to_show):
+        """Build view starting from root structure."""
+        data = []
+        
+        for key, item in structure['structure'].items():
+            layer_data = self._build_item_with_children(item, levels_to_show - 1)
+            data.append(layer_data)
+        
+        return data
+    
+    def _build_levels_from_item(self, item, levels_to_show):
+        """Build view starting from a specific item."""
+        # The item itself becomes layer1, its children become layer2, etc.
+        return [self._build_item_with_children(item, levels_to_show - 1)]
+    
+    def _build_item_with_children(self, item, remaining_levels):
+        """Recursively build an item with its children up to specified depth."""
+        layer_data = {
+            "layer1": item['title'],
+            "layer1_id": item['id'],
+            "layer1_context": item.get('context'),
+            "layer2": []
+        }
+        
+        if remaining_levels > 0 and 'children' in item:
+            for child_key, child_item in item['children'].items():
+                child_data = self._build_child_levels(child_item, remaining_levels - 1, 2)
+                layer_data["layer2"].append(child_data)
+        
+        return layer_data
+    
+    def _build_child_levels(self, item, remaining_levels, current_level):
+        """Recursively build child levels."""
+        if current_level == 2:
+            # Layer 2 structure
+            child_data = {
+                "name": item['title'],
+                "id": item['id'],
+                "context": item.get('context'),
+                "layer3": []
+            }
+            
+            if remaining_levels > 0 and 'children' in item:
+                for grandchild_key, grandchild_item in item['children'].items():
+                    grandchild_data = self._build_child_levels(grandchild_item, remaining_levels - 1, 3)
+                    child_data["layer3"].append(grandchild_data)
+            
+            return child_data
+            
+        elif current_level == 3:
+            # Layer 3 structure  
+            return {
+                "name": item['title'],
+                "id": item['id'],
+                "context": item.get('context')
+            }
+        
+        # For deeper levels, we'd need to extend the HTML structure
+        # For now, return basic structure
+        return {
+            "name": item['title'],
+            "id": item['id'],
+            "context": item.get('context')
+        }
     
     def _build_top_level_view(self, structure):
         """Build the top-level view showing all main categories."""
@@ -211,38 +306,27 @@ class HierarchyBuilder:
         return data
     
     def get_item_by_id(self, item_id):
-        """Get a specific item by its ID."""
+        """Get a specific item by its ID (supports unlimited depth)."""
         structure = self._load_yaml_structure()
-        id_parts = item_id.split('_')
-        
-        try:
-            if len(id_parts) == 1:
-                return structure['structure'][id_parts[0]]
-            elif len(id_parts) == 2:
-                return structure['structure'][id_parts[0]]['children'][id_parts[1]]
-            elif len(id_parts) == 3:
-                return structure['structure'][id_parts[0]]['children'][id_parts[1]]['children'][id_parts[2]]
-        except KeyError:
-            return None
-        
-        return None
+        return self._find_item_by_id(structure, item_id)
     
     def item_exists(self, item_id):
         """Check if an item exists by its ID."""
         return self.get_item_by_id(item_id) is not None
     
     def get_all_items(self):
-        """Get all items in the structure."""
+        """Get all items in the structure (supports unlimited depth)."""
         structure = self._load_yaml_structure()
         items = []
         
-        for level1_key, level1_item in structure['structure'].items():
-            items.append(level1_item)
-            
-            for level2_key, level2_item in level1_item.get('children', {}).items():
-                items.append(level2_item)
+        def collect_items_recursive(items_dict, depth=1):
+            for key, item in items_dict.items():
+                # Add level information for backwards compatibility
+                item_with_level = {**item, 'level': depth}
+                items.append(item_with_level)
                 
-                for level3_key, level3_item in level2_item.get('children', {}).items():
-                    items.append(level3_item)
+                if 'children' in item:
+                    collect_items_recursive(item['children'], depth + 1)
         
+        collect_items_recursive(structure['structure'])
         return items
