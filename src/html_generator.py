@@ -167,13 +167,15 @@ class HTMLGenerator:
         .layer2-context {
             font-size: 12px;
         }
+        .layer3-context {
+            font-size: 10px;
+            color: #000;
+        }
         .layer3 {
             font-size: 14px;
             color: #333;
             font-weight: normal;
-            display: inline-block;
-            margin-right: 15px;
-            vertical-align: top;
+            display: block;
             cursor: pointer;
             padding: 2px 6px;
             border-radius: 3px;
@@ -239,6 +241,10 @@ class HTMLGenerator:
             flex-direction: row;
             flex-wrap: wrap;
             align-items: center;
+        }
+        .layer3-item {
+            margin-right: 15px;
+            margin-bottom: 5px;
         }
         .notification {
             position: fixed;
@@ -436,13 +442,19 @@ class HTMLGenerator:
             # New structure with ID
             layer3_name = layer3_item["name"]
             layer3_id = layer3_item.get("id", "")
+            layer3_context = layer3_item.get("context")
             
             # Only make clickable if it has an ID and is not a leaf node
             layer3_is_leaf = self.file_utils.is_leaf_node(layer3_id) if layer3_id else True
             layer3_clickable_class = "clickable" if layer3_id and not layer3_is_leaf else ""
             layer3_onclick = f"onclick=\"navigateToItem('{layer3_id}')\"" if layer3_id and not layer3_is_leaf else ""
             
-            return f'<span class="layer3 {layer3_clickable_class} color-{color_name}" {layer3_onclick}>{layer3_name}</span>'
+            # Build the layer3 item with context
+            layer3_html = f'<span class="layer3 {layer3_clickable_class} color-{color_name}" {layer3_onclick}>{layer3_name}</span>'
+            if layer3_context:
+                layer3_html += f'<div class="context layer3-context">{layer3_context}</div>'
+            
+            return f'<div class="layer3-item">{layer3_html}</div>'
         else:
             # Old structure (string only) - keep for backward compatibility, but make non-clickable since it's a leaf
-            return f'<span class="layer3 color-{color_name}">{layer3_item}</span>'
+            return f'<div class="layer3-item"><span class="layer3 color-{color_name}">{layer3_item}</span></div>'
