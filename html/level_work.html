@@ -105,13 +105,15 @@
         .layer2-context {
             font-size: 12px;
         }
+        .layer3-context {
+            font-size: 10px;
+            color: #000;
+        }
         .layer3 {
             font-size: 14px;
             color: #333;
             font-weight: normal;
-            display: inline-block;
-            margin-right: 15px;
-            vertical-align: top;
+            display: block;
             cursor: pointer;
             padding: 2px 6px;
             border-radius: 3px;
@@ -177,6 +179,10 @@
             flex-direction: row;
             flex-wrap: wrap;
             align-items: center;
+        }
+        .layer3-item {
+            margin-right: 15px;
+            margin-bottom: 5px;
         }
         .notification {
             position: fixed;
@@ -249,28 +255,49 @@
         
         <div class="section">
             <div class="layer1-container">
+                <div class="layer1 " >Package Delivery</div>
+                <div class="context layer1-context">November 5</div>
+                <div class="underline color-green-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
                 <div class="layer1 clickable" onclick="navigateToItem('level_work_go_melt')">GO-MELT</div>
                 <div class="context layer1-context">November 7</div>
-                <div class="underline color-green-medium"></div>
+                <div class="underline color-blue-medium"></div>
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-green clickable" onclick="navigateToItem('level_work_go_melt_simulation')">Simulation</div>
+                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_go_melt_simulate')">Simulate</div>
                         
-                        <div class="underline color-green-light"></div>
+                        <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-green" >Setup</span><span class="layer3  color-green" >Refinement</span>
+        <div class="layer3-item"><span class="layer3  color-blue" >Setup</span><div class="context layer3-context">AMBench 2025 challenge 7</div></div><div class="layer3-item"><span class="layer3  color-blue" >Refinement</span><div class="context layer3-context">Costs for 3 levels</div></div>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf" >Slides</div>
-                        <div class="context layer2-context">GO-MELT vs AMB</div>
-                        <div class="underline color-green-light"></div>
+                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_go_melt_postprocess')">Postprocess</div>
+                        
+                        <div class="underline color-blue-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3  color-blue" >TAM</span><div class="context layer3-context">Time above melt</div></div><div class="layer3-item"><span class="layer3  color-blue" >SCR</span><div class="context layer3-context">Solidus cooling rate</div></div><div class="layer3-item"><span class="layer3  color-blue" >Melted</span><div class="context layer3-context">Melted area dimensions</div></div>
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-blue leaf" >Compare</div>
+                        <div class="context layer2-context">GO-MELT vs AMBench</div>
+                        <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
         
@@ -282,8 +309,18 @@
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1 " >HighSpeed</div>
-                
-                <div class="underline color-blue-medium"></div>
+                <div class="context layer1-context">November 10</div>
+                <div class="underline color-purple-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >LPBF Visualization</div>
+                <div class="context layer1-context">November 21</div>
+                <div class="underline color-red-medium"></div>
             </div>
             <div class="layer2-section">
         
@@ -292,8 +329,8 @@
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1 " >InherentStrain</div>
-                <div class="context layer1-context">November 10</div>
-                <div class="underline color-purple-medium"></div>
+                <div class="context layer1-context">Spare time</div>
+                <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
         

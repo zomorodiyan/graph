@@ -105,13 +105,15 @@
         .layer2-context {
             font-size: 12px;
         }
+        .layer3-context {
+            font-size: 10px;
+            color: #000;
+        }
         .layer3 {
             font-size: 14px;
             color: #333;
             font-weight: normal;
-            display: inline-block;
-            margin-right: 15px;
-            vertical-align: top;
+            display: block;
             cursor: pointer;
             padding: 2px 6px;
             border-radius: 3px;
@@ -177,6 +179,10 @@
             flex-direction: row;
             flex-wrap: wrap;
             align-items: center;
+        }
+        .layer3-item {
+            margin-right: 15px;
+            margin-bottom: 5px;
         }
         .notification {
             position: fixed;
@@ -294,7 +300,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-blue" >Evening</span><span class="layer3  color-blue" >Morning</span>
+        <div class="layer3-item"><span class="layer3  color-blue" >Evening</span></div><div class="layer3-item"><span class="layer3  color-blue" >Morning</span></div>
                     </div>
                 </div>
         
@@ -305,7 +311,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-blue" >Cook</span><span class="layer3  color-blue" >Eat</span><span class="layer3  color-blue" >Prep</span>
+        <div class="layer3-item"><span class="layer3  color-blue" >Cook</span></div><div class="layer3-item"><span class="layer3  color-blue" >Eat</span></div><div class="layer3-item"><span class="layer3  color-blue" >Prep</span></div>
                     </div>
                 </div>
         
@@ -316,7 +322,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-blue" >Cardio</span><span class="layer3  color-blue" >Flexibility</span><span class="layer3  color-blue" >Strength</span>
+        <div class="layer3-item"><span class="layer3  color-blue" >Cardio</span></div><div class="layer3-item"><span class="layer3  color-blue" >Flexibility</span></div><div class="layer3-item"><span class="layer3  color-blue" >Strength</span></div>
                     </div>
                 </div>
         
@@ -337,7 +343,7 @@
                         <div class="underline color-purple-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-purple" >Job</span><span class="layer3  color-purple" >Passive</span><span class="layer3  color-purple" >Side</span>
+        <div class="layer3-item"><span class="layer3  color-purple" >Job</span></div><div class="layer3-item"><span class="layer3  color-purple" >Passive</span></div><div class="layer3-item"><span class="layer3  color-purple" >Side</span></div>
                     </div>
                 </div>
         
@@ -348,7 +354,7 @@
                         <div class="underline color-purple-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-purple" >Assets</span><span class="layer3  color-purple" >Education</span><span class="layer3  color-purple" >Save</span>
+        <div class="layer3-item"><span class="layer3  color-purple" >Assets</span></div><div class="layer3-item"><span class="layer3  color-purple" >Education</span></div><div class="layer3-item"><span class="layer3  color-purple" >Save</span></div>
                     </div>
                 </div>
         
@@ -359,7 +365,7 @@
                         <div class="underline color-purple-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-purple" >Need</span><span class="layer3  color-purple" >Shop</span><span class="layer3  color-purple" >Wish</span>
+        <div class="layer3-item"><span class="layer3  color-purple" >Need</span></div><div class="layer3-item"><span class="layer3  color-purple" >Shop</span></div><div class="layer3-item"><span class="layer3  color-purple" >Wish</span></div>
                     </div>
                 </div>
         
@@ -380,7 +386,7 @@
                         <div class="underline color-red-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-red" >Groups</span><span class="layer3  color-red" >Local</span><span class="layer3  color-red" >Online</span>
+        <div class="layer3-item"><span class="layer3  color-red" >Groups</span></div><div class="layer3-item"><span class="layer3  color-red" >Local</span></div><div class="layer3-item"><span class="layer3  color-red" >Online</span></div>
                     </div>
                 </div>
         
@@ -391,7 +397,7 @@
                         <div class="underline color-red-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-red" >Extended</span><span class="layer3  color-red" >Parents</span><span class="layer3  color-red" >Siblings</span>
+        <div class="layer3-item"><span class="layer3  color-red" >Extended</span></div><div class="layer3-item"><span class="layer3  color-red" >Parents</span></div><div class="layer3-item"><span class="layer3  color-red" >Siblings</span></div>
                     </div>
                 </div>
         
@@ -402,7 +408,7 @@
                         <div class="underline color-red-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-red" >Close</span><span class="layer3  color-red" >Social</span><span class="layer3  color-red" >Work</span>
+        <div class="layer3-item"><span class="layer3  color-red" >Close</span></div><div class="layer3-item"><span class="layer3  color-red" >Social</span></div><div class="layer3-item"><span class="layer3  color-red" >Work</span></div>
                     </div>
                 </div>
         
@@ -413,7 +419,7 @@
                         <div class="underline color-red-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-red" >Dating</span><span class="layer3  color-red" >Intimacy</span><span class="layer3  color-red" >Partner</span>
+        <div class="layer3-item"><span class="layer3  color-red" >Dating</span></div><div class="layer3-item"><span class="layer3  color-red" >Intimacy</span></div><div class="layer3-item"><span class="layer3  color-red" >Partner</span></div>
                     </div>
                 </div>
         
@@ -434,7 +440,7 @@
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-green" >ASU Craft</span><span class="layer3 clickable color-green" onclick="navigateToItem('level_study_iiot')">IIoT</span>
+        <div class="layer3-item"><span class="layer3  color-green" >ASU Craft</span><div class="context layer3-context">meet w. Xavier & Zixun</div></div><div class="layer3-item"><span class="layer3 clickable color-green" onclick="navigateToItem('level_study_iiot')">IIoT</span><div class="context layer3-context">Industrial Internet of Things</div></div>
                     </div>
                 </div>
         
@@ -445,7 +451,7 @@
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable color-green" onclick="navigateToItem('level_work_go_melt')">GO-MELT</span><span class="layer3  color-green" >HighSpeed</span><span class="layer3  color-green" >InherentStrain</span>
+        <div class="layer3-item"><span class="layer3  color-green" >Package Delivery</span><div class="context layer3-context">November 5</div></div><div class="layer3-item"><span class="layer3 clickable color-green" onclick="navigateToItem('level_work_go_melt')">GO-MELT</span><div class="context layer3-context">November 7</div></div><div class="layer3-item"><span class="layer3  color-green" >HighSpeed</span><div class="context layer3-context">November 10</div></div><div class="layer3-item"><span class="layer3  color-green" >LPBF Visualization</span><div class="context layer3-context">November 21</div></div><div class="layer3-item"><span class="layer3  color-green" >InherentStrain</span><div class="context layer3-context">Spare time</div></div>
                     </div>
                 </div>
         
@@ -488,7 +494,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-blue" >Day</span><span class="layer3  color-blue" >Month</span><span class="layer3  color-blue" >Year</span>
+        <div class="layer3-item"><span class="layer3  color-blue" >Day</span></div><div class="layer3-item"><span class="layer3  color-blue" >Month</span></div><div class="layer3-item"><span class="layer3  color-blue" >Year</span></div>
                     </div>
                 </div>
         

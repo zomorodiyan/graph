@@ -105,13 +105,15 @@
         .layer2-context {
             font-size: 12px;
         }
+        .layer3-context {
+            font-size: 10px;
+            color: #000;
+        }
         .layer3 {
             font-size: 14px;
             color: #333;
             font-weight: normal;
-            display: inline-block;
-            margin-right: 15px;
-            vertical-align: top;
+            display: block;
             cursor: pointer;
             padding: 2px 6px;
             border-radius: 3px;
@@ -177,6 +179,10 @@
             flex-direction: row;
             flex-wrap: wrap;
             align-items: center;
+        }
+        .layer3-item {
+            margin-right: 15px;
+            margin-bottom: 5px;
         }
         .notification {
             position: fixed;
@@ -273,7 +279,7 @@
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3  color-green" >Term paper</span><span class="layer3  color-green" >Group Project</span><span class="layer3  color-green" >Discussion</span>
+        <div class="layer3-item"><span class="layer3  color-green" >Term paper</span><div class="context layer3-context">Due past</div></div><div class="layer3-item"><span class="layer3  color-green" >Group Project</span><div class="context layer3-context">Meet Ryan wednesday 3:30pm</div></div><div class="layer3-item"><span class="layer3  color-green" >Discussion</span><div class="context layer3-context">Wednesday 4:30-6:45pm</div></div>
                     </div>
                 </div>
         
@@ -289,19 +295,41 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
+                        <div class="layer2 color-group-blue leaf" >Package Delivery</div>
+                        <div class="context layer2-context">November 5</div>
+                        <div class="underline color-blue-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
                         <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_go_melt')">GO-MELT</div>
                         <div class="context layer2-context">November 7</div>
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <span class="layer3 clickable color-blue" onclick="navigateToItem('level_work_go_melt_simulation')">Simulation</span><span class="layer3  color-blue" >Slides</span>
+        <div class="layer3-item"><span class="layer3 clickable color-blue" onclick="navigateToItem('level_work_go_melt_simulate')">Simulate</span></div><div class="layer3-item"><span class="layer3 clickable color-blue" onclick="navigateToItem('level_work_go_melt_postprocess')">Postprocess</span></div><div class="layer3-item"><span class="layer3  color-blue" >Compare</span><div class="context layer3-context">GO-MELT vs AMBench</div></div>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-blue leaf" >HighSpeed</div>
-                        
+                        <div class="context layer2-context">November 10</div>
+                        <div class="underline color-blue-light"></div>
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-blue leaf" >LPBF Visualization</div>
+                        <div class="context layer2-context">November 21</div>
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -312,7 +340,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-blue leaf" >InherentStrain</div>
-                        <div class="context layer2-context">November 10</div>
+                        <div class="context layer2-context">Spare time</div>
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">

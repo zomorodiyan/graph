@@ -28,11 +28,9 @@ structure:
           evening:
             title: Evening
             id: body_habit_evening
-            context: Evening routine and wind-down activities
           morning:
             title: Morning
             id: body_habit_morning
-            context: Morning routine and energy-building activities
       nutrition:
         title: Nutrition
         id: body_nutrition
@@ -40,15 +38,12 @@ structure:
           cook:
             title: Cook
             id: body_nutrition_cook
-            context: Meal preparation and cooking skills
           eat:
             title: Eat
             id: body_nutrition_eat
-            context: Eating habits and mindful consumption
           prep:
             title: Prep
             id: body_nutrition_prep
-            context: Meal planning and preparation strategies
       train:
         title: Train
         id: body_train
@@ -56,15 +51,12 @@ structure:
           cardio:
             title: Cardio
             id: body_train_cardio
-            context: Cardiovascular fitness and endurance training
           flexibility:
             title: Flexibility
             id: body_train_flexibility
-            context: Stretching, yoga, and mobility work
           strength:
             title: Strength
             id: body_train_strength
-            context: Weight training and muscle building
 
   finance:
     title: Finance
@@ -77,15 +69,12 @@ structure:
           job:
             title: Job
             id: finance_earn_job
-            context: Primary employment and career advancement
           passive:
             title: Passive
             id: finance_earn_passive
-            context: Passive income streams and investments
           side:
             title: Side
             id: finance_earn_side
-            context: Side hustles and additional income sources
       invest:
         title: Invest
         id: finance_invest
@@ -93,15 +82,12 @@ structure:
           assets:
             title: Assets
             id: finance_invest_assets
-            context: Real estate, stocks, and other asset investments
           education:
             title: Education
             id: finance_invest_education
-            context: Learning about investing and financial literacy
           save:
             title: Save
             id: finance_invest_save
-            context: Savings strategies and emergency funds
       spend:
         title: Spend
         id: finance_spend
@@ -109,15 +95,12 @@ structure:
           need:
             title: Need
             id: finance_spend_need
-            context: Essential expenses and necessities
           shop:
             title: Shop
             id: finance_spend_shop
-            context: Shopping strategies and smart purchasing
           wish:
             title: Wish
             id: finance_spend_wish
-            context: Wants and discretionary spending
 
   interaction:
     title: Interaction
@@ -130,15 +113,12 @@ structure:
           groups:
             title: Groups
             id: interaction_community_groups
-            context: Interest groups and social organizations
           local:
             title: Local
             id: interaction_community_local
-            context: Local community engagement and events
           online:
             title: Online
             id: interaction_community_online
-            context: Online communities and digital social spaces
       family:
         title: Family
         id: interaction_family
@@ -146,15 +126,12 @@ structure:
           extended:
             title: Extended
             id: interaction_family_extended
-            context: Extended family relationships and gatherings
           parents:
             title: Parents
             id: interaction_family_parents
-            context: Relationship with parents and caregivers
           siblings:
             title: Siblings
             id: interaction_family_siblings
-            context: Sibling relationships and connections
       friends:
         title: Friends
         id: interaction_friends
@@ -162,15 +139,12 @@ structure:
           close:
             title: Close
             id: interaction_friends_close
-            context: Close friendships and intimate connections
           social:
             title: Social
             id: interaction_friends_social
-            context: Social circles and acquaintances
           work:
             title: Work
             id: interaction_friends_work
-            context: Professional relationships and workplace friendships
       love:
         title: Love
         id: interaction_love
@@ -178,15 +152,12 @@ structure:
           dating:
             title: Dating
             id: interaction_love_dating
-            context: Dating experiences and relationship building
           intimacy:
             title: Intimacy
             id: interaction_love_intimacy
-            context: Emotional and physical intimacy
           partner:
             title: Partner
             id: interaction_love_partner
-            context: Long-term partnership and commitment
 
   level:
     title: Level
@@ -221,14 +192,18 @@ structure:
         title: Work
         id: level_work
         children:
+          package_delivery:
+            title: Package Delivery
+            id: level_work_package_delivery
+            context: November 5
           go_melt:
             title: GO-MELT
             id: level_work_go_melt
             context: November 7
             children:
-              simulation:
-                title: Simulation
-                id: level_work_go_melt_simulation
+              simulate:
+                title: Simulate
+                id: level_work_go_melt_simulate
                 children:
                   setup:
                     title: Setup
@@ -238,24 +213,44 @@ structure:
                     title: Refinement
                     id: level_work_go_melt_simulation_refinement  
                     context: Costs for 3 levels
-              slides:
-                title: Slides
-                id: level_work_go_melt_slides
-                context: GO-MELT vs AMB
+              postprocess:
+                title: Postprocess
+                id: level_work_go_melt_postprocess
+                children:
+                  tam:
+                    title: TAM
+                    id: level_work_go_melt_postprocess_tam
+                    context: Time above melt
+                  scr:
+                    title: SCR
+                    id: level_work_go_melt_postprocess_scr
+                    context: Solidus cooling rate
+                  melted:
+                    title: Melted
+                    id: level_work_go_melt_postprocess_melted
+                    context: Melted area dimensions
+              compare:
+                title: Compare
+                id: level_work_go_melt_compare
+                context: GO-MELT vs AMBench
           high_speed:
             title: HighSpeed
             id: level_work_high_speed
+            context: November 10
+          lpbf_visualization:
+            title: LPBF Visualization
+            id: level_work_lpbf_visualization
+            context: November 21
           inherent_strain:
             title: InherentStrain
             id: level_work_inherent_strain
-            context: November 10
+            context: Spare time
       goal:
         title: Goal
         id: level_goal
       skill:
         title: Skill
         id: level_skill
-
 
   time:
     title: Time
