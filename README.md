@@ -128,3 +128,10 @@ The application automatically detects and uses Python virtual environments:
 - Windows: `.venv\Scripts\python.exe`
 - Unix/Linux: `.venv/bin/python`
 - Falls back to system Python if no virtual environment is found
+
+## Platform Compatibility
+
+✅ **Tested on Windows and Linux**
+- Windows 10/11 with PowerShell and Command Prompt
+- Linux distributions with Python 3.7+
+- Cross-platform file path handling and virtual environment detection

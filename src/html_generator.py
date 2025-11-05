@@ -42,6 +42,9 @@ class HTMLGenerator:
     
     def _build_html_structure(self, data, breadcrumb_html, current_item_id):
         """Build the complete HTML structure."""
+        from datetime import datetime
+        current_date = datetime.now().strftime("%B %d, %Y")
+        
         html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -57,6 +60,7 @@ class HTMLGenerator:
     <div class="graph-container">
         {breadcrumb_html}
         {self._build_content_sections(data)}
+        <div class="current-date">Updated: {current_date}</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>
@@ -278,6 +282,15 @@ class HTMLGenerator:
         .breadcrumb .current {
             font-weight: bold;
             color: #333;
+        }
+        .current-date {
+            margin-top: 20px;
+            padding: 5px 10px;
+            background: #f8f8f8;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+            text-align: right;
         }
         .back-button {
             display: inline-block;
