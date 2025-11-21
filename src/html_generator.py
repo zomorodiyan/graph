@@ -3,6 +3,7 @@ HTML generator for the YAML-based graph application.
 Handles HTML generation, styling, and JavaScript functionality.
 """
 import os
+from datetime import datetime
 from file_utils import FileUtils
 
 
@@ -11,6 +12,40 @@ class HTMLGenerator:
     
     def __init__(self):
         self.file_utils = FileUtils()
+    
+    def _format_due_date(self, due_date_value):
+        """Format due date with appropriate CSS class based on how soon it is."""
+        if not due_date_value:
+            return ""
+        
+        try:
+            # Handle both string and date object (YAML auto-converts ISO 8601 dates)
+            if isinstance(due_date_value, str):
+                due_date = datetime.strptime(due_date_value, '%Y-%m-%d').date()
+            else:
+                # Already a date object
+                due_date = due_date_value
+            
+            today = datetime.now().date()
+            days_until = (due_date - today).days
+            
+            # Determine CSS class
+            if days_until < 0:
+                css_class = "due-overdue"
+                label = "OVERDUE"
+            elif days_until == 0:
+                css_class = "due-today"
+                label = "TODAY"
+            elif days_until <= 6:
+                css_class = "due-soon"
+                label = f"in {days_until}d"
+            else:
+                css_class = "due-later"
+                label = due_date.strftime('%b %d')
+            
+            return f'<span class="due-date {css_class}">{label}</span>'
+        except (ValueError, TypeError, AttributeError):
+            return ""
     
     def generate_html_graph(self, data, output_path, current_item_id="data", breadcrumb_path=None):
         """Generate an interactive HTML graph."""
@@ -292,6 +327,38 @@ class HTMLGenerator:
             color: #666;
             text-align: right;
         }
+        .due-date {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-left: 8px;
+            font-weight: normal;
+        }
+        .due-overdue {
+            background-color: #ffebee;
+            color: #c62828;
+            font-weight: bold;
+        }
+        .due-today {
+            background-color: #fff3e0;
+            color: #ef6c00;
+            font-weight: bold;
+        }
+        .due-soon {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .due-later {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        .item-path {
+            font-size: 11px;
+            color: #666;
+            font-style: italic;
+            margin-top: 2px;
+        }
         .back-button {
             display: inline-block;
             margin-bottom: 20px;
@@ -382,14 +449,21 @@ class HTMLGenerator:
         layer1_clickable_class = "clickable" if layer1_has_children and not layer1_is_leaf else ""
         layer1_onclick = f"onclick=\"navigateToItem('{layer1_id}')\"" if layer1_id and not layer1_is_leaf else ""
 
-        # Get layer1 context
+        # Get layer1 context and due date
         layer1_context = item.get("layer1_context")
         layer1_context_html = f'<div class="context layer1-context">{layer1_context}</div>' if layer1_context else ""
+        
+        layer1_due = item.get("layer1_due")
+        layer1_due_html = self._format_due_date(layer1_due) if layer1_due else ""
+        
+        layer1_path = item.get("layer1_path")
+        layer1_path_html = f'<div class="item-path">{layer1_path}</div>' if layer1_path else ""
 
         content = f"""
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 {layer1_clickable_class}" {layer1_onclick}>{layer1_name}</div>
+                <div class="layer1 {layer1_clickable_class}" {layer1_onclick}>{layer1_name}{layer1_due_html}</div>
+                {layer1_path_html}
                 {layer1_context_html}
                 <div class="underline color-{color_name}-medium"></div>
             </div>
@@ -426,14 +500,17 @@ class HTMLGenerator:
         
         layer2_class = " ".join(css_classes)
         
-        # Get layer2 context
+        # Get layer2 context and due date
         layer2_context = layer2_item.get("context")
         layer2_context_html = f'<div class="context layer2-context">{layer2_context}</div>' if layer2_context else ""
+        
+        layer2_due = layer2_item.get("due")
+        layer2_due_html = self._format_due_date(layer2_due) if layer2_due else ""
 
         content = f"""
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 {layer2_class}" {onclick_handler}>{layer2_name}</div>
+                        <div class="layer2 {layer2_class}" {onclick_handler}>{layer2_name}{layer2_due_html}</div>
                         {layer2_context_html}
                         <div class="underline color-{color_name}-light"></div>
                     </div>
@@ -456,14 +533,16 @@ class HTMLGenerator:
             layer3_name = layer3_item["name"]
             layer3_id = layer3_item.get("id", "")
             layer3_context = layer3_item.get("context")
+            layer3_due = layer3_item.get("due")
             
             # Only make clickable if it has an ID and is not a leaf node
             layer3_is_leaf = self.file_utils.is_leaf_node(layer3_id) if layer3_id else True
             layer3_clickable_class = "clickable" if layer3_id and not layer3_is_leaf else ""
             layer3_onclick = f"onclick=\"navigateToItem('{layer3_id}')\"" if layer3_id and not layer3_is_leaf else ""
             
-            # Build the layer3 item with context
-            layer3_html = f'<span class="layer3 {layer3_clickable_class} color-{color_name}" {layer3_onclick}>{layer3_name}</span>'
+            # Build the layer3 item with context and due date
+            layer3_due_html = self._format_due_date(layer3_due) if layer3_due else ""
+            layer3_html = f'<span class="layer3 {layer3_clickable_class} color-{color_name}" {layer3_onclick}>{layer3_name}{layer3_due_html}</span>'
             if layer3_context:
                 layer3_html += f'<div class="context layer3-context">{layer3_context}</div>'
             
