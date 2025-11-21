@@ -19,8 +19,20 @@ class GraphApp:
     
     def generate_graph_for_item(self, item_id="data"):
         """Generate HTML graph for a specific item or the root data view."""
-        # Parse hierarchy for the item
-        data = self.hierarchy_builder.parse_structure_for_display(item_id)
+        # Check if this is a time-based view
+        time_categories = ['time_over', 'time_day', 'time_week', 'time_month']
+        
+        if item_id in time_categories:
+            # Generate time-based view
+            category_map = {'time_over': 'overdue', 'time_day': 'day', 'time_week': 'week', 'time_month': 'month'}
+            category = category_map.get(item_id, item_id.split('_')[-1])
+            data = self.hierarchy_builder.build_time_view_data(category)
+        elif item_id == 'time':
+            # Special handling for time - show all time categories with their items
+            data = self.hierarchy_builder.build_time_view()
+        else:
+            # Parse hierarchy for the item normally
+            data = self.hierarchy_builder.parse_structure_for_display(item_id)
         
         # Determine output path
         if item_id == "data":
@@ -66,7 +78,17 @@ class GraphApp:
                 except Exception as e:
                     print(f"Error generating graph for {item_id}: {e}")
         
-        print(f"Generated {generated_count} individual item views (leaf nodes excluded)")
+        # Generate time-based views
+        print("\nGenerating time-based views...")
+        time_views = ['time_over', 'time_day', 'time_week', 'time_month']
+        for view_id in time_views:
+            try:
+                html_path = self.generate_graph_for_item(view_id)
+                print(f"Generated time view: {html_path}")
+            except Exception as e:
+                print(f"Error generating time view {view_id}: {e}")
+        
+        print(f"\nGenerated {generated_count} individual item views (leaf nodes excluded)")
         return main_html_path
     
     def search_items(self, query):

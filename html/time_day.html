@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Graph - Time Calendar</title>
+    <title>Knowledge Graph - Time Day</title>
     <style>
         
         body {
@@ -226,6 +226,38 @@
             color: #666;
             text-align: right;
         }
+        .due-date {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-left: 8px;
+            font-weight: normal;
+        }
+        .due-overdue {
+            background-color: #ffebee;
+            color: #c62828;
+            font-weight: bold;
+        }
+        .due-today {
+            background-color: #fff3e0;
+            color: #ef6c00;
+            font-weight: bold;
+        }
+        .due-soon {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .due-later {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        .item-path {
+            font-size: 11px;
+            color: #666;
+            font-style: italic;
+            margin-top: 2px;
+        }
         .back-button {
             display: inline-block;
             margin-bottom: 20px;
@@ -260,39 +292,20 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('time.html')">Time</a> > <span class="current">Calendar</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('time.html')">Time</a> > <span class="current">Day</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 " >Day</div>
+                <div class="layer1 " >LPBF Visualization<span class="due-date due-today">TODAY</span></div>
                 
+                <div class="context layer1-context">November 21 • Path: Level > Work</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
         
             </div>
         </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 " >Month</div>
-                
-                <div class="underline color-blue-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 " >Year</div>
-                
-                <div class="underline color-purple-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-            </div>
-        </div>
-        <div class="current-date">Updated: November 04, 2025</div>
+        <div class="current-date">Updated: November 21, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

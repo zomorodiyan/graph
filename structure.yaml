@@ -145,19 +145,6 @@ structure:
           work:
             title: Work
             id: interaction_friends_work
-      love:
-        title: Love
-        id: interaction_love
-        children:
-          dating:
-            title: Dating
-            id: interaction_love_dating
-          intimacy:
-            title: Intimacy
-            id: interaction_love_intimacy
-          partner:
-            title: Partner
-            id: interaction_love_partner
 
   level:
     title: Level
@@ -179,15 +166,18 @@ structure:
               termpaper:
                 title: Term paper
                 id: level_work_go_melt_simulation_termpaper
-                context:  Due past 
+                context:  Due past
+                due: 2025-11-15 
               groupProject:
                 title: Group Project
                 id: level_work_go_melt_simulation_groupProject
                 context:  Meet Ryan wednesday 3:30pm
+                due: 2025-11-26
               Discussion:
                 title: Discussion
                 id: level_work_go_melt_simulation_Discussion
                 context:  Wednesday 4:30-6:45pm
+                due: 2025-11-26
       work:
         title: Work
         id: level_work
@@ -196,10 +186,12 @@ structure:
             title: Package Delivery
             id: level_work_package_delivery
             context: November 5
+            due: 2025-11-05
           go_melt:
             title: GO-MELT
             id: level_work_go_melt
             context: November 7
+            due: 2025-11-07
             children:
               simulate:
                 title: Simulate
@@ -209,10 +201,12 @@ structure:
                     title: Setup
                     id: level_work_go_melt_simulation_setup
                     context: AMBench 2025 challenge 7
+                    due: 2025-11-22
                   refinement:
                     title: Refinement
                     id: level_work_go_melt_simulation_refinement  
                     context: Costs for 3 levels
+                    due: 2025-11-25
               postprocess:
                 title: Postprocess
                 id: level_work_go_melt_postprocess
@@ -237,10 +231,12 @@ structure:
             title: HighSpeed
             id: level_work_high_speed
             context: November 10
+            due: 2025-11-10
           lpbf_visualization:
             title: LPBF Visualization
             id: level_work_lpbf_visualization
             context: November 21
+            due: 2025-11-21
           inherent_strain:
             title: InherentStrain
             id: level_work_inherent_strain
@@ -256,16 +252,15 @@ structure:
     title: Time
     id: time
     children:
-      calendar:
-        title: Calendar
-        id: time_calendar
-        children:
-          day:
-            title: Day
-            id: time_calendar_day
-          month:
-            title: Month
-            id: time_calendar_month
-          year:
-            title: Year
-            id: time_calendar_year
+      over:
+        title: Over
+        id: time_over
+      day:
+        title: Day
+        id: time_day
+      week:
+        title: Week
+        id: time_week
+      month:
+        title: Month
+        id: time_month

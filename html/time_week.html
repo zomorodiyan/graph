@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Graph - Level Work Go Melt Simulation</title>
+    <title>Knowledge Graph - Time Week</title>
     <style>
         
         body {
@@ -217,6 +217,47 @@
             font-weight: bold;
             color: #333;
         }
+        .current-date {
+            margin-top: 20px;
+            padding: 5px 10px;
+            background: #f8f8f8;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+        }
+        .due-date {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-left: 8px;
+            font-weight: normal;
+        }
+        .due-overdue {
+            background-color: #ffebee;
+            color: #c62828;
+            font-weight: bold;
+        }
+        .due-today {
+            background-color: #fff3e0;
+            color: #ef6c00;
+            font-weight: bold;
+        }
+        .due-soon {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .due-later {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        .item-path {
+            font-size: 11px;
+            color: #666;
+            font-style: italic;
+            margin-top: 2px;
+        }
         .back-button {
             display: inline-block;
             margin-bottom: 20px;
@@ -251,12 +292,13 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('level.html')">Level</a> > <a href="#" onclick="loadGraph('level_work.html')">Work</a> > <a href="#" onclick="loadGraph('level_work_go_melt.html')">GO-MELT</a> > <span class="current">Simulation</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('time.html')">Time</a> > <span class="current">Week</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 " >Setup</div>
-                <div class="context layer1-context">AMBench 2025 challenge 7</div>
+                <div class="layer1 " >Setup<span class="due-date due-soon">in 1d</span></div>
+                
+                <div class="context layer1-context">AMBench 2025 challenge 7 • Path: Level > Work > GO-MELT > Simulate</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
@@ -265,14 +307,38 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 " >Refinement</div>
-                <div class="context layer1-context">Costs for 3 levels</div>
+                <div class="layer1 " >Refinement<span class="due-date due-soon">in 4d</span></div>
+                
+                <div class="context layer1-context">Costs for 3 levels • Path: Level > Work > GO-MELT > Simulate</div>
                 <div class="underline color-blue-medium"></div>
             </div>
             <div class="layer2-section">
         
             </div>
         </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >Group Project<span class="due-date due-soon">in 5d</span></div>
+                
+                <div class="context layer1-context">Meet Ryan wednesday 3:30pm • Path: Level > Study > IIoT</div>
+                <div class="underline color-purple-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >Discussion<span class="due-date due-soon">in 5d</span></div>
+                
+                <div class="context layer1-context">Wednesday 4:30-6:45pm • Path: Level > Study > IIoT</div>
+                <div class="underline color-red-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="current-date">Updated: November 21, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

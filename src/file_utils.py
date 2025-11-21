@@ -58,6 +58,11 @@ class FileUtils:
     
     def is_leaf_node(self, item_id):
         """Check if an item is a leaf node (has no children or empty children)."""
+        # Special time-based views that are dynamically generated should not be treated as leaf nodes
+        time_view_ids = ['time_over', 'time_day', 'time_week', 'time_month']
+        if item_id in time_view_ids:
+            return False
+        
         structure = self.load_yaml_structure()
         
         def find_item_recursive(items_dict):
