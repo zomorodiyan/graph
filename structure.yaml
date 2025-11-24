@@ -157,86 +157,117 @@ structure:
           asu_craft:
             title: ASU Craft
             id: level_study_asu_craft
-            context: meet w. Xavier & Zixun
+            context: Meet Xavier & Zixun
+            children: {}
           iiot:
             title: IIoT
             id: level_study_iiot
-            context: Industrial Internet of Things
+            context: Industrial IoT course
             children:
               termpaper:
                 title: Term paper
-                id: level_work_go_melt_simulation_termpaper
-                context:  Due past
-                due: 2025-11-15 
+                id: level_study_iiot_termpaper
+                context: Due past
               groupProject:
                 title: Group Project
-                id: level_work_go_melt_simulation_groupProject
-                context:  Meet Ryan wednesday 3:30pm
-                due: 2025-11-26
+                id: level_study_iiot_groupProject
+                context: Meet Ryan Wed 3:30pm
               Discussion:
                 title: Discussion
-                id: level_work_go_melt_simulation_Discussion
-                context:  Wednesday 4:30-6:45pm
-                due: 2025-11-26
+                id: level_study_iiot_Discussion
+                context: Wed 4:30-6:45pm
       work:
         title: Work
         id: level_work
         children:
-          package_delivery:
-            title: Package Delivery
-            id: level_work_package_delivery
-            context: November 5
-            due: 2025-11-05
           go_melt:
             title: GO-MELT
             id: level_work_go_melt
-            context: November 7
-            due: 2025-11-07
+            context: Update heat-source & outline publishing
+            children:
+              outline:
+                title: Outline 
+                id: level_work_go_melt_outline
+                context: Draft outline for publication 
+                due: 2025-11-25
+              learn:
+                title: Learn
+                id: level_work_go_melt_learn
+                context: Understand heat source & batch updates
+                due: 2025-11-27
+              implement:
+                title: Implement
+                id: level_work_go_melt_implement
+                context: Modify code for dynamic heat source
+                due: 2025-11-28
+              effect:
+                title: Effect
+                id: level_work_go_melt_effect
+                context: Dynamic heat source effect on meltpool
+                due: 2025-11-30
+              slides:
+                title: Slides
+                id: level_work_go_melt_slides
+                due: 2025-11-30
+          ray_tracing_visualization:
+            title: Ray-tracing visualization
+            id: level_work_ray_tracing_visualization
+            context: First ray-traced renders on Blackwell
+            due: 2025-11-30
             children:
               simulate:
                 title: Simulate
-                id: level_work_go_melt_simulate
+                id: level_work_ray_tracing_simulate
                 children:
-                  setup:
-                    title: Setup
-                    id: level_work_go_melt_simulation_setup
-                    context: AMBench 2025 challenge 7
-                    due: 2025-11-22
-                  refinement:
-                    title: Refinement
-                    id: level_work_go_melt_simulation_refinement  
-                    context: Costs for 3 levels
-                    due: 2025-11-25
+                  environment:
+                    title: Environment
+                    id: level_work_ray_tracing_simulate_environment
+                    context: done!
+                  configure:
+                    title: Configure
+                    id: level_work_ray_tracing_simulate_configure
+                    due: 2025-11-26
+                  run:
+                    title: Run
+                    id: level_work_ray_tracing_simulate_run
+                    due: 2025-11-28
               postprocess:
                 title: Postprocess
-                id: level_work_go_melt_postprocess
+                id: level_work_ray_tracing_postprocess
                 children:
-                  tam:
-                    title: TAM
-                    id: level_work_go_melt_postprocess_tam
-                    context: Time above melt
-                  scr:
-                    title: SCR
-                    id: level_work_go_melt_postprocess_scr
-                    context: Solidus cooling rate
-                  melted:
-                    title: Melted
-                    id: level_work_go_melt_postprocess_melted
-                    context: Melted area dimensions
-              compare:
-                title: Compare
-                id: level_work_go_melt_compare
-                context: GO-MELT vs AMBench
-          high_speed:
-            title: HighSpeed
-            id: level_work_high_speed
-            context: November 10
-            due: 2025-11-10
-          lpbf_visualization:
-            title: LPBF Visualization
-            id: level_work_lpbf_visualization
-            context: November 21
-            due: 2025-11-21
+                  image:
+                    title: Image
+                    id: level_work_ray_tracing_postprocess_image
+                    due: 2025-11-29
+                  animation:
+                    title: Animation
+                    id: level_work_ray_tracing_postprocess_animation
+                    due: 2025-11-30
+              slides:
+                title: Slides
+                id: level_work_ray_tracing_slides
+                due: 2025-11-29
+          aps_data:
+            title: APS Data
+            id: level_work_aps_data
+            context: Process high-speed data for porosity
+            due: 2025-11-30
+            children:
+              code:
+                title: Code
+                id: level_work_aps_data_code
+                context: Measure porosity for single case
+                due: 2025-11-26
+              meet:
+                title: Meet
+                id: level_work_aps_data_meet
+                context: Zixun - share codes & postprocess insights
+                due: 2025-11-26
+              iterate:
+                title: Iterate
+                id: level_work_aps_data_iterate
+                context: Apply algorithm to whole data
+                due: 2025-11-29
           inherent_strain:
             title: InherentStrain
             id: level_work_inherent_strain
@@ -244,9 +275,11 @@ structure:
       goal:
         title: Goal
         id: level_goal
+        children: {}
       skill:
         title: Skill
         id: level_skill
+        children: {}
 
   time:
     title: Time

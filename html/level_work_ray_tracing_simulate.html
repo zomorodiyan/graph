@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Graph - Level</title>
+    <title>Knowledge Graph - Level Work Ray Tracing Simulate</title>
     <style>
         
         body {
@@ -292,124 +292,36 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Level</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('level.html')">Level</a> > <a href="#" onclick="loadGraph('level_work.html')">Work</a> > <a href="#" onclick="loadGraph('level_work_ray_tracing_visualization.html')">Ray-tracing visualization</a> > <span class="current">Simulate</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('level_study')">Study</div>
+                <div class="layer1 " >Environment</div>
                 
-                
+                <div class="context layer1-context">done!</div>
                 <div class="underline color-green-medium"></div>
             </div>
             <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf" >ASU Craft</div>
-                        <div class="context layer2-context">Meet Xavier & Zixun</div>
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-green clickable" onclick="navigateToItem('level_study_iiot')">IIoT</div>
-                        <div class="context layer2-context">Industrial IoT course</div>
-                        <div class="underline color-green-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-green" >Term paper</span><div class="context layer3-context">Due past</div></div><div class="layer3-item"><span class="layer3  color-green" >Group Project</span><div class="context layer3-context">Meet Ryan Wed 3:30pm</div></div><div class="layer3-item"><span class="layer3  color-green" >Discussion</span><div class="context layer3-context">Wed 4:30-6:45pm</div></div>
-                    </div>
-                </div>
         
             </div>
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('level_work')">Work</div>
+                <div class="layer1 " >Configure<span class="due-date due-soon">in 2d</span></div>
                 
                 
                 <div class="underline color-blue-medium"></div>
             </div>
             <div class="layer2-section">
         
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_go_melt')">GO-MELT</div>
-                        <div class="context layer2-context">Update heat-source & outline publishing</div>
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Outline<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Draft outline for publication</div></div><div class="layer3-item"><span class="layer3  color-blue" >Learn<span class="due-date due-soon">in 3d</span></span><div class="context layer3-context">Understand heat source & batch updates</div></div><div class="layer3-item"><span class="layer3  color-blue" >Implement<span class="due-date due-soon">in 4d</span></span><div class="context layer3-context">Modify code for dynamic heat source</div></div><div class="layer3-item"><span class="layer3  color-blue" >Effect<span class="due-date due-soon">in 6d</span></span><div class="context layer3-context">Dynamic heat source effect on meltpool</div></div><div class="layer3-item"><span class="layer3  color-blue" >Slides<span class="due-date due-soon">in 6d</span></span></div>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_ray_tracing_visualization')">Ray-tracing visualization<span class="due-date due-soon">in 6d</span></div>
-                        <div class="context layer2-context">First ray-traced renders on Blackwell</div>
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3 clickable color-blue" onclick="navigateToItem('level_work_ray_tracing_simulate')">Simulate</span></div><div class="layer3-item"><span class="layer3 clickable color-blue" onclick="navigateToItem('level_work_ray_tracing_postprocess')">Postprocess</span></div><div class="layer3-item"><span class="layer3  color-blue" >Slides<span class="due-date due-soon">in 5d</span></span></div>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-soon">in 6d</span></div>
-                        <div class="context layer2-context">Process high-speed data for porosity</div>
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Code<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Measure porosity for single case</div></div><div class="layer3-item"><span class="layer3  color-blue" >Meet<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Zixun - share codes & postprocess insights</div></div><div class="layer3-item"><span class="layer3  color-blue" >Iterate<span class="due-date due-soon">in 5d</span></span><div class="context layer3-context">Apply algorithm to whole data</div></div>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-blue leaf" >LPBF Visualization</div>
-                        <div class="context layer2-context">Nov 21</div>
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-blue leaf" >InherentStrain</div>
-                        <div class="context layer2-context">Spare time</div>
-                        <div class="underline color-blue-light"></div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
             </div>
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 " >Goal</div>
+                <div class="layer1 " >Run<span class="due-date due-soon">in 4d</span></div>
                 
                 
                 <div class="underline color-purple-medium"></div>
-            </div>
-            <div class="layer2-section">
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 " >Skill</div>
-                
-                
-                <div class="underline color-red-medium"></div>
             </div>
             <div class="layer2-section">
         
