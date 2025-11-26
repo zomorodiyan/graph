@@ -167,15 +167,25 @@ structure:
               termpaper:
                 title: Term paper
                 id: level_study_iiot_termpaper
-                context: Due past
+                context: Expanded Outline 
+                due: 2025-11-26
               groupProject:
                 title: Group Project
                 id: level_study_iiot_groupProject
-                context: Meet Ryan Wed 3:30pm
-              Discussion:
-                title: Discussion
-                id: level_study_iiot_Discussion
-                context: Wed 4:30-6:45pm
+                context: Title and abstract (?), github
+                due: 2025-11-26
+              lab5:
+                title: Lab 5
+                id: level_study_iiot_lab5
+                due: 2025-11-24
+              lab10:
+                title: Lab 10
+                id: level_study_iiot_lab10
+                due: 2025-11-24
+              class:
+                title: Class
+                id: level_study_iiot_class
+                due: 2025-11-24
       work:
         title: Work
         id: level_work
@@ -189,7 +199,7 @@ structure:
                 title: Outline 
                 id: level_work_go_melt_outline
                 context: Draft outline for publication 
-                due: 2025-11-25
+                due: 2025-11-26
               learn:
                 title: Learn
                 id: level_work_go_melt_learn
@@ -230,7 +240,7 @@ structure:
                   run:
                     title: Run
                     id: level_work_ray_tracing_simulate_run
-                    due: 2025-11-28
+                    due: 2025-11-27
               postprocess:
                 title: Postprocess
                 id: level_work_ray_tracing_postprocess
