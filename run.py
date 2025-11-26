@@ -42,7 +42,7 @@ def start_server(port):
     
     try:
         with socketserver.TCPServer(("", port), Handler) as httpd:
-            print(f"Server running at http://localhost:{port}/data.html")
+            print(f"Server running at http://localhost:{port}/level.html")
             httpd.serve_forever()
     except Exception as e:
         print(f"Server error: {e}")
