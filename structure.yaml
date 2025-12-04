@@ -168,24 +168,24 @@ structure:
                 title: Term paper
                 id: level_study_iiot_termpaper
                 context: Expanded Outline 
-                due: 2025-11-26
-              groupProject:
-                title: Group Project
-                id: level_study_iiot_groupProject
-                context: Title and abstract (?), github
-                due: 2025-11-26
+                due: 2025-12-04
+              fullpaper:
+                title: Full paper
+                id: level_study_iiot_fullpaper
+                context: Full paper 
+                due: 2025-12-08
               lab5:
                 title: Lab 5
                 id: level_study_iiot_lab5
-                due: 2025-11-24
+                due: 2025-12-04
               lab10:
                 title: Lab 10
                 id: level_study_iiot_lab10
-                due: 2025-11-24
-              class:
-                title: Class
-                id: level_study_iiot_class
-                due: 2025-11-24
+                due: 2025-12-04
+              lab14:
+                title: Lab 14
+                id: level_study_iiot_lab14
+                due: 2025-12-04
       work:
         title: Work
         id: level_work
@@ -195,93 +195,53 @@ structure:
             id: level_work_go_melt
             context: Update heat-source & outline publishing
             children:
+              delay_effect:
+                title: Delay effect 
+                id: level_work_go_melt_delay_effect
+                context: Effect of delay on surface temperature readings
+                due: 2025-12-04
               outline:
                 title: Outline 
                 id: level_work_go_melt_outline
                 context: Draft outline for publication 
-                due: 2025-11-26
-              learn:
-                title: Learn
-                id: level_work_go_melt_learn
-                context: Understand heat source & batch updates
-                due: 2025-11-27
-              implement:
-                title: Implement
-                id: level_work_go_melt_implement
-                context: Modify code for dynamic heat source
-                due: 2025-11-28
-              effect:
-                title: Effect
-                id: level_work_go_melt_effect
-                context: Dynamic heat source effect on meltpool
-                due: 2025-11-30
-              slides:
-                title: Slides
-                id: level_work_go_melt_slides
-                due: 2025-11-30
+                due: 2025-12-10
+              inherent_strain:
+                title: InherentStrain
+                id: level_work_inherent_strain
+                context: Spare time
           ray_tracing_visualization:
             title: Ray-tracing visualization
             id: level_work_ray_tracing_visualization
             context: First ray-traced renders on Blackwell
-            due: 2025-11-30
             children:
-              simulate:
-                title: Simulate
-                id: level_work_ray_tracing_simulate
-                children:
-                  environment:
-                    title: Environment
-                    id: level_work_ray_tracing_simulate_environment
-                    context: done!
-                  configure:
-                    title: Configure
-                    id: level_work_ray_tracing_simulate_configure
-                    due: 2025-11-26
-                  run:
-                    title: Run
-                    id: level_work_ray_tracing_simulate_run
-                    due: 2025-11-27
               postprocess:
                 title: Postprocess
                 id: level_work_ray_tracing_postprocess
                 children:
-                  image:
-                    title: Image
-                    id: level_work_ray_tracing_postprocess_image
-                    due: 2025-11-29
-                  animation:
-                    title: Animation
-                    id: level_work_ray_tracing_postprocess_animation
-                    due: 2025-11-30
-              slides:
-                title: Slides
-                id: level_work_ray_tracing_slides
-                due: 2025-11-29
+                  inspiration:
+                    title: Inspiration
+                    id: level_work_ray_tracing_postprocess_inspiration
+                    due: 2025-12-06
+                  generation:
+                    title: Generation
+                    id: level_work_ray_tracing_postprocess_generation
+                    due: 2025-12-09
           aps_data:
             title: APS Data
             id: level_work_aps_data
             context: Process high-speed data for porosity
-            due: 2025-11-30
+            due: 2025-12-06
             children:
               code:
                 title: Code
                 id: level_work_aps_data_code
                 context: Measure porosity for single case
-                due: 2025-11-26
+                due: 2025-12-06
               meet:
                 title: Meet
                 id: level_work_aps_data_meet
                 context: Zixun - share codes & postprocess insights
-                due: 2025-11-26
-              iterate:
-                title: Iterate
-                id: level_work_aps_data_iterate
-                context: Apply algorithm to whole data
-                due: 2025-11-29
-          inherent_strain:
-            title: InherentStrain
-            id: level_work_inherent_strain
-            context: Spare time
+                due: 2025-12-07
       goal:
         title: Goal
         id: level_goal
