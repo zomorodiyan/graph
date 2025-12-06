@@ -13,6 +13,31 @@ class HTMLGenerator:
     def __init__(self):
         self.file_utils = FileUtils()
     
+    def _create_progress_underline(self, progress, color_name, intensity):
+        """Create an underline element with optional progress visualization.
+        
+        Args:
+            progress: Number between 0-100, or None
+            color_name: Color theme (green, blue, purple, red)
+            intensity: Color intensity (light, medium, dark)
+        
+        Returns:
+            HTML string for the underline div
+        """
+        if progress is not None and isinstance(progress, (int, float)) and 0 <= progress <= 100:
+            # Map intensity to color values
+            color_map = {
+                "green": {"light": "#A5D6A7", "medium": "#388E3C", "dark": "#1B5E20"},
+                "blue": {"light": "#90CAF9", "medium": "#1976D2", "dark": "#0D47A1"},
+                "purple": {"light": "#CE93D8", "medium": "#8E24AA", "dark": "#4A148C"},
+                "red": {"light": "#FFAB91", "medium": "#D84315", "dark": "#BF360C"},
+            }
+            progress_color = color_map.get(color_name, {}).get(intensity, "#388E3C")
+            return f'<div class="underline-progress" style="--progress-color: {progress_color}; --progress-percent: {progress}%;"></div>'
+        else:
+            # No progress specified, use solid color underline
+            return f'<div class="underline color-{color_name}-{intensity}"></div>'
+    
     def _format_due_date(self, due_date_value):
         """Format due date with appropriate CSS class based on how soon it is."""
         if not due_date_value:
@@ -239,6 +264,12 @@ class HTMLGenerator:
             margin-top: 2px;
             margin-bottom: 4px;
         }
+        .underline-progress {
+            height: 2px;
+            margin-top: 2px;
+            margin-bottom: 4px;
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #e0e0e0 var(--progress-percent));
+        }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
         .color-green-dark { background-color: #1B5E20; }
@@ -458,6 +489,10 @@ class HTMLGenerator:
         
         layer1_path = item.get("layer1_path")
         layer1_path_html = f'<div class="item-path">{layer1_path}</div>' if layer1_path else ""
+        
+        # Get progress and create underline
+        layer1_progress = item.get("layer1_progress")
+        layer1_underline = self._create_progress_underline(layer1_progress, color_name, "medium")
 
         content = f"""
         <div class="section">
@@ -465,7 +500,7 @@ class HTMLGenerator:
                 <div class="layer1 {layer1_clickable_class}" {layer1_onclick}>{layer1_name}{layer1_due_html}</div>
                 {layer1_path_html}
                 {layer1_context_html}
-                <div class="underline color-{color_name}-medium"></div>
+                {layer1_underline}
             </div>
             <div class="layer2-section">
         """
@@ -506,13 +541,17 @@ class HTMLGenerator:
         
         layer2_due = layer2_item.get("due")
         layer2_due_html = self._format_due_date(layer2_due) if layer2_due else ""
+        
+        # Get progress and create underline
+        layer2_progress = layer2_item.get("progress")
+        layer2_underline = self._create_progress_underline(layer2_progress, color_name, "light")
 
         content = f"""
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 {layer2_class}" {onclick_handler}>{layer2_name}{layer2_due_html}</div>
                         {layer2_context_html}
-                        <div class="underline color-{color_name}-light"></div>
+                        {layer2_underline}
                     </div>
                     <div class="layer3-container">
         """

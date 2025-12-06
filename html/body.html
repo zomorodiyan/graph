@@ -138,6 +138,12 @@
             margin-top: 2px;
             margin-bottom: 4px;
         }
+        .underline-progress {
+            height: 2px;
+            margin-top: 2px;
+            margin-bottom: 4px;
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #e0e0e0 var(--progress-percent));
+        }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
         .color-green-dark { background-color: #1B5E20; }
@@ -299,7 +305,7 @@
                 <div class="layer1 clickable" onclick="navigateToItem('body_habit')">Habit</div>
                 
                 
-                <div class="underline color-green-medium"></div>
+                <div class="underline-progress" style="--progress-color: #388E3C; --progress-percent: 45%;"></div>
             </div>
             <div class="layer2-section">
         
@@ -307,7 +313,7 @@
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Evening</div>
                         
-                        <div class="underline color-green-light"></div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-percent: 30%;"></div>
                     </div>
                     <div class="layer3-container">
         
@@ -318,7 +324,7 @@
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Morning</div>
                         
-                        <div class="underline color-green-light"></div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-percent: 100%;"></div>
                     </div>
                     <div class="layer3-container">
         
@@ -415,7 +421,7 @@
         
             </div>
         </div>
-        <div class="current-date">Updated: December 04, 2025</div>
+        <div class="current-date">Updated: December 06, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

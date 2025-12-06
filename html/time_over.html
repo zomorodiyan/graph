@@ -138,6 +138,12 @@
             margin-top: 2px;
             margin-bottom: 4px;
         }
+        .underline-progress {
+            height: 2px;
+            margin-top: 2px;
+            margin-bottom: 4px;
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #e0e0e0 var(--progress-percent));
+        }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
         .color-green-dark { background-color: #1B5E20; }
@@ -294,7 +300,62 @@
     <div class="graph-container">
         <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('time.html')">Time</a> > <span class="current">Over</span></div>
         
-        <div class="current-date">Updated: December 04, 2025</div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >Term paper<span class="due-date due-overdue">OVERDUE</span></div>
+                
+                <div class="context layer1-context">Expanded Outline • Path: Level > Study > IIoT</div>
+                <div class="underline color-green-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >Lab 5<span class="due-date due-overdue">OVERDUE</span></div>
+                
+                <div class="context layer1-context">Path: Level > Study > IIoT</div>
+                <div class="underline color-blue-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >Lab 10<span class="due-date due-overdue">OVERDUE</span></div>
+                
+                <div class="context layer1-context">Path: Level > Study > IIoT</div>
+                <div class="underline color-purple-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >Lab 14<span class="due-date due-overdue">OVERDUE</span></div>
+                
+                <div class="context layer1-context">Path: Level > Study > IIoT</div>
+                <div class="underline color-red-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 " >Delay effect<span class="due-date due-overdue">OVERDUE</span></div>
+                
+                <div class="context layer1-context">Effect of delay on surface temperature readings • Path: Level > Work > GO-MELT</div>
+                <div class="underline color-green-medium"></div>
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="current-date">Updated: December 06, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

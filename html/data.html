@@ -138,6 +138,12 @@
             margin-top: 2px;
             margin-bottom: 4px;
         }
+        .underline-progress {
+            height: 2px;
+            margin-top: 2px;
+            margin-bottom: 4px;
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #e0e0e0 var(--progress-percent));
+        }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
         .color-green-dark { background-color: #1B5E20; }
@@ -299,7 +305,7 @@
                 <div class="layer1 clickable" onclick="navigateToItem('mind')">Mind</div>
                 
                 
-                <div class="underline color-green-medium"></div>
+                <div class="underline-progress" style="--progress-color: #388E3C; --progress-percent: 75%;"></div>
             </div>
             <div class="layer2-section">
         
@@ -307,7 +313,7 @@
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Mood</div>
                         
-                        <div class="underline color-green-light"></div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-percent: 60%;"></div>
                     </div>
                     <div class="layer3-container">
         
@@ -318,7 +324,7 @@
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Rest</div>
                         
-                        <div class="underline color-green-light"></div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-percent: 90%;"></div>
                     </div>
                     <div class="layer3-container">
         
@@ -340,7 +346,7 @@
                     <div class="layer2-content">
                         <div class="layer2 color-group-blue clickable" onclick="navigateToItem('body_habit')">Habit</div>
                         
-                        <div class="underline color-blue-light"></div>
+                        <div class="underline-progress" style="--progress-color: #90CAF9; --progress-percent: 45%;"></div>
                     </div>
                     <div class="layer3-container">
         <div class="layer3-item"><span class="layer3  color-blue" >Evening</span></div><div class="layer3-item"><span class="layer3  color-blue" >Morning</span></div>
@@ -486,7 +492,7 @@
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3 clickable color-green" onclick="navigateToItem('level_work_go_melt')">GO-MELT</span><div class="context layer3-context">Update heat-source & outline publishing</div></div><div class="layer3-item"><span class="layer3 clickable color-green" onclick="navigateToItem('level_work_ray_tracing_visualization')">Ray-tracing visualization</span><div class="context layer3-context">First ray-traced renders on Blackwell</div></div><div class="layer3-item"><span class="layer3 clickable color-green" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Process high-speed data for porosity</div></div>
+        <div class="layer3-item"><span class="layer3 clickable color-green" onclick="navigateToItem('level_work_go_melt')">GO-MELT</span><div class="context layer3-context">Update heat-source & outline publishing</div></div><div class="layer3-item"><span class="layer3 clickable color-green" onclick="navigateToItem('level_work_ray_tracing_visualization')">Ray-tracing visualization</span><div class="context layer3-context">First ray-traced renders on Blackwell</div></div><div class="layer3-item"><span class="layer3 clickable color-green" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Process high-speed data for porosity</div></div>
                     </div>
                 </div>
         
@@ -530,7 +536,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        
+        <div class="layer3-item"><span class="layer3  color-blue" >Term paper<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Expanded Outline • Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Lab 5<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Lab 10<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Lab 14<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Delay effect<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Effect of delay on surface temperature readings • Level > Work > GO-MELT</div></div>
                     </div>
                 </div>
         
@@ -541,7 +547,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Term paper<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Expanded Outline • Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Lab 5<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Lab 10<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Lab 14<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Delay effect<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Effect of delay on surface temperature readings • Level > Work > GO-MELT</div></div>
+        <div class="layer3-item"><span class="layer3  color-blue" >Inspiration<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Work > Ray-tracing visualization > Postprocess</div></div><div class="layer3-item"><span class="layer3 clickable color-blue" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Process high-speed data for porosity • Level > Work</div></div><div class="layer3-item"><span class="layer3  color-blue" >Code<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Measure porosity for single case • Level > Work > APS Data</div></div>
                     </div>
                 </div>
         
@@ -552,7 +558,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Inspiration<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Level > Work > Ray-tracing visualization > Postprocess</div></div><div class="layer3-item"><span class="layer3 clickable color-blue" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Process high-speed data for porosity • Level > Work</div></div><div class="layer3-item"><span class="layer3  color-blue" >Code<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Measure porosity for single case • Level > Work > APS Data</div></div><div class="layer3-item"><span class="layer3  color-blue" >Meet<span class="due-date due-soon">in 3d</span></span><div class="context layer3-context">Zixun - share codes & postprocess insights • Level > Work > APS Data</div></div><div class="layer3-item"><span class="layer3  color-blue" >Full paper<span class="due-date due-soon">in 4d</span></span><div class="context layer3-context">Full paper • Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Generation<span class="due-date due-soon">in 5d</span></span><div class="context layer3-context">Level > Work > Ray-tracing visualization > Postprocess</div></div><div class="layer3-item"><span class="layer3  color-blue" >Outline<span class="due-date due-soon">in 6d</span></span><div class="context layer3-context">Draft outline for publication • Level > Work > GO-MELT</div></div>
+        <div class="layer3-item"><span class="layer3  color-blue" >Meet<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Zixun - share codes & postprocess insights • Level > Work > APS Data</div></div><div class="layer3-item"><span class="layer3  color-blue" >Full paper<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Full paper • Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Generation<span class="due-date due-soon">in 3d</span></span><div class="context layer3-context">Level > Work > Ray-tracing visualization > Postprocess</div></div><div class="layer3-item"><span class="layer3  color-blue" >Outline<span class="due-date due-soon">in 4d</span></span><div class="context layer3-context">Draft outline for publication • Level > Work > GO-MELT</div></div>
                     </div>
                 </div>
         
@@ -569,7 +575,7 @@
         
             </div>
         </div>
-        <div class="current-date">Updated: December 04, 2025</div>
+        <div class="current-date">Updated: December 06, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

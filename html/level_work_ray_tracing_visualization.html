@@ -138,6 +138,12 @@
             margin-top: 2px;
             margin-bottom: 4px;
         }
+        .underline-progress {
+            height: 2px;
+            margin-top: 2px;
+            margin-bottom: 4px;
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #e0e0e0 var(--progress-percent));
+        }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
         .color-green-dark { background-color: #1B5E20; }
@@ -305,7 +311,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf" >Inspiration<span class="due-date due-soon">in 2d</span></div>
+                        <div class="layer2 color-group-green leaf" >Inspiration<span class="due-date due-today">TODAY</span></div>
                         
                         <div class="underline color-green-light"></div>
                     </div>
@@ -316,7 +322,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf" >Generation<span class="due-date due-soon">in 5d</span></div>
+                        <div class="layer2 color-group-green leaf" >Generation<span class="due-date due-soon">in 3d</span></div>
                         
                         <div class="underline color-green-light"></div>
                     </div>
@@ -327,7 +333,7 @@
         
             </div>
         </div>
-        <div class="current-date">Updated: December 04, 2025</div>
+        <div class="current-date">Updated: December 06, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

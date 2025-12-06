@@ -8,14 +8,17 @@ structure:
   mind:
     title: Mind
     id: mind
+    progress: 75
     children:
       mood:
         title: Mood
         id: mind_mood
+        progress: 60
         children: {}
       rest:
         title: Rest
         id: mind_rest
+        progress: 90
         children: {}
   body:
     title: Body
@@ -24,13 +27,16 @@ structure:
       habit:
         title: Habit
         id: body_habit
+        progress: 45
         children:
           evening:
             title: Evening
             id: body_habit_evening
+            progress: 30
           morning:
             title: Morning
             id: body_habit_morning
+            progress: 100
       nutrition:
         title: Nutrition
         id: body_nutrition

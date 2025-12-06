@@ -130,6 +130,7 @@ class HierarchyBuilder:
             "layer1_id": item['id'],
             "layer1_context": item.get('context'),
             "layer1_due": item.get('due'),
+            "layer1_progress": item.get('progress'),
             "layer2": []
         }
         
@@ -149,6 +150,7 @@ class HierarchyBuilder:
                 "id": item['id'],
                 "context": item.get('context'),
                 "due": item.get('due'),
+                "progress": item.get('progress'),
                 "layer3": []
             }
             
@@ -191,7 +193,8 @@ class HierarchyBuilder:
                             "name": due_item['title'],
                             "id": due_item['id'],
                             "context": full_context,
-                            "due": due_str
+                            "due": due_str,
+                            "progress": due_item.get('progress')
                         }
                         child_data["layer3"].append(layer3_data)
             elif remaining_levels > 0 and 'children' in item:
@@ -207,7 +210,8 @@ class HierarchyBuilder:
                 "name": item['title'],
                 "id": item['id'],
                 "context": item.get('context'),
-                "due": item.get('due')
+                "due": item.get('due'),
+                "progress": item.get('progress')
             }
         
         # For deeper levels, we'd need to extend the HTML structure
@@ -216,7 +220,8 @@ class HierarchyBuilder:
             "name": item['title'],
             "id": item['id'],
             "context": item.get('context'),
-            "due": item.get('due')
+            "due": item.get('due'),
+            "progress": item.get('progress')
         }
     
     def get_all_items_with_due_dates(self):
@@ -233,6 +238,7 @@ class HierarchyBuilder:
                         'id': item['id'],
                         'context': item.get('context'),
                         'due': item['due'],
+                        'progress': item.get('progress'),
                         'path': path + [item['title']]
                     }
                     all_items.append(item_data)
@@ -324,6 +330,7 @@ class HierarchyBuilder:
                 "layer1_id": item['id'],
                 "layer1_context": full_context,
                 "layer1_due": due_str,
+                "layer1_progress": item.get('progress'),
                 "layer2": []
             }
             data.append(layer1_data)
@@ -372,6 +379,7 @@ class HierarchyBuilder:
                     "id": item['id'],
                     "context": full_context,
                     "due": due_str,
+                    "progress": item.get('progress'),
                     "layer3": []
                 }
                 layer2_items.append(layer2_data)

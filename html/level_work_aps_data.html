@@ -138,6 +138,12 @@
             margin-top: 2px;
             margin-bottom: 4px;
         }
+        .underline-progress {
+            height: 2px;
+            margin-top: 2px;
+            margin-bottom: 4px;
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #e0e0e0 var(--progress-percent));
+        }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
         .color-green-dark { background-color: #1B5E20; }
@@ -296,7 +302,7 @@
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 " >Code<span class="due-date due-soon">in 2d</span></div>
+                <div class="layer1 " >Code<span class="due-date due-today">TODAY</span></div>
                 
                 <div class="context layer1-context">Measure porosity for single case</div>
                 <div class="underline color-green-medium"></div>
@@ -307,7 +313,7 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 " >Meet<span class="due-date due-soon">in 3d</span></div>
+                <div class="layer1 " >Meet<span class="due-date due-soon">in 1d</span></div>
                 
                 <div class="context layer1-context">Zixun - share codes & postprocess insights</div>
                 <div class="underline color-blue-medium"></div>
@@ -316,7 +322,7 @@
         
             </div>
         </div>
-        <div class="current-date">Updated: December 04, 2025</div>
+        <div class="current-date">Updated: December 06, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

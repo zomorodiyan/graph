@@ -138,6 +138,12 @@
             margin-top: 2px;
             margin-bottom: 4px;
         }
+        .underline-progress {
+            height: 2px;
+            margin-top: 2px;
+            margin-bottom: 4px;
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #e0e0e0 var(--progress-percent));
+        }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
         .color-green-dark { background-color: #1B5E20; }
@@ -321,7 +327,7 @@
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-green" >Term paper<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Expanded Outline</div></div><div class="layer3-item"><span class="layer3  color-green" >Full paper<span class="due-date due-soon">in 4d</span></span><div class="context layer3-context">Full paper</div></div><div class="layer3-item"><span class="layer3  color-green" >Lab 5<span class="due-date due-today">TODAY</span></span></div><div class="layer3-item"><span class="layer3  color-green" >Lab 10<span class="due-date due-today">TODAY</span></span></div><div class="layer3-item"><span class="layer3  color-green" >Lab 14<span class="due-date due-today">TODAY</span></span></div>
+        <div class="layer3-item"><span class="layer3  color-green" >Term paper<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Expanded Outline</div></div><div class="layer3-item"><span class="layer3  color-green" >Full paper<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Full paper</div></div><div class="layer3-item"><span class="layer3  color-green" >Lab 5<span class="due-date due-overdue">OVERDUE</span></span></div><div class="layer3-item"><span class="layer3  color-green" >Lab 10<span class="due-date due-overdue">OVERDUE</span></span></div><div class="layer3-item"><span class="layer3  color-green" >Lab 14<span class="due-date due-overdue">OVERDUE</span></span></div>
                     </div>
                 </div>
         
@@ -343,7 +349,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Delay effect<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Effect of delay on surface temperature readings</div></div><div class="layer3-item"><span class="layer3  color-blue" >Outline<span class="due-date due-soon">in 6d</span></span><div class="context layer3-context">Draft outline for publication</div></div><div class="layer3-item"><span class="layer3  color-blue" >InherentStrain</span><div class="context layer3-context">Spare time</div></div>
+        <div class="layer3-item"><span class="layer3  color-blue" >Delay effect<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Effect of delay on surface temperature readings</div></div><div class="layer3-item"><span class="layer3  color-blue" >Outline<span class="due-date due-soon">in 4d</span></span><div class="context layer3-context">Draft outline for publication</div></div><div class="layer3-item"><span class="layer3  color-blue" >InherentStrain</span><div class="context layer3-context">Spare time</div></div>
                     </div>
                 </div>
         
@@ -360,12 +366,12 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-soon">in 2d</span></div>
+                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></div>
                         <div class="context layer2-context">Process high-speed data for porosity</div>
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Code<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Measure porosity for single case</div></div><div class="layer3-item"><span class="layer3  color-blue" >Meet<span class="due-date due-soon">in 3d</span></span><div class="context layer3-context">Zixun - share codes & postprocess insights</div></div>
+        <div class="layer3-item"><span class="layer3  color-blue" >Code<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Measure porosity for single case</div></div><div class="layer3-item"><span class="layer3  color-blue" >Meet<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Zixun - share codes & postprocess insights</div></div>
                     </div>
                 </div>
         
@@ -393,7 +399,7 @@
         
             </div>
         </div>
-        <div class="current-date">Updated: December 04, 2025</div>
+        <div class="current-date">Updated: December 06, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

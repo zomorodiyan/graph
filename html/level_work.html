@@ -138,6 +138,12 @@
             margin-top: 2px;
             margin-bottom: 4px;
         }
+        .underline-progress {
+            height: 2px;
+            margin-top: 2px;
+            margin-bottom: 4px;
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #e0e0e0 var(--progress-percent));
+        }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
         .color-green-dark { background-color: #1B5E20; }
@@ -305,7 +311,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf" >Delay effect<span class="due-date due-today">TODAY</span></div>
+                        <div class="layer2 color-group-green leaf" >Delay effect<span class="due-date due-overdue">OVERDUE</span></div>
                         <div class="context layer2-context">Effect of delay on surface temperature readings</div>
                         <div class="underline color-green-light"></div>
                     </div>
@@ -316,7 +322,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf" >Outline<span class="due-date due-soon">in 6d</span></div>
+                        <div class="layer2 color-group-green leaf" >Outline<span class="due-date due-soon">in 4d</span></div>
                         <div class="context layer2-context">Draft outline for publication</div>
                         <div class="underline color-green-light"></div>
                     </div>
@@ -354,7 +360,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Inspiration<span class="due-date due-soon">in 2d</span></span></div><div class="layer3-item"><span class="layer3  color-blue" >Generation<span class="due-date due-soon">in 5d</span></span></div>
+        <div class="layer3-item"><span class="layer3  color-blue" >Inspiration<span class="due-date due-today">TODAY</span></span></div><div class="layer3-item"><span class="layer3  color-blue" >Generation<span class="due-date due-soon">in 3d</span></span></div>
                     </div>
                 </div>
         
@@ -362,7 +368,7 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-soon">in 2d</span></div>
+                <div class="layer1 clickable" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></div>
                 
                 <div class="context layer1-context">Process high-speed data for porosity</div>
                 <div class="underline color-purple-medium"></div>
@@ -371,7 +377,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-purple leaf" >Code<span class="due-date due-soon">in 2d</span></div>
+                        <div class="layer2 color-group-purple leaf" >Code<span class="due-date due-today">TODAY</span></div>
                         <div class="context layer2-context">Measure porosity for single case</div>
                         <div class="underline color-purple-light"></div>
                     </div>
@@ -382,7 +388,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-purple leaf" >Meet<span class="due-date due-soon">in 3d</span></div>
+                        <div class="layer2 color-group-purple leaf" >Meet<span class="due-date due-soon">in 1d</span></div>
                         <div class="context layer2-context">Zixun - share codes & postprocess insights</div>
                         <div class="underline color-purple-light"></div>
                     </div>
@@ -393,7 +399,7 @@
         
             </div>
         </div>
-        <div class="current-date">Updated: December 04, 2025</div>
+        <div class="current-date">Updated: December 06, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>
