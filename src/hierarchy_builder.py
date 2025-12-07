@@ -177,22 +177,13 @@ class HierarchyBuilder:
                         else:
                             due_str = str(due_value)
                         
-                        # Build path string
+                        # Build path string (show only path, not context)
                         path_str = ' > '.join(due_item['path'][:-1]) if len(due_item['path']) > 1 else ''
-                        context_str = due_item.get('context', '')
-                        
-                        # Combine context and path
-                        if context_str and path_str:
-                            full_context = f"{context_str} • {path_str}"
-                        elif path_str:
-                            full_context = path_str
-                        else:
-                            full_context = context_str
                         
                         layer3_data = {
                             "name": due_item['title'],
                             "id": due_item['id'],
-                            "context": full_context,
+                            "context": path_str,
                             "due": due_str,
                             "progress": due_item.get('progress')
                         }
@@ -313,22 +304,13 @@ class HierarchyBuilder:
             else:
                 due_str = str(due_value)
             
-            # Build path string
+            # Build path string (show only path, not context)
             path_str = ' > '.join(item['path'][:-1]) if len(item['path']) > 1 else ''
-            context_str = item.get('context', '')
-            
-            # Combine context and path
-            if context_str and path_str:
-                full_context = f"{context_str} • Path: {path_str}"
-            elif path_str:
-                full_context = f"Path: {path_str}"
-            else:
-                full_context = context_str
             
             layer1_data = {
                 "layer1": item['title'],
                 "layer1_id": item['id'],
-                "layer1_context": full_context,
+                "layer1_context": path_str,
                 "layer1_due": due_str,
                 "layer1_progress": item.get('progress'),
                 "layer2": []
@@ -362,22 +344,13 @@ class HierarchyBuilder:
                 else:
                     due_str = str(due_value)
                 
-                # Build path string
+                # Build path string (show only path, not context)
                 path_str = ' > '.join(item['path'][:-1]) if len(item['path']) > 1 else ''
-                context_str = item.get('context', '')
-                
-                # Combine context and path
-                if context_str and path_str:
-                    full_context = f"{context_str} • Path: {path_str}"
-                elif path_str:
-                    full_context = f"Path: {path_str}"
-                else:
-                    full_context = context_str
                 
                 layer2_data = {
                     "name": item['title'],
                     "id": item['id'],
-                    "context": full_context,
+                    "context": path_str,
                     "due": due_str,
                     "progress": item.get('progress'),
                     "layer3": []

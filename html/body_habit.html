@@ -31,11 +31,20 @@
             border-radius: 4px;
             transition: background-color 0.2s;
         }
-        .layer1.clickable:hover {
-            background-color: #e0e0e0;
-        }
         .layer1:not(.clickable) {
             cursor: default;
+        }
+        .layer1.color-group-green:hover {
+            background-color: rgba(165, 214, 167, 0.5);
+        }
+        .layer1.color-group-blue:hover {
+            background-color: rgba(144, 202, 249, 0.5);
+        }
+        .layer1.color-group-purple:hover {
+            background-color: rgba(206, 147, 216, 0.5);
+        }
+        .layer1.color-group-red:hover {
+            background-color: rgba(255, 171, 145, 0.5);
         }
         .layer2 {
             font-size: 14px;
@@ -54,35 +63,35 @@
         .layer2.leaf {
             font-weight: bold;
         }
-        .layer2.color-group-green:hover {
-            background-color: #A5D6A7;
+        .layer2.color-green:hover {
+            background-color: rgba(165, 214, 167, 0.5);
         }
-        .layer2.color-group-blue:hover {
-            background-color: #90CAF9;
+        .layer2.color-blue:hover {
+            background-color: rgba(144, 202, 249, 0.5);
         }
-        .layer2.color-group-purple:hover {
-            background-color: #CE93D8;
+        .layer2.color-purple:hover {
+            background-color: rgba(206, 147, 216, 0.5);
         }
         .layer2.color-group-red:hover {
-            background-color: #FFAB91;
+            background-color: rgba(255, 171, 145, 0.5);
         }
         .layer2.clickable {
             border: 0px dashed #2196f3;
         }
         .layer2.clickable.color-group-green:hover {
-            background-color: #A5D6A7;
+            background-color: rgba(165, 214, 167, 0.5);
             border-color: #388E3C;
         }
         .layer2.clickable.color-group-blue:hover {
-            background-color: #90CAF9;
+            background-color: rgba(144, 202, 249, 0.5);
             border-color: #1976D2;
         }
         .layer2.clickable.color-group-purple:hover {
-            background-color: #CE93D8;
+            background-color: rgba(206, 147, 216, 0.5);
             border-color: #8E24AA;
         }
         .layer2.clickable.color-group-red:hover {
-            background-color: #FFAB91;
+            background-color: rgba(255, 171, 145, 0.5);
             border-color: #D84315;
         }
         .layer2:not(.clickable) {
@@ -122,10 +131,6 @@
         .layer3.clickable {
             font-weight: bold;
         }
-        .layer3.clickable:hover {
-            background-color: #f0f0f0;
-            color: #333;
-        }
         .layer3:not(.clickable) {
             cursor: default;
         }
@@ -133,6 +138,49 @@
         .layer3.color-blue { color: #063A85; }
         .layer3.color-purple { color: #3A0F6E; }
         .layer3.color-red { color: #A12F08; }
+        .layer3.color-green:hover { background-color: rgba(165, 214, 167, 0.5); }
+        .layer3.color-blue:hover { background-color: rgba(144, 202, 249, 0.5); }
+        .layer3.color-purple:hover { background-color: rgba(206, 147, 216, 0.5); }
+        .layer3.color-red:hover { background-color: rgba(255, 171, 145, 0.5); }171, 145, 0.5); }
+        .layer3-progress {
+            background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+        .layer3-progress:hover {
+            background-color: #f0f0f0;
+        }
+        .layer3-progress-clickable {
+            background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        .layer3-progress-clickable.color-green:hover {
+            background: rgba(165, 214, 167, 0.5);
+            -webkit-text-fill-color: #0D4F14;
+        }
+        .layer3-progress-clickable.color-blue:hover {
+            background: rgba(144, 202, 249, 0.5);
+            -webkit-text-fill-color: #063A85;
+        }
+        .layer3-progress-clickable.color-purple:hover {
+            background: rgba(206, 147, 216, 0.5);
+            -webkit-text-fill-color: #3A0F6E;
+        }
+        .layer3-progress-clickable.color-red:hover {
+            background: rgba(255, 171, 145, 0.5);
+            -webkit-text-fill-color: #A12F08;
+        }
         .underline {
             height: 2px;
             margin-top: 2px;
@@ -142,7 +190,7 @@
             height: 2px;
             margin-top: 2px;
             margin-bottom: 4px;
-            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #e0e0e0 var(--progress-percent));
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), var(--progress-color-light) var(--progress-percent));
         }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
@@ -302,10 +350,10 @@
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 " >Evening</div>
+                <div class="layer1  color-group-green" >Evening</div>
                 
                 
-                <div class="underline-progress" style="--progress-color: #388E3C; --progress-percent: 30%;"></div>
+                <div class="underline-progress" style="--progress-color: #388E3C; --progress-color-light: #e0e0e0; --progress-percent: 30%;"></div>
             </div>
             <div class="layer2-section">
         
@@ -313,10 +361,10 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 " >Morning</div>
+                <div class="layer1  color-group-blue" >Morning</div>
                 
                 
-                <div class="underline-progress" style="--progress-color: #1976D2; --progress-percent: 100%;"></div>
+                <div class="underline-progress" style="--progress-color: #1976D2; --progress-color-light: #e0e0e0; --progress-percent: 100%;"></div>
             </div>
             <div class="layer2-section">
         

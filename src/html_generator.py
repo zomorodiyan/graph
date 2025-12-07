@@ -33,10 +33,39 @@ class HTMLGenerator:
                 "red": {"light": "#FFAB91", "medium": "#D84315", "dark": "#BF360C"},
             }
             progress_color = color_map.get(color_name, {}).get(intensity, "#388E3C")
-            return f'<div class="underline-progress" style="--progress-color: {progress_color}; --progress-percent: {progress}%;"></div>'
+            return f'<div class="underline-progress" style="--progress-color: {progress_color}; --progress-color-light: #e0e0e0; --progress-percent: {progress}%;"></div>'
         else:
             # No progress specified, use solid color underline
             return f'<div class="underline color-{color_name}-{intensity}"></div>'
+    
+    def _get_progress_text_style(self, progress, color_name, is_clickable=""):
+        """Get inline style for progress-based text coloring (used for layer3).
+        
+        Args:
+            progress: Number between 0-100, or None
+            color_name: Color theme (green, blue, purple, red)
+            is_clickable: Whether the item is clickable (has "clickable" class)
+        
+        Returns:
+            Tuple of (css_class, inline_style) for the text element
+        """
+        if progress is not None and isinstance(progress, (int, float)) and 0 <= progress <= 100:
+            # Map color name to text color (darkest and medium-dark variant)
+            text_color_map = {
+                "green": ("#0D4F14", "#388E3C"),
+                "blue": ("#063A85", "#1976D2"),
+                "purple": ("#3A0F6E", "#8E24AA"),
+                "red": ("#A12F08", "#D84315"),
+            }
+            colors = text_color_map.get(color_name, ("#0D4F14", "#388E3C"))
+            text_color = colors[0]
+            text_color_medium = colors[1]
+            # Use different class for clickable items with progress, and include color class for hover
+            progress_class = "layer3-progress-clickable" if is_clickable else "layer3-progress"
+            return f"{progress_class} color-{color_name}", f"--text-progress-color: {text_color}; --text-progress-color-light: {text_color_medium}; --text-progress-percent: {progress}%;"
+        else:
+            # No progress, use regular color class
+            return f"color-{color_name}", ""
     
     def _format_due_date(self, due_date_value):
         """Format due date with appropriate CSS class based on how soon it is."""
@@ -157,11 +186,20 @@ class HTMLGenerator:
             border-radius: 4px;
             transition: background-color 0.2s;
         }
-        .layer1.clickable:hover {
-            background-color: #e0e0e0;
-        }
         .layer1:not(.clickable) {
             cursor: default;
+        }
+        .layer1.color-group-green:hover {
+            background-color: rgba(165, 214, 167, 0.5);
+        }
+        .layer1.color-group-blue:hover {
+            background-color: rgba(144, 202, 249, 0.5);
+        }
+        .layer1.color-group-purple:hover {
+            background-color: rgba(206, 147, 216, 0.5);
+        }
+        .layer1.color-group-red:hover {
+            background-color: rgba(255, 171, 145, 0.5);
         }
         .layer2 {
             font-size: 14px;
@@ -180,35 +218,35 @@ class HTMLGenerator:
         .layer2.leaf {
             font-weight: bold;
         }
-        .layer2.color-group-green:hover {
-            background-color: #A5D6A7;
+        .layer2.color-green:hover {
+            background-color: rgba(165, 214, 167, 0.5);
         }
-        .layer2.color-group-blue:hover {
-            background-color: #90CAF9;
+        .layer2.color-blue:hover {
+            background-color: rgba(144, 202, 249, 0.5);
         }
-        .layer2.color-group-purple:hover {
-            background-color: #CE93D8;
+        .layer2.color-purple:hover {
+            background-color: rgba(206, 147, 216, 0.5);
         }
         .layer2.color-group-red:hover {
-            background-color: #FFAB91;
+            background-color: rgba(255, 171, 145, 0.5);
         }
         .layer2.clickable {
             border: 0px dashed #2196f3;
         }
         .layer2.clickable.color-group-green:hover {
-            background-color: #A5D6A7;
+            background-color: rgba(165, 214, 167, 0.5);
             border-color: #388E3C;
         }
         .layer2.clickable.color-group-blue:hover {
-            background-color: #90CAF9;
+            background-color: rgba(144, 202, 249, 0.5);
             border-color: #1976D2;
         }
         .layer2.clickable.color-group-purple:hover {
-            background-color: #CE93D8;
+            background-color: rgba(206, 147, 216, 0.5);
             border-color: #8E24AA;
         }
         .layer2.clickable.color-group-red:hover {
-            background-color: #FFAB91;
+            background-color: rgba(255, 171, 145, 0.5);
             border-color: #D84315;
         }
         .layer2:not(.clickable) {
@@ -248,10 +286,6 @@ class HTMLGenerator:
         .layer3.clickable {
             font-weight: bold;
         }
-        .layer3.clickable:hover {
-            background-color: #f0f0f0;
-            color: #333;
-        }
         .layer3:not(.clickable) {
             cursor: default;
         }
@@ -259,6 +293,49 @@ class HTMLGenerator:
         .layer3.color-blue { color: #063A85; }
         .layer3.color-purple { color: #3A0F6E; }
         .layer3.color-red { color: #A12F08; }
+        .layer3.color-green:hover { background-color: rgba(165, 214, 167, 0.5); }
+        .layer3.color-blue:hover { background-color: rgba(144, 202, 249, 0.5); }
+        .layer3.color-purple:hover { background-color: rgba(206, 147, 216, 0.5); }
+        .layer3.color-red:hover { background-color: rgba(255, 171, 145, 0.5); }171, 145, 0.5); }
+        .layer3-progress {
+            background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+        .layer3-progress:hover {
+            background-color: #f0f0f0;
+        }
+        .layer3-progress-clickable {
+            background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        .layer3-progress-clickable.color-green:hover {
+            background: rgba(165, 214, 167, 0.5);
+            -webkit-text-fill-color: #0D4F14;
+        }
+        .layer3-progress-clickable.color-blue:hover {
+            background: rgba(144, 202, 249, 0.5);
+            -webkit-text-fill-color: #063A85;
+        }
+        .layer3-progress-clickable.color-purple:hover {
+            background: rgba(206, 147, 216, 0.5);
+            -webkit-text-fill-color: #3A0F6E;
+        }
+        .layer3-progress-clickable.color-red:hover {
+            background: rgba(255, 171, 145, 0.5);
+            -webkit-text-fill-color: #A12F08;
+        }
         .underline {
             height: 2px;
             margin-top: 2px;
@@ -268,7 +345,7 @@ class HTMLGenerator:
             height: 2px;
             margin-top: 2px;
             margin-bottom: 4px;
-            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #e0e0e0 var(--progress-percent));
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), var(--progress-color-light) var(--progress-percent));
         }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
@@ -479,6 +556,7 @@ class HTMLGenerator:
         layer1_is_leaf = self.file_utils.is_leaf_node(layer1_id) if layer1_id else True
         layer1_clickable_class = "clickable" if layer1_has_children and not layer1_is_leaf else ""
         layer1_onclick = f"onclick=\"navigateToItem('{layer1_id}')\"" if layer1_id and not layer1_is_leaf else ""
+        layer1_color_class = f"color-group-{color_name}"
 
         # Get layer1 context and due date
         layer1_context = item.get("layer1_context")
@@ -497,7 +575,7 @@ class HTMLGenerator:
         content = f"""
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 {layer1_clickable_class}" {layer1_onclick}>{layer1_name}{layer1_due_html}</div>
+                <div class="layer1 {layer1_clickable_class} {layer1_color_class}" {layer1_onclick}>{layer1_name}{layer1_due_html}</div>
                 {layer1_path_html}
                 {layer1_context_html}
                 {layer1_underline}
@@ -573,15 +651,22 @@ class HTMLGenerator:
             layer3_id = layer3_item.get("id", "")
             layer3_context = layer3_item.get("context")
             layer3_due = layer3_item.get("due")
+            layer3_progress = layer3_item.get("progress")
             
             # Only make clickable if it has an ID and is not a leaf node
             layer3_is_leaf = self.file_utils.is_leaf_node(layer3_id) if layer3_id else True
             layer3_clickable_class = "clickable" if layer3_id and not layer3_is_leaf else ""
             layer3_onclick = f"onclick=\"navigateToItem('{layer3_id}')\"" if layer3_id and not layer3_is_leaf else ""
             
+            # Get progress-based styling
+            progress_class, progress_style = self._get_progress_text_style(layer3_progress, color_name, layer3_clickable_class)
+            style_attr = f'style="{progress_style}"' if progress_style else ""
+            
             # Build the layer3 item with context and due date
             layer3_due_html = self._format_due_date(layer3_due) if layer3_due else ""
-            layer3_html = f'<span class="layer3 {layer3_clickable_class} color-{color_name}" {layer3_onclick}>{layer3_name}{layer3_due_html}</span>'
+            # Don't add clickable class if using progress-clickable class
+            final_clickable_class = "" if progress_class == "layer3-progress-clickable" else layer3_clickable_class
+            layer3_html = f'<span class="layer3 {final_clickable_class} {progress_class}" {style_attr} {layer3_onclick}>{layer3_name}{layer3_due_html}</span>'
             if layer3_context:
                 layer3_html += f'<div class="context layer3-context">{layer3_context}</div>'
             

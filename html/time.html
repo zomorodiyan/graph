@@ -31,11 +31,20 @@
             border-radius: 4px;
             transition: background-color 0.2s;
         }
-        .layer1.clickable:hover {
-            background-color: #e0e0e0;
-        }
         .layer1:not(.clickable) {
             cursor: default;
+        }
+        .layer1.color-group-green:hover {
+            background-color: rgba(165, 214, 167, 0.5);
+        }
+        .layer1.color-group-blue:hover {
+            background-color: rgba(144, 202, 249, 0.5);
+        }
+        .layer1.color-group-purple:hover {
+            background-color: rgba(206, 147, 216, 0.5);
+        }
+        .layer1.color-group-red:hover {
+            background-color: rgba(255, 171, 145, 0.5);
         }
         .layer2 {
             font-size: 14px;
@@ -54,35 +63,35 @@
         .layer2.leaf {
             font-weight: bold;
         }
-        .layer2.color-group-green:hover {
-            background-color: #A5D6A7;
+        .layer2.color-green:hover {
+            background-color: rgba(165, 214, 167, 0.5);
         }
-        .layer2.color-group-blue:hover {
-            background-color: #90CAF9;
+        .layer2.color-blue:hover {
+            background-color: rgba(144, 202, 249, 0.5);
         }
-        .layer2.color-group-purple:hover {
-            background-color: #CE93D8;
+        .layer2.color-purple:hover {
+            background-color: rgba(206, 147, 216, 0.5);
         }
         .layer2.color-group-red:hover {
-            background-color: #FFAB91;
+            background-color: rgba(255, 171, 145, 0.5);
         }
         .layer2.clickable {
             border: 0px dashed #2196f3;
         }
         .layer2.clickable.color-group-green:hover {
-            background-color: #A5D6A7;
+            background-color: rgba(165, 214, 167, 0.5);
             border-color: #388E3C;
         }
         .layer2.clickable.color-group-blue:hover {
-            background-color: #90CAF9;
+            background-color: rgba(144, 202, 249, 0.5);
             border-color: #1976D2;
         }
         .layer2.clickable.color-group-purple:hover {
-            background-color: #CE93D8;
+            background-color: rgba(206, 147, 216, 0.5);
             border-color: #8E24AA;
         }
         .layer2.clickable.color-group-red:hover {
-            background-color: #FFAB91;
+            background-color: rgba(255, 171, 145, 0.5);
             border-color: #D84315;
         }
         .layer2:not(.clickable) {
@@ -122,10 +131,6 @@
         .layer3.clickable {
             font-weight: bold;
         }
-        .layer3.clickable:hover {
-            background-color: #f0f0f0;
-            color: #333;
-        }
         .layer3:not(.clickable) {
             cursor: default;
         }
@@ -133,6 +138,49 @@
         .layer3.color-blue { color: #063A85; }
         .layer3.color-purple { color: #3A0F6E; }
         .layer3.color-red { color: #A12F08; }
+        .layer3.color-green:hover { background-color: rgba(165, 214, 167, 0.5); }
+        .layer3.color-blue:hover { background-color: rgba(144, 202, 249, 0.5); }
+        .layer3.color-purple:hover { background-color: rgba(206, 147, 216, 0.5); }
+        .layer3.color-red:hover { background-color: rgba(255, 171, 145, 0.5); }171, 145, 0.5); }
+        .layer3-progress {
+            background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+        .layer3-progress:hover {
+            background-color: #f0f0f0;
+        }
+        .layer3-progress-clickable {
+            background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        .layer3-progress-clickable.color-green:hover {
+            background: rgba(165, 214, 167, 0.5);
+            -webkit-text-fill-color: #0D4F14;
+        }
+        .layer3-progress-clickable.color-blue:hover {
+            background: rgba(144, 202, 249, 0.5);
+            -webkit-text-fill-color: #063A85;
+        }
+        .layer3-progress-clickable.color-purple:hover {
+            background: rgba(206, 147, 216, 0.5);
+            -webkit-text-fill-color: #3A0F6E;
+        }
+        .layer3-progress-clickable.color-red:hover {
+            background: rgba(255, 171, 145, 0.5);
+            -webkit-text-fill-color: #A12F08;
+        }
         .underline {
             height: 2px;
             margin-top: 2px;
@@ -142,7 +190,7 @@
             height: 2px;
             margin-top: 2px;
             margin-bottom: 4px;
-            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #e0e0e0 var(--progress-percent));
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), var(--progress-color-light) var(--progress-percent));
         }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
@@ -302,7 +350,7 @@
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('time_over')">Over</div>
+                <div class="layer1 clickable color-group-green" onclick="navigateToItem('time_over')">Over</div>
                 
                 <div class="context layer1-context">5 items</div>
                 <div class="underline color-green-medium"></div>
@@ -312,7 +360,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Term paper<span class="due-date due-overdue">OVERDUE</span></div>
-                        <div class="context layer2-context">Expanded Outline • Path: Level > Study > IIoT</div>
+                        <div class="context layer2-context">Level > Study > IIoT</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -323,7 +371,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Lab 5<span class="due-date due-overdue">OVERDUE</span></div>
-                        <div class="context layer2-context">Path: Level > Study > IIoT</div>
+                        <div class="context layer2-context">Level > Study > IIoT</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -334,7 +382,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Lab 10<span class="due-date due-overdue">OVERDUE</span></div>
-                        <div class="context layer2-context">Path: Level > Study > IIoT</div>
+                        <div class="context layer2-context">Level > Study > IIoT</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -345,7 +393,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Lab 14<span class="due-date due-overdue">OVERDUE</span></div>
-                        <div class="context layer2-context">Path: Level > Study > IIoT</div>
+                        <div class="context layer2-context">Level > Study > IIoT</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -356,7 +404,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Delay effect<span class="due-date due-overdue">OVERDUE</span></div>
-                        <div class="context layer2-context">Effect of delay on surface temperature readings • Path: Level > Work > GO-MELT</div>
+                        <div class="context layer2-context">Level > Work > GO-MELT</div>
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -368,7 +416,7 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('time_day')">Day</div>
+                <div class="layer1 clickable color-group-blue" onclick="navigateToItem('time_day')">Day</div>
                 
                 <div class="context layer1-context">3 items</div>
                 <div class="underline color-blue-medium"></div>
@@ -378,7 +426,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-blue leaf" >Inspiration<span class="due-date due-today">TODAY</span></div>
-                        <div class="context layer2-context">Path: Level > Work > Ray-tracing visualization > Postprocess</div>
+                        <div class="context layer2-context">Level > Work > Ray-tracing visualization > Postprocess</div>
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -389,7 +437,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></div>
-                        <div class="context layer2-context">Process high-speed data for porosity • Path: Level > Work</div>
+                        <div class="context layer2-context">Level > Work</div>
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -400,7 +448,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-blue leaf" >Code<span class="due-date due-today">TODAY</span></div>
-                        <div class="context layer2-context">Measure porosity for single case • Path: Level > Work > APS Data</div>
+                        <div class="context layer2-context">Level > Work > APS Data</div>
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -412,7 +460,7 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('time_week')">Week</div>
+                <div class="layer1 clickable color-group-purple" onclick="navigateToItem('time_week')">Week</div>
                 
                 <div class="context layer1-context">4 items</div>
                 <div class="underline color-purple-medium"></div>
@@ -422,7 +470,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-purple leaf" >Meet<span class="due-date due-soon">in 1d</span></div>
-                        <div class="context layer2-context">Zixun - share codes & postprocess insights • Path: Level > Work > APS Data</div>
+                        <div class="context layer2-context">Level > Work > APS Data</div>
                         <div class="underline color-purple-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -433,7 +481,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-purple leaf" >Full paper<span class="due-date due-soon">in 2d</span></div>
-                        <div class="context layer2-context">Full paper • Path: Level > Study > IIoT</div>
+                        <div class="context layer2-context">Level > Study > IIoT</div>
                         <div class="underline color-purple-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -444,7 +492,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-purple leaf" >Generation<span class="due-date due-soon">in 3d</span></div>
-                        <div class="context layer2-context">Path: Level > Work > Ray-tracing visualization > Postprocess</div>
+                        <div class="context layer2-context">Level > Work > Ray-tracing visualization > Postprocess</div>
                         <div class="underline color-purple-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -455,7 +503,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-purple leaf" >Outline<span class="due-date due-soon">in 4d</span></div>
-                        <div class="context layer2-context">Draft outline for publication • Path: Level > Work > GO-MELT</div>
+                        <div class="context layer2-context">Level > Work > GO-MELT</div>
                         <div class="underline color-purple-light"></div>
                     </div>
                     <div class="layer3-container">
@@ -467,7 +515,7 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 " onclick="navigateToItem('time_month')">Month</div>
+                <div class="layer1  color-group-red" onclick="navigateToItem('time_month')">Month</div>
                 
                 <div class="context layer1-context">No items</div>
                 <div class="underline color-red-medium"></div>

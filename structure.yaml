@@ -44,12 +44,15 @@ structure:
           cook:
             title: Cook
             id: body_nutrition_cook
+            progress: 85
           eat:
             title: Eat
             id: body_nutrition_eat
+            progress: 50
           prep:
             title: Prep
             id: body_nutrition_prep
+            progress: 20
       train:
         title: Train
         id: body_train
@@ -200,6 +203,7 @@ structure:
             title: GO-MELT
             id: level_work_go_melt
             context: Update heat-source & outline publishing
+            progress: 40
             children:
               delay_effect:
                 title: Delay effect 

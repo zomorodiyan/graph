@@ -31,11 +31,20 @@
             border-radius: 4px;
             transition: background-color 0.2s;
         }
-        .layer1.clickable:hover {
-            background-color: #e0e0e0;
-        }
         .layer1:not(.clickable) {
             cursor: default;
+        }
+        .layer1.color-group-green:hover {
+            background-color: rgba(165, 214, 167, 0.5);
+        }
+        .layer1.color-group-blue:hover {
+            background-color: rgba(144, 202, 249, 0.5);
+        }
+        .layer1.color-group-purple:hover {
+            background-color: rgba(206, 147, 216, 0.5);
+        }
+        .layer1.color-group-red:hover {
+            background-color: rgba(255, 171, 145, 0.5);
         }
         .layer2 {
             font-size: 14px;
@@ -54,35 +63,35 @@
         .layer2.leaf {
             font-weight: bold;
         }
-        .layer2.color-group-green:hover {
-            background-color: #A5D6A7;
+        .layer2.color-green:hover {
+            background-color: rgba(165, 214, 167, 0.5);
         }
-        .layer2.color-group-blue:hover {
-            background-color: #90CAF9;
+        .layer2.color-blue:hover {
+            background-color: rgba(144, 202, 249, 0.5);
         }
-        .layer2.color-group-purple:hover {
-            background-color: #CE93D8;
+        .layer2.color-purple:hover {
+            background-color: rgba(206, 147, 216, 0.5);
         }
         .layer2.color-group-red:hover {
-            background-color: #FFAB91;
+            background-color: rgba(255, 171, 145, 0.5);
         }
         .layer2.clickable {
             border: 0px dashed #2196f3;
         }
         .layer2.clickable.color-group-green:hover {
-            background-color: #A5D6A7;
+            background-color: rgba(165, 214, 167, 0.5);
             border-color: #388E3C;
         }
         .layer2.clickable.color-group-blue:hover {
-            background-color: #90CAF9;
+            background-color: rgba(144, 202, 249, 0.5);
             border-color: #1976D2;
         }
         .layer2.clickable.color-group-purple:hover {
-            background-color: #CE93D8;
+            background-color: rgba(206, 147, 216, 0.5);
             border-color: #8E24AA;
         }
         .layer2.clickable.color-group-red:hover {
-            background-color: #FFAB91;
+            background-color: rgba(255, 171, 145, 0.5);
             border-color: #D84315;
         }
         .layer2:not(.clickable) {
@@ -122,10 +131,6 @@
         .layer3.clickable {
             font-weight: bold;
         }
-        .layer3.clickable:hover {
-            background-color: #f0f0f0;
-            color: #333;
-        }
         .layer3:not(.clickable) {
             cursor: default;
         }
@@ -133,6 +138,49 @@
         .layer3.color-blue { color: #063A85; }
         .layer3.color-purple { color: #3A0F6E; }
         .layer3.color-red { color: #A12F08; }
+        .layer3.color-green:hover { background-color: rgba(165, 214, 167, 0.5); }
+        .layer3.color-blue:hover { background-color: rgba(144, 202, 249, 0.5); }
+        .layer3.color-purple:hover { background-color: rgba(206, 147, 216, 0.5); }
+        .layer3.color-red:hover { background-color: rgba(255, 171, 145, 0.5); }171, 145, 0.5); }
+        .layer3-progress {
+            background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+        .layer3-progress:hover {
+            background-color: #f0f0f0;
+        }
+        .layer3-progress-clickable {
+            background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        .layer3-progress-clickable.color-green:hover {
+            background: rgba(165, 214, 167, 0.5);
+            -webkit-text-fill-color: #0D4F14;
+        }
+        .layer3-progress-clickable.color-blue:hover {
+            background: rgba(144, 202, 249, 0.5);
+            -webkit-text-fill-color: #063A85;
+        }
+        .layer3-progress-clickable.color-purple:hover {
+            background: rgba(206, 147, 216, 0.5);
+            -webkit-text-fill-color: #3A0F6E;
+        }
+        .layer3-progress-clickable.color-red:hover {
+            background: rgba(255, 171, 145, 0.5);
+            -webkit-text-fill-color: #A12F08;
+        }
         .underline {
             height: 2px;
             margin-top: 2px;
@@ -142,7 +190,7 @@
             height: 2px;
             margin-top: 2px;
             margin-bottom: 4px;
-            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #e0e0e0 var(--progress-percent));
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), var(--progress-color-light) var(--progress-percent));
         }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
@@ -302,10 +350,10 @@
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('mind')">Mind</div>
+                <div class="layer1 clickable color-group-green" onclick="navigateToItem('mind')">Mind</div>
                 
                 
-                <div class="underline-progress" style="--progress-color: #388E3C; --progress-percent: 75%;"></div>
+                <div class="underline-progress" style="--progress-color: #388E3C; --progress-color-light: #e0e0e0; --progress-percent: 75%;"></div>
             </div>
             <div class="layer2-section">
         
@@ -313,7 +361,7 @@
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Mood</div>
                         
-                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-percent: 60%;"></div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-light: #e0e0e0; --progress-percent: 60%;"></div>
                     </div>
                     <div class="layer3-container">
         
@@ -324,7 +372,7 @@
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Rest</div>
                         
-                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-percent: 90%;"></div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-light: #e0e0e0; --progress-percent: 90%;"></div>
                     </div>
                     <div class="layer3-container">
         
@@ -335,7 +383,7 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('body')">Body</div>
+                <div class="layer1 clickable color-group-blue" onclick="navigateToItem('body')">Body</div>
                 
                 
                 <div class="underline color-blue-medium"></div>
@@ -346,10 +394,10 @@
                     <div class="layer2-content">
                         <div class="layer2 color-group-blue clickable" onclick="navigateToItem('body_habit')">Habit</div>
                         
-                        <div class="underline-progress" style="--progress-color: #90CAF9; --progress-percent: 45%;"></div>
+                        <div class="underline-progress" style="--progress-color: #90CAF9; --progress-color-light: #e0e0e0; --progress-percent: 45%;"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Evening</span></div><div class="layer3-item"><span class="layer3  color-blue" >Morning</span></div>
+        <div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #1976D2; --text-progress-percent: 30%;" >Evening</span></div><div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #1976D2; --text-progress-percent: 100%;" >Morning</span></div>
                     </div>
                 </div>
         
@@ -360,7 +408,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Cook</span></div><div class="layer3-item"><span class="layer3  color-blue" >Eat</span></div><div class="layer3-item"><span class="layer3  color-blue" >Prep</span></div>
+        <div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #1976D2; --text-progress-percent: 85%;" >Cook</span></div><div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #1976D2; --text-progress-percent: 50%;" >Eat</span></div><div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #1976D2; --text-progress-percent: 20%;" >Prep</span></div>
                     </div>
                 </div>
         
@@ -371,7 +419,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Cardio</span></div><div class="layer3-item"><span class="layer3  color-blue" >Flexibility</span></div><div class="layer3-item"><span class="layer3  color-blue" >Strength</span></div>
+        <div class="layer3-item"><span class="layer3  color-blue"  >Cardio</span></div><div class="layer3-item"><span class="layer3  color-blue"  >Flexibility</span></div><div class="layer3-item"><span class="layer3  color-blue"  >Strength</span></div>
                     </div>
                 </div>
         
@@ -379,7 +427,7 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('finance')">Finance</div>
+                <div class="layer1 clickable color-group-purple" onclick="navigateToItem('finance')">Finance</div>
                 
                 
                 <div class="underline color-purple-medium"></div>
@@ -393,7 +441,7 @@
                         <div class="underline color-purple-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-purple" >Job</span></div><div class="layer3-item"><span class="layer3  color-purple" >Passive</span></div><div class="layer3-item"><span class="layer3  color-purple" >Side</span></div>
+        <div class="layer3-item"><span class="layer3  color-purple"  >Job</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Passive</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Side</span></div>
                     </div>
                 </div>
         
@@ -404,7 +452,7 @@
                         <div class="underline color-purple-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-purple" >Assets</span></div><div class="layer3-item"><span class="layer3  color-purple" >Education</span></div><div class="layer3-item"><span class="layer3  color-purple" >Save</span></div>
+        <div class="layer3-item"><span class="layer3  color-purple"  >Assets</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Education</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Save</span></div>
                     </div>
                 </div>
         
@@ -415,7 +463,7 @@
                         <div class="underline color-purple-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-purple" >Need</span></div><div class="layer3-item"><span class="layer3  color-purple" >Shop</span></div><div class="layer3-item"><span class="layer3  color-purple" >Wish</span></div>
+        <div class="layer3-item"><span class="layer3  color-purple"  >Need</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Shop</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Wish</span></div>
                     </div>
                 </div>
         
@@ -423,7 +471,7 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('interaction')">Interaction</div>
+                <div class="layer1 clickable color-group-red" onclick="navigateToItem('interaction')">Interaction</div>
                 
                 
                 <div class="underline color-red-medium"></div>
@@ -437,7 +485,7 @@
                         <div class="underline color-red-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-red" >Groups</span></div><div class="layer3-item"><span class="layer3  color-red" >Local</span></div><div class="layer3-item"><span class="layer3  color-red" >Online</span></div>
+        <div class="layer3-item"><span class="layer3  color-red"  >Groups</span></div><div class="layer3-item"><span class="layer3  color-red"  >Local</span></div><div class="layer3-item"><span class="layer3  color-red"  >Online</span></div>
                     </div>
                 </div>
         
@@ -448,7 +496,7 @@
                         <div class="underline color-red-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-red" >Extended</span></div><div class="layer3-item"><span class="layer3  color-red" >Parents</span></div><div class="layer3-item"><span class="layer3  color-red" >Siblings</span></div>
+        <div class="layer3-item"><span class="layer3  color-red"  >Extended</span></div><div class="layer3-item"><span class="layer3  color-red"  >Parents</span></div><div class="layer3-item"><span class="layer3  color-red"  >Siblings</span></div>
                     </div>
                 </div>
         
@@ -459,7 +507,7 @@
                         <div class="underline color-red-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-red" >Close</span></div><div class="layer3-item"><span class="layer3  color-red" >Social</span></div><div class="layer3-item"><span class="layer3  color-red" >Work</span></div>
+        <div class="layer3-item"><span class="layer3  color-red"  >Close</span></div><div class="layer3-item"><span class="layer3  color-red"  >Social</span></div><div class="layer3-item"><span class="layer3  color-red"  >Work</span></div>
                     </div>
                 </div>
         
@@ -467,7 +515,7 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('level')">Level</div>
+                <div class="layer1 clickable color-group-green" onclick="navigateToItem('level')">Level</div>
                 
                 
                 <div class="underline color-green-medium"></div>
@@ -481,7 +529,7 @@
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-green" >ASU Craft</span><div class="context layer3-context">Meet Xavier & Zixun</div></div><div class="layer3-item"><span class="layer3 clickable color-green" onclick="navigateToItem('level_study_iiot')">IIoT</span><div class="context layer3-context">Industrial IoT course</div></div>
+        <div class="layer3-item"><span class="layer3  color-green"  >ASU Craft</span><div class="context layer3-context">Meet Xavier & Zixun</div></div><div class="layer3-item"><span class="layer3 clickable color-green"  onclick="navigateToItem('level_study_iiot')">IIoT</span><div class="context layer3-context">Industrial IoT course</div></div>
                     </div>
                 </div>
         
@@ -492,7 +540,7 @@
                         <div class="underline color-green-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3 clickable color-green" onclick="navigateToItem('level_work_go_melt')">GO-MELT</span><div class="context layer3-context">Update heat-source & outline publishing</div></div><div class="layer3-item"><span class="layer3 clickable color-green" onclick="navigateToItem('level_work_ray_tracing_visualization')">Ray-tracing visualization</span><div class="context layer3-context">First ray-traced renders on Blackwell</div></div><div class="layer3-item"><span class="layer3 clickable color-green" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Process high-speed data for porosity</div></div>
+        <div class="layer3-item"><span class="layer3 clickable layer3-progress-clickable color-green" style="--text-progress-color: #0D4F14; --text-progress-color-light: #388E3C; --text-progress-percent: 40%;" onclick="navigateToItem('level_work_go_melt')">GO-MELT</span><div class="context layer3-context">Update heat-source & outline publishing</div></div><div class="layer3-item"><span class="layer3 clickable color-green"  onclick="navigateToItem('level_work_ray_tracing_visualization')">Ray-tracing visualization</span><div class="context layer3-context">First ray-traced renders on Blackwell</div></div><div class="layer3-item"><span class="layer3 clickable color-green"  onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Process high-speed data for porosity</div></div>
                     </div>
                 </div>
         
@@ -522,7 +570,7 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable" onclick="navigateToItem('time')">Time</div>
+                <div class="layer1 clickable color-group-blue" onclick="navigateToItem('time')">Time</div>
                 
                 
                 <div class="underline color-blue-medium"></div>
@@ -536,7 +584,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Term paper<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Expanded Outline • Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Lab 5<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Lab 10<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Lab 14<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Delay effect<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Effect of delay on surface temperature readings • Level > Work > GO-MELT</div></div>
+        <div class="layer3-item"><span class="layer3  color-blue"  >Term paper<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Lab 5<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Lab 10<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Lab 14<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Delay effect<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Work > GO-MELT</div></div>
                     </div>
                 </div>
         
@@ -547,7 +595,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Inspiration<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Work > Ray-tracing visualization > Postprocess</div></div><div class="layer3-item"><span class="layer3 clickable color-blue" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Process high-speed data for porosity • Level > Work</div></div><div class="layer3-item"><span class="layer3  color-blue" >Code<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Measure porosity for single case • Level > Work > APS Data</div></div>
+        <div class="layer3-item"><span class="layer3  color-blue"  >Inspiration<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Work > Ray-tracing visualization > Postprocess</div></div><div class="layer3-item"><span class="layer3 clickable color-blue"  onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Work</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Code<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Work > APS Data</div></div>
                     </div>
                 </div>
         
@@ -558,7 +606,7 @@
                         <div class="underline color-blue-light"></div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue" >Meet<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Zixun - share codes & postprocess insights • Level > Work > APS Data</div></div><div class="layer3-item"><span class="layer3  color-blue" >Full paper<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Full paper • Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue" >Generation<span class="due-date due-soon">in 3d</span></span><div class="context layer3-context">Level > Work > Ray-tracing visualization > Postprocess</div></div><div class="layer3-item"><span class="layer3  color-blue" >Outline<span class="due-date due-soon">in 4d</span></span><div class="context layer3-context">Draft outline for publication • Level > Work > GO-MELT</div></div>
+        <div class="layer3-item"><span class="layer3  color-blue"  >Meet<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Level > Work > APS Data</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Full paper<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Generation<span class="due-date due-soon">in 3d</span></span><div class="context layer3-context">Level > Work > Ray-tracing visualization > Postprocess</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Outline<span class="due-date due-soon">in 4d</span></span><div class="context layer3-context">Level > Work > GO-MELT</div></div>
                     </div>
                 </div>
         
