@@ -8,12 +8,11 @@ structure:
   mind:
     title: Mind
     id: mind
-    progress: 75
     children:
       mood:
         title: Mood
         id: mind_mood
-        progress: 60
+        progress: 80
         children: {}
       rest:
         title: Rest
@@ -27,35 +26,19 @@ structure:
       habit:
         title: Habit
         id: body_habit
-        progress: 45
         children:
-          evening:
-            title: Evening
-            id: body_habit_evening
-            progress: 30
           morning:
             title: Morning
             id: body_habit_morning
-            progress: 100
-      nutrition:
-        title: Nutrition
-        id: body_nutrition
-        children:
-          cook:
-            title: Cook
-            id: body_nutrition_cook
-            progress: 85
-          eat:
-            title: Eat
-            id: body_nutrition_eat
-            progress: 50
-          prep:
-            title: Prep
-            id: body_nutrition_prep
-            progress: 20
+            progress: 60
+          evening:
+            title: Evening
+            id: body_habit_evening
+            progress: 60
       train:
         title: Train
         id: body_train
+        progress: 0
         children:
           cardio:
             title: Cardio
@@ -66,94 +49,118 @@ structure:
           strength:
             title: Strength
             id: body_train_strength
+      nutrition:
+        title: Nutrition
+        id: body_nutrition
+        children:
+          prep:
+            title: Prep
+            id: body_nutrition_prep
+            progress: 30
+          eat:
+            title: Eat
+            id: body_nutrition_eat
+            progress: 30
 
   finance:
     title: Finance
     id: finance
     children:
-      earn:
-        title: Earn
-        id: finance_earn
+      shop:
+        title: Shop
+        id: finance_shop
         children:
-          job:
-            title: Job
-            id: finance_earn_job
-          passive:
-            title: Passive
-            id: finance_earn_passive
-          side:
-            title: Side
-            id: finance_earn_side
-      invest:
-        title: Invest
-        id: finance_invest
+          groceries:
+            title: Groceries
+            id: finance_shop_groceries
+          household:
+            title: Household
+            id: finance_shop_household
+          outfit:
+            title: Outfit
+            id: finance_shop_outfit
+          gift:
+            title: Gift
+            id: finance_shop_gift
+      recur:
+        title: Recur
+        id: finance_recur
         children:
-          assets:
-            title: Assets
-            id: finance_invest_assets
-          education:
-            title: Education
-            id: finance_invest_education
-          save:
-            title: Save
-            id: finance_invest_save
-      spend:
-        title: Spend
-        id: finance_spend
-        children:
-          need:
-            title: Need
-            id: finance_spend_need
-          shop:
-            title: Shop
-            id: finance_spend_shop
-          wish:
-            title: Wish
-            id: finance_spend_wish
+          budget:
+            title: Budget
+            id: finance_recur_budget
+            progress: 30
+          stipend:
+            title: Stipend
+            id: finance_recur_stipend
+          rent:
+            title: Rent
+            id: finance_recur_rent
+          subscriptions:
+            title: Subscriptions
+            id: finance_recur_subscriptions
+          installments:
+            title: Installments
+            id: finance_recur_installments
 
   interaction:
     title: Interaction
     id: interaction
     children:
       community:
-        title: Community
-        id: interaction_community
+        title: Colleagues
+        id: interaction_colleagues
+        progress: 60
         children:
-          groups:
-            title: Groups
-            id: interaction_community_groups
-          local:
-            title: Local
-            id: interaction_community_local
-          online:
-            title: Online
-            id: interaction_community_online
+          Zhengtao:
+            title: Zhengtao
+            id: interaction_colleagues_zhengtao
+          Zixun:
+            title: Zixun 
+            id: interaction_colleagues_zixun
+          Xavier:
+            title: Xavier
+            id: interaction_colleagues_xavier
+          Prokash:
+            title: Prokash
+            id: interaction_colleagues_prokash
+      friends:
+        title: Friends
+        id: interaction_friends
+        progress: 60
+        children:
+          Ali:
+            title: Ali
+            id: interaction_friends_ali
+          Milad:
+            title: Milad
+            id: interaction_friends_milad
+          Matin:
+            title: Matin
+            id: interaction_friends_matin
+          Mohamad:
+            title: Mohamad
+            id: interaction_friends_mohamad
       family:
         title: Family
         id: interaction_family
         children:
-          extended:
-            title: Extended
-            id: interaction_family_extended
-          parents:
-            title: Parents
-            id: interaction_family_parents
-          siblings:
-            title: Siblings
-            id: interaction_family_siblings
-      friends:
-        title: Friends
-        id: interaction_friends
-        children:
-          close:
-            title: Close
-            id: interaction_friends_close
-          social:
-            title: Social
-            id: interaction_friends_social
-          work:
-            title: Work
-            id: interaction_friends_work
+          Alireza:
+            title: Alireza
+            id: interaction_family_alireza
+            progress: 0
+          Soqra:
+            title: Soqra
+            id: interaction_family_soqra
+          Hosein:
+            title: Hosein
+            id: interaction_family_hosein
+          Hojjat:
+            title: Hojjat
+            id: interaction_family_hojjat
+          Hamid:
+            title: Hamid
+            id: interaction_family_hamid
 
   level:
     title: Level
@@ -177,7 +184,7 @@ structure:
                 title: Term paper
                 id: level_study_iiot_termpaper
                 context: Expanded Outline 
-                due: 2025-12-04
+                due: 2025-12-07
               fullpaper:
                 title: Full paper
                 id: level_study_iiot_fullpaper
@@ -186,15 +193,15 @@ structure:
               lab5:
                 title: Lab 5
                 id: level_study_iiot_lab5
-                due: 2025-12-04
+                due: 2025-12-07
               lab10:
                 title: Lab 10
                 id: level_study_iiot_lab10
-                due: 2025-12-04
+                due: 2025-12-07
               lab14:
                 title: Lab 14
                 id: level_study_iiot_lab14
-                due: 2025-12-04
+                due: 2025-12-07
       work:
         title: Work
         id: level_work
@@ -240,22 +247,32 @@ structure:
             title: APS Data
             id: level_work_aps_data
             context: Process high-speed data for porosity
-            due: 2025-12-06
+            due: 2025-12-08
             children:
+              read:
+                title: Read 
+                id: level_work_aps_data_read
+                context: Read image processing article 
+                due: 2025-12-08
               code:
                 title: Code
                 id: level_work_aps_data_code
-                context: Measure porosity for single case
-                due: 2025-12-06
-              meet:
-                title: Meet
-                id: level_work_aps_data_meet
-                context: Zixun - share codes & postprocess insights
-                due: 2025-12-07
+                context: Implement image processing method 
+                due: 2025-12-09
       goal:
         title: Goal
         id: level_goal
-        children: {}
+        children:
+          article:
+            title: Article
+            id: level_goal_article
+            context: Submit Adaptive heat source Manuscript 
+            due: 2026-01-01
+          teamwork:
+            title: Teamwork 
+            id: level_goal_teamwork
+            context: Implement Article Zixun 
+            due: 2025-12-09
       skill:
         title: Skill
         id: level_skill

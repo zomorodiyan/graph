@@ -21,7 +21,7 @@
         .layer1 {
             font-size: 16px;
             font-weight: bold;
-            color: #333;
+            color: #222;
             display: inline-block;
             margin-right: 5px;
             cursor: pointer;
@@ -48,6 +48,7 @@
             font-size: 14px;
             font-weight: normal;
             cursor: pointer;
+            color: #333;
             padding: 3px 8px;
             border-radius: 4px;
             margin-right: 10px;
@@ -362,7 +363,7 @@
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1 clickable color-group-green" onclick="navigateToItem('level_work_go_melt')">GO-MELT</div>
-                <div class="underline-progress" style="--progress-color: #388E3C; --progress-color-light: #e0e0e0; --progress-percent: 40%;"></div>
+                <div class="underline-progress" style="--progress-color: #388E3C; --progress-color-light: #dddddd; --progress-percent: 40%;"></div>
                 <div class="context layer1-context">Update heat-source & outline publishing</div>
                 
             </div>
@@ -381,7 +382,7 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf" >Outline<span class="due-date due-soon">in 4d</span></div>
+                        <div class="layer2 color-group-green leaf" >Outline<span class="due-date due-soon">in 3d</span></div>
                         <div class="underline color-green-light"></div>
                         <div class="context layer2-context">Draft outline for publication</div>
                     </div>
@@ -419,7 +420,7 @@
                         
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue"  >Inspiration<span class="due-date due-today">TODAY</span></span></div><div class="layer3-item"><span class="layer3  color-blue"  >Generation<span class="due-date due-soon">in 3d</span></span></div>
+        <div class="layer3-item"><span class="layer3  color-blue"  >Inspiration<span class="due-date due-overdue">OVERDUE</span></span></div><div class="layer3-item"><span class="layer3  color-blue"  >Generation<span class="due-date due-soon">in 2d</span></span></div>
                     </div>
                 </div>
         
@@ -427,8 +428,8 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable color-group-purple" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></div>
-                <div class="underline color-purple-medium"></div>
+                <div class="layer1 clickable color-group-red" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-soon">in 1d</span></div>
+                <div class="underline color-red-medium"></div>
                 <div class="context layer1-context">Process high-speed data for porosity</div>
                 
             </div>
@@ -436,9 +437,9 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-purple leaf" >Code<span class="due-date due-today">TODAY</span></div>
-                        <div class="underline color-purple-light"></div>
-                        <div class="context layer2-context">Measure porosity for single case</div>
+                        <div class="layer2 color-group-red leaf" >Read<span class="due-date due-soon">in 1d</span></div>
+                        <div class="underline color-red-light"></div>
+                        <div class="context layer2-context">Read image processing article</div>
                     </div>
                     <div class="layer3-container">
         
@@ -447,9 +448,9 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-purple leaf" >Meet<span class="due-date due-soon">in 1d</span></div>
-                        <div class="underline color-purple-light"></div>
-                        <div class="context layer2-context">Zixun - share codes & postprocess insights</div>
+                        <div class="layer2 color-group-red leaf" >Code<span class="due-date due-soon">in 2d</span></div>
+                        <div class="underline color-red-light"></div>
+                        <div class="context layer2-context">Implement image processing method</div>
                     </div>
                     <div class="layer3-container">
         
@@ -458,7 +459,7 @@
         
             </div>
         </div>
-        <div class="current-date">Updated: December 06, 2025</div>
+        <div class="current-date">Updated: December 07, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

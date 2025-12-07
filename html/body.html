@@ -21,7 +21,7 @@
         .layer1 {
             font-size: 16px;
             font-weight: bold;
-            color: #333;
+            color: #222;
             display: inline-block;
             margin-right: 5px;
             cursor: pointer;
@@ -48,6 +48,7 @@
             font-size: 14px;
             font-weight: normal;
             cursor: pointer;
+            color: #333;
             padding: 3px 8px;
             border-radius: 4px;
             margin-right: 10px;
@@ -362,27 +363,27 @@
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1 clickable color-group-green" onclick="navigateToItem('body_habit')">Habit</div>
-                <div class="underline-progress" style="--progress-color: #388E3C; --progress-color-light: #e0e0e0; --progress-percent: 45%;"></div>
+                <div class="underline color-green-medium"></div>
                 
                 
             </div>
             <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf" >Evening</div>
-                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-light: #e0e0e0; --progress-percent: 30%;"></div>
-                        
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Morning</div>
-                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-light: #e0e0e0; --progress-percent: 100%;"></div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-light: #dddddd; --progress-percent: 60%;"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-green leaf" >Evening</div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-light: #dddddd; --progress-percent: 60%;"></div>
                         
                     </div>
                     <div class="layer3-container">
@@ -394,8 +395,8 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable color-group-blue" onclick="navigateToItem('body_nutrition')">Nutrition</div>
-                <div class="underline color-blue-medium"></div>
+                <div class="layer1 clickable color-group-blue" onclick="navigateToItem('body_train')">Train</div>
+                <div class="underline-progress" style="--progress-color: #1976D2; --progress-color-light: #dddddd; --progress-percent: 0%;"></div>
                 
                 
             </div>
@@ -403,8 +404,8 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-blue leaf" >Cook</div>
-                        <div class="underline-progress" style="--progress-color: #90CAF9; --progress-color-light: #e0e0e0; --progress-percent: 85%;"></div>
+                        <div class="layer2 color-group-blue leaf" >Cardio</div>
+                        <div class="underline color-blue-light"></div>
                         
                     </div>
                     <div class="layer3-container">
@@ -414,8 +415,8 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-blue leaf" >Eat</div>
-                        <div class="underline-progress" style="--progress-color: #90CAF9; --progress-color-light: #e0e0e0; --progress-percent: 50%;"></div>
+                        <div class="layer2 color-group-blue leaf" >Flexibility</div>
+                        <div class="underline color-blue-light"></div>
                         
                     </div>
                     <div class="layer3-container">
@@ -425,8 +426,8 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-blue leaf" >Prep</div>
-                        <div class="underline-progress" style="--progress-color: #90CAF9; --progress-color-light: #e0e0e0; --progress-percent: 20%;"></div>
+                        <div class="layer2 color-group-blue leaf" >Strength</div>
+                        <div class="underline color-blue-light"></div>
                         
                     </div>
                     <div class="layer3-container">
@@ -438,8 +439,8 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable color-group-purple" onclick="navigateToItem('body_train')">Train</div>
-                <div class="underline color-purple-medium"></div>
+                <div class="layer1 clickable color-group-red" onclick="navigateToItem('body_nutrition')">Nutrition</div>
+                <div class="underline color-red-medium"></div>
                 
                 
             </div>
@@ -447,8 +448,8 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-purple leaf" >Cardio</div>
-                        <div class="underline color-purple-light"></div>
+                        <div class="layer2 color-group-red leaf" >Prep</div>
+                        <div class="underline-progress" style="--progress-color: #FFAB91; --progress-color-light: #dddddd; --progress-percent: 30%;"></div>
                         
                     </div>
                     <div class="layer3-container">
@@ -458,19 +459,8 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-purple leaf" >Flexibility</div>
-                        <div class="underline color-purple-light"></div>
-                        
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-purple leaf" >Strength</div>
-                        <div class="underline color-purple-light"></div>
+                        <div class="layer2 color-group-red leaf" >Eat</div>
+                        <div class="underline-progress" style="--progress-color: #FFAB91; --progress-color-light: #dddddd; --progress-percent: 30%;"></div>
                         
                     </div>
                     <div class="layer3-container">
@@ -480,7 +470,7 @@
         
             </div>
         </div>
-        <div class="current-date">Updated: December 06, 2025</div>
+        <div class="current-date">Updated: December 07, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

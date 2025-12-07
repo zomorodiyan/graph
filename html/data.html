@@ -21,7 +21,7 @@
         .layer1 {
             font-size: 16px;
             font-weight: bold;
-            color: #333;
+            color: #222;
             display: inline-block;
             margin-right: 5px;
             cursor: pointer;
@@ -48,6 +48,7 @@
             font-size: 14px;
             font-weight: normal;
             cursor: pointer;
+            color: #333;
             padding: 3px 8px;
             border-radius: 4px;
             margin-right: 10px;
@@ -362,7 +363,7 @@
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1 clickable color-group-green" onclick="navigateToItem('mind')">Mind</div>
-                <div class="underline-progress" style="--progress-color: #388E3C; --progress-color-light: #e0e0e0; --progress-percent: 75%;"></div>
+                <div class="underline color-green-medium"></div>
                 
                 
             </div>
@@ -371,7 +372,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Mood</div>
-                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-light: #e0e0e0; --progress-percent: 60%;"></div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-light: #dddddd; --progress-percent: 80%;"></div>
                         
                     </div>
                     <div class="layer3-container">
@@ -382,7 +383,7 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Rest</div>
-                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-light: #e0e0e0; --progress-percent: 90%;"></div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-light: #dddddd; --progress-percent: 90%;"></div>
                         
                     </div>
                     <div class="layer3-container">
@@ -404,11 +405,22 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-blue clickable" onclick="navigateToItem('body_habit')">Habit</div>
-                        <div class="underline-progress" style="--progress-color: #90CAF9; --progress-color-light: #e0e0e0; --progress-percent: 45%;"></div>
+                        <div class="underline color-blue-light"></div>
                         
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #1976D2; --text-progress-percent: 30%;" >Evening</span></div><div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #1976D2; --text-progress-percent: 100%;" >Morning</span></div>
+        <div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #A0A0A0; --text-progress-percent: 60%;" >Morning</span></div><div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #A0A0A0; --text-progress-percent: 60%;" >Evening</span></div>
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('body_train')">Train</div>
+                        <div class="underline-progress" style="--progress-color: #90CAF9; --progress-color-light: #dddddd; --progress-percent: 0%;"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3  color-blue"  >Cardio</span></div><div class="layer3-item"><span class="layer3  color-blue"  >Flexibility</span></div><div class="layer3-item"><span class="layer3  color-blue"  >Strength</span></div>
                     </div>
                 </div>
         
@@ -419,18 +431,7 @@
                         
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #1976D2; --text-progress-percent: 85%;" >Cook</span></div><div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #1976D2; --text-progress-percent: 50%;" >Eat</span></div><div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #1976D2; --text-progress-percent: 20%;" >Prep</span></div>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('body_train')">Train</div>
-                        <div class="underline color-blue-light"></div>
-                        
-                    </div>
-                    <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue"  >Cardio</span></div><div class="layer3-item"><span class="layer3  color-blue"  >Flexibility</span></div><div class="layer3-item"><span class="layer3  color-blue"  >Strength</span></div>
+        <div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #A0A0A0; --text-progress-percent: 30%;" >Prep</span></div><div class="layer3-item"><span class="layer3  layer3-progress color-blue" style="--text-progress-color: #063A85; --text-progress-color-light: #A0A0A0; --text-progress-percent: 30%;" >Eat</span></div>
                     </div>
                 </div>
         
@@ -438,51 +439,7 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable color-group-purple" onclick="navigateToItem('finance')">Finance</div>
-                <div class="underline color-purple-medium"></div>
-                
-                
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-purple clickable" onclick="navigateToItem('finance_earn')">Earn</div>
-                        <div class="underline color-purple-light"></div>
-                        
-                    </div>
-                    <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-purple"  >Job</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Passive</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Side</span></div>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-purple clickable" onclick="navigateToItem('finance_invest')">Invest</div>
-                        <div class="underline color-purple-light"></div>
-                        
-                    </div>
-                    <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-purple"  >Assets</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Education</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Save</span></div>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-purple clickable" onclick="navigateToItem('finance_spend')">Spend</div>
-                        <div class="underline color-purple-light"></div>
-                        
-                    </div>
-                    <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-purple"  >Need</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Shop</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Wish</span></div>
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 clickable color-group-red" onclick="navigateToItem('interaction')">Interaction</div>
+                <div class="layer1 clickable color-group-red" onclick="navigateToItem('finance')">Finance</div>
                 <div class="underline color-red-medium"></div>
                 
                 
@@ -491,34 +448,67 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-red clickable" onclick="navigateToItem('interaction_community')">Community</div>
+                        <div class="layer2 color-group-red clickable" onclick="navigateToItem('finance_shop')">Shop</div>
                         <div class="underline color-red-light"></div>
                         
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-red"  >Groups</span></div><div class="layer3-item"><span class="layer3  color-red"  >Local</span></div><div class="layer3-item"><span class="layer3  color-red"  >Online</span></div>
+        <div class="layer3-item"><span class="layer3  color-red"  >Groceries</span></div><div class="layer3-item"><span class="layer3  color-red"  >Household</span></div><div class="layer3-item"><span class="layer3  color-red"  >Outfit</span></div><div class="layer3-item"><span class="layer3  color-red"  >Gift</span></div>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-red clickable" onclick="navigateToItem('interaction_family')">Family</div>
+                        <div class="layer2 color-group-red clickable" onclick="navigateToItem('finance_recur')">Recur</div>
                         <div class="underline color-red-light"></div>
                         
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-red"  >Extended</span></div><div class="layer3-item"><span class="layer3  color-red"  >Parents</span></div><div class="layer3-item"><span class="layer3  color-red"  >Siblings</span></div>
+        <div class="layer3-item"><span class="layer3  layer3-progress color-red" style="--text-progress-color: #A12F08; --text-progress-color-light: #A0A0A0; --text-progress-percent: 30%;" >Budget</span></div><div class="layer3-item"><span class="layer3  color-red"  >Stipend</span></div><div class="layer3-item"><span class="layer3  color-red"  >Rent</span></div><div class="layer3-item"><span class="layer3  color-red"  >Subscriptions</span></div><div class="layer3-item"><span class="layer3  color-red"  >Installments</span></div>
+                    </div>
+                </div>
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 clickable color-group-purple" onclick="navigateToItem('interaction')">Interaction</div>
+                <div class="underline color-purple-medium"></div>
+                
+                
+            </div>
+            <div class="layer2-section">
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-purple clickable" onclick="navigateToItem('interaction_colleagues')">Colleagues</div>
+                        <div class="underline-progress" style="--progress-color: #CE93D8; --progress-color-light: #dddddd; --progress-percent: 60%;"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3  color-purple"  >Zhengtao</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Zixun</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Xavier</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Prokash</span></div>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-red clickable" onclick="navigateToItem('interaction_friends')">Friends</div>
-                        <div class="underline color-red-light"></div>
+                        <div class="layer2 color-group-purple clickable" onclick="navigateToItem('interaction_friends')">Friends</div>
+                        <div class="underline-progress" style="--progress-color: #CE93D8; --progress-color-light: #dddddd; --progress-percent: 60%;"></div>
                         
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-red"  >Close</span></div><div class="layer3-item"><span class="layer3  color-red"  >Social</span></div><div class="layer3-item"><span class="layer3  color-red"  >Work</span></div>
+        <div class="layer3-item"><span class="layer3  color-purple"  >Ali</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Milad</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Matin</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Mohamad</span></div>
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-purple clickable" onclick="navigateToItem('interaction_family')">Family</div>
+                        <div class="underline color-purple-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3  layer3-progress color-purple" style="--text-progress-color: #3A0F6E; --text-progress-color-light: #A0A0A0; --text-progress-percent: 0%;" >Alireza</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Soqra</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Hosein</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Hojjat</span></div><div class="layer3-item"><span class="layer3  color-purple"  >Hamid</span></div>
                     </div>
                 </div>
         
@@ -551,18 +541,18 @@
                         
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3 clickable layer3-progress-clickable color-green" style="--text-progress-color: #0D4F14; --text-progress-color-light: #388E3C; --text-progress-percent: 40%;" onclick="navigateToItem('level_work_go_melt')">GO-MELT</span><div class="context layer3-context">Update heat-source & outline publishing</div></div><div class="layer3-item"><span class="layer3 clickable color-green"  onclick="navigateToItem('level_work_ray_tracing_visualization')">Ray-tracing visualization</span><div class="context layer3-context">First ray-traced renders on Blackwell</div></div><div class="layer3-item"><span class="layer3 clickable color-green"  onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Process high-speed data for porosity</div></div>
+        <div class="layer3-item"><span class="layer3 clickable layer3-progress-clickable color-green" style="--text-progress-color: #0D4F14; --text-progress-color-light: #A0A0A0; --text-progress-percent: 40%;" onclick="navigateToItem('level_work_go_melt')">GO-MELT</span><div class="context layer3-context">Update heat-source & outline publishing</div></div><div class="layer3-item"><span class="layer3 clickable color-green"  onclick="navigateToItem('level_work_ray_tracing_visualization')">Ray-tracing visualization</span><div class="context layer3-context">First ray-traced renders on Blackwell</div></div><div class="layer3-item"><span class="layer3 clickable color-green"  onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Process high-speed data for porosity</div></div>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf" >Goal</div>
+                        <div class="layer2 color-group-green clickable" onclick="navigateToItem('level_goal')">Goal</div>
                         <div class="underline color-green-light"></div>
                         
                     </div>
                     <div class="layer3-container">
-        
+        <div class="layer3-item"><span class="layer3  color-green"  >Article<span class="due-date due-later">Jan 01</span></span><div class="context layer3-context">Submit Adaptive heat source Manuscript</div></div><div class="layer3-item"><span class="layer3  color-green"  >Teamwork<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Implement Article Zixun</div></div>
                     </div>
                 </div>
         
@@ -595,7 +585,7 @@
                         
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue"  >Term paper<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Lab 5<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Lab 10<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Lab 14<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Delay effect<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Work > GO-MELT</div></div>
+        <div class="layer3-item"><span class="layer3  color-blue"  >Delay effect<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Work > GO-MELT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Inspiration<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Level > Work > Ray-tracing visualization > Postprocess</div></div>
                     </div>
                 </div>
         
@@ -606,7 +596,7 @@
                         
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue"  >Inspiration<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Work > Ray-tracing visualization > Postprocess</div></div><div class="layer3-item"><span class="layer3 clickable color-blue"  onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Work</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Code<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Work > APS Data</div></div>
+        <div class="layer3-item"><span class="layer3  color-blue"  >Term paper<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Lab 5<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Lab 10<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Lab 14<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Level > Study > IIoT</div></div>
                     </div>
                 </div>
         
@@ -617,7 +607,7 @@
                         
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue"  >Meet<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Level > Work > APS Data</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Full paper<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Generation<span class="due-date due-soon">in 3d</span></span><div class="context layer3-context">Level > Work > Ray-tracing visualization > Postprocess</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Outline<span class="due-date due-soon">in 4d</span></span><div class="context layer3-context">Level > Work > GO-MELT</div></div>
+        <div class="layer3-item"><span class="layer3  color-blue"  >Full paper<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Level > Study > IIoT</div></div><div class="layer3-item"><span class="layer3 clickable color-blue"  onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Level > Work</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Read<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Level > Work > APS Data</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Generation<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Level > Work > Ray-tracing visualization > Postprocess</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Code<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Level > Work > APS Data</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Teamwork<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Level > Goal</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Outline<span class="due-date due-soon">in 3d</span></span><div class="context layer3-context">Level > Work > GO-MELT</div></div>
                     </div>
                 </div>
         
@@ -628,13 +618,13 @@
                         
                     </div>
                     <div class="layer3-container">
-        
+        <div class="layer3-item"><span class="layer3  color-blue"  >Article<span class="due-date due-later">Jan 01</span></span><div class="context layer3-context">Level > Goal</div></div>
                     </div>
                 </div>
         
             </div>
         </div>
-        <div class="current-date">Updated: December 06, 2025</div>
+        <div class="current-date">Updated: December 07, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

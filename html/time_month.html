@@ -21,7 +21,7 @@
         .layer1 {
             font-size: 16px;
             font-weight: bold;
-            color: #333;
+            color: #222;
             display: inline-block;
             margin-right: 5px;
             cursor: pointer;
@@ -48,6 +48,7 @@
             font-size: 14px;
             font-weight: normal;
             cursor: pointer;
+            color: #333;
             padding: 3px 8px;
             border-radius: 4px;
             margin-right: 10px;
@@ -359,7 +360,18 @@
     <div class="graph-container">
         <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('time.html')">Time</a> > <span class="current">Month</span></div>
         
-        <div class="current-date">Updated: December 06, 2025</div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1  color-group-green" >Article<span class="due-date due-later">Jan 01</span></div>
+                <div class="underline color-green-medium"></div>
+                <div class="context layer1-context">Level > Goal</div>
+                
+            </div>
+            <div class="layer2-section">
+        
+            </div>
+        </div>
+        <div class="current-date">Updated: December 07, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

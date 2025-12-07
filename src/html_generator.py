@@ -33,7 +33,7 @@ class HTMLGenerator:
                 "red": {"light": "#FFAB91", "medium": "#D84315", "dark": "#BF360C"},
             }
             progress_color = color_map.get(color_name, {}).get(intensity, "#388E3C")
-            return f'<div class="underline-progress" style="--progress-color: {progress_color}; --progress-color-light: #e0e0e0; --progress-percent: {progress}%;"></div>'
+            return f'<div class="underline-progress" style="--progress-color: {progress_color}; --progress-color-light: #dddddd; --progress-percent: {progress}%;"></div>'
         else:
             # No progress specified, use solid color underline
             return f'<div class="underline color-{color_name}-{intensity}"></div>'
@@ -62,7 +62,7 @@ class HTMLGenerator:
             text_color_medium = colors[1]
             # Use different class for clickable items with progress, and include color class for hover
             progress_class = "layer3-progress-clickable" if is_clickable else "layer3-progress"
-            return f"{progress_class} color-{color_name}", f"--text-progress-color: {text_color}; --text-progress-color-light: {text_color_medium}; --text-progress-percent: {progress}%;"
+            return f"{progress_class} color-{color_name}", f"--text-progress-color: {text_color}; --text-progress-color-light: #A0A0A0; --text-progress-percent: {progress}%;"
         else:
             # No progress, use regular color class
             return f"color-{color_name}", ""
@@ -176,7 +176,7 @@ class HTMLGenerator:
         .layer1 {
             font-size: 16px;
             font-weight: bold;
-            color: #333;
+            color: #222;
             display: inline-block;
             margin-right: 5px;
             cursor: pointer;
@@ -203,6 +203,7 @@ class HTMLGenerator:
             font-size: 14px;
             font-weight: normal;
             cursor: pointer;
+            color: #333;
             padding: 3px 8px;
             border-radius: 4px;
             margin-right: 10px;
@@ -547,8 +548,8 @@ class HTMLGenerator:
         base_colors = [
             ("green", "#A5D6A7", "#388E3C", "#1B5E20"),
             ("blue", "#90CAF9", "#1976D2", "#0D47A1"),
-            ("purple", "#CE93D8", "#8E24AA", "#4A148C"),
             ("red", "#FFAB91", "#D84315", "#BF360C"),
+            ("purple", "#CE93D8", "#8E24AA", "#4A148C"),
         ]
 
         for idx, item in enumerate(data):
