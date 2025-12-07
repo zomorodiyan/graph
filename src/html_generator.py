@@ -296,7 +296,7 @@ class HTMLGenerator:
         .layer3.color-green:hover { background-color: rgba(165, 214, 167, 0.5); }
         .layer3.color-blue:hover { background-color: rgba(144, 202, 249, 0.5); }
         .layer3.color-purple:hover { background-color: rgba(206, 147, 216, 0.5); }
-        .layer3.color-red:hover { background-color: rgba(255, 171, 145, 0.5); }171, 145, 0.5); }
+        .layer3.color-red:hover { background-color: rgba(255, 171, 145, 0.5); }
         .layer3-progress {
             background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
             -webkit-background-clip: text;
