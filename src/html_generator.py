@@ -86,10 +86,10 @@ class HTMLGenerator:
             # Determine CSS class
             if days_until < 0:
                 css_class = "due-overdue"
-                label = "OVERDUE"
+                label = "Overdue"
             elif days_until == 0:
                 css_class = "due-today"
-                label = "TODAY"
+                label = "Today"
             elif days_until <= 6:
                 css_class = "due-soon"
                 label = f"in {days_until}d"
@@ -303,10 +303,25 @@ class HTMLGenerator:
             -webkit-text-fill-color: transparent;
             background-clip: text;
             display: inline-block;
+            padding: 1px 6px;
+            border-radius: 3px;
             transition: background-color 0.2s;
         }
-        .layer3-progress:hover {
-            background-color: #f0f0f0;
+        .layer3-progress.color-green:hover {
+            background: rgba(165, 214, 167, 0.5);
+            -webkit-text-fill-color: #0D4F14;
+        }
+        .layer3-progress.color-blue:hover {
+            background: rgba(144, 202, 249, 0.5);
+            -webkit-text-fill-color: #063A85;
+        }
+        .layer3-progress.color-purple:hover {
+            background: rgba(206, 147, 216, 0.5);
+            -webkit-text-fill-color: #3A0F6E;
+        }
+        .layer3-progress.color-red:hover {
+            background: rgba(255, 171, 145, 0.5);
+            -webkit-text-fill-color: #A12F08;
         }
         .layer3-progress-clickable {
             background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
@@ -448,7 +463,7 @@ class HTMLGenerator:
             text-align: right;
         }
         .due-date {
-            font-size: 11px;
+            font-size: 10px;
             padding: 2px 6px;
             border-radius: 3px;
             display: inline-block;
@@ -458,12 +473,10 @@ class HTMLGenerator:
         .due-overdue {
             background-color: #ffebee;
             color: #c62828;
-            font-weight: bold;
         }
         .due-today {
             background-color: #fff3e0;
             color: #ef6c00;
-            font-weight: bold;
         }
         .due-soon {
             background-color: #e8f5e9;
