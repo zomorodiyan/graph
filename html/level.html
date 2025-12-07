@@ -148,10 +148,25 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             display: inline-block;
+            padding: 1px 6px;
+            border-radius: 3px;
             transition: background-color 0.2s;
         }
-        .layer3-progress:hover {
-            background-color: #f0f0f0;
+        .layer3-progress.color-green:hover {
+            background: rgba(165, 214, 167, 0.5);
+            -webkit-text-fill-color: #0D4F14;
+        }
+        .layer3-progress.color-blue:hover {
+            background: rgba(144, 202, 249, 0.5);
+            -webkit-text-fill-color: #063A85;
+        }
+        .layer3-progress.color-purple:hover {
+            background: rgba(206, 147, 216, 0.5);
+            -webkit-text-fill-color: #3A0F6E;
+        }
+        .layer3-progress.color-red:hover {
+            background: rgba(255, 171, 145, 0.5);
+            -webkit-text-fill-color: #A12F08;
         }
         .layer3-progress-clickable {
             background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
@@ -293,7 +308,7 @@
             text-align: right;
         }
         .due-date {
-            font-size: 11px;
+            font-size: 10px;
             padding: 2px 6px;
             border-radius: 3px;
             display: inline-block;
@@ -303,12 +318,10 @@
         .due-overdue {
             background-color: #ffebee;
             color: #c62828;
-            font-weight: bold;
         }
         .due-today {
             background-color: #fff3e0;
             color: #ef6c00;
-            font-weight: bold;
         }
         .due-soon {
             background-color: #e8f5e9;
@@ -387,7 +400,7 @@
                         <div class="context layer2-context">Industrial IoT course</div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-green"  >Term paper<span class="due-date due-today">TODAY</span></span><div class="context layer3-context">Expanded Outline</div></div><div class="layer3-item"><span class="layer3  color-green"  >Full paper<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Full paper</div></div><div class="layer3-item"><span class="layer3  color-green"  >Lab 5<span class="due-date due-today">TODAY</span></span></div><div class="layer3-item"><span class="layer3  color-green"  >Lab 10<span class="due-date due-today">TODAY</span></span></div><div class="layer3-item"><span class="layer3  color-green"  >Lab 14<span class="due-date due-today">TODAY</span></span></div>
+        <div class="layer3-item"><span class="layer3  color-green"  >Term paper<span class="due-date due-today">Today</span></span><div class="context layer3-context">Expanded Outline</div></div><div class="layer3-item"><span class="layer3  color-green"  >Full paper<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Full paper</div></div><div class="layer3-item"><span class="layer3  color-green"  >Lab 5<span class="due-date due-today">Today</span></span></div><div class="layer3-item"><span class="layer3  color-green"  >Lab 10<span class="due-date due-today">Today</span></span></div><div class="layer3-item"><span class="layer3  color-green"  >Lab 14<span class="due-date due-today">Today</span></span></div>
                     </div>
                 </div>
         
@@ -409,18 +422,7 @@
                         <div class="context layer2-context">Update heat-source & outline publishing</div>
                     </div>
                     <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3  color-blue"  >Delay effect<span class="due-date due-overdue">OVERDUE</span></span><div class="context layer3-context">Effect of delay on surface temperature readings</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Outline<span class="due-date due-soon">in 3d</span></span><div class="context layer3-context">Draft outline for publication</div></div><div class="layer3-item"><span class="layer3  color-blue"  >InherentStrain</span><div class="context layer3-context">Spare time</div></div>
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_ray_tracing_visualization')">Ray-tracing visualization</div>
-                        <div class="underline color-blue-light"></div>
-                        <div class="context layer2-context">First ray-traced renders on Blackwell</div>
-                    </div>
-                    <div class="layer3-container">
-        <div class="layer3-item"><span class="layer3 clickable color-blue"  onclick="navigateToItem('level_work_ray_tracing_postprocess')">Postprocess</span></div>
+        <div class="layer3-item"><span class="layer3  color-blue"  >Delay effect<span class="due-date due-overdue">Overdue</span></span><div class="context layer3-context">Effect of delay on surface temperature readings</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Outline<span class="due-date due-soon">in 3d</span></span><div class="context layer3-context">Draft outline for publication</div></div><div class="layer3-item"><span class="layer3  color-blue"  >InherentStrain</span><div class="context layer3-context">Spare time</div></div>
                     </div>
                 </div>
         
@@ -432,6 +434,17 @@
                     </div>
                     <div class="layer3-container">
         <div class="layer3-item"><span class="layer3  color-blue"  >Read<span class="due-date due-soon">in 1d</span></span><div class="context layer3-context">Read image processing article</div></div><div class="layer3-item"><span class="layer3  color-blue"  >Code<span class="due-date due-soon">in 2d</span></span><div class="context layer3-context">Implement image processing method</div></div>
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_ray_tracing_visualization')">Ray-tracing visualization</div>
+                        <div class="underline-progress" style="--progress-color: #90CAF9; --progress-color-light: #dddddd; --progress-percent: 0%;"></div>
+                        <div class="context layer2-context">First ray-traced renders on Blackwell</div>
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3 clickable color-blue"  onclick="navigateToItem('level_work_ray_tracing_postprocess')">Postprocess</span></div>
                     </div>
                 </div>
         
@@ -467,17 +480,6 @@
         
                     </div>
                 </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1  color-group-purple" >Skill</div>
-                <div class="underline color-purple-medium"></div>
-                
-                
-            </div>
-            <div class="layer2-section">
         
             </div>
         </div>

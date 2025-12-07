@@ -226,23 +226,6 @@ structure:
                 title: InherentStrain
                 id: level_work_inherent_strain
                 context: Spare time
-          ray_tracing_visualization:
-            title: Ray-tracing visualization
-            id: level_work_ray_tracing_visualization
-            context: First ray-traced renders on Blackwell
-            children:
-              postprocess:
-                title: Postprocess
-                id: level_work_ray_tracing_postprocess
-                children:
-                  inspiration:
-                    title: Inspiration
-                    id: level_work_ray_tracing_postprocess_inspiration
-                    due: 2025-12-06
-                  generation:
-                    title: Generation
-                    id: level_work_ray_tracing_postprocess_generation
-                    due: 2025-12-09
           aps_data:
             title: APS Data
             id: level_work_aps_data
@@ -259,6 +242,24 @@ structure:
                 id: level_work_aps_data_code
                 context: Implement image processing method 
                 due: 2025-12-09
+          ray_tracing_visualization:
+            title: Ray-tracing visualization
+            id: level_work_ray_tracing_visualization
+            context: First ray-traced renders on Blackwell
+            progress: 0
+            children:
+              postprocess:
+                title: Postprocess
+                id: level_work_ray_tracing_postprocess
+                children:
+                  inspiration:
+                    title: Inspiration
+                    id: level_work_ray_tracing_postprocess_inspiration
+                    due: 2025-12-06
+                  generation:
+                    title: Generation
+                    id: level_work_ray_tracing_postprocess_generation
+                    due: 2025-12-09
       goal:
         title: Goal
         id: level_goal
@@ -273,10 +274,6 @@ structure:
             id: level_goal_teamwork
             context: Implement Article Zixun 
             due: 2025-12-09
-      skill:
-        title: Skill
-        id: level_skill
-        children: {}
 
   time:
     title: Time
