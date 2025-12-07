@@ -14,7 +14,7 @@
         }
         .graph-container {
             background: white;
-            padding: 20px;
+            padding: 10px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
@@ -23,11 +23,9 @@
             font-weight: bold;
             color: #333;
             display: inline-block;
-            vertical-align: top;
-            margin-right: 30px;
-            min-width: 80px;
+            margin-right: 5px;
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-radius: 4px;
             transition: background-color 0.2s;
         }
@@ -50,12 +48,13 @@
             font-size: 14px;
             font-weight: normal;
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-radius: 4px;
+            margin-right: 10px;
             transition: background-color 0.2s;
             display: block;
-            margin-bottom: 4px;
-            min-width: 80px;
+            margin-bottom: 0px;
+            min-width: 30px;
         }
         .layer2.clickable {
             font-weight: bold;
@@ -103,8 +102,8 @@
         .context {
             color: #000;
             font-style: italic;
-            margin-top: 2px;
-            padding: 2px 8px;
+            margin-top: 1px;
+            padding: 1px 8px;
             display: block;
             font-weight: normal;
         }
@@ -119,12 +118,12 @@
             color: #000;
         }
         .layer3 {
-            font-size: 14px;
+            font-size: 12px;
             color: #333;
             font-weight: normal;
             display: block;
             cursor: pointer;
-            padding: 2px 6px;
+            padding: 1px 6px;
             border-radius: 3px;
             transition: background-color 0.2s;
         }
@@ -183,14 +182,26 @@
         }
         .underline {
             height: 2px;
-            margin-top: 2px;
-            margin-bottom: 4px;
+            margin-top: 0px;
+            margin-bottom: 1px;
+            display: block;
+            width: 100%;
+            line-height: 0;
+            font-size: 0;
+            overflow: hidden;
+            opacity: 0.6;
         }
         .underline-progress {
             height: 2px;
-            margin-top: 2px;
-            margin-bottom: 4px;
+            margin-top: 0px;
+            margin-bottom: 1px;
+            display: block;
+            width: 100%;
+            line-height: 0;
+            font-size: 0;
+            overflow: hidden;
             background: linear-gradient(to right, var(--progress-color) var(--progress-percent), var(--progress-color-light) var(--progress-percent));
+            opacity: 0.6;
         }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
@@ -205,14 +216,14 @@
         .color-red-medium { background-color: #D84315; }
         .color-red-dark { background-color: #BF360C; }
         .section {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             display: flex;
             align-items: flex-start;
         }
         .layer1-container {
             display: flex;
             flex-direction: column;
-            margin-right: 30px;
+            margin-right: 15px;
             flex-shrink: 0;
         }
         .layer2-section {
@@ -220,7 +231,7 @@
             flex-direction: column;
         }
         .layer2-container {
-            margin-bottom: 7px;
+            margin-bottom: 2px;
             display: flex;
             align-items: flex-start;
         }
@@ -236,7 +247,7 @@
         }
         .layer3-item {
             margin-right: 15px;
-            margin-bottom: 5px;
+            margin-bottom: 1px;
         }
         .notification {
             position: fixed;
@@ -351,17 +362,17 @@
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1 clickable color-group-green" onclick="navigateToItem('level_work_go_melt')">GO-MELT</div>
-                
-                <div class="context layer1-context">Update heat-source & outline publishing</div>
                 <div class="underline-progress" style="--progress-color: #388E3C; --progress-color-light: #e0e0e0; --progress-percent: 40%;"></div>
+                <div class="context layer1-context">Update heat-source & outline publishing</div>
+                
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Delay effect<span class="due-date due-overdue">OVERDUE</span></div>
-                        <div class="context layer2-context">Effect of delay on surface temperature readings</div>
                         <div class="underline color-green-light"></div>
+                        <div class="context layer2-context">Effect of delay on surface temperature readings</div>
                     </div>
                     <div class="layer3-container">
         
@@ -371,8 +382,8 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >Outline<span class="due-date due-soon">in 4d</span></div>
-                        <div class="context layer2-context">Draft outline for publication</div>
                         <div class="underline color-green-light"></div>
+                        <div class="context layer2-context">Draft outline for publication</div>
                     </div>
                     <div class="layer3-container">
         
@@ -382,8 +393,8 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-green leaf" >InherentStrain</div>
-                        <div class="context layer2-context">Spare time</div>
                         <div class="underline color-green-light"></div>
+                        <div class="context layer2-context">Spare time</div>
                     </div>
                     <div class="layer3-container">
         
@@ -395,17 +406,17 @@
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1 clickable color-group-blue" onclick="navigateToItem('level_work_ray_tracing_visualization')">Ray-tracing visualization</div>
-                
-                <div class="context layer1-context">First ray-traced renders on Blackwell</div>
                 <div class="underline color-blue-medium"></div>
+                <div class="context layer1-context">First ray-traced renders on Blackwell</div>
+                
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-blue clickable" onclick="navigateToItem('level_work_ray_tracing_postprocess')">Postprocess</div>
-                        
                         <div class="underline color-blue-light"></div>
+                        
                     </div>
                     <div class="layer3-container">
         <div class="layer3-item"><span class="layer3  color-blue"  >Inspiration<span class="due-date due-today">TODAY</span></span></div><div class="layer3-item"><span class="layer3  color-blue"  >Generation<span class="due-date due-soon">in 3d</span></span></div>
@@ -417,17 +428,17 @@
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1 clickable color-group-purple" onclick="navigateToItem('level_work_aps_data')">APS Data<span class="due-date due-today">TODAY</span></div>
-                
-                <div class="context layer1-context">Process high-speed data for porosity</div>
                 <div class="underline color-purple-medium"></div>
+                <div class="context layer1-context">Process high-speed data for porosity</div>
+                
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-purple leaf" >Code<span class="due-date due-today">TODAY</span></div>
-                        <div class="context layer2-context">Measure porosity for single case</div>
                         <div class="underline color-purple-light"></div>
+                        <div class="context layer2-context">Measure porosity for single case</div>
                     </div>
                     <div class="layer3-container">
         
@@ -437,8 +448,8 @@
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 color-group-purple leaf" >Meet<span class="due-date due-soon">in 1d</span></div>
-                        <div class="context layer2-context">Zixun - share codes & postprocess insights</div>
                         <div class="underline color-purple-light"></div>
+                        <div class="context layer2-context">Zixun - share codes & postprocess insights</div>
                     </div>
                     <div class="layer3-container">
         
