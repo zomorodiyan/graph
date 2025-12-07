@@ -169,7 +169,7 @@ class HTMLGenerator:
         }
         .graph-container {
             background: white;
-            padding: 20px;
+            padding: 10px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
@@ -178,11 +178,9 @@ class HTMLGenerator:
             font-weight: bold;
             color: #333;
             display: inline-block;
-            vertical-align: top;
-            margin-right: 30px;
-            min-width: 80px;
+            margin-right: 5px;
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-radius: 4px;
             transition: background-color 0.2s;
         }
@@ -205,12 +203,13 @@ class HTMLGenerator:
             font-size: 14px;
             font-weight: normal;
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-radius: 4px;
+            margin-right: 10px;
             transition: background-color 0.2s;
             display: block;
-            margin-bottom: 4px;
-            min-width: 80px;
+            margin-bottom: 0px;
+            min-width: 30px;
         }
         .layer2.clickable {
             font-weight: bold;
@@ -258,8 +257,8 @@ class HTMLGenerator:
         .context {
             color: #000;
             font-style: italic;
-            margin-top: 2px;
-            padding: 2px 8px;
+            margin-top: 1px;
+            padding: 1px 8px;
             display: block;
             font-weight: normal;
         }
@@ -274,12 +273,12 @@ class HTMLGenerator:
             color: #000;
         }
         .layer3 {
-            font-size: 14px;
+            font-size: 12px;
             color: #333;
             font-weight: normal;
             display: block;
             cursor: pointer;
-            padding: 2px 6px;
+            padding: 1px 6px;
             border-radius: 3px;
             transition: background-color 0.2s;
         }
@@ -338,14 +337,26 @@ class HTMLGenerator:
         }
         .underline {
             height: 2px;
-            margin-top: 2px;
-            margin-bottom: 4px;
+            margin-top: 0px;
+            margin-bottom: 1px;
+            display: block;
+            width: 100%;
+            line-height: 0;
+            font-size: 0;
+            overflow: hidden;
+            opacity: 0.6;
         }
         .underline-progress {
             height: 2px;
-            margin-top: 2px;
-            margin-bottom: 4px;
+            margin-top: 0px;
+            margin-bottom: 1px;
+            display: block;
+            width: 100%;
+            line-height: 0;
+            font-size: 0;
+            overflow: hidden;
             background: linear-gradient(to right, var(--progress-color) var(--progress-percent), var(--progress-color-light) var(--progress-percent));
+            opacity: 0.6;
         }
         .color-green-light { background-color: #A5D6A7; }
         .color-green-medium { background-color: #388E3C; }
@@ -360,14 +371,14 @@ class HTMLGenerator:
         .color-red-medium { background-color: #D84315; }
         .color-red-dark { background-color: #BF360C; }
         .section {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             display: flex;
             align-items: flex-start;
         }
         .layer1-container {
             display: flex;
             flex-direction: column;
-            margin-right: 30px;
+            margin-right: 15px;
             flex-shrink: 0;
         }
         .layer2-section {
@@ -375,7 +386,7 @@ class HTMLGenerator:
             flex-direction: column;
         }
         .layer2-container {
-            margin-bottom: 7px;
+            margin-bottom: 2px;
             display: flex;
             align-items: flex-start;
         }
@@ -391,7 +402,7 @@ class HTMLGenerator:
         }
         .layer3-item {
             margin-right: 15px;
-            margin-bottom: 5px;
+            margin-bottom: 1px;
         }
         .notification {
             position: fixed;
@@ -576,9 +587,9 @@ class HTMLGenerator:
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1 {layer1_clickable_class} {layer1_color_class}" {layer1_onclick}>{layer1_name}{layer1_due_html}</div>
-                {layer1_path_html}
-                {layer1_context_html}
                 {layer1_underline}
+                {layer1_context_html}
+                {layer1_path_html}
             </div>
             <div class="layer2-section">
         """
@@ -628,8 +639,8 @@ class HTMLGenerator:
                 <div class="layer2-container">
                     <div class="layer2-content">
                         <div class="layer2 {layer2_class}" {onclick_handler}>{layer2_name}{layer2_due_html}</div>
-                        {layer2_context_html}
                         {layer2_underline}
+                        {layer2_context_html}
                     </div>
                     <div class="layer3-container">
         """
