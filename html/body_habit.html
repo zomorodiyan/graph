@@ -371,31 +371,97 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('body.html')">Body</a> > <span class="current">Habit</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('level.html')">Level</a> > <span class="current">Habit</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1  color-group-green" >Morning</div>
+                <div class="layer1 clickable color-group-green" onclick="navigateToItem('body_habit_morning')">Morning</div>
                 <div class="underline-progress" style="--progress-color: #388E3C; --progress-color-light: #dddddd; --progress-percent: 60%;"></div>
                 
                 
             </div>
             <div class="layer2-section">
         
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-green leaf" >Clean</div>
+                        <div class="underline color-green-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-green leaf" >Breakfast</div>
+                        <div class="underline color-green-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-green leaf" >CommuteUni</div>
+                        <div class="underline color-green-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-green leaf" >Workout</div>
+                        <div class="underline color-green-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-green leaf" >Shower</div>
+                        <div class="underline color-green-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
             </div>
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1  color-group-blue" >Evening</div>
+                <div class="layer1 clickable color-group-blue" onclick="navigateToItem('body_habit_evening')">Evening</div>
                 <div class="underline-progress" style="--progress-color: #1976D2; --progress-color-light: #dddddd; --progress-percent: 60%;"></div>
                 
                 
             </div>
             <div class="layer2-section">
         
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-blue leaf" >CommuteHome</div>
+                        <div class="underline color-blue-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
             </div>
         </div>
-        <div class="current-date">Updated: December 07, 2025</div>
+        <div class="current-date">Updated: December 10, 2025</div>
     </div>
     <div id="notification" class="notification"></div>
     <script>

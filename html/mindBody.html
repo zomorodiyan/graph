@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Graph - Interaction Family</title>
+    <title>Knowledge Graph - Mindbody</title>
     <style>
         
         body {
@@ -371,12 +371,12 @@
 </head>
 <body>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <a href="#" onclick="loadGraph('interaction.html')">Interaction</a> > <span class="current">Family</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('data.html')">Data</a> > <span class="current">Mind & Body</span></div>
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1  color-group-green" >Alireza</div>
-                <div class="underline-progress" style="--progress-color: #388E3C; --progress-color-light: #dddddd; --progress-percent: 0%;"></div>
+                <div class="layer1  color-group-green" >Mood</div>
+                <div class="underline-progress" style="--progress-color: #388E3C; --progress-color-light: #dddddd; --progress-percent: 80%;"></div>
                 
                 
             </div>
@@ -386,8 +386,8 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1  color-group-blue" >Soqra</div>
-                <div class="underline color-blue-medium"></div>
+                <div class="layer1  color-group-blue" >Rest</div>
+                <div class="underline-progress" style="--progress-color: #1976D2; --progress-color-light: #dddddd; --progress-percent: 90%;"></div>
                 
                 
             </div>
@@ -397,34 +397,78 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1  color-group-red" >Hosein</div>
-                <div class="underline color-red-medium"></div>
-                <div class="context layer1-context">Parmis</div>
+                <div class="layer1 clickable color-group-red" onclick="navigateToItem('mindBody_train')">Train</div>
+                <div class="underline-progress" style="--progress-color: #D84315; --progress-color-light: #dddddd; --progress-percent: 0%;"></div>
+                
                 
             </div>
             <div class="layer2-section">
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-red leaf" >Cardio</div>
+                        <div class="underline color-red-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-red leaf" >Flexibility</div>
+                        <div class="underline color-red-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-red leaf" >Strength</div>
+                        <div class="underline color-red-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
         
             </div>
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1  color-group-purple" >Hojjat</div>
+                <div class="layer1 clickable color-group-purple" onclick="navigateToItem('mindBody_nutrition')">Nutrition</div>
                 <div class="underline color-purple-medium"></div>
                 
                 
             </div>
             <div class="layer2-section">
         
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1  color-group-green" >Hamid</div>
-                <div class="underline color-green-medium"></div>
-                
-                
-            </div>
-            <div class="layer2-section">
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-purple leaf" >Cook</div>
+                        <div class="underline color-purple-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-purple leaf" >Eat</div>
+                        <div class="underline color-purple-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
         
             </div>
         </div>
