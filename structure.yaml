@@ -5,62 +5,44 @@ metadata:
   updated_at: '2025-11-04T14:00:00.000000'
 
 structure:
-  mind:
-    title: Mind
-    id: mind
+  mindBody:
+    title: Mind & Body
+    id: mindBody
     children:
       mood:
         title: Mood
-        id: mind_mood
+        id: mindBody_mood
         progress: 80
         children: {}
       rest:
         title: Rest
-        id: mind_rest
+        id: mindBody_rest
         progress: 90
         children: {}
-  body:
-    title: Body
-    id: body
-    children:
-      habit:
-        title: Habit
-        id: body_habit
-        children:
-          morning:
-            title: Morning
-            id: body_habit_morning
-            progress: 60
-          evening:
-            title: Evening
-            id: body_habit_evening
-            progress: 60
       train:
         title: Train
-        id: body_train
+        id: mindBody_train
         progress: 0
         children:
           cardio:
             title: Cardio
-            id: body_train_cardio
+            id: mindBody_train_cardio
           flexibility:
             title: Flexibility
-            id: body_train_flexibility
+            id: mindBody_train_flexibility
           strength:
             title: Strength
-            id: body_train_strength
+            id: mindBody_train_strength
       nutrition:
         title: Nutrition
-        id: body_nutrition
+        id: mindBody_nutrition
         children:
-          prep:
-            title: Prep
-            id: body_nutrition_prep
-            progress: 30
+          cook:
+            title: Cook
+            id: mindBody_nutrition_cook
           eat:
             title: Eat
-            id: body_nutrition_eat
-            progress: 30
+            id: mindBody_nutrition_eat
 
   finance:
     title: Finance
@@ -76,6 +58,9 @@ structure:
           household:
             title: Household
             id: finance_shop_household
+          dine_out:
+            title: Dine Out
+            id: finance_shop_dine_out
           outfit:
             title: Outfit
             id: finance_shop_outfit
@@ -155,6 +140,7 @@ structure:
           Hosein:
             title: Hosein
             id: interaction_family_hosein
+            context: Parmis
           Hojjat:
             title: Hojjat
             id: interaction_family_hojjat
@@ -274,6 +260,83 @@ structure:
             id: level_goal_teamwork
             context: Implement Article Zixun 
             due: 2025-12-09
+      habit:
+        title: Habit
+        id: level_habit
+        children:
+          morning:
+            title: Morning
+            id: level_habit_morning
+            context: 7-9
+            progress: 40
+            children:
+              clean:
+                title: Clean
+                id: level_habit_morning_clean
+              meal:
+                title: Meal
+                id: level_habit_morning_meal
+              go_uni:
+                title: Go Uni
+                id: level_habit_morning_go_uni
+              workout:
+                title: Workout
+                id: level_habit_morning_workout
+              shower:
+                title: Shower
+                id: level_habit_morning_shower
+              plan:
+                title: Plan
+                id: level_habit_morning_plan
+          midday:
+            title: Midday
+            id: level_habit_midday
+            context: 13-14
+            progress: 50
+            children:
+              lunch:
+                title: Lunch
+                id: level_habit_midday_lunch
+              rest:
+                title: Rest
+                id: level_habit_midday_rest
+              socialize:
+                title: Socialize
+                id: level_habit_midday_socialize
+          evening:
+            title: Evening
+            id: level_habit_evening
+            context: 18-20
+            progress: 65
+            children:
+              commuteHome:
+                title: CommuteHome
+                id: level_habit_evening_commuteHome
+              cook:
+                title: Cook
+                id: level_habit_evening_cook
+              cook:
+                title: Cook
+                id: level_habit_evening_cook
+          night:
+            title: Night
+            id: level_habit_night
+            context: 23-24
+            children:
+              review:
+                title: Review
+                id: level_habit_night_review
+              read:
+                title: Read
+                id: level_habit_night_read
+              prepare:
+                title: Prepare
+                id: level_habit_night_prepare
+                context: clothes
+              sleep:
+                title: Sleep
+                id: level_habit_night_sleep
+                context: 00:00
 
   time:
     title: Time
