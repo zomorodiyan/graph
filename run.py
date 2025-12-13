@@ -15,6 +15,10 @@ import socketserver
 import socket
 from pathlib import Path
 
+# Import Google Drive integration
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+from google_drive import download_structure_yaml, authenticate
+
 def is_port_free(port):
     """Check if a port is free"""
     try:
@@ -77,12 +81,20 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(script_dir)
     
+    # Handle command line arguments
+    command = sys.argv[1] if len(sys.argv) > 1 else "serve"
+    
+    # Handle auth command separately (before YAML sync)
+    if command == "auth":
+        success = authenticate()
+        sys.exit(0 if success else 1)
+    
+    # Sync structure.yaml from Google Drive (falls back to local if it fails)
+    download_structure_yaml()
+    
     # Check if structure.yaml exists
     if not check_yaml_file():
         return
-    
-    # Handle command line arguments
-    command = sys.argv[1] if len(sys.argv) > 1 else "serve"
     python_cmd = get_python_command()
     src_dir = os.path.join(script_dir, 'src')
     
@@ -123,14 +135,17 @@ def main():
         print("  serve          Generate HTML files and start web server (default)")
         print("  generate       Generate HTML files only")
         print("  search:<query> Search for items matching query")
+        print("  auth           Authenticate with Google Drive (first-time setup)")
         print("  help           Show this help message")
         print()
         print("Examples:")
+        print("  python run.py auth")
         print("  python run.py")
         print("  python run.py generate")
         print("  python run.py search:finance")
         print()
         print("The structure is defined in structure.yaml")
+        print("On each run, structure.yaml is synced from Google Drive")
     
     elif command == "serve" or len(sys.argv) == 1:
         # Default: generate and serve
