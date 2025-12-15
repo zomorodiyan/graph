@@ -1,8 +1,9 @@
-metadata:
+﻿metadata:
   title: Personal Knowledge Graph
   description: Hierarchical structure of personal development data
   version: 2.0
   updated_at: '2025-11-04T14:00:00.000000'
+
 
 structure:
   mindBody:
@@ -43,6 +44,7 @@ structure:
           eat:
             title: Eat
             id: mindBody_nutrition_eat
+
 
   finance:
     title: Finance
@@ -87,6 +89,7 @@ structure:
           installments:
             title: Installments
             id: finance_recur_installments
+
 
   interaction:
     title: Interaction
@@ -147,6 +150,7 @@ structure:
           Hamid:
             title: Hamid
             id: interaction_family_hamid
+
 
   level:
     title: Level
@@ -337,6 +341,7 @@ structure:
                 title: Sleep
                 id: level_habit_night_sleep
                 context: 00:00
+
 
   time:
     title: Time

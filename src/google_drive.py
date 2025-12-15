@@ -134,10 +134,21 @@ def download_structure_yaml():
         ).execute()
         
         print(f"✓ Found file: {file_metadata['name']}")
+        print(f"  MIME type: {file_metadata['mimeType']}")
         print(f"  Last modified: {file_metadata['modifiedTime']}")
         
-        # Download the file
-        request = service.files().get_media(fileId=file_id)
+        # Google Docs need export; regular files can be downloaded directly
+        mime_type = file_metadata.get('mimeType')
+        if mime_type == 'application/vnd.google-apps.document':
+            request = service.files().export_media(
+                fileId=file_id,
+                mimeType='text/plain'
+            )
+            print("  Exporting Google Doc as text/plain for YAML content")
+        else:
+            request = service.files().get_media(fileId=file_id)
+            print("  Downloading file content")
+        
         file_handle = io.BytesIO()
         downloader = MediaIoBaseDownload(file_handle, request)
         
