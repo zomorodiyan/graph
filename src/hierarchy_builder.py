@@ -28,7 +28,7 @@ class HierarchyBuilder:
         return self._structure_data
     
     def _inject_ids(self, structure, parent_id=""):
-        """Recursively inject 'id' field based on key path."""
+        """Recursively inject 'id' and 'title' fields based on key path."""
         for key, item in structure.items():
             # Generate ID from parent_id + key
             if parent_id:
@@ -36,9 +36,17 @@ class HierarchyBuilder:
             else:
                 item['id'] = key
             
+            # Generate title from key if not present
+            if 'title' not in item:
+                item['title'] = self._key_to_title(key)
+            
             # Recursively process children
             if 'children' in item and item['children']:
                 self._inject_ids(item['children'], item['id'])
+    
+    def _key_to_title(self, key):
+        """Convert a key to a title (replace underscores with spaces and title case)."""
+        return key.replace('_', ' ').title()
     
     def get_breadcrumb_for_item(self, item_id):
         """Generate breadcrumb navigation for an item based on its ID (supports unlimited depth)."""

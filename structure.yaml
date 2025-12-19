@@ -1,259 +1,169 @@
 ﻿metadata:
-  title: Personal Knowledge Graph
   description: Hierarchical structure of personal development data
   version: 2.0
   updated_at: '2025-11-04T14:00:00.000000'
 structure:
   mindBody:
-    title: Mind & Body
     children:
       mood:
-        title: Mood
         progress: 80
         children: {}
       rest:
-        title: Rest
         progress: 90
         children: {}
       train:
-        title: Train
         progress: 0
         children:
-          cardio:
-            title: Cardio
-          flexibility:
-            title: Flexibility
-          strength:
-            title: Strength
+          cardio: {}
+          flexibility: {}
+          strength: {}
       nutrition:
-        title: Nutrition
         children:
-          cook:
-            title: Cook
-          eat:
-            title: Eat
+          cook: {}
+          eat: {}
   finance:
-    title: Finance
     children:
       shop:
-        title: Shop
         children:
-          groceries:
-            title: Groceries
-          household:
-            title: Household
-          dine_out:
-            title: Dine Out
-          outfit:
-            title: Outfit
-          gift:
-            title: Gift
+          groceries: {}
+          household: {}
+          dine_out: {}
+          outfit: {}
+          gift: {}
       recur:
-        title: Recur
         children:
           budget:
-            title: Budget
             progress: 30
-          stipend:
-            title: Stipend
-          rent:
-            title: Rent
-          subscriptions:
-            title: Subscriptions
-          installments:
-            title: Installments
+          stipend: {}
+          rent: {}
+          subscriptions: {}
+          installments: {}
   interaction:
-    title: Interaction
     children:
       community:
-        title: Colleagues
         progress: 60
         children:
-          Zhengtao:
-            title: Zhengtao
-          Zixun:
-            title: Zixun
-          Xavier:
-            title: Xavier
-          Prokash:
-            title: Prokash
+          Zhengtao: {}
+          Zixun: {}
+          Xavier: {}
+          Prokash: {}
       friends:
-        title: Friends
         progress: 60
         children:
-          Ali:
-            title: Ali
-          Milad:
-            title: Milad
-          Matin:
-            title: Matin
-          Mohamad:
-            title: Mohamad
+          Ali: {}
+          Milad: {}
+          Matin: {}
+          Mohamad: {}
       family:
-        title: Family
         children:
           Alireza:
-            title: Alireza
             progress: 0
-          Soqra:
-            title: Soqra
+          Soqra: {}
           Hosein:
-            title: Hosein
             context: Parmis
-          Hojjat:
-            title: Hojjat
-          Hamid:
-            title: Hamid
+          Hojjat: {}
+          Hamid: {}
   level:
-    title: Level
     children:
       study:
-        title: Study
         children:
           asu_craft:
-            title: ASU Craft
             context: Meet Xavier & Zixun
             children: {}
           iiot:
-            title: IIoT
             context: Industrial IoT course
             children:
               termpaper:
-                title: Term paper
                 context: Expanded Outline
                 due: 2025-12-07
               fullpaper:
-                title: Full paper
                 context: Full paper
                 due: 2025-12-08
               lab5:
-                title: Lab 5
                 due: 2025-12-07
               lab10:
-                title: Lab 10
                 due: 2025-12-07
               lab14:
-                title: Lab 14
                 due: 2025-12-07
       work:
-        title: Work
         children:
           go_melt:
-            title: GO-MELT
             context: Update heat-source & outline publishing
             progress: 40
             children:
               delay_effect:
-                title: Delay effect
                 context: Effect of delay on surface temperature readings
                 due: 2025-12-04
               outline:
-                title: Outline
                 context: Draft outline for publication
                 due: 2025-12-10
               inherent_strain:
-                title: InherentStrain
                 context: Spare time
           aps_data:
-            title: APS Data
             context: Process high-speed data for porosity
             due: 2025-12-08
             children:
               read:
-                title: Read
                 context: Read image processing article
                 due: 2025-12-08
               code:
-                title: Code
                 context: Implement image processing method
                 due: 2025-12-09
           ray_tracing_visualization:
-            title: Ray-tracing visualization
             context: First ray-traced renders on Blackwell
             progress: 0
             children:
               postprocess:
-                title: Postprocess
                 children:
                   inspiration:
-                    title: Inspiration
                     due: 2025-12-06
                   generation:
-                    title: Generation
                     due: 2025-12-09
       goal:
-        title: Goal
         children:
           article:
-            title: Article
             context: Submit Adaptive heat source Manuscript
             due: 2026-01-01
           teamwork:
-            title: Teamwork
             context: Implement Article Zixun
             due: 2025-12-09
       habit:
-        title: Habit
         children:
           morning:
-            title: Morning
             context: 7-9
             progress: 40
             children:
-              clean:
-                title: Clean
-              meal:
-                title: Meal
-              go_uni:
-                title: Go Uni
-              workout:
-                title: Workout
-              shower:
-                title: Shower
-              plan:
-                title: Plan
+              clean: {}
+              meal: {}
+              go_uni: {}
+              workout: {}
+              shower: {}
+              plan: {}
           midday:
-            title: Midday
             context: 13-14
             progress: 50
             children:
-              lunch:
-                title: Lunch
-              rest:
-                title: Rest
-              socialize:
-                title: Socialize
+              lunch: {}
+              rest: {}
+              socialize: {}
           evening:
-            title: Evening
             context: 18-20
             progress: 65
             children:
-              commuteHome:
-                title: CommuteHome
-              cook:
-                title: Cook
+              commuteHome: {}
+              cook: {}
           night:
-            title: Night
             context: 23-24
             children:
-              review:
-                title: Review
-              read:
-                title: Read
+              review: {}
+              read: {}
               prepare:
-                title: Prepare
                 context: clothes
               sleep:
-                title: Sleep
                 context: 00:00
   time:
-    title: Time
     children:
-      over:
-        title: Over
-      day:
-        title: Day
-      week:
-        title: Week
-      month:
-        title: Month
+      over: {}
+      day: {}
+      week: {}
+      month: {}

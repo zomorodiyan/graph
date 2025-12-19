@@ -27,7 +27,7 @@ class FileUtils:
             raise ValueError(f"Error parsing YAML file: {e}")
     
     def _inject_ids(self, structure, parent_id=""):
-        """Recursively inject 'id' field based on key path."""
+        """Recursively inject 'id' and 'title' fields based on key path."""
         for key, item in structure.items():
             # Generate ID from parent_id + key
             if parent_id:
@@ -35,9 +35,17 @@ class FileUtils:
             else:
                 item['id'] = key
             
+            # Generate title from key if not present
+            if 'title' not in item:
+                item['title'] = self._key_to_title(key)
+            
             # Recursively process children
             if 'children' in item and item['children']:
                 self._inject_ids(item['children'], item['id'])
+    
+    def _key_to_title(self, key):
+        """Convert a key to a title (replace underscores with spaces and title case)."""
+        return key.replace('_', ' ').title()
     
     def get_all_items(self):
         """Get all items in the structure (supports unlimited depth)."""
