@@ -29,6 +29,11 @@ class FileUtils:
     def _inject_ids(self, structure, parent_id=""):
         """Recursively inject 'id' and 'title' fields based on key path."""
         for key, item in structure.items():
+            # Handle None/null values as empty dicts
+            if item is None:
+                item = {}
+                structure[key] = item
+            
             # Generate ID from parent_id + key
             if parent_id:
                 item['id'] = f"{parent_id}_{key}"
@@ -39,9 +44,30 @@ class FileUtils:
             if 'title' not in item:
                 item['title'] = self._key_to_title(key)
             
-            # Recursively process children
-            if 'children' in item and item['children']:
-                self._inject_ids(item['children'], item['id'])
+            # Separate children from properties
+            children = self._extract_children(item)
+            if children:
+                item['children'] = children
+                self._inject_ids(children, item['id'])
+            else:
+                item['children'] = {}
+    
+    def _extract_children(self, item):
+        """Extract child items from the item dict (anything that's not a known property)."""
+        known_properties = {'id', 'title', 'progress', 'context', 'due', 'children'}
+        children = {}
+        keys_to_remove = []
+        
+        for key, value in item.items():
+            if key not in known_properties and isinstance(value, dict):
+                children[key] = value
+                keys_to_remove.append(key)
+        
+        # Remove child items from the main dict
+        for key in keys_to_remove:
+            del item[key]
+        
+        return children
     
     def _key_to_title(self, key):
         """Convert a key to a title (replace underscores with spaces and title case)."""

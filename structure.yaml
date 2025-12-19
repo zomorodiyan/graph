@@ -1,169 +1,141 @@
-﻿metadata:
+metadata:
   description: Hierarchical structure of personal development data
   version: 2.0
   updated_at: '2025-11-04T14:00:00.000000'
 structure:
   mindBody:
-    children:
-      mood:
-        progress: 80
-        children: {}
-      rest:
-        progress: 90
-        children: {}
-      train:
-        progress: 0
-        children:
-          cardio: {}
-          flexibility: {}
-          strength: {}
-      nutrition:
-        children:
-          cook: {}
-          eat: {}
+    mood:
+      progress: 80
+    rest:
+      progress: 90
+    train:
+      progress: 0
+      cardio:
+      flexibility:
+      strength:
+    nutrition:
+      cook:
+      eat:
   finance:
-    children:
-      shop:
-        children:
-          groceries: {}
-          household: {}
-          dine_out: {}
-          outfit: {}
-          gift: {}
-      recur:
-        children:
-          budget:
-            progress: 30
-          stipend: {}
-          rent: {}
-          subscriptions: {}
-          installments: {}
+    shop:
+      groceries:
+      household:
+      dine_out:
+      outfit:
+      gift:
+    recur:
+      budget:
+        progress: 30
+      stipend:
+      rent:
+      subscriptions:
+      installments:
   interaction:
-    children:
-      community:
-        progress: 60
-        children:
-          Zhengtao: {}
-          Zixun: {}
-          Xavier: {}
-          Prokash: {}
-      friends:
-        progress: 60
-        children:
-          Ali: {}
-          Milad: {}
-          Matin: {}
-          Mohamad: {}
-      family:
-        children:
-          Alireza:
-            progress: 0
-          Soqra: {}
-          Hosein:
-            context: Parmis
-          Hojjat: {}
-          Hamid: {}
+    community:
+      progress: 60
+      Zhengtao:
+      Zixun:
+      Xavier:
+      Prokash:
+    friends:
+      progress: 60
+      Ali:
+      Milad:
+      Matin:
+      Mohamad:
+    family:
+      Alireza:
+        progress: 0
+      Soqra:
+      Hosein:
+        context: Parmis
+      Hojjat:
+      Hamid:
   level:
-    children:
-      study:
-        children:
-          asu_craft:
-            context: Meet Xavier & Zixun
-            children: {}
-          iiot:
-            context: Industrial IoT course
-            children:
-              termpaper:
-                context: Expanded Outline
-                due: 2025-12-07
-              fullpaper:
-                context: Full paper
-                due: 2025-12-08
-              lab5:
-                due: 2025-12-07
-              lab10:
-                due: 2025-12-07
-              lab14:
-                due: 2025-12-07
-      work:
-        children:
-          go_melt:
-            context: Update heat-source & outline publishing
-            progress: 40
-            children:
-              delay_effect:
-                context: Effect of delay on surface temperature readings
-                due: 2025-12-04
-              outline:
-                context: Draft outline for publication
-                due: 2025-12-10
-              inherent_strain:
-                context: Spare time
-          aps_data:
-            context: Process high-speed data for porosity
-            due: 2025-12-08
-            children:
-              read:
-                context: Read image processing article
-                due: 2025-12-08
-              code:
-                context: Implement image processing method
-                due: 2025-12-09
-          ray_tracing_visualization:
-            context: First ray-traced renders on Blackwell
-            progress: 0
-            children:
-              postprocess:
-                children:
-                  inspiration:
-                    due: 2025-12-06
-                  generation:
-                    due: 2025-12-09
-      goal:
-        children:
-          article:
-            context: Submit Adaptive heat source Manuscript
-            due: 2026-01-01
-          teamwork:
-            context: Implement Article Zixun
+    study:
+      asu_craft:
+        context: Meet Xavier & Zixun
+      iiot:
+        context: Industrial IoT course
+        termpaper:
+          context: Expanded Outline
+          due: 2025-12-07
+        fullpaper:
+          context: Full paper
+          due: 2025-12-08
+        lab5:
+          due: 2025-12-07
+        lab10:
+          due: 2025-12-07
+        lab14:
+          due: 2025-12-07
+    work:
+      go_melt:
+        context: Update heat-source & outline publishing
+        progress: 40
+        delay_effect:
+          context: Effect of delay on surface temperature readings
+          due: 2025-12-04
+        outline:
+          context: Draft outline for publication
+          due: 2025-12-10
+        inherent_strain:
+          context: Spare time
+      aps_data:
+        context: Process high-speed data for porosity
+        due: 2025-12-08
+        read:
+          context: Read image processing article
+          due: 2025-12-08
+        code:
+          context: Implement image processing method
+          due: 2025-12-09
+      ray_tracing_visualization:
+        context: First ray-traced renders on Blackwell
+        progress: 0
+        postprocess:
+          inspiration:
+            due: 2025-12-06
+          generation:
             due: 2025-12-09
-      habit:
-        children:
-          morning:
-            context: 7-9
-            progress: 40
-            children:
-              clean: {}
-              meal: {}
-              go_uni: {}
-              workout: {}
-              shower: {}
-              plan: {}
-          midday:
-            context: 13-14
-            progress: 50
-            children:
-              lunch: {}
-              rest: {}
-              socialize: {}
-          evening:
-            context: 18-20
-            progress: 65
-            children:
-              commuteHome: {}
-              cook: {}
-          night:
-            context: 23-24
-            children:
-              review: {}
-              read: {}
-              prepare:
-                context: clothes
-              sleep:
-                context: 00:00
+    goal:
+      article:
+        context: Submit Adaptive heat source Manuscript
+        due: 2026-01-01
+      teamwork:
+        context: Implement Article Zixun
+        due: 2025-12-09
+    habit:
+      morning:
+        context: 7-9
+        progress: 40
+        clean:
+        meal:
+        go_uni:
+        workout:
+        shower:
+        plan:
+      midday:
+        context: 13-14
+        progress: 50
+        lunch:
+        rest:
+        socialize:
+      evening:
+        context: 18-19
+        progress: 65
+        commuteHome:
+        cook:
+      night:
+        context: 23-24
+        review:
+        read:
+        prepare:
+          context: clothes
+        sleep:
+          context: 00:00
   time:
-    children:
-      over: {}
-      day: {}
-      week: {}
-      month: {}
+    over:
+    day:
+    week:
+    month:
