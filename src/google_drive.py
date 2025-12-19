@@ -118,7 +118,7 @@ def download_structure_yaml():
         return False
     
     # Get credentials
-    creds = authenticate()
+    creds = get_credentials()
     if not creds:
         print("⚠️  Authentication failed, using local structure.txt")
         return False
