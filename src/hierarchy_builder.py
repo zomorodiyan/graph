@@ -14,16 +14,31 @@ class HierarchyBuilder:
         self._structure_data = None
     
     def _load_yaml_structure(self):
-        """Load structure from YAML file."""
+        """Load structure from YAML file and auto-generate IDs."""
         if self._structure_data is None:
             try:
                 with open(self.yaml_file_path, 'r', encoding='utf-8') as f:
                     self._structure_data = yaml.safe_load(f)
+                # Auto-generate IDs based on hierarchical key paths
+                self._inject_ids(self._structure_data['structure'])
             except FileNotFoundError:
                 raise FileNotFoundError(f"Structure file not found: {self.yaml_file_path}")
             except yaml.YAMLError as e:
                 raise ValueError(f"Error parsing YAML file: {e}")
         return self._structure_data
+    
+    def _inject_ids(self, structure, parent_id=""):
+        """Recursively inject 'id' field based on key path."""
+        for key, item in structure.items():
+            # Generate ID from parent_id + key
+            if parent_id:
+                item['id'] = f"{parent_id}_{key}"
+            else:
+                item['id'] = key
+            
+            # Recursively process children
+            if 'children' in item and item['children']:
+                self._inject_ids(item['children'], item['id'])
     
     def get_breadcrumb_for_item(self, item_id):
         """Generate breadcrumb navigation for an item based on its ID (supports unlimited depth)."""

@@ -3,359 +3,257 @@
   description: Hierarchical structure of personal development data
   version: 2.0
   updated_at: '2025-11-04T14:00:00.000000'
-
-
 structure:
   mindBody:
     title: Mind & Body
-    id: mindBody
     children:
       mood:
         title: Mood
-        id: mindBody_mood
         progress: 80
         children: {}
       rest:
         title: Rest
-        id: mindBody_rest
         progress: 90
         children: {}
       train:
         title: Train
-        id: mindBody_train
         progress: 0
         children:
           cardio:
             title: Cardio
-            id: mindBody_train_cardio
           flexibility:
             title: Flexibility
-            id: mindBody_train_flexibility
           strength:
             title: Strength
-            id: mindBody_train_strength
       nutrition:
         title: Nutrition
-        id: mindBody_nutrition
         children:
           cook:
             title: Cook
-            id: mindBody_nutrition_cook
           eat:
             title: Eat
-            id: mindBody_nutrition_eat
-
-
   finance:
     title: Finance
-    id: finance
     children:
       shop:
         title: Shop
-        id: finance_shop
         children:
           groceries:
             title: Groceries
-            id: finance_shop_groceries
           household:
             title: Household
-            id: finance_shop_household
           dine_out:
             title: Dine Out
-            id: finance_shop_dine_out
           outfit:
             title: Outfit
-            id: finance_shop_outfit
           gift:
             title: Gift
-            id: finance_shop_gift
       recur:
         title: Recur
-        id: finance_recur
         children:
           budget:
             title: Budget
-            id: finance_recur_budget
             progress: 30
           stipend:
             title: Stipend
-            id: finance_recur_stipend
           rent:
             title: Rent
-            id: finance_recur_rent
           subscriptions:
             title: Subscriptions
-            id: finance_recur_subscriptions
           installments:
             title: Installments
-            id: finance_recur_installments
-
-
   interaction:
     title: Interaction
-    id: interaction
     children:
       community:
         title: Colleagues
-        id: interaction_colleagues
         progress: 60
         children:
           Zhengtao:
             title: Zhengtao
-            id: interaction_colleagues_zhengtao
           Zixun:
-            title: Zixun 
-            id: interaction_colleagues_zixun
+            title: Zixun
           Xavier:
             title: Xavier
-            id: interaction_colleagues_xavier
           Prokash:
             title: Prokash
-            id: interaction_colleagues_prokash
       friends:
         title: Friends
-        id: interaction_friends
         progress: 60
         children:
           Ali:
             title: Ali
-            id: interaction_friends_ali
           Milad:
             title: Milad
-            id: interaction_friends_milad
           Matin:
             title: Matin
-            id: interaction_friends_matin
           Mohamad:
             title: Mohamad
-            id: interaction_friends_mohamad
       family:
         title: Family
-        id: interaction_family
         children:
           Alireza:
             title: Alireza
-            id: interaction_family_alireza
             progress: 0
           Soqra:
             title: Soqra
-            id: interaction_family_soqra
           Hosein:
             title: Hosein
-            id: interaction_family_hosein
             context: Parmis
           Hojjat:
             title: Hojjat
-            id: interaction_family_hojjat
           Hamid:
             title: Hamid
-            id: interaction_family_hamid
-
-
   level:
     title: Level
-    id: level
     children:
       study:
         title: Study
-        id: level_study
         children:
           asu_craft:
             title: ASU Craft
-            id: level_study_asu_craft
             context: Meet Xavier & Zixun
             children: {}
           iiot:
             title: IIoT
-            id: level_study_iiot
             context: Industrial IoT course
             children:
               termpaper:
                 title: Term paper
-                id: level_study_iiot_termpaper
-                context: Expanded Outline 
+                context: Expanded Outline
                 due: 2025-12-07
               fullpaper:
                 title: Full paper
-                id: level_study_iiot_fullpaper
-                context: Full paper 
+                context: Full paper
                 due: 2025-12-08
               lab5:
                 title: Lab 5
-                id: level_study_iiot_lab5
                 due: 2025-12-07
               lab10:
                 title: Lab 10
-                id: level_study_iiot_lab10
                 due: 2025-12-07
               lab14:
                 title: Lab 14
-                id: level_study_iiot_lab14
                 due: 2025-12-07
       work:
         title: Work
-        id: level_work
         children:
           go_melt:
             title: GO-MELT
-            id: level_work_go_melt
             context: Update heat-source & outline publishing
             progress: 40
             children:
               delay_effect:
-                title: Delay effect 
-                id: level_work_go_melt_delay_effect
+                title: Delay effect
                 context: Effect of delay on surface temperature readings
                 due: 2025-12-04
               outline:
-                title: Outline 
-                id: level_work_go_melt_outline
-                context: Draft outline for publication 
+                title: Outline
+                context: Draft outline for publication
                 due: 2025-12-10
               inherent_strain:
                 title: InherentStrain
-                id: level_work_inherent_strain
                 context: Spare time
           aps_data:
             title: APS Data
-            id: level_work_aps_data
             context: Process high-speed data for porosity
             due: 2025-12-08
             children:
               read:
-                title: Read 
-                id: level_work_aps_data_read
-                context: Read image processing article 
+                title: Read
+                context: Read image processing article
                 due: 2025-12-08
               code:
                 title: Code
-                id: level_work_aps_data_code
-                context: Implement image processing method 
+                context: Implement image processing method
                 due: 2025-12-09
           ray_tracing_visualization:
             title: Ray-tracing visualization
-            id: level_work_ray_tracing_visualization
             context: First ray-traced renders on Blackwell
             progress: 0
             children:
               postprocess:
                 title: Postprocess
-                id: level_work_ray_tracing_postprocess
                 children:
                   inspiration:
                     title: Inspiration
-                    id: level_work_ray_tracing_postprocess_inspiration
                     due: 2025-12-06
                   generation:
                     title: Generation
-                    id: level_work_ray_tracing_postprocess_generation
                     due: 2025-12-09
       goal:
         title: Goal
-        id: level_goal
         children:
           article:
             title: Article
-            id: level_goal_article
-            context: Submit Adaptive heat source Manuscript 
+            context: Submit Adaptive heat source Manuscript
             due: 2026-01-01
           teamwork:
-            title: Teamwork 
-            id: level_goal_teamwork
-            context: Implement Article Zixun 
+            title: Teamwork
+            context: Implement Article Zixun
             due: 2025-12-09
       habit:
         title: Habit
-        id: level_habit
         children:
           morning:
             title: Morning
-            id: level_habit_morning
             context: 7-9
             progress: 40
             children:
               clean:
                 title: Clean
-                id: level_habit_morning_clean
               meal:
                 title: Meal
-                id: level_habit_morning_meal
               go_uni:
                 title: Go Uni
-                id: level_habit_morning_go_uni
               workout:
                 title: Workout
-                id: level_habit_morning_workout
               shower:
                 title: Shower
-                id: level_habit_morning_shower
               plan:
                 title: Plan
-                id: level_habit_morning_plan
           midday:
             title: Midday
-            id: level_habit_midday
             context: 13-14
             progress: 50
             children:
               lunch:
                 title: Lunch
-                id: level_habit_midday_lunch
               rest:
                 title: Rest
-                id: level_habit_midday_rest
               socialize:
                 title: Socialize
-                id: level_habit_midday_socialize
           evening:
             title: Evening
-            id: level_habit_evening
             context: 18-20
             progress: 65
             children:
               commuteHome:
                 title: CommuteHome
-                id: level_habit_evening_commuteHome
               cook:
                 title: Cook
-                id: level_habit_evening_cook
-              cook:
-                title: Cook
-                id: level_habit_evening_cook
           night:
             title: Night
-            id: level_habit_night
             context: 23-24
             children:
               review:
                 title: Review
-                id: level_habit_night_review
               read:
                 title: Read
-                id: level_habit_night_read
               prepare:
                 title: Prepare
-                id: level_habit_night_prepare
                 context: clothes
               sleep:
                 title: Sleep
-                id: level_habit_night_sleep
                 context: 00:00
-
-
   time:
     title: Time
-    id: time
     children:
       over:
         title: Over
-        id: time_over
       day:
         title: Day
-        id: time_day
       week:
         title: Week
-        id: time_week
       month:
         title: Month
-        id: time_month
