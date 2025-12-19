@@ -20,7 +20,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 TOKEN_PATH = PROJECT_ROOT / 'token.pickle'
 CREDENTIALS_PATH = PROJECT_ROOT / 'credentials.json'
 CONFIG_PATH = PROJECT_ROOT / 'config.yaml'
-STRUCTURE_PATH = PROJECT_ROOT / 'structure.yaml'
+STRUCTURE_PATH = PROJECT_ROOT / 'structure.txt'
 
 
 def get_credentials():
@@ -114,13 +114,13 @@ def download_structure_yaml():
     # Get file ID from config
     file_id = get_file_id_from_config()
     if not file_id:
-        print("⚠️  Using local structure.yaml")
+        print("⚠️  Using local structure.txt")
         return False
     
     # Get credentials
-    creds = get_credentials()
+    creds = authenticate()
     if not creds:
-        print("⚠️  Authentication failed, using local structure.yaml")
+        print("⚠️  Authentication failed, using local structure.txt")
         return False
     
     try:
@@ -161,17 +161,17 @@ def download_structure_yaml():
         
         print()  # New line after progress
         
-        # Write to structure.yaml
+        # Write to structure.txt
         with open(STRUCTURE_PATH, 'wb') as f:
             f.write(file_handle.getvalue())
         
-        print(f"✅ Successfully downloaded structure.yaml to {STRUCTURE_PATH}")
+        print(f"✅ Successfully downloaded structure.txt to {STRUCTURE_PATH}")
         return True
     
     except Exception as e:
         print(f"⚠️  Failed to download from Google Drive: {e}")
         if STRUCTURE_PATH.exists():
-            print(f"⚠️  Using local structure.yaml")
+            print(f"⚠️  Using local structure.txt")
         else:
             print(f"❌ No local structure.yaml found either!")
         return False

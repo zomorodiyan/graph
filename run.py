@@ -52,11 +52,11 @@ def start_server(port):
         print(f"Server error: {e}")
 
 def check_yaml_file():
-    """Check if the structure.yaml file exists"""
-    yaml_path = os.path.join(os.path.dirname(__file__), 'structure.yaml')
-    if not os.path.exists(yaml_path):
-        print("Error: structure.yaml file not found!")
-        print("Please ensure the structure.yaml file exists in the project root.")
+    """Check if the structure.txt file exists"""
+    structure_path = os.path.join(os.path.dirname(__file__), 'structure.txt')
+    if not os.path.exists(structure_path):
+        print("Error: structure.txt file not found!")
+        print("Please ensure the structure.txt file exists in the project root.")
         return False
     return True
 
@@ -89,10 +89,10 @@ def main():
         success = authenticate()
         sys.exit(0 if success else 1)
     
-    # Sync structure.yaml from Google Drive (falls back to local if it fails)
+    # Sync structure.txt from Google Drive (falls back to local if it fails)
     download_structure_yaml()
     
-    # Check if structure.yaml exists
+    # Check if structure.txt exists
     if not check_yaml_file():
         return
     python_cmd = get_python_command()
@@ -144,8 +144,8 @@ def main():
         print("  python run.py generate")
         print("  python run.py search:finance")
         print()
-        print("The structure is defined in structure.yaml")
-        print("On each run, structure.yaml is synced from Google Drive")
+        print("The structure is defined in structure.txt")
+        print("On each run, structure.txt is synced from Google Drive")
     
     elif command == "serve" or len(sys.argv) == 1:
         # Default: generate and serve
@@ -189,7 +189,7 @@ def main():
         # Keep main thread alive
         try:
             print("Server running... Press Ctrl+C to stop")
-            print("Edit structure.yaml to modify the knowledge graph")
+            print("Edit structure.txt to modify the knowledge graph")
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:

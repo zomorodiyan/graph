@@ -1,30 +1,30 @@
 """
-File utilities for the YAML-based graph application.
-Handles YAML operations and utility functions.
+File utilities for the structure-based graph application.
+Handles file operations and utility functions.
 """
 import os
-import yaml
+from simple_parser import SimpleParser
 
 
 class FileUtils:
     """Utility class for YAML operations and path handling."""
     
-    def __init__(self, yaml_file_path="../structure.yaml"):
-        self.yaml_file_path = yaml_file_path
+    def __init__(self, structure_file_path="../structure.txt"):
+        self.structure_file_path = structure_file_path
     
     def load_yaml_structure(self):
-        """Load structure from YAML file and auto-generate IDs based on key paths."""
+        """Load structure from file and auto-generate IDs based on key paths."""
         try:
-            with open(self.yaml_file_path, 'r', encoding='utf-8') as f:
-                data = yaml.safe_load(f)
+            data = SimpleParser.parse_file(self.structure_file_path)
             
             # Auto-generate IDs based on hierarchical key paths
-            self._inject_ids(data['structure'])
+            if 'structure' in data:
+                self._inject_ids(data['structure'])
             return data
         except FileNotFoundError:
-            raise FileNotFoundError(f"Structure file not found: {self.yaml_file_path}")
-        except yaml.YAMLError as e:
-            raise ValueError(f"Error parsing YAML file: {e}")
+            raise FileNotFoundError(f"Structure file not found: {self.structure_file_path}")
+        except Exception as e:
+            raise ValueError(f"Error parsing structure file: {e}")
     
     def _inject_ids(self, structure, parent_id=""):
         """Recursively inject 'id' and 'title' fields based on key path."""

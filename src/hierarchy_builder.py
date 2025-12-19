@@ -1,30 +1,30 @@
 """
-YAML-based hierarchy builder for the graph application.
-Handles building and managing hierarchy structure from a YAML configuration file.
+Hierarchy builder for the graph application.
+Handles building and managing hierarchy structure from a simple indented configuration file.
 """
-import yaml
+from simple_parser import SimpleParser
 from datetime import datetime, timedelta
 
 
 class HierarchyBuilder:
     """Builds and manages hierarchy structure from YAML configuration."""
     
-    def __init__(self, yaml_file_path="../structure.yaml"):
-        self.yaml_file_path = yaml_file_path
+    def __init__(self, structure_file_path="../structure.txt"):
+        self.structure_file_path = structure_file_path
         self._structure_data = None
     
     def _load_yaml_structure(self):
-        """Load structure from YAML file and auto-generate IDs."""
+        """Load structure from file and auto-generate IDs."""
         if self._structure_data is None:
             try:
-                with open(self.yaml_file_path, 'r', encoding='utf-8') as f:
-                    self._structure_data = yaml.safe_load(f)
+                self._structure_data = SimpleParser.parse_file(self.structure_file_path)
                 # Auto-generate IDs based on hierarchical key paths
-                self._inject_ids(self._structure_data['structure'])
+                if 'structure' in self._structure_data:
+                    self._inject_ids(self._structure_data['structure'])
             except FileNotFoundError:
-                raise FileNotFoundError(f"Structure file not found: {self.yaml_file_path}")
-            except yaml.YAMLError as e:
-                raise ValueError(f"Error parsing YAML file: {e}")
+                raise FileNotFoundError(f"Structure file not found: {self.structure_file_path}")
+            except Exception as e:
+                raise ValueError(f"Error parsing structure file: {e}")
         return self._structure_data
     
     def _inject_ids(self, structure, parent_id=""):
