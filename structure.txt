@@ -1,16 +1,13 @@
-﻿metadata
-  description: Hierarchical structure of personal development data
-  version: 2.0
-  updated_at: '2025-11-04T14:00:00.000000'
 structure
   mindBody
     mood
-      progress: 80
+      progress: 20
     rest
       progress: 90
     train
       progress: 0
       cardio
+        progress: 34
       flexibility
       strength
     nutrition
@@ -71,8 +68,8 @@ structure
           due: 2025-12-07
     work
       go_melt
-        context: Update heat-source & outline publishing
         progress: 40
+        context: Update heat-source & outline publishing
         delay_effect
           context: Effect of delay on surface temperature readings
           due: 2025-12-04
@@ -91,8 +88,8 @@ structure
           context: Implement image processing method
           due: 2025-12-09
       ray_tracing_visualization
-        context: First ray-traced renders on Blackwell
         progress: 0
+        context: First ray-traced renders on Blackwell
         postprocess
           inspiration
             due: 2025-12-06
@@ -107,8 +104,8 @@ structure
         due: 2025-12-09
     habit
       morning
-        context: 7-9
         progress: 40
+        context: 7-9
         clean
         meal
         go_uni
@@ -116,14 +113,14 @@ structure
         shower
         plan
       midday
-        context: 13-14
         progress: 50
+        context: 13-14
         lunch
         rest
         socialize
       evening
-        context: 18-19
         progress: 65
+        context: 18-19
         commuteHome
         cook
       night
