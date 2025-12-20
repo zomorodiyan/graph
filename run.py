@@ -183,6 +183,22 @@ def main():
         print(f"📡 API Server: http://localhost:{api_port}")
         print(f"📖 API Docs:   http://localhost:{api_port}/docs")
         print()
+        print("Generating HTML before starting API (ensures html/*.html exists)...")
+        try:
+            gen_result = subprocess.run(
+                [python_cmd, "graph.py"],
+                capture_output=True,
+                text=True,
+                cwd=src_dir,
+                encoding="utf-8",
+                errors="replace",
+            )
+            if gen_result.returncode != 0:
+                print(f"Error generating HTML: {gen_result.stderr}")
+            else:
+                print("HTML generated.")
+        except Exception as e:
+            print(f"Warning: could not generate HTML before API start: {e}")
         print("Next steps:")
         print("1. Open html/data.html in your browser")
         print("2. Long-press any item to edit (800ms hold)")

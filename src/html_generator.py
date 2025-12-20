@@ -148,9 +148,6 @@ class HTMLGenerator:
 <body>
     <div class="graph-container">
         {breadcrumb_html}
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <button onclick="regenerateCurrentPage()" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">Regenerate page</button>
-        </div>
         <div class="pending-actions" id="pendingActions">
             <div style="flex: 1;">
                 <div style="font-weight: bold; margin-bottom: 8px;">Pending changes:</div>
@@ -162,7 +159,7 @@ class HTMLGenerator:
             </div>
         </div>
         {self._build_content_sections(data, current_item_id)}
-        <div class="current-date">Updated: {current_date} <span onclick="regenerateCurrentPage()" style="cursor: pointer; margin-left: 10px; display: inline-block;" title="Regenerate page">🔄</span></div>
+        <div class="current-date">Updated: {current_date} <span onclick="regenerateCurrentPage()" class="refresh-icon" title="Regenerate page">↻</span></div>
     </div>
     <div id="notification" class="notification"></div>
     
@@ -604,6 +601,17 @@ class HTMLGenerator:
             font-size: 12px;
             color: #666;
             text-align: right;
+        }
+        .refresh-icon {
+            cursor: pointer;
+            margin-left: 10px;
+            display: inline-block;
+            font-size: 18px;
+            color: #000;
+            background: none;
+            border: none;
+            padding: 0;
+            line-height: 1;
         }
         .due-date {
             font-size: 10px;

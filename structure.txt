@@ -1,3 +1,7 @@
+metadata
+  description: Hierarchical structure of personal development data
+  version: 2.0
+  updated_at: '2025-11-04T14:00:00.000000'
 structure
   mindBody
     mood
@@ -9,6 +13,7 @@ structure
       cardio
       flexibility
       strength
+        progress: 30
     nutrition
       cook
       eat
@@ -24,6 +29,7 @@ structure
         progress: 31
       stipend
       rent
+        context: lots of $s
       subscriptions
       installments
   interaction
@@ -135,7 +141,3 @@ structure
     day
     week
     month
-  bol
-    bol
-      bol
-        context: bolbolbol
