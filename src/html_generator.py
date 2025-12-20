@@ -159,7 +159,7 @@ class HTMLGenerator:
             <h2 id="modalTitle">Edit Item</h2>
             <div class="form-group">
                 <label for="editName">Item Name:</label>
-                <input type="text" id="editName" placeholder="Item name (key)" disabled title="Renaming not yet supported">
+                <input type="text" id="editName" placeholder="Item name (key)">
             </div>
             <div class="form-group">
                 <label for="editProgress">Progress (0-100):</label>
@@ -715,6 +715,7 @@ class HTMLGenerator:
         async function saveEdit() {
             const modal = document.getElementById('editModal');
             const itemPath = modal.getAttribute('data-editing-path');
+            const name = document.getElementById('editName').value;
             const progress = document.getElementById('editProgress').value;
             const context = document.getElementById('editContext').value;
             const due = document.getElementById('editDue').value;
@@ -726,6 +727,7 @@ class HTMLGenerator:
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
+                        name: name || null,
                         progress: progress ? parseInt(progress) : null,
                         context: context || null,
                         due: due || null

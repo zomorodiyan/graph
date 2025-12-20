@@ -36,6 +36,7 @@ html_generator = HTMLGenerator()
 
 class ItemUpdate(BaseModel):
     """Model for updating an item."""
+    name: Optional[str] = Field(None, description="Item name/key")
     progress: Optional[int] = Field(None, ge=0, le=100, description="Progress percentage (0-100)")
     context: Optional[str] = Field(None, description="Context/description text")
     due: Optional[str] = Field(None, description="Due date in YYYY-MM-DD format or empty to remove")
@@ -202,6 +203,16 @@ async def update_item(path: str, update: ItemUpdate):
             item_value = {}
             parent[item_key] = item_value
             print(f"DEBUG: Converted item_value to dict")
+        
+        # Handle renaming first (restructure parent if needed)
+        if update.name is not None and update.name != item_key:
+            new_name = update.name.lower().replace(' ', '_')
+            if new_name in parent and new_name != item_key:
+                raise HTTPException(status_code=400, detail=f"Item '{new_name}' already exists at this level")
+            # Rename the item by moving its value to new key
+            parent[new_name] = item_value
+            del parent[item_key]
+            print(f"DEBUG: Renamed item from '{item_key}' to '{new_name}'")
         
         # Update only provided fields
         if update.progress is not None:
