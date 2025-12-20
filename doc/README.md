@@ -30,6 +30,12 @@ python run.py
 # 3. Open your browser to the main visualization
 ```
 
+## Configuration
+
+1. Copy config.example.yaml to config.yaml and set your Google Drive file ID (the value between `/d/` and `/view` in the file URL).
+2. Copy credentials.example.json to credentials.json and paste your own OAuth client values from Google Cloud (client_id, client_secret, project_id, redirect_uris).
+3. Run the normal commands once the two real files exist. The actual config and credentials stay git-ignored for safety.
+
 ## Available Commands
 
 ```bash
