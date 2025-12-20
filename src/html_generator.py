@@ -148,6 +148,10 @@ class HTMLGenerator:
 <body>
     <div class="graph-container">
         {breadcrumb_html}
+        <div class="pending-actions" id="pendingActions">
+            <button id="confirmChangesBtn" class="btn-primary" onclick="confirmQueuedChanges()">Confirm changes</button>
+            <button id="cancelChangesBtn" class="btn-secondary" onclick="cancelQueuedChanges()">Cancel changes</button>
+        </div>
         {self._build_content_sections(data, current_item_id)}
         <div class="current-date">Updated: {current_date}</div>
     </div>
@@ -471,7 +475,7 @@ class HTMLGenerator:
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0,0,0,0.1);
             align-items: center;
             justify-content: center;
         }
@@ -545,6 +549,24 @@ class HTMLGenerator:
         }
         .btn-danger:hover {
             background-color: #c62828;
+        }
+        /* Pending actions toolbar */
+        .pending-actions {
+            margin: 10px 0 15px 0;
+            display: none; /* shown when there are queued changes */
+            gap: 8px;
+        }
+        /* Soft-delete styling */
+        .deleted {
+            color: #c62828;
+            text-decoration: line-through;
+            opacity: 0.9;
+        }
+        /* Pending add styling */
+        .pending-add::after {
+            content: " *";
+            color: #ef6c00;
+            font-weight: bold;
         }
         .breadcrumb {
             margin-bottom: 20px;
@@ -638,6 +660,17 @@ class HTMLGenerator:
     def _get_javascript_functions(self):
         """Get JavaScript functions for the HTML page."""
         return """
+        // Queues for pending changes in current session
+        const pendingAdds = []; // { parentPath, payload: {name, progress, context, due} }
+        const pendingDeletes = new Set(); // itemPath strings
+
+        function updatePendingActionsVisibility() {
+            const hasChanges = pendingAdds.length > 0 || pendingDeletes.size > 0;
+            const bar = document.getElementById('pendingActions');
+            if (bar) {
+                bar.style.display = hasChanges ? 'flex' : 'none';
+            }
+        }
         let longPressTimer;
         let longPressTarget;
         const LONG_PRESS_DURATION = 800; // milliseconds
@@ -763,18 +796,34 @@ class HTMLGenerator:
             try {
                 let response;
                 if (mode === 'create') {
+                    // Queue add instead of persisting immediately
                     if (!name) {
                         showNotification('Name is required to create an item', true);
                         return;
                     }
-                    const targetParent = parentPath || 'root';
-                    response = await fetch(`http://localhost:8000/api/items/${targetParent}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(payload)
-                    });
+                    pendingAdds.push({ parentPath: parentPath || 'root', payload });
+                    // Add a temporary visual item under the parent if possible
+                    try {
+                        let parentEl = parentPath ? document.querySelector(`[data-item-path="${parentPath}"]`) : null;
+                        const temp = document.createElement('div');
+                        temp.className = 'layer3 pending-add';
+                        temp.textContent = name;
+                        if (parentEl) {
+                            const section = parentEl.closest('.section, .layer2-container');
+                            let targetList = section ? section.querySelector('.layer3-container') : null;
+                            if (!targetList && section) targetList = section.querySelector('.layer2-section');
+                            if (targetList) targetList.appendChild(temp);
+                            else document.querySelector('.graph-container').appendChild(temp);
+                        } else {
+                            document.querySelector('.graph-container').appendChild(temp);
+                        }
+                    } catch (e) {
+                        console.warn('Could not render pending add:', e);
+                    }
+                    updatePendingActionsVisibility();
+                    closeEditModal();
+                    showNotification('Queued new item. Confirm to save, or Cancel to revert.');
+                    return;
                 } else {
                     response = await fetch(`http://localhost:8000/api/items/${itemPath}`, {
                         method: 'PUT',
@@ -804,38 +853,32 @@ class HTMLGenerator:
             }
         }
         
-        async function deleteItem() {
-            const modal = document.getElementById('editModal');
-            const itemPath = modal.getAttribute('data-editing-path');
-            const hasChildren = modal.getAttribute('data-has-children') === 'true';
+        function queueDelete(itemPath) {
             if (!itemPath) {
                 showNotification('Nothing to delete', true);
                 return;
             }
+            pendingDeletes.add(itemPath);
+            const allItems = document.querySelectorAll('[data-item-path]');
+            allItems.forEach(el => {
+                const p = el.getAttribute('data-item-path') || '';
+                if (p === itemPath || p.startsWith(itemPath + '.')) {
+                    el.classList.add('deleted');
+                }
+            });
+            updatePendingActionsVisibility();
+            showNotification('Queued delete. Confirm to apply, or Cancel to revert.');
+        }
 
-            const message = hasChildren
-                ? 'This item has subitems. Delete it and all its subitems?'
-                : 'Delete this item?';
-            if (!confirm(message)) {
+        async function deleteItem() {
+            const modal = document.getElementById('editModal');
+            const itemPath = modal.getAttribute('data-editing-path');
+            if (!itemPath) {
+                showNotification('Nothing to delete', true);
                 return;
             }
-
-            try {
-                const response = await fetch(`http://localhost:8000/api/items/${itemPath}`, {
-                    method: 'DELETE'
-                });
-                if (!response.ok) {
-                    throw new Error('Failed to delete');
-                }
-
-                closeEditModal();
-                showNotification('Deleted successfully! Reloading...');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 800);
-            } catch (error) {
-                showNotification('Error deleting: ' + error.message, true);
-            }
+            queueDelete(itemPath);
+            closeEditModal();
         }
         
         // Close modal when clicking outside
@@ -869,6 +912,46 @@ class HTMLGenerator:
         function loadGraph(filePath) {
             // Navigate to breadcrumb target
             window.location.href = filePath;
+        }
+        
+        async function confirmQueuedChanges() {
+            try {
+                for (const itemPath of pendingDeletes) {
+                    const res = await fetch(`http://localhost:8000/api/items/${itemPath}`, { method: 'DELETE' });
+                    if (!res.ok) {
+                        const t = await res.text();
+                        throw new Error(`Failed to delete ${itemPath}: ${res.status} ${t}`);
+                    }
+                }
+                for (const add of pendingAdds) {
+                    const url = `http://localhost:8000/api/items/${add.parentPath}`;
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(add.payload)
+                    });
+                    if (!res.ok) {
+                        const t = await res.text();
+                        throw new Error(`Failed to add under ${add.parentPath}: ${res.status} ${t}`);
+                    }
+                }
+                pendingDeletes.clear();
+                pendingAdds.splice(0, pendingAdds.length);
+                updatePendingActionsVisibility();
+                showNotification('Changes saved. Reloading...');
+                setTimeout(() => { window.location.reload(); }, 800);
+            } catch (err) {
+                showNotification('Error confirming changes: ' + err.message, true);
+            }
+        }
+        
+        function cancelQueuedChanges() {
+            document.querySelectorAll('.deleted').forEach(el => el.classList.remove('deleted'));
+            document.querySelectorAll('.pending-add').forEach(el => el.remove());
+            pendingDeletes.clear();
+            pendingAdds.splice(0, pendingAdds.length);
+            updatePendingActionsVisibility();
+            showNotification('Reverted pending changes.');
         }
         """
     
