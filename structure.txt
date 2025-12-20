@@ -1,13 +1,12 @@
 structure
   mindBody
     mood
-      progress: 20
+      progress: 80
     rest
       progress: 90
     train
       progress: 0
       cardio
-        progress: 34
       flexibility
       strength
     nutrition
@@ -136,3 +135,7 @@ structure
     day
     week
     month
+  bol
+    bol
+      bol
+        context: bolbolbol

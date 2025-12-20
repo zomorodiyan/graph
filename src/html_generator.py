@@ -148,7 +148,7 @@ class HTMLGenerator:
 <body>
     <div class="graph-container">
         {breadcrumb_html}
-        {self._build_content_sections(data)}
+        {self._build_content_sections(data, current_item_id)}
         <div class="current-date">Updated: {current_date}</div>
     </div>
     <div id="notification" class="notification"></div>
@@ -176,6 +176,7 @@ class HTMLGenerator:
             <div class="modal-buttons">
                 <button onclick="saveEdit()" class="btn-primary">Save</button>
                 <button onclick="closeEditModal()" class="btn-secondary">Cancel</button>
+                <button onclick="deleteItem()" id="deleteButton" class="btn-danger" style="display:none;">Delete</button>
             </div>
         </div>
     </div>
@@ -538,6 +539,13 @@ class HTMLGenerator:
         .btn-secondary:hover {
             background-color: #e0e0e0;
         }
+        .btn-danger {
+            background-color: #e53935;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c62828;
+        }
         .breadcrumb {
             margin-bottom: 20px;
             padding: 10px;
@@ -636,7 +644,7 @@ class HTMLGenerator:
         
         // Long press handling for edit
         document.addEventListener('mousedown', function(e) {
-            const itemElement = e.target.closest('[data-item-path]');
+            const itemElement = e.target.closest('[data-item-path], [data-new-item]');
             if (itemElement) {
                 longPressTarget = itemElement;
                 longPressTimer = setTimeout(() => {
@@ -661,7 +669,7 @@ class HTMLGenerator:
         
         // Touch support for mobile
         document.addEventListener('touchstart', function(e) {
-            const itemElement = e.target.closest('[data-item-path]');
+            const itemElement = e.target.closest('[data-item-path], [data-new-item]');
             if (itemElement) {
                 longPressTarget = itemElement;
                 longPressTimer = setTimeout(() => {
@@ -685,27 +693,50 @@ class HTMLGenerator:
         });
         
         function openEditModal(element) {
-            const itemPath = element.getAttribute('data-item-path');
-            const itemName = element.getAttribute('data-item-name');
-            const currentProgress = element.getAttribute('data-progress') || '';
-            const currentContext = element.getAttribute('data-context') || '';
-            const currentDue = element.getAttribute('data-due') || '';
-            
+            const isNew = element.hasAttribute('data-new-item');
             const modal = document.getElementById('editModal');
             const modalTitle = document.getElementById('modalTitle');
             const nameInput = document.getElementById('editName');
             const progressInput = document.getElementById('editProgress');
             const contextInput = document.getElementById('editContext');
             const dueInput = document.getElementById('editDue');
+            const deleteBtn = document.getElementById('deleteButton');
             
-            modalTitle.textContent = 'Edit: ' + itemName;
-            nameInput.value = itemName;
-            progressInput.value = currentProgress;
-            contextInput.value = currentContext;
-            dueInput.value = currentDue;
+            if (isNew) {
+                const parentPath = element.getAttribute('data-parent-path') || '';
+                const parentName = element.getAttribute('data-parent-name') || 'this parent';
+                modalTitle.textContent = 'Add new item under ' + parentName.replaceAll('_', ' ');
+                nameInput.value = '';
+                progressInput.value = '';
+                contextInput.value = '';
+                dueInput.value = '';
+                modal.removeAttribute('data-editing-path');
+                modal.setAttribute('data-parent-path', parentPath);
+                modal.setAttribute('data-mode', 'create');
+                modal.setAttribute('data-has-children', 'false');
+                if (deleteBtn) deleteBtn.style.display = 'none';
+            } else {
+                const itemPath = element.getAttribute('data-item-path');
+                const itemName = element.getAttribute('data-item-name');
+                const currentProgress = element.getAttribute('data-progress') || '';
+                const currentContext = element.getAttribute('data-context') || '';
+                const currentDue = element.getAttribute('data-due') || '';
+                const hasChildren = element.getAttribute('data-has-children') === 'true';
+                
+                modalTitle.textContent = 'Edit: ' + itemName;
+                nameInput.value = itemName;
+                progressInput.value = currentProgress;
+                contextInput.value = currentContext;
+                dueInput.value = currentDue;
+                
+                modal.setAttribute('data-editing-path', itemPath);
+                modal.removeAttribute('data-parent-path');
+                modal.setAttribute('data-mode', 'edit');
+                modal.setAttribute('data-has-children', hasChildren ? 'true' : 'false');
+                if (deleteBtn) deleteBtn.style.display = 'inline-block';
+            }
             
             modal.style.display = 'flex';
-            modal.setAttribute('data-editing-path', itemPath);
         }
         
         function closeEditModal() {
@@ -714,28 +745,49 @@ class HTMLGenerator:
         
         async function saveEdit() {
             const modal = document.getElementById('editModal');
+            const mode = modal.getAttribute('data-mode') || 'edit';
             const itemPath = modal.getAttribute('data-editing-path');
+            const parentPath = modal.getAttribute('data-parent-path');
             const name = document.getElementById('editName').value;
             const progress = document.getElementById('editProgress').value;
             const context = document.getElementById('editContext').value;
             const due = document.getElementById('editDue').value;
             
+            const payload = {
+                name: name || null,
+                progress: progress ? parseInt(progress) : null,
+                context: context || null,
+                due: due || null
+            };
+            
             try {
-                const response = await fetch(`http://localhost:8000/api/items/${itemPath}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: name || null,
-                        progress: progress ? parseInt(progress) : null,
-                        context: context || null,
-                        due: due || null
-                    })
-                });
+                let response;
+                if (mode === 'create') {
+                    if (!name) {
+                        showNotification('Name is required to create an item', true);
+                        return;
+                    }
+                    const targetParent = parentPath || 'root';
+                    response = await fetch(`http://localhost:8000/api/items/${targetParent}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    response = await fetch(`http://localhost:8000/api/items/${itemPath}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                }
                 
                 if (!response.ok) {
-                    throw new Error('Failed to save');
+                    const responseText = await response.text();
+                    throw new Error(`Failed to save: ${response.status} - ${responseText}`);
                 }
                 
                 closeEditModal();
@@ -748,6 +800,41 @@ class HTMLGenerator:
                 
             } catch (error) {
                 showNotification('Error saving: ' + error.message, true);
+                console.error('Save error:', error);
+            }
+        }
+        
+        async function deleteItem() {
+            const modal = document.getElementById('editModal');
+            const itemPath = modal.getAttribute('data-editing-path');
+            const hasChildren = modal.getAttribute('data-has-children') === 'true';
+            if (!itemPath) {
+                showNotification('Nothing to delete', true);
+                return;
+            }
+
+            const message = hasChildren
+                ? 'This item has subitems. Delete it and all its subitems?'
+                : 'Delete this item?';
+            if (!confirm(message)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8000/api/items/${itemPath}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to delete');
+                }
+
+                closeEditModal();
+                showNotification('Deleted successfully! Reloading...');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 800);
+            } catch (error) {
+                showNotification('Error deleting: ' + error.message, true);
             }
         }
         
@@ -785,7 +872,7 @@ class HTMLGenerator:
         }
         """
     
-    def _build_content_sections(self, data):
+    def _build_content_sections(self, data, current_item_id):
         """Build the main content sections of the HTML."""
         content = ""
         
@@ -800,6 +887,17 @@ class HTMLGenerator:
         for idx, item in enumerate(data):
             color_name = base_colors[idx % 4][0]  # Only get the color name
             content += self._build_layer1_section(item, color_name)
+
+        # Add a grayed-out "New item" placeholder after all level 1 items
+        parent_path = current_item_id.replace('_', '.') if current_item_id else ""
+        content += f"""
+        <div class=\"section\">
+            <div class=\"layer1-container\">
+                <div class=\"layer1 new-item placeholder\" data-new-item=\"true\" data-parent-path=\"{parent_path}\" data-parent-name=\"{current_item_id}\">New item</div>
+                <div class=\"underline\" style=\"background-color:#e0e0e0;\"></div>
+                <div class=\"context layer1-context new-item-hint\">Long-press to add</div>
+            </div>
+        </div>"""
 
         return content
     
@@ -831,7 +929,7 @@ class HTMLGenerator:
         
         # Data attributes for editing
         layer1_data_path = layer1_id.replace('_', '.') if layer1_id else ""
-        layer1_data_attrs = f'data-item-path="{layer1_data_path}" data-item-name="{layer1_name}"'
+        layer1_data_attrs = f'data-item-path="{layer1_data_path}" data-item-name="{layer1_name}" data-has-children="{str(bool(layer1_has_children)).lower()}"'
         if layer1_progress is not None:
             layer1_data_attrs += f' data-progress="{layer1_progress}"'
         if layer1_context:
@@ -852,6 +950,18 @@ class HTMLGenerator:
 
         for layer2_item in item.get("layer2", []):
             content += self._build_layer2_section(layer2_item, color_name)
+
+        # Add "New subitem" placeholder for leaf level1 items (items with no children)
+        if not layer1_has_children:
+            layer1_path_for_placeholder = layer1_data_path.replace('.', '_') if layer1_data_path else ""
+            content += f"""
+            <div class="layer2-container">
+                <div class="layer2-content">
+                    <div class="layer2 new-item placeholder" data-new-item="true" data-parent-path="{layer1_data_path}" data-parent-name="{layer1_name}">New subitem</div>
+                    <div class="underline" style="background-color:#e0e0e0;"></div>
+                    <div class="context layer2-context new-item-hint">Long-press to add</div>
+                </div>
+            </div>"""
 
         content += """
             </div>
@@ -893,7 +1003,7 @@ class HTMLGenerator:
         
         # Data attributes for editing
         layer2_data_path = layer2_id.replace('_', '.') if layer2_id else ""
-        layer2_data_attrs = f'data-item-path="{layer2_data_path}" data-item-name="{layer2_name}"'
+        layer2_data_attrs = f'data-item-path="{layer2_data_path}" data-item-name="{layer2_name}" data-has-children="{str(not layer2_is_leaf).lower()}"'
         if layer2_progress is not None:
             layer2_data_attrs += f' data-progress="{layer2_progress}"'
         if layer2_context:
@@ -944,7 +1054,7 @@ class HTMLGenerator:
             
             # Data attributes for editing
             layer3_data_path = layer3_id.replace('_', '.') if layer3_id else ""
-            layer3_data_attrs = f'data-item-path="{layer3_data_path}" data-item-name="{layer3_name}"'
+            layer3_data_attrs = f'data-item-path="{layer3_data_path}" data-item-name="{layer3_name}" data-has-children="{str(not layer3_is_leaf).lower()}"'
             if layer3_progress is not None:
                 layer3_data_attrs += f' data-progress="{layer3_progress}"'
             if layer3_context:

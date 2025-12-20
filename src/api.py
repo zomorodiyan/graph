@@ -272,14 +272,25 @@ async def create_item(parent_path: str, item: ItemCreate):
     """Create a new item under a parent."""
     try:
         data = file_utils.load_yaml_structure()
-        keys = path_to_keys(parent_path)
-        
-        parent, parent_key, parent_value = find_item(data['structure'], keys)
-        
-        if parent is None:
-            raise HTTPException(status_code=404, detail=f"Parent not found: {parent_path}")
-        
-        # Create new item
+        keys = path_to_keys(parent_path) if parent_path not in ("", "root", "data") else []
+
+        # Locate parent container
+        if not keys:
+            parent_children = data.get('structure', {})
+        else:
+            parent, parent_key, parent_value = find_item(data['structure'], keys)
+            if parent is None:
+                raise HTTPException(status_code=404, detail=f"Parent not found: {parent_path}")
+            if not isinstance(parent_value, dict):
+                raise HTTPException(status_code=400, detail=f"Parent is not a container: {parent_path}")
+            parent_children = parent_value.setdefault('children', {})
+
+        # Normalize name and enforce uniqueness
+        new_name = item.name.lower().replace(' ', '_')
+        if new_name in parent_children:
+            raise HTTPException(status_code=400, detail=f"Item '{new_name}' already exists under this parent")
+
+        # Build new item payload
         new_item = {}
         if item.progress is not None:
             new_item['progress'] = item.progress
@@ -288,15 +299,16 @@ async def create_item(parent_path: str, item: ItemCreate):
         if item.due:
             new_item['due'] = item.due
         
-        # Add to parent
-        parent_value[item.name] = new_item
+        # Add to parent children
+        parent_children[new_name] = new_item
         
-        # Save the updated structure
-        file_utils.save_structure(data)
+        # Clean and save structure
+        data_to_save = _clean_structure_for_save(data)
+        file_utils.save_structure(data_to_save)
         
-        # Trigger regeneration
-        new_path = f"{parent_path}.{item.name}"
-        affected_paths = get_affected_paths(parent_path)
+        # Trigger regeneration for new path
+        new_path = new_name if not parent_path or parent_path in ("root", "data") else f"{parent_path}.{new_name}"
+        affected_paths = get_affected_paths(new_path)
         regenerate_html(affected_paths)
         
         return {
@@ -312,8 +324,10 @@ async def create_item(parent_path: str, item: ItemCreate):
 async def delete_item(path: str):
     """Delete an item."""
     try:
+        print(f"DEBUG: Deleting item at path: {path}")
         data = file_utils.load_yaml_structure()
         keys = path_to_keys(path)
+        print(f"DEBUG: Path keys: {keys}")
         
         parent, item_key, item_value = find_item(data['structure'], keys)
         
@@ -322,20 +336,29 @@ async def delete_item(path: str):
         
         # Delete the item
         del parent[item_key]
+        print(f"DEBUG: Deleted item '{item_key}'")
         
-        # Save the updated structure
-        file_utils.save_structure(data)
+        # Clean and save the updated structure
+        data_to_save = _clean_structure_for_save(data)
+        file_utils.save_structure(data_to_save)
+        print(f"DEBUG: Structure saved after deletion")
         
-        # Trigger regeneration
-        parent_path = '.'.join(keys[:-1])
-        affected_paths = get_affected_paths(parent_path if parent_path else 'root')
+        # Trigger regeneration - regenerate parent and all ancestors
+        parent_path = '.'.join(keys[:-1]) if len(keys) > 1 else 'root'
+        print(f"DEBUG: Parent path for regeneration: {parent_path}")
+        affected_paths = get_affected_paths(parent_path)
+        print(f"DEBUG: Affected paths: {affected_paths}")
         regenerate_html(affected_paths)
+        print(f"DEBUG: Regeneration complete")
         
         return {
             "success": True,
             "deleted": path
         }
     except Exception as e:
+        print(f"ERROR in delete_item: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
