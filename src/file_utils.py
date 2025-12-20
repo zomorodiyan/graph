@@ -73,6 +73,111 @@ class FileUtils:
         """Convert a key to a title (replace underscores with spaces and title case)."""
         return key.replace('_', ' ').title()
     
+    def save_structure(self, data):
+        """
+        Save structure to file with validation and backup.
+        Uses atomic write (temp file + rename) for safety.
+        """
+        import shutil
+        import tempfile
+        from datetime import datetime
+        
+        # Validate data
+        self._validate_structure(data.get('structure', {}))
+        
+        # Create backups directory
+        backup_dir = os.path.join(os.path.dirname(self.structure_file_path), '..', 'backups')
+        os.makedirs(backup_dir, exist_ok=True)
+        
+        # Create backup of current file
+        if os.path.exists(self.structure_file_path):
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_path = os.path.join(backup_dir, f'structure_backup_{timestamp}.txt')
+            shutil.copy2(self.structure_file_path, backup_path)
+        
+        # Write to temporary file first
+        temp_fd, temp_path = tempfile.mkstemp(suffix='.txt', text=True)
+        try:
+            with os.fdopen(temp_fd, 'w', encoding='utf-8') as f:
+                self._write_structure(f, data)
+            
+            # Atomic rename
+            shutil.move(temp_path, self.structure_file_path)
+        except Exception as e:
+            # Clean up temp file on error
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+            raise ValueError(f"Failed to save structure: {e}")
+    
+    def _validate_structure(self, structure, path=""):
+        """Validate structure data recursively."""
+        for key, value in structure.items():
+            current_path = f"{path}.{key}" if path else key
+            
+            if value is None:
+                continue
+            
+            if not isinstance(value, dict):
+                raise ValueError(f"Invalid item at {current_path}: must be a dict")
+            
+            # Validate progress
+            if 'progress' in value:
+                progress = value['progress']
+                if not isinstance(progress, int) or not (0 <= progress <= 100):
+                    raise ValueError(f"Invalid progress at {current_path}: must be integer 0-100")
+            
+            # Validate due date format
+            if 'due' in value:
+                import re
+                due = value['due']
+                if not isinstance(due, str) or not re.match(r'^\d{4}-\d{2}-\d{2}$', due):
+                    raise ValueError(f"Invalid due date at {current_path}: must be YYYY-MM-DD format")
+            
+            # Recurse into children
+            for child_key, child_value in value.items():
+                if child_key not in {'progress', 'context', 'due', 'id', 'title', 'children'}:
+                    if isinstance(child_value, dict):
+                        self._validate_structure({child_key: child_value}, current_path)
+    
+    def _write_structure(self, file, data):
+        """Write structure to file in simple indented format."""
+        # Write metadata section
+        if 'metadata' in data:
+            metadata = data['metadata']
+            file.write('metadata\n')
+            for key, value in metadata.items():
+                if key == 'title':
+                    continue  # Skip title, it's auto-generated
+                file.write(f'  {key}: {value}\n')
+        
+        # Write structure section
+        if 'structure' in data:
+            file.write('structure\n')
+            self._write_items(file, data['structure'], indent=1)
+    
+    def _write_items(self, file, items, indent=0):
+        """Recursively write items in indented format."""
+        indent_str = '  ' * indent
+        
+        for key, value in items.items():
+            if value is None or (isinstance(value, dict) and not value):
+                # Empty item
+                file.write(f'{indent_str}{key}\n')
+            elif isinstance(value, dict):
+                # Item with properties or children
+                file.write(f'{indent_str}{key}\n')
+                
+                # Write properties first
+                for prop in ['progress', 'context', 'due']:
+                    if prop in value:
+                        prop_value = value[prop]
+                        file.write(f'{indent_str}  {prop}: {prop_value}\n')
+                
+                # Write child items
+                for child_key, child_value in value.items():
+                    if child_key not in {'progress', 'context', 'due', 'id', 'title', 'children'}:
+                        self._write_items(file, {child_key: child_value}, indent + 1)
+    
     def get_all_items(self):
         """Get all items in the structure (supports unlimited depth)."""
         structure = self.load_yaml_structure()

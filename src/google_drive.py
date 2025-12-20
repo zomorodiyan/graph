@@ -13,7 +13,8 @@ from googleapiclient.http import MediaIoBaseDownload
 import io
 
 # If modifying these scopes, delete the file token.pickle
-SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+# Changed to drive.file scope to enable both read and write operations
+SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -209,4 +210,107 @@ def authenticate():
         print()
         print("❌ Authentication failed")
         print("   Please check that credentials.json exists and is valid")
+        return False
+
+
+def upload_structure_yaml():
+    """
+    Uploads local structure.txt to Google Drive, overwriting the existing file.
+    Uses last-write-wins conflict resolution: compares modification times and keeps
+    the most recently modified version.
+    
+    Returns:
+        bool: True if upload succeeded, False otherwise
+    """
+    import os
+    from datetime import datetime
+    from googleapiclient.http import MediaFileUpload
+    
+    print("📤 Uploading structure.txt to Google Drive...")
+    
+    # Check local file exists
+    if not STRUCTURE_PATH.exists():
+        print(f"❌ Error: structure.txt not found at {STRUCTURE_PATH}")
+        return False
+    
+    # Get file ID from config
+    file_id = get_file_id_from_config()
+    if not file_id:
+        print("⚠️  Cannot upload: file_id not configured")
+        return False
+    
+    # Get credentials
+    creds = get_credentials()
+    if not creds:
+        print("⚠️  Authentication failed, cannot upload")
+        return False
+    
+    try:
+        service = build('drive', 'v3', credentials=creds)
+        
+        # Get remote file metadata
+        remote_file = service.files().get(
+            fileId=file_id,
+            fields='name, mimeType, modifiedTime'
+        ).execute()
+        
+        print(f"✓ Found remote file: {remote_file['name']}")
+        
+        # Compare modification times (last-write-wins)
+        local_mtime = os.path.getmtime(STRUCTURE_PATH)
+        local_datetime = datetime.utcfromtimestamp(local_mtime).isoformat() + 'Z'
+        remote_mtime_str = remote_file.get('modifiedTime', '')
+        
+        print(f"  Local modified:  {local_datetime}")
+        print(f"  Remote modified: {remote_mtime_str}")
+        
+        # Parse ISO format dates for comparison
+        from datetime import datetime
+        try:
+            local_dt = datetime.fromisoformat(local_datetime.replace('Z', '+00:00'))
+            remote_dt = datetime.fromisoformat(remote_mtime_str.replace('Z', '+00:00'))
+            
+            if remote_dt > local_dt:
+                print("⚠️  Remote file is newer - skipping upload to avoid data loss")
+                print("    Consider downloading first with: python run.py download")
+                return False
+        except:
+            pass  # If date parsing fails, proceed with upload
+        
+        # Determine MIME type based on remote file
+        mime_type = remote_file.get('mimeType', 'text/plain')
+        if 'document' in mime_type.lower():
+            mime_type = 'text/plain'  # Google Docs export as text/plain
+        
+        # Upload file
+        media = MediaFileUpload(
+            STRUCTURE_PATH,
+            mimetype=mime_type,
+            resumable=True
+        )
+        
+        file_metadata = {'name': remote_file['name']}
+        
+        request = service.files().update(
+            fileId=file_id,
+            body=file_metadata,
+            media_body=media,
+            fields='id, modifiedTime'
+        )
+        
+        response = None
+        while response is None:
+            status, response = request.next_chunk()
+            if status:
+                progress = int(status.progress() * 100)
+                print(f"  Upload progress: {progress}%", end='\r')
+        
+        print()  # New line after progress
+        print(f"✅ Successfully uploaded structure.txt")
+        print(f"   File ID: {response['id']}")
+        print(f"   Modified: {response['modifiedTime']}")
+        return True
+    
+    except Exception as e:
+        print(f"❌ Upload failed: {e}")
         return False

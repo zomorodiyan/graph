@@ -152,6 +152,34 @@ class HTMLGenerator:
         <div class="current-date">Updated: {current_date}</div>
     </div>
     <div id="notification" class="notification"></div>
+    
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Edit Item</h2>
+            <div class="form-group">
+                <label for="editName">Item Name:</label>
+                <input type="text" id="editName" placeholder="Item name (key)" disabled title="Renaming not yet supported">
+            </div>
+            <div class="form-group">
+                <label for="editProgress">Progress (0-100):</label>
+                <input type="number" id="editProgress" min="0" max="100" placeholder="Leave empty to keep current">
+            </div>
+            <div class="form-group">
+                <label for="editContext">Context:</label>
+                <textarea id="editContext" rows="3" placeholder="Leave empty to keep current"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editDue">Due Date (YYYY-MM-DD):</label>
+                <input type="date" id="editDue" placeholder="Leave empty to keep current">
+            </div>
+            <div class="modal-buttons">
+                <button onclick="saveEdit()" class="btn-primary">Save</button>
+                <button onclick="closeEditModal()" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         {self._get_javascript_functions()}
     </script>
@@ -434,6 +462,82 @@ class HTMLGenerator:
         .notification.error {
             background: #f44336;
         }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .modal-content h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #1976d2;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .btn-primary,
+        .btn-secondary {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-primary {
+            background-color: #1976d2;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #1565c0;
+        }
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background-color: #e0e0e0;
+        }
         .breadcrumb {
             margin-bottom: 20px;
             padding: 10px;
@@ -526,6 +630,132 @@ class HTMLGenerator:
     def _get_javascript_functions(self):
         """Get JavaScript functions for the HTML page."""
         return """
+        let longPressTimer;
+        let longPressTarget;
+        const LONG_PRESS_DURATION = 800; // milliseconds
+        
+        // Long press handling for edit
+        document.addEventListener('mousedown', function(e) {
+            const itemElement = e.target.closest('[data-item-path]');
+            if (itemElement) {
+                longPressTarget = itemElement;
+                longPressTimer = setTimeout(() => {
+                    openEditModal(itemElement);
+                }, LONG_PRESS_DURATION);
+            }
+        });
+        
+        document.addEventListener('mouseup', function() {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        });
+        
+        document.addEventListener('mousemove', function() {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        });
+        
+        // Touch support for mobile
+        document.addEventListener('touchstart', function(e) {
+            const itemElement = e.target.closest('[data-item-path]');
+            if (itemElement) {
+                longPressTarget = itemElement;
+                longPressTimer = setTimeout(() => {
+                    openEditModal(itemElement);
+                }, LONG_PRESS_DURATION);
+            }
+        });
+        
+        document.addEventListener('touchend', function() {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        });
+        
+        document.addEventListener('touchmove', function() {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        });
+        
+        function openEditModal(element) {
+            const itemPath = element.getAttribute('data-item-path');
+            const itemName = element.getAttribute('data-item-name');
+            const currentProgress = element.getAttribute('data-progress') || '';
+            const currentContext = element.getAttribute('data-context') || '';
+            const currentDue = element.getAttribute('data-due') || '';
+            
+            const modal = document.getElementById('editModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const nameInput = document.getElementById('editName');
+            const progressInput = document.getElementById('editProgress');
+            const contextInput = document.getElementById('editContext');
+            const dueInput = document.getElementById('editDue');
+            
+            modalTitle.textContent = 'Edit: ' + itemName;
+            nameInput.value = itemName;
+            progressInput.value = currentProgress;
+            contextInput.value = currentContext;
+            dueInput.value = currentDue;
+            
+            modal.style.display = 'flex';
+            modal.setAttribute('data-editing-path', itemPath);
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        async function saveEdit() {
+            const modal = document.getElementById('editModal');
+            const itemPath = modal.getAttribute('data-editing-path');
+            const progress = document.getElementById('editProgress').value;
+            const context = document.getElementById('editContext').value;
+            const due = document.getElementById('editDue').value;
+            
+            try {
+                const response = await fetch(`http://localhost:8000/api/items/${itemPath}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        progress: progress ? parseInt(progress) : null,
+                        context: context || null,
+                        due: due || null
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to save');
+                }
+                
+                closeEditModal();
+                showNotification('Saved successfully! Reloading...');
+                
+                // Reload page to show updates
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+                
+            } catch (error) {
+                showNotification('Error saving: ' + error.message, true);
+            }
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('editModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+        
         function showNotification(message, isError = false) {
             const notification = document.getElementById('notification');
             notification.textContent = message;
@@ -596,11 +826,21 @@ class HTMLGenerator:
         # Get progress and create underline
         layer1_progress = item.get("layer1_progress")
         layer1_underline = self._create_progress_underline(layer1_progress, color_name, "medium")
+        
+        # Data attributes for editing
+        layer1_data_path = layer1_id.replace('_', '.') if layer1_id else ""
+        layer1_data_attrs = f'data-item-path="{layer1_data_path}" data-item-name="{layer1_name}"'
+        if layer1_progress is not None:
+            layer1_data_attrs += f' data-progress="{layer1_progress}"'
+        if layer1_context:
+            layer1_data_attrs += f' data-context="{layer1_context}"'
+        if layer1_due:
+            layer1_data_attrs += f' data-due="{layer1_due}"'
 
         content = f"""
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 {layer1_clickable_class} {layer1_color_class}" {layer1_onclick}>{layer1_name}{layer1_due_html}</div>
+                <div class="layer1 {layer1_clickable_class} {layer1_color_class}" {layer1_onclick} {layer1_data_attrs}>{layer1_name}{layer1_due_html}</div>
                 {layer1_underline}
                 {layer1_context_html}
                 {layer1_path_html}
@@ -648,11 +888,21 @@ class HTMLGenerator:
         # Get progress and create underline
         layer2_progress = layer2_item.get("progress")
         layer2_underline = self._create_progress_underline(layer2_progress, color_name, "light")
+        
+        # Data attributes for editing
+        layer2_data_path = layer2_id.replace('_', '.') if layer2_id else ""
+        layer2_data_attrs = f'data-item-path="{layer2_data_path}" data-item-name="{layer2_name}"'
+        if layer2_progress is not None:
+            layer2_data_attrs += f' data-progress="{layer2_progress}"'
+        if layer2_context:
+            layer2_data_attrs += f' data-context="{layer2_context}"'
+        if layer2_due:
+            layer2_data_attrs += f' data-due="{layer2_due}"'
 
         content = f"""
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 {layer2_class}" {onclick_handler}>{layer2_name}{layer2_due_html}</div>
+                        <div class="layer2 {layer2_class}" {onclick_handler} {layer2_data_attrs}>{layer2_name}{layer2_due_html}</div>
                         {layer2_underline}
                         {layer2_context_html}
                     </div>
@@ -689,9 +939,20 @@ class HTMLGenerator:
             
             # Build the layer3 item with context and due date
             layer3_due_html = self._format_due_date(layer3_due) if layer3_due else ""
+            
+            # Data attributes for editing
+            layer3_data_path = layer3_id.replace('_', '.') if layer3_id else ""
+            layer3_data_attrs = f'data-item-path="{layer3_data_path}" data-item-name="{layer3_name}"'
+            if layer3_progress is not None:
+                layer3_data_attrs += f' data-progress="{layer3_progress}"'
+            if layer3_context:
+                layer3_data_attrs += f' data-context="{layer3_context}"'
+            if layer3_due:
+                layer3_data_attrs += f' data-due="{layer3_due}"'
+            
             # Don't add clickable class if using progress-clickable class
             final_clickable_class = "" if progress_class == "layer3-progress-clickable" else layer3_clickable_class
-            layer3_html = f'<span class="layer3 {final_clickable_class} {progress_class}" {style_attr} {layer3_onclick}>{layer3_name}{layer3_due_html}</span>'
+            layer3_html = f'<span class="layer3 {final_clickable_class} {progress_class}" {style_attr} {layer3_onclick} {layer3_data_attrs}>{layer3_name}{layer3_due_html}</span>'
             if layer3_context:
                 layer3_html += f'<div class="context layer3-context">{layer3_context}</div>'
             
