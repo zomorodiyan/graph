@@ -417,7 +417,9 @@ async def root():
             "delete_item": "DELETE /api/items/{path}",
             "sync_download": "POST /api/sync/download",
             "sync_upload": "POST /api/sync/upload",
-            "sync_both": "POST /api/sync/both"
+            "sync_to_drive": "POST /api/sync-to-drive",
+            "sync_both": "POST /api/sync/both",
+            "regenerate": "POST /api/regenerate/{item_id}"
         }
     }
 
@@ -444,6 +446,33 @@ async def sync_upload():
     }
 
 
+@app.post("/api/sync-to-drive")
+async def sync_to_drive():
+    """Alias for uploading structure.txt to Google Drive."""
+    success = upload_structure_yaml()
+    return {
+        "success": success,
+        "action": "upload",
+        "message": "Uploaded structure.txt to Google Drive" if success else "Upload failed"
+    }
+
+
+@app.post("/api/regenerate/{item_id}")
+async def regenerate_page(item_id: str):
+    """Regenerate HTML for a specific item using GraphApp."""
+    try:
+        from graph import GraphApp
+        app_gen = GraphApp()
+        html_path = app_gen.generate_graph_for_item(item_id or "data")
+        return {
+            "success": True,
+            "item_id": item_id,
+            "message": f"Regenerated {html_path}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to regenerate: {str(e)}")
+
+
 @app.post("/api/sync/both")
 async def sync_both():
     """Download then upload (download wins in conflicts)."""
@@ -463,6 +492,9 @@ async def sync_both():
         "upload": upload_success,
         "message": "Sync completed" if upload_success else "Download succeeded but upload failed"
     }
+
+
+# Removed duplicate /api/regenerate/{item_id:path} endpoint to avoid conflicts
 
 
 if __name__ == "__main__":

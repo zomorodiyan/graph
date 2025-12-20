@@ -18,6 +18,8 @@ from pathlib import Path
 # Import Google Drive integration
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 from google_drive import download_structure_yaml, authenticate
+from google_drive import upload_structure_yaml
+from google_drive import set_drive_file_id
 
 def is_port_free(port):
     """Check if a port is free"""
@@ -162,6 +164,10 @@ def main():
         print("  POST   /api/sync/download          - Download from Google Drive")
         print("  POST   /api/sync/upload            - Upload to Google Drive")
         print()
+        print("Direct commands:")
+        print("  upload         Upload local structure.txt to Google Drive (no servers)")
+        print("  set-file:<URL or ID>  Set Google Drive file_id in config.yaml")
+        print()
         print("API Documentation:")
         print("  http://localhost:8000/docs         - Interactive API docs")
         print("  http://localhost:8000/redoc        - ReDoc documentation")
@@ -274,6 +280,21 @@ def main():
         except KeyboardInterrupt:
             print("\nShutting down servers...")
             sys.exit(0)
+    
+    elif command == "upload":
+        # Upload local structure.txt to Google Drive
+        print("Uploading structure.txt to Google Drive...")
+        success = upload_structure_yaml()
+        sys.exit(0 if success else 1)
+    
+    elif command.startswith("set-file:"):
+        url_or_id = command[len("set-file:"):].strip()
+        if not url_or_id:
+            print("Usage: python run.py set-file:<URL or ID>")
+            sys.exit(1)
+        print("Setting Google Drive file ID in config.yaml...")
+        ok = set_drive_file_id(url_or_id)
+        sys.exit(0 if ok else 1)
     
     
     else:

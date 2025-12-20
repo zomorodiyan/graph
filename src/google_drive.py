@@ -13,8 +13,8 @@ from googleapiclient.http import MediaIoBaseDownload
 import io
 
 # If modifying these scopes, delete the file token.pickle
-# Changed to drive.file scope to enable both read and write operations
-SCOPES = ['https://www.googleapis.com/auth/drive.file']
+# Use full Drive scope to allow updating any file by ID
+SCOPES = ['https://www.googleapis.com/auth/drive']
 
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -100,6 +100,107 @@ def get_file_id_from_config():
     except Exception as e:
         print(f"⚠️  Error reading config.yaml: {e}")
         return None
+
+
+def update_config_file_id(new_file_id: str) -> bool:
+    """Update config.yaml with a new Google Drive file_id."""
+    import yaml
+    try:
+        config = {}
+        if CONFIG_PATH.exists():
+            with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f) or {}
+        config.setdefault('google_drive', {})
+        config['google_drive']['file_id'] = new_file_id
+        with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(config, f, sort_keys=False)
+        print(f"🔁 Updated config.yaml with new file_id: {new_file_id}")
+        return True
+    except Exception as e:
+        print(f"⚠️  Failed to update config.yaml: {e}")
+        return False
+
+
+def ensure_remote_text_file(service, file_id: str) -> str:
+    """
+    Ensure the remote structure file is a regular text file.
+    If current file is a Google Doc, create a new text/plain file and return its ID.
+    """
+    try:
+        meta = service.files().get(fileId=file_id, fields='name, mimeType, parents').execute()
+        mime = meta.get('mimeType', '')
+        if mime == 'application/vnd.google-apps.document':
+            print("⚠️  Remote file is a Google Doc. Creating a plain text file for writes...")
+            from googleapiclient.http import MediaFileUpload
+            body = {'name': meta.get('name', 'structure.txt')}
+            # Preserve parent folder if available
+            parents = meta.get('parents')
+            if parents:
+                body['parents'] = parents
+            # Use local structure.txt if present, else create empty file
+            if STRUCTURE_PATH.exists():
+                media = MediaFileUpload(STRUCTURE_PATH, mimetype='text/plain', resumable=True)
+            else:
+                import io
+                from googleapiclient.http import MediaIoBaseUpload
+                media = MediaIoBaseUpload(io.BytesIO(b''), mimetype='text/plain', resumable=True)
+            new_file = service.files().create(body=body, media_body=media, fields='id').execute()
+            new_id = new_file.get('id')
+            print(f"✅ Created new text file. ID: {new_id}")
+            update_config_file_id(new_id)
+            return new_id
+        return file_id
+    except Exception as e:
+        print(f"⚠️  Could not verify remote file type: {e}")
+        return file_id
+
+
+def parse_drive_file_id(url_or_id: str) -> str:
+    """Extract a Google Drive file ID from common URL formats or return the input if it's already an ID."""
+    if not url_or_id:
+        return ""
+    s = url_or_id.strip()
+    # If it looks like a bare ID (letters/numbers, length ~ 25-60), accept it
+    import re
+    if re.fullmatch(r"[A-Za-z0-9_-]{10,100}", s) and "http" not in s:
+        return s
+    # Common URL patterns
+    # https://drive.google.com/file/d/<ID>/view?...
+    m = re.search(r"/d/([A-Za-z0-9_-]{10,100})", s)
+    if m:
+        return m.group(1)
+    # https://docs.google.com/document/d/<ID>/...
+    m = re.search(r"document/d/([A-Za-z0-9_-]{10,100})", s)
+    if m:
+        return m.group(1)
+    # https://drive.google.com/open?id=<ID>
+    m = re.search(r"[?&]id=([A-Za-z0-9_-]{10,100})", s)
+    if m:
+        return m.group(1)
+    # Fallback: return original string
+    return s
+
+
+def set_drive_file_id(url_or_id: str) -> bool:
+    """Set the Drive file_id in config.yaml from a URL or ID. Verifies access with Drive API if possible."""
+    fid = parse_drive_file_id(url_or_id)
+    if not fid:
+        print("❌ Could not parse file ID from input")
+        return False
+    # Try to verify the file exists with current credentials
+    creds = get_credentials()
+    if not creds:
+        print("⚠️  Could not verify file without credentials; saving ID anyway.")
+        return update_config_file_id(fid)
+    try:
+        service = build('drive', 'v3', credentials=creds)
+        meta = service.files().get(fileId=fid, fields='name, mimeType').execute()
+        print(f"✅ Found file: {meta.get('name')} ({meta.get('mimeType')})")
+        return update_config_file_id(fid)
+    except Exception as e:
+        print(f"⚠️  Could not verify file ID: {e}")
+        print("Saving ID to config.yaml; you may need to re-auth or check permissions.")
+        return update_config_file_id(fid)
 
 
 def download_structure_yaml():
@@ -248,6 +349,8 @@ def upload_structure_yaml():
     try:
         service = build('drive', 'v3', credentials=creds)
         
+        # Ensure remote file is writable text; if Google Doc, create a text file
+        file_id = ensure_remote_text_file(service, file_id)
         # Get remote file metadata
         remote_file = service.files().get(
             fileId=file_id,
@@ -277,10 +380,8 @@ def upload_structure_yaml():
         except:
             pass  # If date parsing fails, proceed with upload
         
-        # Determine MIME type based on remote file
-        mime_type = remote_file.get('mimeType', 'text/plain')
-        if 'document' in mime_type.lower():
-            mime_type = 'text/plain'  # Google Docs export as text/plain
+        # Determine MIME type for upload (use text/plain)
+        mime_type = 'text/plain'
         
         # Upload file
         media = MediaFileUpload(

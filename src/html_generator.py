@@ -148,12 +148,21 @@ class HTMLGenerator:
 <body>
     <div class="graph-container">
         {breadcrumb_html}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <button onclick="regenerateCurrentPage()" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">Regenerate page</button>
+        </div>
         <div class="pending-actions" id="pendingActions">
-            <button id="confirmChangesBtn" class="btn-primary" onclick="confirmQueuedChanges()">Confirm changes</button>
-            <button id="cancelChangesBtn" class="btn-secondary" onclick="cancelQueuedChanges()">Cancel changes</button>
+            <div style="flex: 1;">
+                <div style="font-weight: bold; margin-bottom: 8px;">Pending changes:</div>
+                <ul id="changesList" style="margin: 0; padding-left: 20px; font-size: 13px; color: #333;"></ul>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button id="confirmChangesBtn" class="btn-primary" onclick="confirmQueuedChanges()">Confirm changes</button>
+                <button id="cancelChangesBtn" class="btn-secondary" onclick="cancelQueuedChanges()">Cancel changes</button>
+            </div>
         </div>
         {self._build_content_sections(data, current_item_id)}
-        <div class="current-date">Updated: {current_date}</div>
+        <div class="current-date">Updated: {current_date} <span onclick="regenerateCurrentPage()" style="cursor: pointer; margin-left: 10px; display: inline-block;" title="Regenerate page">🔄</span></div>
     </div>
     <div id="notification" class="notification"></div>
     
@@ -661,15 +670,53 @@ class HTMLGenerator:
         """Get JavaScript functions for the HTML page."""
         return """
         // Queues for pending changes in current session
-        const pendingAdds = []; // { parentPath, payload: {name, progress, context, due} }
-        const pendingDeletes = new Set(); // itemPath strings
+        const pendingAdds = []; // { parentPath, payload, description }
+        const pendingDeletes = []; // { itemPath, itemName, description }
+        const pendingEdits = []; // { itemPath, itemName, changes, description }
 
         function updatePendingActionsVisibility() {
-            const hasChanges = pendingAdds.length > 0 || pendingDeletes.size > 0;
+            const hasChanges = pendingAdds.length > 0 || pendingDeletes.length > 0 || pendingEdits.length > 0;
             const bar = document.getElementById('pendingActions');
             if (bar) {
                 bar.style.display = hasChanges ? 'flex' : 'none';
+                if (hasChanges) updateChangesList();
             }
+        }
+
+        function updateChangesList() {
+            const list = document.getElementById('changesList');
+            list.innerHTML = '';
+            pendingAdds.forEach(add => {
+                const li = document.createElement('li');
+                li.textContent = add.description;
+                list.appendChild(li);
+            });
+            pendingDeletes.forEach(del => {
+                const li = document.createElement('li');
+                li.textContent = del.description;
+                list.appendChild(li);
+            });
+            pendingEdits.forEach(edit => {
+                const li = document.createElement('li');
+                li.textContent = edit.description;
+                list.appendChild(li);
+            });
+        }
+
+        function formatChangeDescription(type, itemName, details) {
+            if (type === 'add') return `add ${itemName}`;
+            if (type === 'delete') return `delete ${itemName}`;
+            if (type === 'edit') {
+                const parts = [];
+                if (details.progress !== undefined && details.progress !== null) parts.push(`progress:${details.progress}`);
+                if (details.context) {
+                    const ctx = details.context.substring(0, 20);
+                    parts.push(`context: ${ctx}${details.context.length > 20 ? '...' : ''}`);
+                }
+                if (details.due) parts.push(`due: ${details.due}`);
+                return parts.length > 0 ? `${parts.join(', ')} ${itemName}` : `edit ${itemName}`;
+            }
+            return `change ${itemName}`;
         }
         let longPressTimer;
         let longPressTarget;
@@ -801,7 +848,8 @@ class HTMLGenerator:
                         showNotification('Name is required to create an item', true);
                         return;
                     }
-                    pendingAdds.push({ parentPath: parentPath || 'root', payload });
+                    const description = formatChangeDescription('add', name, {});
+                    pendingAdds.push({ parentPath: parentPath || 'root', payload, description });
                     // Add a temporary visual item under the parent if possible
                     try {
                         let parentEl = parentPath ? document.querySelector(`[data-item-path="${parentPath}"]`) : null;
@@ -825,28 +873,25 @@ class HTMLGenerator:
                     showNotification('Queued new item. Confirm to save, or Cancel to revert.');
                     return;
                 } else {
-                    response = await fetch(`http://localhost:8000/api/items/${itemPath}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(payload)
-                    });
+                    // Queue edit with description - only include changed fields
+                    const nameInput = document.getElementById('editName');
+                    const originalName = nameInput.value;
+                    const progressVal = progress ? parseInt(progress) : null;
+                    const contextVal = context || null;
+                    const dueVal = due || null;
+                    
+                    const changes = {};
+                    if (progressVal !== null) changes.progress = progressVal;
+                    if (contextVal) changes.context = contextVal;
+                    if (dueVal) changes.due = dueVal;
+                    
+                    const description = formatChangeDescription('edit', originalName, changes);
+                    pendingEdits.push({ itemPath, itemName: originalName, changes, description });
+                    updatePendingActionsVisibility();
+                    closeEditModal();
+                    showNotification('Queued edit. Confirm to save, or Cancel to revert.');
+                    return;
                 }
-                
-                if (!response.ok) {
-                    const responseText = await response.text();
-                    throw new Error(`Failed to save: ${response.status} - ${responseText}`);
-                }
-                
-                closeEditModal();
-                showNotification('Saved successfully! Reloading...');
-                
-                // Reload page to show updates
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-                
             } catch (error) {
                 showNotification('Error saving: ' + error.message, true);
                 console.error('Save error:', error);
@@ -858,7 +903,10 @@ class HTMLGenerator:
                 showNotification('Nothing to delete', true);
                 return;
             }
-            pendingDeletes.add(itemPath);
+            const itemEl = document.querySelector(`[data-item-path="${itemPath}"]`);
+            const itemName = itemEl ? (itemEl.getAttribute('data-item-name') || itemPath) : itemPath;
+            const description = formatChangeDescription('delete', itemName, {});
+            pendingDeletes.push({ itemPath, itemName, description });
             const allItems = document.querySelectorAll('[data-item-path]');
             allItems.forEach(el => {
                 const p = el.getAttribute('data-item-path') || '';
@@ -914,15 +962,49 @@ class HTMLGenerator:
             window.location.href = filePath;
         }
         
+        async function regenerateCurrentPage() {
+            // Extract current page ID from filename
+            const path = window.location.pathname;
+            const filename = path.substring(path.lastIndexOf('/') + 1) || 'data.html';
+            const itemId = filename.replace('.html', '');
+            
+            showNotification('Regenerating page...');
+            try {
+                const res = await fetch(`http://localhost:8000/api/regenerate/${itemId}`, { method: 'POST' });
+                if (!res.ok) {
+                    const t = await res.text();
+                    throw new Error(`Failed: ${res.status} ${t}`);
+                }
+                showNotification('Page regenerated. Reloading...');
+                setTimeout(() => { window.location.reload(); }, 500);
+            } catch (err) {
+                showNotification('Error regenerating page: ' + err.message, true);
+            }
+        }
+        
         async function confirmQueuedChanges() {
             try {
-                for (const itemPath of pendingDeletes) {
-                    const res = await fetch(`http://localhost:8000/api/items/${itemPath}`, { method: 'DELETE' });
+                // Apply edits
+                for (const edit of pendingEdits) {
+                    const res = await fetch(`http://localhost:8000/api/items/${edit.itemPath}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(edit.changes)
+                    });
                     if (!res.ok) {
                         const t = await res.text();
-                        throw new Error(`Failed to delete ${itemPath}: ${res.status} ${t}`);
+                        throw new Error(`Failed to edit ${edit.itemPath}: ${res.status} ${t}`);
                     }
                 }
+                // Delete items
+                for (const del of pendingDeletes) {
+                    const res = await fetch(`http://localhost:8000/api/items/${del.itemPath}`, { method: 'DELETE' });
+                    if (!res.ok) {
+                        const t = await res.text();
+                        throw new Error(`Failed to delete ${del.itemPath}: ${res.status} ${t}`);
+                    }
+                }
+                // Add items
                 for (const add of pendingAdds) {
                     const url = `http://localhost:8000/api/items/${add.parentPath}`;
                     const res = await fetch(url, {
@@ -935,10 +1017,16 @@ class HTMLGenerator:
                         throw new Error(`Failed to add under ${add.parentPath}: ${res.status} ${t}`);
                     }
                 }
-                pendingDeletes.clear();
+                // Sync to Google Drive
+                const syncRes = await fetch(`http://localhost:8000/api/sync-to-drive`, { method: 'POST' });
+                if (!syncRes.ok) {
+                    console.warn('Warning: Google Drive sync may have failed:', syncRes.status);
+                }
+                pendingDeletes.splice(0, pendingDeletes.length);
                 pendingAdds.splice(0, pendingAdds.length);
+                pendingEdits.splice(0, pendingEdits.length);
                 updatePendingActionsVisibility();
-                showNotification('Changes saved. Reloading...');
+                showNotification('Changes saved and synced to Google Drive. Reloading...');
                 setTimeout(() => { window.location.reload(); }, 800);
             } catch (err) {
                 showNotification('Error confirming changes: ' + err.message, true);
@@ -948,11 +1036,14 @@ class HTMLGenerator:
         function cancelQueuedChanges() {
             document.querySelectorAll('.deleted').forEach(el => el.classList.remove('deleted'));
             document.querySelectorAll('.pending-add').forEach(el => el.remove());
-            pendingDeletes.clear();
+            pendingDeletes.splice(0, pendingDeletes.length);
             pendingAdds.splice(0, pendingAdds.length);
+            pendingEdits.splice(0, pendingEdits.length);
             updatePendingActionsVisibility();
             showNotification('Reverted pending changes.');
         }
+        
+        // (duplicate function removed)
         """
     
     def _build_content_sections(self, data, current_item_id):
