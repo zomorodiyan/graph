@@ -65,17 +65,23 @@ def check_yaml_file():
 def get_python_command():
     """Get the appropriate Python command"""
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Check for virtual environment
+
+    # Prefer 'env' virtual environment if it exists
+    env_python_win = os.path.join(script_dir, 'env', 'Scripts', 'python.exe')
+    env_python_unix = os.path.join(script_dir, 'env', 'bin', 'python')
     venv_python_win = os.path.join(script_dir, '.venv', 'Scripts', 'python.exe')
     venv_python_unix = os.path.join(script_dir, '.venv', 'bin', 'python')
-    
-    if os.path.exists(venv_python_win):
+
+    if os.path.exists(env_python_win):
+        return env_python_win
+    elif os.path.exists(env_python_unix):
+        return env_python_unix
+    elif os.path.exists(venv_python_win):
         return venv_python_win
     elif os.path.exists(venv_python_unix):
         return venv_python_unix
     else:
-        return 'python3'
+        return sys.executable
 
 def main():
     """Main entry point for the launcher."""
