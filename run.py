@@ -82,7 +82,7 @@ def main():
     os.chdir(script_dir)
     
     # Handle command line arguments
-    command = sys.argv[1] if len(sys.argv) > 1 else "serve"
+    command = sys.argv[1] if len(sys.argv) > 1 else "api"
     
     # Handle auth command separately (before YAML sync)
     if command == "auth":
@@ -126,59 +126,132 @@ def main():
     
     elif command == "help":
         # Show help
-        print("YAML-based Knowledge Graph Launcher")
+        print("Web-Based Hierarchical Graph Editor")
         print("===================================")
         print()
         print("Usage: python run.py [command]")
         print()
         print("Commands:")
-        print("  serve          Generate HTML files and start web server (default)")
-        print("  generate       Generate HTML files only")
+        print("  api            Start FastAPI backend server (default)")
+        print("                 API runs on http://localhost:8000")
+        print("                 Open html/data.html in browser to use")
+        print()
+        print("  serve          Start API server + HTML server (all-in-one)")
+        print("                 Opens browser automatically")
+        print()
+        print("  generate       Generate HTML files only (no servers)")
         print("  search:<query> Search for items matching query")
-        print("  auth           Authenticate with Google Drive (first-time setup)")
+        print("  auth           Authenticate with Google Drive")
         print("  help           Show this help message")
         print()
-        print("Examples:")
-        print("  python run.py auth")
-        print("  python run.py")
-        print("  python run.py generate")
-        print("  python run.py search:finance")
+        print("Quick Start:")
+        print("  1. First time: python run.py auth")
+        print("  2. Run server: python run.py")
+        print("  3. Or run all-in-one: python run.py serve")
         print()
-        print("The structure is defined in structure.txt")
-        print("On each run, structure.txt is synced from Google Drive")
+        print("Editing:")
+        print("  - Long-press (0.8 sec) any item to open edit modal")
+        print("  - Edit progress (0-100), context, or due date")
+        print("  - Changes save automatically via API")
+        print()
+        print("API Endpoints (when running 'python run.py api'):")
+        print("  GET    /api/items/{path}           - Get item")
+        print("  PUT    /api/items/{path}           - Update item")
+        print("  POST   /api/items/{parent_path}    - Create item")
+        print("  DELETE /api/items/{path}           - Delete item")
+        print("  POST   /api/sync/download          - Download from Google Drive")
+        print("  POST   /api/sync/upload            - Upload to Google Drive")
+        print()
+        print("API Documentation:")
+        print("  http://localhost:8000/docs         - Interactive API docs")
+        print("  http://localhost:8000/redoc        - ReDoc documentation")
     
-    elif command == "serve" or len(sys.argv) == 1:
-        # Default: generate and serve
-        print("Generating visualization from YAML structure...")
+    
+    elif command == "api" or len(sys.argv) == 1:
+        # Default: Start FastAPI server only (no HTML server)
+        # Allow custom port via environment variable or command line
+        api_port = os.getenv("API_PORT", "8000")
+        
+        print("Starting FastAPI backend server...")
+        print()
+        print(f"📡 API Server: http://localhost:{api_port}")
+        print(f"📖 API Docs:   http://localhost:{api_port}/docs")
+        print()
+        print("Next steps:")
+        print("1. Open html/data.html in your browser")
+        print("2. Long-press any item to edit (800ms hold)")
+        print("3. API will save changes automatically")
+        print()
+        print("To stop: Press Ctrl+C")
+        print()
+        
+        try:
+            # Use uvicorn to run the FastAPI app
+            uvicorn_cmd = [
+                python_cmd, '-m', 'uvicorn',
+                'api:app',
+                '--host', '0.0.0.0',
+                '--port', api_port,
+                '--reload'
+            ]
+            subprocess.run(uvicorn_cmd, cwd=src_dir)
+        except KeyboardInterrupt:
+            print("\nShutting down API server...")
+            sys.exit(0)
+        except Exception as e:
+            print(f"Error starting API server: {e}")
+            sys.exit(1)
+    
+    elif command == "serve":
+        # All-in-one: API server + HTML server
+        print("Starting API + HTML servers (all-in-one)...")
+        print()
+        print("📡 API Server: http://localhost:8000")
+        print("🌐 HTML Server: http://localhost:8080")
+        print()
+        
+        # Generate HTML first
+        print("Generating HTML files...")
         try:
             result = subprocess.run([python_cmd, 'graph.py'], 
                                   capture_output=True, text=True, cwd=src_dir, encoding='utf-8', errors='replace')
             if result.returncode != 0:
                 print(f"Error generating visualization: {result.stderr}")
                 return
-            print("Visualization generated successfully!")
         except Exception as e:
             print(f"Error running graph.py: {e}")
             return
         
-        # Find a free port
-        port = find_free_port(8080)
-        if not port:
-            print("Could not find a free port. Please close other servers and try again.")
+        # Start API server in background thread
+        def start_api_server():
+            try:
+                uvicorn_cmd = [
+                    python_cmd, '-m', 'uvicorn',
+                    'api:app',
+                    '--host', '0.0.0.0',
+                    '--port', '8000',
+                    '--reload'
+                ]
+                subprocess.run(uvicorn_cmd, cwd=src_dir)
+            except Exception as e:
+                print(f"API server error: {e}")
+        
+        api_thread = threading.Thread(target=start_api_server, daemon=True)
+        api_thread.start()
+        time.sleep(2)  # Give API server time to start
+        
+        # Start HTML server in background thread
+        html_port = find_free_port(8080)
+        if not html_port:
+            print("Could not find a free port for HTML server.")
             return
         
-        if port != 8080:
-            print(f"Port 8080 was busy, using port {port} instead")
-        
-        # Start server in background thread
-        server_thread = threading.Thread(target=start_server, args=(port,), daemon=True)
-        server_thread.start()
-        
-        # Give server time to start
-        time.sleep(2)
+        html_thread = threading.Thread(target=start_server, args=(html_port,), daemon=True)
+        html_thread.start()
+        time.sleep(1)
         
         # Open browser
-        url = f"http://localhost:{port}/data.html"
+        url = f"http://localhost:{html_port}/data.html"
         try:
             webbrowser.open(url)
             print(f"Opening browser to {url}")
@@ -186,15 +259,22 @@ def main():
             print(f"Could not open browser: {e}")
             print(f"Please manually open: {url}")
         
-        # Keep main thread alive
+        print()
+        print("Both servers running! Press Ctrl+C to stop")
+        print()
+        print("Tips:")
+        print("- Long-press items to edit")
+        print("- View API docs at http://localhost:8000/docs")
+        print("- HTML server serves static files from html/")
+        print()
+        
         try:
-            print("Server running... Press Ctrl+C to stop")
-            print("Edit structure.txt to modify the knowledge graph")
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            print("\nShutting down server...")
+            print("\nShutting down servers...")
             sys.exit(0)
+    
     
     else:
         print(f"Unknown command: {command}")
