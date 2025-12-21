@@ -271,22 +271,45 @@ async def update_item(path: str, update: ItemUpdate):
 async def create_item(parent_path: str, item: ItemCreate):
     """Create a new item under a parent."""
     try:
+        print(f"DEBUG: Creating item under parent_path: '{parent_path}'")
+        print(f"DEBUG: Item data: {item}")
+        
         data = file_utils.load_yaml_structure()
-        keys = path_to_keys(parent_path) if parent_path not in ("", "root", "data") else []
+        
+        # Handle special cases: empty path, "root", or "data" all mean add to top-level structure
+        if parent_path in ("", "root", "data"):
+            keys = []
+        else:
+            keys = path_to_keys(parent_path)
+        
+        print(f"DEBUG: Keys: {keys}")
 
         # Locate parent container
         if not keys:
+            # Adding to root/top-level structure
             parent_children = data.get('structure', {})
+            print(f"DEBUG: Using root structure, keys in structure: {list(parent_children.keys())}")
         else:
             parent, parent_key, parent_value = find_item(data['structure'], keys)
             if parent is None:
                 raise HTTPException(status_code=404, detail=f"Parent not found: {parent_path}")
+            
+            print(f"DEBUG: Found parent - key: {parent_key}, value type: {type(parent_value)}")
+            
             if not isinstance(parent_value, dict):
-                raise HTTPException(status_code=400, detail=f"Parent is not a container: {parent_path}")
-            parent_children = parent_value.setdefault('children', {})
+                # Convert to dict if needed
+                parent_value = {}
+                parent[parent_key] = parent_value
+                print(f"DEBUG: Converted parent_value to dict")
+            
+            # Don't use 'children' wrapper - add directly to parent_value
+            parent_children = parent_value
+            print(f"DEBUG: parent_children keys: {list(parent_children.keys())}")
 
         # Normalize name and enforce uniqueness
         new_name = item.name.lower().replace(' ', '_')
+        print(f"DEBUG: Normalized name: {new_name}")
+        
         if new_name in parent_children:
             raise HTTPException(status_code=400, detail=f"Item '{new_name}' already exists under this parent")
 
@@ -299,24 +322,38 @@ async def create_item(parent_path: str, item: ItemCreate):
         if item.due:
             new_item['due'] = item.due
         
+        print(f"DEBUG: New item payload: {new_item}")
+        
         # Add to parent children
         parent_children[new_name] = new_item
+        print(f"DEBUG: Added new item to parent_children")
         
         # Clean and save structure
         data_to_save = _clean_structure_for_save(data)
         file_utils.save_structure(data_to_save)
+        print(f"DEBUG: Saved structure")
         
         # Trigger regeneration for new path
-        new_path = new_name if not parent_path or parent_path in ("root", "data") else f"{parent_path}.{new_name}"
+        if not parent_path or parent_path in ("root", "data"):
+            new_path = new_name
+        else:
+            new_path = f"{parent_path}.{new_name}"
+        print(f"DEBUG: New path: {new_path}")
         affected_paths = get_affected_paths(new_path)
         regenerate_html(affected_paths)
+        print(f"DEBUG: Regenerated HTML for affected paths")
         
         return {
             "success": True,
             "path": new_path,
             "created": new_item
         }
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"DEBUG ERROR: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 

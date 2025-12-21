@@ -29,7 +29,7 @@ class HTMLGenerator:
             color_map = {
                 "green": {"light": "#A5D6A7", "medium": "#388E3C", "dark": "#1B5E20"},
                 "blue": {"light": "#90CAF9", "medium": "#1976D2", "dark": "#0D47A1"},
-                "purple": {"light": "#CE93D8", "medium": "#8E24AA", "dark": "#4A148C"},
+                "purple": {"light": "#B39DDB", "medium": "#7E57C2", "dark": "#4527A0"},
                 "brown": {"light": "#BCAAA4", "medium": "#795548", "dark": "#3E2723"},
             }
             progress_color = color_map.get(color_name, {}).get(intensity, "#388E3C")
@@ -56,7 +56,7 @@ class HTMLGenerator:
             text_color_map = {
                 "green": ("#0D4F14", "#388E3C"),
                 "blue": ("#063A85", "#1976D2"),
-                "purple": ("#3A0F6E", "#8E24AA"),
+                "purple": ("#311B92", "#7E57C2"),
                 "brown": ("#3E2723", "#795548"),
             }
             colors = text_color_map.get(color_name, ("#0D4F14", "#388E3C"))
@@ -205,7 +205,7 @@ class HTMLGenerator:
             color: #90CAF9 !important;
         }}
         body.dark-theme .layer3.color-purple {{
-            color: #CE93D8 !important;
+            color: #B39DDB !important;
         }}
         body.dark-theme .layer3.color-brown {{
             color: #BCAAA4 !important;
@@ -251,7 +251,7 @@ class HTMLGenerator:
             background-color: #0D47A1 !important;
         }}
         body.dark-theme .underline.color-purple-medium {{
-            background-color: #4A148C !important;
+            background-color: #4527A0 !important;
         }}
         body.dark-theme .underline.color-brown-medium {{
             background-color: #3E2723 !important;
@@ -264,7 +264,7 @@ class HTMLGenerator:
             background-color: #1976D2 !important;
         }}
         body.dark-theme .underline.color-purple-light {{
-            background-color: #8E24AA !important;
+            background-color: #7E57C2 !important;
         }}
         body.dark-theme .underline.color-brown-light {{
             background-color: #795548 !important;
@@ -274,9 +274,9 @@ class HTMLGenerator:
         body.dark-theme .underline-progress {{
             background: #444 !important;
         }}
-        /* Progress underline uses dark color for filled section in dark mode */
+        /* Progress underline uses light color for filled section in dark mode to match level 3 items */
         body.dark-theme .underline-progress {{
-            background: linear-gradient(to right, var(--progress-color-dark, #1B5E20) var(--progress-percent), var(--progress-color-light, #A5D6A7) var(--progress-percent)) !important;
+            background: linear-gradient(to right, var(--progress-color-light, #A5D6A7) var(--progress-percent), #555 var(--progress-percent)) !important;
         }}
         body.dark-theme .layer1.color-group-green:hover,
         body.dark-theme .layer2.color-green:hover,
@@ -291,12 +291,41 @@ class HTMLGenerator:
         body.dark-theme .layer1.color-group-purple:hover,
         body.dark-theme .layer2.color-purple:hover,
         body.dark-theme .layer3.color-purple:hover {{
-            background-color: rgba(206, 147, 216, 0.2) !important;
+            background-color: rgba(179, 157, 219, 0.2) !important;
         }}
         body.dark-theme .layer1.color-group-brown:hover,
         body.dark-theme .layer2.color-group-brown:hover,
         body.dark-theme .layer3.color-brown:hover {{
             background-color: rgba(188, 170, 164, 0.2) !important;
+        }}
+        /* Layer3 progress text uses light group colors in dark mode */
+        body.dark-theme .layer3-progress.color-green,
+        body.dark-theme .layer3-progress-clickable.color-green {{
+            background: linear-gradient(to right, #A5D6A7 var(--text-progress-percent), #888 var(--text-progress-percent)) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+        }}
+        body.dark-theme .layer3-progress.color-blue,
+        body.dark-theme .layer3-progress-clickable.color-blue {{
+            background: linear-gradient(to right, #90CAF9 var(--text-progress-percent), #888 var(--text-progress-percent)) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+        }}
+        body.dark-theme .layer3-progress.color-purple,
+        body.dark-theme .layer3-progress-clickable.color-purple {{
+            background: linear-gradient(to right, #B39DDB var(--text-progress-percent), #888 var(--text-progress-percent)) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+        }}
+        body.dark-theme .layer3-progress.color-brown,
+        body.dark-theme .layer3-progress-clickable.color-brown {{
+            background: linear-gradient(to right, #BCAAA4 var(--text-progress-percent), #888 var(--text-progress-percent)) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
         }}
         {self._get_css_styles()}
     </style>
@@ -518,7 +547,7 @@ class HTMLGenerator:
             line-height: 0;
             font-size: 0;
             overflow: hidden;
-            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), var(--progress-color-light) var(--progress-percent));
+            background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #ddd var(--progress-percent));
             opacity: 0.6;
         }
         .color-green-light { background-color: #A5D6A7; }
@@ -527,9 +556,9 @@ class HTMLGenerator:
         .color-blue-light { background-color: #90CAF9; }
         .color-blue-medium { background-color: #1976D2; }
         .color-blue-dark { background-color: #0D47A1; }
-        .color-purple-light { background-color: #CE93D8; }
-        .color-purple-medium { background-color: #8E24AA; }
-        .color-purple-dark { background-color: #4A148C; }
+        .color-purple-light { background-color: #B39DDB; }
+        .color-purple-medium { background-color: #7E57C2; }
+        .color-purple-dark { background-color: #4527A0; }
         .color-brown-light { background-color: #BCAAA4; }
         .color-brown-medium { background-color: #795548; }
         .color-brown-dark { background-color: #3E2723; }
@@ -721,6 +750,9 @@ class HTMLGenerator:
             padding: 0;
             line-height: 1;
         }
+        body.dark-theme .refresh-icon {
+            color: #fff;
+        }
         .due-date {
             font-size: 10px;
             padding: 2px 6px;
@@ -747,20 +779,45 @@ class HTMLGenerator:
         }
         /* Darker backgrounds for time bubbles in dark mode */
         body.dark-theme .due-overdue {
-            background-color: #5c1414;
+            background-color: #2a1515;
             color: #ffebee;
         }
         body.dark-theme .due-today {
-            background-color: #6b3400;
+            background-color: #3d2515;
             color: #fff3e0;
         }
         body.dark-theme .due-soon {
-            background-color: #1b4d20;
+            background-color: #1a2e1d;
             color: #e8f5e9;
         }
         body.dark-theme .due-later {
-            background-color: #0d3768;
+            background-color: #152b3d;
             color: #e3f2fd;
+        }
+        /* Time category items (Over, Day, Week, Month) match time bubble colors */
+        [data-item-path="time.over"] {
+            color: #c62828 !important;
+        }
+        body.dark-theme [data-item-path="time.over"] {
+            color: #ffb3ba !important;
+        }
+        [data-item-path="time.day"] {
+            color: #ef6c00 !important;
+        }
+        body.dark-theme [data-item-path="time.day"] {
+            color: #ffd699 !important;
+        }
+        [data-item-path="time.week"] {
+            color: #2e7d32 !important;
+        }
+        body.dark-theme [data-item-path="time.week"] {
+            color: #b3e5b3 !important;
+        }
+        [data-item-path="time.month"] {
+            color: #1565c0 !important;
+        }
+        body.dark-theme [data-item-path="time.month"] {
+            color: #b3d9f2 !important;
         }
         .item-path {
             font-size: 11px;
@@ -1151,6 +1208,7 @@ class HTMLGenerator:
                     }
                 }
                 // Sync to Google Drive
+                showNotification('Syncing to Google Drive...');
                 const syncRes = await fetch(`http://localhost:8000/api/sync-to-drive`, { method: 'POST' });
                 if (!syncRes.ok) {
                     console.warn('Warning: Google Drive sync may have failed:', syncRes.status);
@@ -1188,7 +1246,7 @@ class HTMLGenerator:
             ("green", "#A5D6A7", "#388E3C", "#1B5E20"),
             ("brown", "#BCAAA4", "#795548", "#3E2723"),
             ("blue", "#90CAF9", "#1976D2", "#0D47A1"),
-            ("purple", "#CE93D8", "#8E24AA", "#4A148C"),
+            ("purple", "#B39DDB", "#7E57C2", "#4527A0"),
         ]
 
         for idx, item in enumerate(data):
