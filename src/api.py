@@ -2,7 +2,7 @@
 FastAPI backend for editing hierarchical structure.
 Provides REST API for CRUD operations on items.
 """
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
@@ -40,25 +40,6 @@ class ItemUpdate(BaseModel):
     progress: Optional[int] = Field(None, ge=0, le=100, description="Progress percentage (0-100)")
     context: Optional[str] = Field(None, description="Context/description text")
     due: Optional[str] = Field(None, description="Due date in YYYY-MM-DD format or empty to remove")
-    
-    # Custom validation to allow empty string for due date
-    @classmethod
-    def model_validate(cls, obj):
-        if isinstance(obj, dict):
-            # Convert empty strings to None
-            if obj.get('due') == '':
-                obj['due'] = None
-            if obj.get('context') == '':
-                obj['context'] = None
-            if obj.get('progress') == '':
-                obj['progress'] = None
-            # Validate date format if not empty
-            due = obj.get('due')
-            if due and not None:
-                import re
-                if not re.match(r'^\d{4}-\d{2}-\d{2}$', due):
-                    raise ValueError(f"Invalid date format: {due}. Must be YYYY-MM-DD")
-        return super().model_validate(obj)
 
 
 class ItemCreate(BaseModel):
@@ -172,11 +153,26 @@ async def get_item(path: str):
 
 
 @app.put("/api/items/{path:path}")
-async def update_item(path: str, update: ItemUpdate):
+async def update_item(path: str, request: Request):
     """Update an item's properties."""
     try:
+        # Get raw JSON data to avoid Pydantic validation issues with empty strings
+        update_data = await request.json()
         print(f"DEBUG: Updating item at path: {path}")
-        print(f"DEBUG: Update data: {update}")
+        print(f"DEBUG: Update data: {update_data}")
+        
+        # Track which fields should be removed (empty strings)
+        remove_progress = update_data.get('progress') == ''
+        remove_context = update_data.get('context') == ''
+        remove_due = update_data.get('due') == ''
+        
+        # Convert empty strings to None for processing
+        if remove_progress:
+            update_data['progress'] = None
+        if remove_context:
+            update_data['context'] = None
+        if remove_due:
+            update_data['due'] = None
         
         try:
             data = file_utils.load_yaml_structure()
@@ -205,8 +201,9 @@ async def update_item(path: str, update: ItemUpdate):
             print(f"DEBUG: Converted item_value to dict")
         
         # Handle renaming first (restructure parent if needed)
-        if update.name is not None and update.name != item_key:
-            new_name = update.name.lower().replace(' ', '_')
+        new_name = update_data.get('name')
+        if new_name is not None and new_name != item_key:
+            new_name = new_name.lower().replace(' ', '_')
             if new_name in parent and new_name != item_key:
                 raise HTTPException(status_code=400, detail=f"Item '{new_name}' already exists at this level")
             # Rename the item by moving its value to new key
@@ -214,35 +211,33 @@ async def update_item(path: str, update: ItemUpdate):
             del parent[item_key]
             print(f"DEBUG: Renamed item from '{item_key}' to '{new_name}'")
         
-        # Update only provided fields
-        if update.progress is not None:
-            item_value['progress'] = update.progress
-            print(f"DEBUG: Set progress to {update.progress}")
-        elif 'progress' in item_value and update.progress is None:
-            # If progress field exists but update is None, keep it (don't remove)
-            pass
+        # Handle progress: update, remove, or leave unchanged
+        if remove_progress:
+            item_value.pop('progress', None)
+            print(f"DEBUG: Removed progress")
+        elif 'progress' in update_data and update_data['progress'] is not None:
+            item_value['progress'] = int(update_data['progress'])
+            print(f"DEBUG: Set progress to {update_data['progress']}")
         
-        if update.context is not None:
-            if update.context == "":
-                item_value.pop('context', None)  # Remove if empty
-                print(f"DEBUG: Removed context")
-            else:
-                item_value['context'] = update.context
-                print(f"DEBUG: Set context to {update.context}")
-        elif 'context' in item_value and update.context is None:
-            # If context field exists but update is None, keep it (don't remove)
-            pass
+        # Handle context: update, remove, or leave unchanged
+        if remove_context:
+            item_value.pop('context', None)
+            print(f"DEBUG: Removed context")
+        elif 'context' in update_data and update_data['context'] is not None:
+            item_value['context'] = update_data['context']
+            print(f"DEBUG: Set context to {update_data['context']}")
             
-        if update.due is not None:
-            if update.due == "":
-                item_value.pop('due', None)  # Remove if empty
-                print(f"DEBUG: Removed due date")
-            else:
-                item_value['due'] = update.due
-                print(f"DEBUG: Set due to {update.due}")
-        elif 'due' in item_value and update.due is None:
-            # If due field exists but update is None, keep it (don't remove)
-            pass
+        # Handle due date: update, remove, or leave unchanged
+        if remove_due:
+            item_value.pop('due', None)
+            print(f"DEBUG: Removed due date")
+        elif 'due' in update_data and update_data['due'] is not None:
+            # Validate date format
+            import re
+            if not re.match(r'^\d{4}-\d{2}-\d{2}$', update_data['due']):
+                raise HTTPException(status_code=400, detail=f"Invalid date format: {update_data['due']}. Must be YYYY-MM-DD")
+            item_value['due'] = update_data['due']
+            print(f"DEBUG: Set due to {update_data['due']}")
         
         print(f"DEBUG: About to save structure...")
         
@@ -264,6 +259,8 @@ async def update_item(path: str, update: ItemUpdate):
             "updated": item_value
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
