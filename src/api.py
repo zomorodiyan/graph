@@ -276,8 +276,8 @@ async def create_item(parent_path: str, item: ItemCreate):
         
         data = file_utils.load_yaml_structure()
         
-        # Handle special cases: empty path, "root", or "data" all mean add to top-level structure
-        if parent_path in ("", "root", "data"):
+        # Handle special cases: empty path, "root", or "home" all mean add to top-level structure
+        if parent_path in ("", "root", "home"):
             keys = []
         else:
             keys = path_to_keys(parent_path)
@@ -334,7 +334,7 @@ async def create_item(parent_path: str, item: ItemCreate):
         print(f"DEBUG: Saved structure")
         
         # Trigger regeneration for new path
-        if not parent_path or parent_path in ("root", "data"):
+        if not parent_path or parent_path in ("root", "home"):
             new_path = new_name
         else:
             new_path = f"{parent_path}.{new_name}"
@@ -432,7 +432,7 @@ def regenerate_html(paths: list):
     for path in paths:
         try:
             if path == 'root':
-                item_id = 'data'
+                item_id = 'home'
             else:
                 item_id = path.replace('.', '_')
             

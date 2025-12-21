@@ -17,7 +17,7 @@ class GraphApp:
         self.hierarchy_builder = HierarchyBuilder()
         self.html_generator = HTMLGenerator()
     
-    def generate_graph_for_item(self, item_id="data"):
+    def generate_graph_for_item(self, item_id="home"):
         """Generate HTML graph for a specific item or the root data view."""
         # Check if this is a time-based view
         time_categories = ['time_over', 'time_day', 'time_week', 'time_month']
@@ -35,8 +35,8 @@ class GraphApp:
             data = self.hierarchy_builder.parse_structure_for_display(item_id)
         
         # Determine output path
-        if item_id == "data":
-            base_name = "data"
+        if item_id == "home":
+            base_name = "home"
         else:
             base_name = item_id
         
@@ -63,14 +63,14 @@ class GraphApp:
         html_dir = self.file_utils.ensure_html_directory_exists()
         
         # Generate main data view
-        main_html_path = self.generate_graph_for_item("data")
+        main_html_path = self.generate_graph_for_item("home")
         print(f"Generated main view: {main_html_path}")
         
         # Generate views for all non-leaf items
         generated_count = 0
         for item in all_non_leaf_items:
             item_id = item.get('id')
-            if item_id and item_id != "data":
+            if item_id and item_id != "home":
                 try:
                     html_path = self.generate_graph_for_item(item_id)
                     print(f"Generated: {html_path}")

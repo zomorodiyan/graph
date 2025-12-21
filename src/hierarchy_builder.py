@@ -83,15 +83,15 @@ class HierarchyBuilder:
         """Generate breadcrumb navigation for an item based on its ID (supports unlimited depth)."""
         structure = self._load_yaml_structure()
         
-        # No breadcrumb for data.html (root page)
-        if item_id == "data":
+        # No breadcrumb for home.html (root page)
+        if item_id == "home":
             return []
         
         # Find the item and build its path
         path = self._find_item_path(structure, item_id)
         
         # Convert path to breadcrumb - include all items in the path
-        breadcrumb = [("Data", "data.html")]
+        breadcrumb = [("Home", "home.html")]
         
         for item in path:
             breadcrumb.append((item['title'], f"{item['id']}.html"))
@@ -115,11 +115,11 @@ class HierarchyBuilder:
         
         return search_recursive(structure['structure']) or []
     
-    def parse_structure_for_display(self, target_id="data"):
+    def parse_structure_for_display(self, target_id="home"):
         """Parse YAML structure and build 3-level hierarchy data for display from any starting point."""
         structure = self._load_yaml_structure()
         
-        if target_id == "data":
+        if target_id == "home":
             # Return top-level view (show first 3 levels)
             return self._build_dynamic_view(structure, None, 3)
         else:

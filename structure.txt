@@ -142,8 +142,3 @@ structure
     day
     week
     month
-  temp
-    jkl
-      due: 2025-12-22
-    adfad
-      due: 2025-12-20

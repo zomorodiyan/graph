@@ -103,7 +103,7 @@ class HTMLGenerator:
         except (ValueError, TypeError, AttributeError):
             return ""
     
-    def generate_html_graph(self, data, output_path, current_item_id="data", breadcrumb_path=None):
+    def generate_html_graph(self, data, output_path, current_item_id="home", breadcrumb_path=None):
         """Generate an interactive HTML graph."""
         if breadcrumb_path is None:
             breadcrumb_path = []
@@ -746,6 +746,9 @@ class HTMLGenerator:
             font-weight: bold;
             color: #333;
         }
+        body.dark-theme .breadcrumb .current {
+            color: #bbb;
+        }
         .current-date {
             margin-top: 20px;
             padding: 5px 10px;
@@ -754,6 +757,9 @@ class HTMLGenerator:
             font-size: 12px;
             color: #666;
             text-align: right;
+        }
+        body.dark-theme .current-date {
+            color: #555;
         }
         .refresh-icon {
             cursor: pointer;
@@ -795,19 +801,19 @@ class HTMLGenerator:
         }
         /* Darker backgrounds for time bubbles in dark mode */
         body.dark-theme .due-overdue {
-            background-color: #2a1515;
+            background-color: #3a2525;
             color: #ffebee;
         }
         body.dark-theme .due-today {
-            background-color: #3d2515;
+            background-color: #4d3525;
             color: #fff3e0;
         }
         body.dark-theme .due-soon {
-            background-color: #1a2e1d;
+            background-color: #2a3e2d;
             color: #e8f5e9;
         }
         body.dark-theme .due-later {
-            background-color: #152b3d;
+            background-color: #253b4d;
             color: #e3f2fd;
         }
         /* Time category items (Over, Day, Week, Month) match time bubble colors */
