@@ -9,8 +9,16 @@ from simple_parser import SimpleParser
 class FileUtils:
     """Utility class for YAML operations and path handling."""
     
-    def __init__(self, structure_file_path="../structure.txt"):
-        self.structure_file_path = structure_file_path
+    def __init__(self, structure_file_path=None):
+        # Resolve project root as the parent of this file's directory
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(base_dir, os.pardir))
+        # Use provided path or default to project-root/structure.txt
+        self.structure_file_path = (
+            structure_file_path
+            if structure_file_path is not None
+            else os.path.join(project_root, "structure.txt")
+        )
     
     def load_yaml_structure(self):
         """Load structure from file and auto-generate IDs based on key paths."""
@@ -252,7 +260,9 @@ class FileUtils:
     
     @staticmethod
     def ensure_html_directory_exists():
-        """Create html directory if it doesn't exist."""
-        html_dir = "../html"
+        """Create html directory under project root if it doesn't exist."""
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(base_dir, os.pardir))
+        html_dir = os.path.join(project_root, "html")
         os.makedirs(html_dir, exist_ok=True)
         return html_dir

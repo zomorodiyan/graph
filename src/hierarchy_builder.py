@@ -9,7 +9,12 @@ from datetime import datetime, timedelta
 class HierarchyBuilder:
     """Builds and manages hierarchy structure from YAML configuration."""
     
-    def __init__(self, structure_file_path="../structure.txt"):
+    def __init__(self, structure_file_path=None):
+        if structure_file_path is None:
+            import os
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.abspath(os.path.join(base_dir, os.pardir))
+            structure_file_path = os.path.join(project_root, "structure.txt")
         self.structure_file_path = structure_file_path
         self._structure_data = None
     

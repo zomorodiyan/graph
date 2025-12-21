@@ -30,10 +30,12 @@ class HTMLGenerator:
                 "green": {"light": "#A5D6A7", "medium": "#388E3C", "dark": "#1B5E20"},
                 "blue": {"light": "#90CAF9", "medium": "#1976D2", "dark": "#0D47A1"},
                 "purple": {"light": "#CE93D8", "medium": "#8E24AA", "dark": "#4A148C"},
-                "red": {"light": "#FFAB91", "medium": "#D84315", "dark": "#BF360C"},
+                "brown": {"light": "#BCAAA4", "medium": "#795548", "dark": "#3E2723"},
             }
             progress_color = color_map.get(color_name, {}).get(intensity, "#388E3C")
-            return f'<div class="underline-progress" style="--progress-color: {progress_color}; --progress-color-light: #dddddd; --progress-percent: {progress}%;"></div>'
+            progress_color_dark = color_map.get(color_name, {}).get("dark", "#1B5E20")
+            progress_color_light = color_map.get(color_name, {}).get("light", "#A5D6A7")
+            return f'<div class="underline-progress" style="--progress-color: {progress_color}; --progress-color-dark: {progress_color_dark}; --progress-color-light: {progress_color_light}; --progress-percent: {progress}%;"></div>'
         else:
             # No progress specified, use solid color underline
             return f'<div class="underline color-{color_name}-{intensity}"></div>'
@@ -55,7 +57,7 @@ class HTMLGenerator:
                 "green": ("#0D4F14", "#388E3C"),
                 "blue": ("#063A85", "#1976D2"),
                 "purple": ("#3A0F6E", "#8E24AA"),
-                "red": ("#A12F08", "#D84315"),
+                "brown": ("#3E2723", "#795548"),
             }
             colors = text_color_map.get(color_name, ("#0D4F14", "#388E3C"))
             text_color = colors[0]
@@ -136,66 +138,172 @@ class HTMLGenerator:
         
         html_content = f"""
 <!DOCTYPE html>
-<html lang="en">
+<html lang=\"en\">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
     <title>Knowledge Graph - {current_item_id.replace('_', ' ').title()}</title>
     <style>
+        /* Theme toggle button styles */
+        .theme-toggle {{
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 3000;
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s;
+        }}
+        .theme-toggle .icon {{
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        .theme-toggle.sun {{
+            background: #fff;
+            color: #FFD600;
+            border: 2px solid #FFD600;
+        }}
+        .theme-toggle.moon {{
+            background: #222;
+            color: #fff;
+            border: 2px solid #222;
+        }}
+        /* Dark theme styles */
+        body.dark-theme {{
+            background-color: #23272e !important;
+            color: #fff !important;
+        }}
+        body.dark-theme .graph-container {{
+            background: #2d313a !important;
+            color: #fff !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }}
+        /* Dark mode text colors */
+        /* Layer1 and Layer2 use light gray */
+        body.dark-theme .layer1 {{
+            color: #bbb !important;
+        }}
+        body.dark-theme .layer2 {{
+            color: #bbb !important;
+        }}
+        /* Layer3 uses light group colors */
+        body.dark-theme .layer3.color-green {{
+            color: #A5D6A7 !important;
+        }}
+        body.dark-theme .layer3.color-blue {{
+            color: #90CAF9 !important;
+        }}
+        body.dark-theme .layer3.color-purple {{
+            color: #CE93D8 !important;
+        }}
+        body.dark-theme .layer3.color-brown {{
+            color: #BCAAA4 !important;
+        }}
+        /* All contexts use light gray */
+        body.dark-theme .context,
+        body.dark-theme .layer1-context,
+        body.dark-theme .layer2-context,
+        body.dark-theme .layer3-context {{
+            color: #bbb !important;
+        }}
+        /* New item placeholders use light gray */
+        body.dark-theme .new-item.placeholder {{
+            color: #bbb !important;
+        }}
+        body.dark-theme .section {{
+            background: transparent !important;
+        }}
+        body.dark-theme .breadcrumb,
+        body.dark-theme .modal-content,
+        body.dark-theme .current-date {{
+            background: #23272e !important;
+            color: #fff !important;
+        }}
+        body.dark-theme .btn-primary {{
+            background-color: #444 !important;
+            color: #fff !important;
+        }}
+        body.dark-theme .btn-secondary {{
+            background-color: #333 !important;
+            color: #fff !important;
+        }}
+        body.dark-theme .btn-danger {{
+            background-color: #b71c1c !important;
+            color: #fff !important;
+        }}
+        /* Underline colors in dark mode */
+        /* Layer1 underlines use dark group color */
+        body.dark-theme .underline.color-green-medium {{
+            background-color: #1B5E20 !important;
+        }}
+        body.dark-theme .underline.color-blue-medium {{
+            background-color: #0D47A1 !important;
+        }}
+        body.dark-theme .underline.color-purple-medium {{
+            background-color: #4A148C !important;
+        }}
+        body.dark-theme .underline.color-brown-medium {{
+            background-color: #3E2723 !important;
+        }}
+        /* Layer2 underlines use medium group color */
+        body.dark-theme .underline.color-green-light {{
+            background-color: #388E3C !important;
+        }}
+        body.dark-theme .underline.color-blue-light {{
+            background-color: #1976D2 !important;
+        }}
+        body.dark-theme .underline.color-purple-light {{
+            background-color: #8E24AA !important;
+        }}
+        body.dark-theme .underline.color-brown-light {{
+            background-color: #795548 !important;
+        }}
+        /* fallback for other underlines */
+        body.dark-theme .underline,
+        body.dark-theme .underline-progress {{
+            background: #444 !important;
+        }}
+        /* Progress underline uses dark color for filled section in dark mode */
+        body.dark-theme .underline-progress {{
+            background: linear-gradient(to right, var(--progress-color-dark, #1B5E20) var(--progress-percent), var(--progress-color-light, #A5D6A7) var(--progress-percent)) !important;
+        }}
+        body.dark-theme .layer1.color-group-green:hover,
+        body.dark-theme .layer2.color-green:hover,
+        body.dark-theme .layer3.color-green:hover {{
+            background-color: rgba(165, 214, 167, 0.2) !important;
+        }}
+        body.dark-theme .layer1.color-group-blue:hover,
+        body.dark-theme .layer2.color-blue:hover,
+        body.dark-theme .layer3.color-blue:hover {{
+            background-color: rgba(144, 202, 249, 0.2) !important;
+        }}
+        body.dark-theme .layer1.color-group-purple:hover,
+        body.dark-theme .layer2.color-purple:hover,
+        body.dark-theme .layer3.color-purple:hover {{
+            background-color: rgba(206, 147, 216, 0.2) !important;
+        }}
+        body.dark-theme .layer1.color-group-brown:hover,
+        body.dark-theme .layer2.color-group-brown:hover,
+        body.dark-theme .layer3.color-brown:hover {{
+            background-color: rgba(188, 170, 164, 0.2) !important;
+        }}
         {self._get_css_styles()}
     </style>
 </head>
 <body>
-    <div class="graph-container">
-        {breadcrumb_html}
-        <div class="pending-actions" id="pendingActions">
-            <div style="flex: 1;">
-                <div style="font-weight: bold; margin-bottom: 8px;">Pending changes:</div>
-                <ul id="changesList" style="margin: 0; padding-left: 20px; font-size: 13px; color: #333;"></ul>
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <button id="confirmChangesBtn" class="btn-primary" onclick="confirmQueuedChanges()">Confirm changes</button>
-                <button id="cancelChangesBtn" class="btn-secondary" onclick="cancelQueuedChanges()">Cancel changes</button>
-            </div>
-        </div>
-        {self._build_content_sections(data, current_item_id)}
-        <div class="current-date">Updated: {current_date} <span onclick="regenerateCurrentPage()" class="refresh-icon" title="Regenerate page">↻</span></div>
-    </div>
-    <div id="notification" class="notification"></div>
-    
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <h2 id="modalTitle">Edit Item</h2>
-            <div class="form-group">
-                <label for="editName">Item Name:</label>
-                <input type="text" id="editName" placeholder="Item name (key)">
-            </div>
-            <div class="form-group">
-                <label for="editProgress">Progress (0-100):</label>
-                <input type="number" id="editProgress" min="0" max="100" placeholder="Leave empty to keep current">
-            </div>
-            <div class="form-group">
-                <label for="editContext">Context:</label>
-                <textarea id="editContext" rows="3" placeholder="Leave empty to keep current"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="editDue">Due Date (YYYY-MM-DD):</label>
-                <input type="date" id="editDue" placeholder="Leave empty to keep current">
-            </div>
-            <div class="modal-buttons">
-                <button onclick="saveEdit()" class="btn-primary">Save</button>
-                <button onclick="closeEditModal()" class="btn-secondary">Cancel</button>
-                <button onclick="deleteItem()" id="deleteButton" class="btn-danger" style="display:none;">Delete</button>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        {self._get_javascript_functions()}
-    </script>
-</body>
-</html>"""
+    <button id=\"themeToggle\" class=\"theme-toggle sun\" title=\"Toggle dark mode\" aria-label=\"Toggle dark mode\">\n        <span class=\"icon\" id=\"themeIcon\">\n            <!-- Sun SVG -->\n            <svg id=\"sunIcon\" xmlns=\"http://www.w3.org/2000/svg\" width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\" fill=\"#FFD600\"/><g stroke=\"#FFD600\"><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></g></svg>\n            <!-- Moon SVG (hidden by default) -->\n            <svg id=\"moonIcon\" xmlns=\"http://www.w3.org/2000/svg\" width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"display:none;\"><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"#222\"/><path d=\"M21 12.79A9 9 0 0 1 12.21 3 7 7 0 0 0 12 17a7 7 0 0 0 9-4.21z\" fill=\"#fff\"/></svg>\n        </span>\n    </button>
+    <div class=\"graph-container\">\n        {breadcrumb_html}\n        <div class=\"pending-actions\" id=\"pendingActions\">\n            <div style=\"flex: 1;\">\n                <div style=\"font-weight: bold; margin-bottom: 8px;\">Pending changes:</div>\n                <ul id=\"changesList\" style=\"margin: 0; padding-left: 20px; font-size: 13px; color: #333;\"></ul>\n            </div>\n            <div style=\"display: flex; gap: 8px;\">\n                <button id=\"confirmChangesBtn\" class=\"btn-primary\" onclick=\"confirmQueuedChanges()\">Confirm changes</button>\n                <button id=\"cancelChangesBtn\" class=\"btn-secondary\" onclick=\"cancelQueuedChanges()\">Cancel changes</button>\n            </div>\n        </div>\n        {self._build_content_sections(data, current_item_id)}\n        <div class=\"current-date\">Updated: {current_date} <span onclick=\"regenerateCurrentPage()\" class=\"refresh-icon\" title=\"Regenerate page\">↻</span></div>\n    </div>\n    <div id=\"notification\" class=\"notification\"></div>\n    \n    <!-- Edit Modal -->\n    <div id=\"editModal\" class=\"modal\">\n        <div class=\"modal-content\">\n            <h2 id=\"modalTitle\">Edit Item</h2>\n            <div class=\"form-group\">\n                <label for=\"editName\">Item Name:</label>\n                <input type=\"text\" id=\"editName\" placeholder=\"Item name (key)\">\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editProgress\">Progress (0-100):</label>\n                <input type=\"number\" id=\"editProgress\" min=\"0\" max=\"100\" placeholder=\"Leave empty to keep current\">\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editContext\">Context:</label>\n                <textarea id=\"editContext\" rows=\"3\" placeholder=\"Leave empty to keep current\"></textarea>\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editDue\">Due Date (YYYY-MM-DD):</label>\n                <input type=\"date\" id=\"editDue\" placeholder=\"Leave empty to keep current\">\n            </div>\n            <div class=\"modal-buttons\">\n                <button onclick=\"saveEdit()\" class=\"btn-primary\">Save</button>\n                <button onclick=\"closeEditModal()\" class=\"btn-secondary\">Cancel</button>\n                <button onclick=\"deleteItem()\" id=\"deleteButton\" class=\"btn-danger\" style=\"display:none;\">Delete</button>\n            </div>\n        </div>\n    </div>\n    \n    <script>\n        // Theme toggle logic\n        const themeToggle = document.getElementById('themeToggle');\n        const sunIcon = document.getElementById('sunIcon');\n        const moonIcon = document.getElementById('moonIcon');\n        function setTheme(isDark) {{\n            if (isDark) {{\n                document.body.classList.add('dark-theme');\n                themeToggle.classList.remove('sun');\n                themeToggle.classList.add('moon');\n                sunIcon.style.display = 'none';\n                moonIcon.style.display = '';\n            }} else {{\n                document.body.classList.remove('dark-theme');\n                themeToggle.classList.remove('moon');\n                themeToggle.classList.add('sun');\n                sunIcon.style.display = '';\n                moonIcon.style.display = 'none';\n            }}\n        }}\n        // Persist theme in sessionStorage\n        function getThemePref() {{\n            return sessionStorage.getItem('theme') === 'dark';\n        }}\n        function setThemePref(isDark) {{\n            sessionStorage.setItem('theme', isDark ? 'dark' : 'light');\n        }}\n        // Initial theme\n        setTimeout(() => {{\n            setTheme(getThemePref());\n            themeToggle.addEventListener('click', function() {{\n                const isDark = !document.body.classList.contains('dark-theme');\n                setTheme(isDark);\n                setThemePref(isDark);\n            }});\n        }}, 0);\n        {self._get_javascript_functions()}\n    </script>\n</body>\n</html>"""
         return html_content
     
     def _get_css_styles(self):
@@ -235,8 +343,8 @@ class HTMLGenerator:
         .layer1.color-group-purple:hover {
             background-color: rgba(206, 147, 216, 0.5);
         }
-        .layer1.color-group-red:hover {
-            background-color: rgba(255, 171, 145, 0.5);
+        .layer1.color-group-brown:hover {
+            background-color: rgba(188, 170, 164, 0.5);
         }
         .layer2 {
             font-size: 14px;
@@ -266,8 +374,8 @@ class HTMLGenerator:
         .layer2.color-purple:hover {
             background-color: rgba(206, 147, 216, 0.5);
         }
-        .layer2.color-group-red:hover {
-            background-color: rgba(255, 171, 145, 0.5);
+        .layer2.color-group-brown:hover {
+            background-color: rgba(188, 170, 164, 0.5);
         }
         .layer2.clickable {
             border: 0px dashed #2196f3;
@@ -284,9 +392,9 @@ class HTMLGenerator:
             background-color: rgba(206, 147, 216, 0.5);
             border-color: #8E24AA;
         }
-        .layer2.clickable.color-group-red:hover {
-            background-color: rgba(255, 171, 145, 0.5);
-            border-color: #D84315;
+        .layer2.clickable.color-group-brown:hover {
+            background-color: rgba(188, 170, 164, 0.5);
+            border-color: #795548;
         }
         .layer2:not(.clickable) {
             cursor: default;
@@ -331,11 +439,11 @@ class HTMLGenerator:
         .layer3.color-green { color: #0D4F14; }
         .layer3.color-blue { color: #063A85; }
         .layer3.color-purple { color: #3A0F6E; }
-        .layer3.color-red { color: #A12F08; }
+        .layer3.color-brown { color: #3E2723; }
         .layer3.color-green:hover { background-color: rgba(165, 214, 167, 0.5); }
         .layer3.color-blue:hover { background-color: rgba(144, 202, 249, 0.5); }
         .layer3.color-purple:hover { background-color: rgba(206, 147, 216, 0.5); }
-        .layer3.color-red:hover { background-color: rgba(255, 171, 145, 0.5); }
+        .layer3.color-brown:hover { background-color: rgba(188, 170, 164, 0.5); }
         .layer3-progress {
             background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
             -webkit-background-clip: text;
@@ -358,9 +466,9 @@ class HTMLGenerator:
             background: rgba(206, 147, 216, 0.5);
             -webkit-text-fill-color: #3A0F6E;
         }
-        .layer3-progress.color-red:hover {
-            background: rgba(255, 171, 145, 0.5);
-            -webkit-text-fill-color: #A12F08;
+        .layer3-progress.color-brown:hover {
+            background: rgba(188, 170, 164, 0.5);
+            -webkit-text-fill-color: #3E2723;
         }
         .layer3-progress-clickable {
             background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
@@ -386,9 +494,9 @@ class HTMLGenerator:
             background: rgba(206, 147, 216, 0.5);
             -webkit-text-fill-color: #3A0F6E;
         }
-        .layer3-progress-clickable.color-red:hover {
-            background: rgba(255, 171, 145, 0.5);
-            -webkit-text-fill-color: #A12F08;
+        .layer3-progress-clickable.color-brown:hover {
+            background: rgba(188, 170, 164, 0.5);
+            -webkit-text-fill-color: #3E2723;
         }
         .underline {
             height: 2px;
@@ -422,9 +530,9 @@ class HTMLGenerator:
         .color-purple-light { background-color: #CE93D8; }
         .color-purple-medium { background-color: #8E24AA; }
         .color-purple-dark { background-color: #4A148C; }
-        .color-red-light { background-color: #FFAB91; }
-        .color-red-medium { background-color: #D84315; }
-        .color-red-dark { background-color: #BF360C; }
+        .color-brown-light { background-color: #BCAAA4; }
+        .color-brown-medium { background-color: #795548; }
+        .color-brown-dark { background-color: #3E2723; }
         .section {
             margin-bottom: 10px;
             display: flex;
@@ -636,6 +744,23 @@ class HTMLGenerator:
         .due-later {
             background-color: #e3f2fd;
             color: #1565c0;
+        }
+        /* Darker backgrounds for time bubbles in dark mode */
+        body.dark-theme .due-overdue {
+            background-color: #5c1414;
+            color: #ffebee;
+        }
+        body.dark-theme .due-today {
+            background-color: #6b3400;
+            color: #fff3e0;
+        }
+        body.dark-theme .due-soon {
+            background-color: #1b4d20;
+            color: #e8f5e9;
+        }
+        body.dark-theme .due-later {
+            background-color: #0d3768;
+            color: #e3f2fd;
         }
         .item-path {
             font-size: 11px;
@@ -1061,8 +1186,8 @@ class HTMLGenerator:
         # Color mapping
         base_colors = [
             ("green", "#A5D6A7", "#388E3C", "#1B5E20"),
+            ("brown", "#BCAAA4", "#795548", "#3E2723"),
             ("blue", "#90CAF9", "#1976D2", "#0D47A1"),
-            ("red", "#FFAB91", "#D84315", "#BF360C"),
             ("purple", "#CE93D8", "#8E24AA", "#4A148C"),
         ]
 
