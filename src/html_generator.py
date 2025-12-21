@@ -233,6 +233,16 @@ class HTMLGenerator:
             background: #23272e !important;
             color: #fff !important;
         }}
+        body.dark-theme .modal-content h2,
+        body.dark-theme .form-group label {{
+            color: #ccc !important;
+        }}
+        body.dark-theme .form-group input,
+        body.dark-theme .form-group textarea {{
+            background: #2d313a !important;
+            color: #ccc !important;
+            border-color: #444 !important;
+        }}
         body.dark-theme .btn-primary {{
             background-color: #444 !important;
             color: #fff !important;
@@ -242,8 +252,11 @@ class HTMLGenerator:
             color: #fff !important;
         }}
         body.dark-theme .btn-danger {{
-            background-color: #b71c1c !important;
+            background-color: #a84444 !important;
             color: #fff !important;
+        }}
+        body.dark-theme .btn-danger:hover {{
+            background-color: #963838 !important;
         }}
         /* Underline colors in dark mode */
         /* Layer1 underlines use dark group color */
@@ -690,11 +703,17 @@ class HTMLGenerator:
             background-color: #e0e0e0;
         }
         .btn-danger {
-            background-color: #e53935;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            background-color: #d84545;
             color: white;
         }
         .btn-danger:hover {
-            background-color: #c62828;
+            background-color: #c23838;
         }
         /* Pending actions toolbar */
         .pending-actions {
@@ -709,6 +728,8 @@ class HTMLGenerator:
         .deleted {
             color: #c62828;
             text-decoration: line-through;
+            text-decoration-color: #c62828 !important;
+            -webkit-text-decoration-color: #c62828 !important;
             opacity: 0.9;
         }
         /* Force strikethrough on progress items that are deleted */
@@ -718,6 +739,11 @@ class HTMLGenerator:
             -webkit-text-decoration: line-through !important;
             text-decoration-color: #c62828 !important;
             -webkit-text-decoration-color: #c62828 !important;
+        }
+        body.dark-theme .deleted {
+            color: #ff6b6b;
+            text-decoration-color: #ff6b6b !important;
+            -webkit-text-decoration-color: #ff6b6b !important;
         }
         body.dark-theme .deleted.layer3-progress,
         body.dark-theme .deleted.layer3-progress-clickable {
