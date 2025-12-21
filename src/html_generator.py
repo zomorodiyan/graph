@@ -1029,6 +1029,7 @@ class HTMLGenerator:
                 modal.setAttribute('data-mode', 'edit');
                 modal.setAttribute('data-has-children', hasChildren ? 'true' : 'false');
                 // Store original values to detect when fields are cleared
+                modal.setAttribute('data-original-name', itemName);
                 modal.setAttribute('data-original-progress', currentProgress);
                 modal.setAttribute('data-original-context', currentContext);
                 modal.setAttribute('data-original-due', currentDue);
@@ -1093,15 +1094,18 @@ class HTMLGenerator:
                     return;
                 } else {
                     // Queue edit with description - include all fields that changed or were cleared
-                    const nameInput = document.getElementById('editName');
-                    const originalName = nameInput.value;
-                    
                     // Get original values from modal attributes
+                    const originalName = modal.getAttribute('data-original-name') || '';
                     const originalProgress = modal.getAttribute('data-original-progress') || '';
                     const originalContext = modal.getAttribute('data-original-context') || '';
                     const originalDue = modal.getAttribute('data-original-due') || '';
                     
                     const changes = {};
+                    
+                    // Handle name: send new name if changed, omit if unchanged
+                    if (name !== originalName) {
+                        changes.name = name;
+                    }
                     
                     // Handle progress: send empty string if cleared, value if changed, omit if unchanged
                     if (progress !== originalProgress) {

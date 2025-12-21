@@ -62,22 +62,28 @@ def _clean_structure_for_save(data: dict) -> dict:
         if not isinstance(item, dict):
             return item
         
-        # Remove auto-generated fields
-        item.pop('id', None)
-        item.pop('title', None)
+        # Create a new cleaned dict to avoid modification-during-iteration issues
+        result = {}
         
-        # If there's a 'children' key, flatten it back into the item
+        # Copy properties (not children or auto-generated fields)
+        for key in ['progress', 'context', 'due']:
+            if key in item:
+                result[key] = item[key]
+        
+        # Handle children: flatten them into the result
         if 'children' in item:
-            children = item.pop('children')
-            for child_key, child_value in children.items():
-                item[child_key] = clean_item(child_value)
+            for child_key, child_value in item['children'].items():
+                result[child_key] = clean_item(child_value)
         
-        # Recursively clean remaining items
-        for key, value in list(item.items()):
-            if isinstance(value, dict):
-                item[key] = clean_item(value)
+        # Handle any other nested dicts (that aren't properties or children)
+        for key, value in item.items():
+            if key not in {'id', 'title', 'children', 'progress', 'context', 'due'}:
+                if isinstance(value, dict):
+                    result[key] = clean_item(value)
+                else:
+                    result[key] = value
         
-        return item
+        return result
     
     # Clean the structure section
     if 'structure' in cleaned:
@@ -202,13 +208,15 @@ async def update_item(path: str, request: Request):
         
         # Handle renaming first (restructure parent if needed)
         new_name = update_data.get('name')
+        renamed = False
         if new_name is not None and new_name != item_key:
             new_name = new_name.lower().replace(' ', '_')
             if new_name in parent and new_name != item_key:
                 raise HTTPException(status_code=400, detail=f"Item '{new_name}' already exists at this level")
             # Rename the item by moving its value to new key
-            parent[new_name] = item_value
-            del parent[item_key]
+            parent[new_name] = parent.pop(item_key)
+            item_value = parent[new_name]  # Update reference to the renamed item
+            renamed = True
             print(f"DEBUG: Renamed item from '{item_key}' to '{new_name}'")
         
         # Handle progress: update, remove, or leave unchanged
@@ -240,22 +248,39 @@ async def update_item(path: str, request: Request):
             print(f"DEBUG: Set due to {update_data['due']}")
         
         print(f"DEBUG: About to save structure...")
+        print(f"DEBUG: Item value before cleaning: {item_value}")
         
         # IMPORTANT: Remove auto-generated fields before saving
         data_to_save = _clean_structure_for_save(data)
         print(f"DEBUG: Cleaned structure, saving...")
         
+        # Debug: Print the path to the renamed item in the cleaned structure
+        if renamed:
+            try:
+                check_keys = keys[:-1] + [new_name] if keys else [new_name]
+                cleaned_parent, _, cleaned_item = find_item(data_to_save['structure'], check_keys)
+                print(f"DEBUG: After cleaning, renamed item at {check_keys} exists: {cleaned_parent is not None}")
+            except Exception as e:
+                print(f"DEBUG: Error checking renamed item: {e}")
+        
         # Save the updated structure (without auto-generated fields)
         file_utils.save_structure(data_to_save)
         print(f"DEBUG: Structure saved successfully")
         
+        # Update path if renamed
+        final_path = path
+        if renamed:
+            path_parts = keys[:-1] + [new_name]
+            final_path = '.'.join(path_parts) if path_parts else new_name
+            print(f"DEBUG: Updated path from '{path}' to '{final_path}'")
+        
         # Trigger incremental regeneration
-        affected_paths = get_affected_paths(path)
+        affected_paths = get_affected_paths(final_path)
         regenerate_html(affected_paths)
         
         return {
             "success": True,
-            "path": path,
+            "path": final_path,
             "updated": item_value
         }
     except Exception as e:

@@ -10,8 +10,11 @@ structure
       progress: 90
     train
       progress: 0
+      newtyui
       cardio
+        progress: 5
       flexibility
+        progress: 50
       strength
         progress: 49
     nutrition
@@ -35,24 +38,17 @@ structure
   interaction
     community
       progress: 60
-      Zhengtao
-      Zixun
-      Xavier
-      Prokash
+      supervisor
+      colleague
     friends
       progress: 60
-      Ali
-      Milad
-      Matin
-      Mohamad
+      childhood
+      highschool
+      college
     family
-      Alireza
-        progress: 0
-      Soqra
-      Hosein
-        context: Parmis
-      Hojjat
-      Hamid
+      parent
+      sibling
+      niece
   level
     study
       asu_craft
