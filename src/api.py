@@ -500,7 +500,7 @@ async def regenerate_page(item_id: str):
     try:
         from graph import GraphApp
         app_gen = GraphApp()
-        html_path = app_gen.generate_graph_for_item(item_id or "data")
+        html_path = app_gen.generate_graph_for_item(item_id or "home")
         return {
             "success": True,
             "item_id": item_id,

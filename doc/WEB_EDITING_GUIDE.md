@@ -43,7 +43,7 @@ The server will start at `http://localhost:8000`
 
 ### 2. Open the Web Interface
 
-Open [html/data.html](html/data.html) in your browser. This is the main entry point for navigation.
+Open [html/home.html](html/home.html) in your browser. This is the main entry point for navigation.
 
 ### 3. Edit an Item
 
@@ -175,7 +175,7 @@ structure
 ### Architecture
 
 ```
-Browser (html/data.html)
+Browser (html/home.html)
     ↓ [Long-press event]
     ↓
 JavaScript Modal Form (saveEdit())

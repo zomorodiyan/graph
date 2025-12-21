@@ -217,9 +217,12 @@ class HTMLGenerator:
         body.dark-theme .layer3-context {{
             color: #bbb !important;
         }}
-        /* New item placeholders use light gray */
+        /* New item placeholders use medium gray (between #444 dark and #bbb light) */
         body.dark-theme .new-item.placeholder {{
-            color: #bbb !important;
+            color: #888 !important;
+        }}
+        body.dark-theme .new-item-hint {{
+            color: #888 !important;
         }}
         body.dark-theme .section {{
             background: transparent !important;
@@ -777,7 +780,7 @@ class HTMLGenerator:
         }
         .due-date {
             font-size: 10px;
-            padding: 2px 6px;
+            padding: 1.8px 6px;
             border-radius: 3px;
             display: inline-block;
             margin-left: 8px;
@@ -817,28 +820,28 @@ class HTMLGenerator:
             color: #e3f2fd;
         }
         /* Time category items (Over, Day, Week, Month) match time bubble colors */
-        [data-item-path="time.over"] {
+        .time-category-over {
             color: #c62828 !important;
         }
-        body.dark-theme [data-item-path="time.over"] {
+        body.dark-theme .time-category-over {
             color: #ffb3ba !important;
         }
-        [data-item-path="time.day"] {
+        .time-category-day {
             color: #ef6c00 !important;
         }
-        body.dark-theme [data-item-path="time.day"] {
+        body.dark-theme .time-category-day {
             color: #ffd699 !important;
         }
-        [data-item-path="time.week"] {
+        .time-category-week {
             color: #2e7d32 !important;
         }
-        body.dark-theme [data-item-path="time.week"] {
+        body.dark-theme .time-category-week {
             color: #b3e5b3 !important;
         }
-        [data-item-path="time.month"] {
+        .time-category-month {
             color: #1565c0 !important;
         }
-        body.dark-theme [data-item-path="time.month"] {
+        body.dark-theme .time-category-month {
             color: #b3d9f2 !important;
         }
         .item-path {
@@ -1177,7 +1180,7 @@ class HTMLGenerator:
         async function regenerateCurrentPage() {
             // Extract current page ID from filename
             const path = window.location.pathname;
-            const filename = path.substring(path.lastIndexOf('/') + 1) || 'data.html';
+            const filename = path.substring(path.lastIndexOf('/') + 1) || 'home.html';
             const itemId = filename.replace('.html', '');
             
             showNotification('Regenerating page...');
@@ -1275,9 +1278,10 @@ class HTMLGenerator:
             color_name = base_colors[idx % 4][0]  # Only get the color name
             content += self._build_layer1_section(item, color_name)
 
-        # Add a grayed-out "New item" placeholder after all level 1 items
-        parent_path = current_item_id.replace('_', '.') if current_item_id else ""
-        content += f"""
+        # Add a grayed-out "New item" placeholder after all level 1 items (skip for time page)
+        if current_item_id != 'time':
+            parent_path = current_item_id.replace('_', '.') if current_item_id else ""
+            content += f"""
         <div class=\"section\">
             <div class=\"layer1-container\">
                 <div class=\"layer1 new-item placeholder\" data-new-item=\"true\" data-parent-path=\"{parent_path}\" data-parent-name=\"{current_item_id}\">New item</div>
@@ -1294,10 +1298,21 @@ class HTMLGenerator:
         layer1_id = item.get("layer1_id", "")
         layer1_has_children = len(item.get("layer2", [])) > 0
         
-        # Make layer1 clickable only if it has children (is not a leaf node)
+        # Check if this is a time category (Over, Day, Week, Month) - they should not be clickable or editable
+        time_categories = ['time_over', 'time_day', 'time_week', 'time_month']
+        is_time_category = layer1_id in time_categories
+        
+        # Add time category CSS class for custom coloring
+        time_category_class = ""
+        if is_time_category:
+            # Map time_over -> time-category-over
+            category_name = layer1_id.replace('time_', '')
+            time_category_class = f"time-category-{category_name}"
+        
+        # Make layer1 clickable only if it has children (is not a leaf node) and is not a time category
         layer1_is_leaf = self.file_utils.is_leaf_node(layer1_id) if layer1_id else True
-        layer1_clickable_class = "clickable" if layer1_has_children and not layer1_is_leaf else ""
-        layer1_onclick = f"onclick=\"navigateToItem('{layer1_id}')\"" if layer1_id and not layer1_is_leaf else ""
+        layer1_clickable_class = "clickable" if layer1_has_children and not layer1_is_leaf and not is_time_category else ""
+        layer1_onclick = f"onclick=\"navigateToItem('{layer1_id}')\"" if layer1_id and not layer1_is_leaf and not is_time_category else ""
         layer1_color_class = f"color-group-{color_name}"
 
         # Get layer1 context and due date
@@ -1314,20 +1329,23 @@ class HTMLGenerator:
         layer1_progress = item.get("layer1_progress")
         layer1_underline = self._create_progress_underline(layer1_progress, color_name, "medium")
         
-        # Data attributes for editing
-        layer1_data_path = layer1_id.replace('_', '.') if layer1_id else ""
-        layer1_data_attrs = f'data-item-path="{layer1_data_path}" data-item-name="{layer1_name}" data-has-children="{str(bool(layer1_has_children)).lower()}"'
-        if layer1_progress is not None:
-            layer1_data_attrs += f' data-progress="{layer1_progress}"'
-        if layer1_context:
-            layer1_data_attrs += f' data-context="{layer1_context}"'
-        if layer1_due:
-            layer1_data_attrs += f' data-due="{layer1_due}"'
+        # Data attributes for editing - skip for time categories
+        if is_time_category:
+            layer1_data_attrs = ""
+        else:
+            layer1_data_path = layer1_id.replace('_', '.') if layer1_id else ""
+            layer1_data_attrs = f'data-item-path="{layer1_data_path}" data-item-name="{layer1_name}" data-has-children="{str(bool(layer1_has_children)).lower()}"'
+            if layer1_progress is not None:
+                layer1_data_attrs += f' data-progress="{layer1_progress}"'
+            if layer1_context:
+                layer1_data_attrs += f' data-context="{layer1_context}"'
+            if layer1_due:
+                layer1_data_attrs += f' data-due="{layer1_due}"'
 
         content = f"""
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 {layer1_clickable_class} {layer1_color_class}" {layer1_onclick} {layer1_data_attrs}>{layer1_name}{layer1_due_html}</div>
+                <div class="layer1 {layer1_clickable_class} {layer1_color_class} {time_category_class}" {layer1_onclick} {layer1_data_attrs}>{layer1_name}{layer1_due_html}</div>
                 {layer1_underline}
                 {layer1_context_html}
                 {layer1_path_html}
@@ -1338,8 +1356,11 @@ class HTMLGenerator:
         for layer2_item in item.get("layer2", []):
             content += self._build_layer2_section(layer2_item, color_name)
 
-        # Add "New subitem" placeholder for leaf level1 items (items with no children)
-        if not layer1_has_children:
+        # Add "New subitem" placeholder for leaf level1 items (skip for time page)
+        layer1_id = item.get("layer1_id", "")
+        is_time_item = layer1_id and layer1_id.startswith('time')
+        
+        if not layer1_has_children and not is_time_item:
             layer1_path_for_placeholder = layer1_data_path.replace('.', '_') if layer1_data_path else ""
             content += f"""
             <div class="layer2-container">
@@ -1364,9 +1385,18 @@ class HTMLGenerator:
         # Only make clickable if it has an ID and is not a leaf node
         layer2_is_leaf = self.file_utils.is_leaf_node(layer2_id) if layer2_id else True
         
+        # Make time categories (Over, Day, Week, Month) non-clickable
+        time_categories = ['time_over', 'time_day', 'time_week', 'time_month']
+        is_time_category = layer2_id in time_categories
+        
         # Determine CSS classes
         css_classes = [f"color-group-{color_name}"]
-        if layer2_id and not layer2_is_leaf:
+        if is_time_category:
+            # Add time category CSS class for custom coloring
+            category_name = layer2_id.replace('time_', '')
+            css_classes.append(f"time-category-{category_name}")
+            onclick_handler = ""
+        elif layer2_id and not layer2_is_leaf:
             css_classes.append("clickable")
             onclick_handler = f"onclick=\"navigateToItem('{layer2_id}')\""
         elif layer2_is_leaf:
@@ -1388,11 +1418,14 @@ class HTMLGenerator:
         layer2_progress = layer2_item.get("progress")
         layer2_underline = self._create_progress_underline(layer2_progress, color_name, "light")
         
-        # Data attributes for editing
-        layer2_data_path = layer2_id.replace('_', '.') if layer2_id else ""
-        layer2_data_attrs = f'data-item-path="{layer2_data_path}" data-item-name="{layer2_name}" data-has-children="{str(not layer2_is_leaf).lower()}"'
-        if layer2_progress is not None:
-            layer2_data_attrs += f' data-progress="{layer2_progress}"'
+        # Data attributes for editing - skip for time categories
+        if is_time_category:
+            layer2_data_attrs = ""
+        else:
+            layer2_data_path = layer2_id.replace('_', '.') if layer2_id else ""
+            layer2_data_attrs = f'data-item-path="{layer2_data_path}" data-item-name="{layer2_name}" data-has-children="{str(not layer2_is_leaf).lower()}"'
+            if layer2_progress is not None:
+                layer2_data_attrs += f' data-progress="{layer2_progress}"'
         if layer2_context:
             layer2_data_attrs += f' data-context="{layer2_context}"'
         if layer2_due:

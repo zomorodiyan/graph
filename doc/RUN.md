@@ -9,7 +9,7 @@ This guide covers how to run the web-based hierarchical graph editor on **Window
 python run.py
 ```
 
-That's it! The API server starts at `http://localhost:8000`. Open `html/data.html` in your browser.
+That's it! The API server starts at `http://localhost:8000`. Open `html/home.html` in your browser.
 
 ---
 
@@ -36,7 +36,7 @@ python run.py
 
 - Lightweight and fast
 - No browser auto-open
-- You open `html/data.html` manually
+- You open `html/home.html` manually
 
 #### Option B: All-in-One (API + HTML Servers)
 ```bash
@@ -94,13 +94,13 @@ chmod +x graph.sh      # Make script executable (first time only)
 ### 1. Access the Interface
 
 **If using `python run.py api`:**
-- Open browser and go to: `file:///path/to/html/data.html`
-  - Windows example: `file:///C:/Users/YourName/code/graph/html/data.html`
-  - Linux example: `file:///home/yourname/code/graph/html/data.html`
-- Or: Drag `html/data.html` into your browser
+- Open browser and go to: `file:///path/to/html/home.html`
+  - Windows example: `file:///C:/Users/YourName/code/graph/html/home.html`
+  - Linux example: `file:///home/yourname/code/graph/html/home.html`
+- Or: Drag `html/home.html` into your browser
 
 **If using `python run.py serve`:**
-- Browser opens automatically to `http://localhost:8080/data.html`
+- Browser opens automatically to `http://localhost:8080/home.html`
 
 ### 2. Edit Items
 
@@ -184,15 +184,15 @@ kill -9 <process_id>
 pip install -r requirements.txt
 ```
 
-### "Can't open html/data.html" in API-only mode
+### "Can't open html/home.html" in API-only mode
 
 **Option 1**: Use file manager
 - Navigate to the `html/` folder
-- Double-click `data.html`
+- Double-click `home.html`
 
 **Option 2**: Copy-paste path in browser
-- Windows: `file:///C:/Users/YourName/code/graph/html/data.html`
-- Linux: `file:///home/username/code/graph/html/data.html`
+- Windows: `file:///C:/Users/YourName/code/graph/html/home.html`
+- Linux: `file:///home/username/code/graph/html/home.html`
 
 **Option 3**: Switch to all-in-one
 ```bash
@@ -223,7 +223,7 @@ graph/
 ├── graph.sh            ← Linux/macOS launcher (Bash)
 ├── structure.txt       ← Your data (editable)
 ├── html/
-│   ├── data.html       ← Main entry point
+│   ├── home.html       ← Main entry point
 │   ├── level.html      ← Item pages
 │   └── ...
 ├── src/
@@ -304,7 +304,7 @@ A: Yes! Both use the same Python commands and file format.
 ## 🎯 Next Steps
 
 1. ✅ Run `python run.py`
-2. 📝 Open `html/data.html` in browser
+2. 📝 Open `html/home.html` in browser
 3. 🖱️ Long-press an item to test editing
 4. 📖 Read [WEB_EDITING_GUIDE.md](WEB_EDITING_GUIDE.md) for advanced features
 5. ☁️ Optional: Setup Google Drive with `python run.py auth`

@@ -142,7 +142,7 @@ def main():
         print("Commands:")
         print("  api            Start FastAPI backend server (default)")
         print("                 API runs on http://localhost:8000")
-        print("                 Open html/data.html in browser to use")
+        print("                 Open html/home.html in browser to use")
         print()
         print("  serve          Start API server + HTML server (all-in-one)")
         print("                 Opens browser automatically")
@@ -206,7 +206,7 @@ def main():
         except Exception as e:
             print(f"Warning: could not generate HTML before API start: {e}")
         print("Next steps:")
-        print("1. Open html/data.html in your browser")
+        print("1. Open html/home.html in your browser")
         print("2. Long-press any item to edit (800ms hold)")
         print("3. API will save changes automatically")
         print()
@@ -279,7 +279,7 @@ def main():
         time.sleep(1)
         
         # Open browser
-        url = f"http://localhost:{html_port}/data.html"
+        url = f"http://localhost:{html_port}/home.html"
         try:
             webbrowser.open(url)
             print(f"Opening browser to {url}")

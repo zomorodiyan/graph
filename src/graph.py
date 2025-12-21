@@ -18,7 +18,7 @@ class GraphApp:
         self.html_generator = HTMLGenerator()
     
     def generate_graph_for_item(self, item_id="home"):
-        """Generate HTML graph for a specific item or the root data view."""
+        """Generate HTML graph for a specific item or the root home view."""
         # Check if this is a time-based view
         time_categories = ['time_over', 'time_day', 'time_week', 'time_month']
         
@@ -78,15 +78,15 @@ class GraphApp:
                 except Exception as e:
                     print(f"Error generating graph for {item_id}: {e}")
         
-        # Generate time-based views
-        print("\nGenerating time-based views...")
-        time_views = ['time_over', 'time_day', 'time_week', 'time_month']
-        for view_id in time_views:
-            try:
-                html_path = self.generate_graph_for_item(view_id)
-                print(f"Generated time view: {html_path}")
-            except Exception as e:
-                print(f"Error generating time view {view_id}: {e}")
+        # Generate time-based views - skip individual category pages
+        print("\nSkipping time category pages (Over, Day, Week, Month)...")
+        # time_views = ['time_over', 'time_day', 'time_week', 'time_month']
+        # for view_id in time_views:
+        #     try:
+        #         html_path = self.generate_graph_for_item(view_id)
+        #         print(f"Generated time view: {html_path}")
+        #     except Exception as e:
+        #         print(f"Error generating time view {view_id}: {e}")
         
         print(f"\nGenerated {generated_count} individual item views (leaf nodes excluded)")
         return main_html_path

@@ -19,7 +19,7 @@ python run.py
 ```
 ✨ That's it! API runs at `http://localhost:8000`
 
-Then open `html/data.html` in your browser (just drag and drop the file).
+Then open `html/home.html` in your browser (just drag and drop the file).
 
 ---
 
@@ -49,7 +49,7 @@ Terminal Output:
 ✓ Ready to accept connections
 
 Browser:
-1. Open: html/data.html
+1. Open: html/home.html
 2. See your hierarchical graph
 3. Long-press any item for 0.8 seconds
 4. Modal form appears to edit progress/context/due date
@@ -74,7 +74,7 @@ Browser:
 ## 📝 Editing Workflow
 
 1. **Server running?** ✓ (You'll see "API running at http://localhost:8000")
-2. **Browser open to html/data.html?** ✓
+2. **Browser open to html/home.html?** ✓
 3. **Long-press an item** (hold for 0.8 seconds)
 4. **Modal form appears** with editable fields
 5. **Edit progress** (0-100%), **context** (text), or **due date** (YYYY-MM-DD)
@@ -113,7 +113,7 @@ curl -X POST http://localhost:8000/api/sync/upload
 | File | Purpose |
 |------|---------|
 | `structure.txt` | Your data (editable) |
-| `html/data.html` | Main entry point in browser |
+| `html/home.html` | Main entry point in browser |
 | `src/api.py` | FastAPI server |
 | `run.py` | Launcher script |
 | `backups/` | Automatic backups (safe!) |
@@ -131,9 +131,9 @@ curl -X POST http://localhost:8000/api/sync/upload
 
 ## ❓ Troubleshooting
 
-### "Can't find html/data.html"
+### "Can't find html/home.html"
 - Look in the `html/` folder
-- Or open from browser: `file:///C:/Users/YourName/code/graph/html/data.html`
+- Or open from browser: `file:///C:/Users/YourName/code/graph/html/home.html`
 
 ### "Port 8000 already in use"
 ```bash
@@ -171,7 +171,7 @@ pip install -r requirements.txt
 
 1. **Just starting?**
    - Run: `python run.py`
-   - Open: `html/data.html`
+   - Open: `html/home.html`
    - Try: Long-press an item
 
 2. **Want advanced features?**
@@ -251,7 +251,7 @@ pip install -r requirements.txt
 # 1. Run the server (default command)
 python run.py
 
-# 2. Open your browser to html/data.html
+# 2. Open your browser to html/home.html
 
 # 3. Long-press any item to edit!
 ```
