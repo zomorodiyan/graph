@@ -708,6 +708,19 @@ class HTMLGenerator:
             text-decoration: line-through;
             opacity: 0.9;
         }
+        /* Force strikethrough on progress items that are deleted */
+        .deleted.layer3-progress,
+        .deleted.layer3-progress-clickable {
+            text-decoration: line-through !important;
+            -webkit-text-decoration: line-through !important;
+            text-decoration-color: #c62828 !important;
+            -webkit-text-decoration-color: #c62828 !important;
+        }
+        body.dark-theme .deleted.layer3-progress,
+        body.dark-theme .deleted.layer3-progress-clickable {
+            text-decoration-color: #ff6b6b !important;
+            -webkit-text-decoration-color: #ff6b6b !important;
+        }
         /* Pending add styling */
         .pending-add::after {
             content: " *";
