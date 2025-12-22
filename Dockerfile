@@ -12,6 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 COPY html/ ./html/
 
+# Debug: List html directory contents
+RUN ls -la html/ || echo "html directory not found"
+
 # Create placeholder files (will be overridden by secrets at runtime)
 RUN touch config.yaml
 RUN touch token.pickle
