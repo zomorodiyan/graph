@@ -11,7 +11,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY src/ ./src/
 COPY html/ ./html/
-COPY config.yaml .
+
+# Create placeholder files (will be overridden by secrets at runtime)
+RUN touch config.yaml
+RUN touch token.pickle
 
 # Create structure.txt if it doesn't exist (will be downloaded from Drive)
 RUN touch structure.txt

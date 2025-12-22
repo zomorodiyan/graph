@@ -19,12 +19,16 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 # Paths - support both local development and Cloud Run deployment
 PROJECT_ROOT = Path(__file__).parent.parent
 
-# Cloud Run mounts secrets to /app, local dev uses project root
+# Cloud Run mounts secrets to /secrets by default, local dev uses project root
 def _get_path(filename: str) -> Path:
-    """Get path for a file, checking Cloud Run mount first."""
-    cloud_run_path = Path('/app') / filename
+    """Get path for a file, checking Cloud Run secrets mount first."""
+    cloud_run_path = Path('/secrets') / filename
     if cloud_run_path.exists():
         return cloud_run_path
+    # Also check /app for compatibility
+    app_path = Path('/app') / filename
+    if app_path.exists():
+        return app_path
     return PROJECT_ROOT / filename
 
 TOKEN_PATH = _get_path('token.pickle')
