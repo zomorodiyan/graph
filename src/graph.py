@@ -46,10 +46,20 @@ class GraphApp:
         # Generate breadcrumb navigation
         breadcrumb = self.hierarchy_builder.get_breadcrumb_for_item(item_id)
         
+        # Get the current item's path (for items with underscores in names)
+        current_item_path = None
+        if item_id != 'home' and item_id != 'time':
+            current_item = self.hierarchy_builder._find_item_by_id(
+                self.hierarchy_builder._load_yaml_structure(), item_id
+            )
+            if current_item:
+                current_item_path = current_item.get('path', item_id)
+        
         # Generate HTML
         self.html_generator.generate_html_graph(
             data, html_path, 
-            current_item_id=item_id, 
+            current_item_id=item_id,
+            current_item_path=current_item_path,
             breadcrumb_path=breadcrumb
         )
         return html_path

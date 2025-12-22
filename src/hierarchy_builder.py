@@ -32,19 +32,26 @@ class HierarchyBuilder:
                 raise ValueError(f"Error parsing structure file: {e}")
         return self._structure_data
     
-    def _inject_ids(self, structure, parent_id=""):
-        """Recursively inject 'id' and 'title' fields based on key path."""
+    def _inject_ids(self, structure, parent_id="", parent_path=""):
+        """Recursively inject 'id', 'path', and 'title' fields based on key path."""
         for key, item in structure.items():
             # Handle None/null values as empty dicts
             if item is None:
                 item = {}
                 structure[key] = item
             
-            # Generate ID from parent_id + key
+            # Generate ID from parent_id + key (using underscore)
             if parent_id:
                 item['id'] = f"{parent_id}_{key}"
             else:
                 item['id'] = key
+            
+            # Generate path from parent_path + key (using dot separator)
+            # This preserves underscores in the key name itself
+            if parent_path:
+                item['path'] = f"{parent_path}.{key}"
+            else:
+                item['path'] = key
             
             # Generate title from key if not present
             if 'title' not in item:
@@ -54,13 +61,13 @@ class HierarchyBuilder:
             children = self._extract_children(item)
             if children:
                 item['children'] = children
-                self._inject_ids(children, item['id'])
+                self._inject_ids(children, item['id'], item['path'])
             else:
                 item['children'] = {}
     
     def _extract_children(self, item):
         """Extract child items from the item dict (anything that's not a known property)."""
-        known_properties = {'id', 'title', 'progress', 'context', 'due', 'children'}
+        known_properties = {'id', 'path', 'title', 'progress', 'context', 'due', 'children'}
         children = {}
         keys_to_remove = []
         
@@ -182,6 +189,7 @@ class HierarchyBuilder:
         layer_data = {
             "layer1": item['title'],
             "layer1_id": item['id'],
+            "layer1_path": item.get('path', item['id']),  # Use path field if available
             "layer1_context": item.get('context'),
             "layer1_due": item.get('due'),
             "layer1_progress": item.get('progress'),
@@ -202,6 +210,7 @@ class HierarchyBuilder:
             child_data = {
                 "name": item['title'],
                 "id": item['id'],
+                "path": item.get('path', item['id']),  # Use path field if available
                 "context": item.get('context'),
                 "due": item.get('due'),
                 "progress": item.get('progress'),
@@ -254,6 +263,7 @@ class HierarchyBuilder:
             return {
                 "name": item['title'],
                 "id": item['id'],
+                "path": item.get('path', item['id']),  # Use path field if available
                 "context": item.get('context'),
                 "due": item.get('due'),
                 "progress": item.get('progress')
