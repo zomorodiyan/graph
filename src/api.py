@@ -24,6 +24,17 @@ from google_drive import download_structure_yaml, upload_structure_yaml
 app = FastAPI(title="Hierarchical Graph API", version="1.0")
 
 
+@app.on_event("startup")
+async def startup_event():
+    """Download structure from Google Drive on startup."""
+    print("📥 Downloading structure from Google Drive...")
+    success = download_structure_yaml()
+    if success:
+        print("✅ Structure downloaded successfully")
+    else:
+        print("⚠️  Warning: Could not download structure from Google Drive")
+
+
 # Enable CORS for local development and cross-origin requests
 app.add_middleware(
     CORSMiddleware,
