@@ -5,7 +5,7 @@ Provides REST API for CRUD operations on items.
 from fastapi import FastAPI, HTTPException, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 from pathlib import Path
@@ -22,6 +22,7 @@ from google_drive import download_structure_yaml, upload_structure_yaml
 
 
 app = FastAPI(title="Hierarchical Graph API", version="1.0")
+
 
 # Enable CORS for local development and cross-origin requests
 app.add_middleware(
@@ -541,21 +542,26 @@ async def sync_both():
 # Removed duplicate /api/regenerate/{item_id:path} endpoint to avoid conflicts
 
 
-# Mount static HTML files - MUST be after all API routes but before root catch-all
+# Define HTML directory at module level
 HTML_DIR = Path(__file__).parent.parent / "html"
 print(f"HTML_DIR: {HTML_DIR}, exists: {HTML_DIR.exists()}")
-if HTML_DIR.exists():
-    print(f"Mounting static files from {HTML_DIR}")
-    app.mount("/html", StaticFiles(directory=str(HTML_DIR), html=True), name="html")
-else:
-    print(f"ERROR: HTML directory not found at {HTML_DIR}")
 
 
-# Root redirect to home page - MUST be after StaticFiles mount
+# Root redirect to home page
 @app.get("/")
 async def root():
     """Redirect root to home.html"""
     return RedirectResponse(url="/html/home.html")
+
+
+# Serve individual HTML files
+@app.get("/html/{filename}")
+async def serve_html(filename: str):
+    """Serve HTML files from the html directory"""
+    file_path = HTML_DIR / filename
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path, media_type="text/html")
 
 
 if __name__ == "__main__":
