@@ -189,6 +189,13 @@ async def update_item(path: str, request: Request):
         try:
             data = file_utils.load_yaml_structure()
             print(f"DEBUG: Loaded structure successfully")
+            print(f"DEBUG: Data keys: {list(data.keys())}")
+            if 'structure' not in data:
+                print(f"DEBUG ERROR: 'structure' key missing from loaded data!")
+                print(f"DEBUG: Full data: {data}")
+                raise HTTPException(status_code=500, detail="Invalid structure file: missing 'structure' key")
+        except HTTPException:
+            raise
         except Exception as e:
             print(f"DEBUG ERROR loading structure: {e}")
             import traceback
