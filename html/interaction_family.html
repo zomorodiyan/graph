@@ -937,7 +937,7 @@
                 <div class="context layer1-context new-item-hint">Click to add</div>
             </div>
         </div>
-        <div class="current-date">Updated: December 21, 2025 <span onclick="regenerateCurrentPage()" class="refresh-icon" title="Regenerate page">↻</span></div>
+        <div class="current-date">Updated: December 22, 2025 <span onclick="regenerateCurrentPage()" class="refresh-icon" title="Regenerate page">↻</span></div>
     </div>
     <div id="notification" class="notification"></div>
     
@@ -1367,9 +1367,20 @@
         async function confirmQueuedChanges() {
             // API base URL - always use same origin since HTML and API are served from same server
             const API_BASE = window.location.origin;
+            console.log('API_BASE:', API_BASE);
+            console.log('Current URL:', window.location.href);
+            
+            // Detect if opened as file:// instead of http://
+            if (API_BASE.startsWith('file://')) {
+                showNotification('Error: Please open via http://localhost:8000/html/home.html, not as a file', true);
+                console.error('Cannot make API calls from file:// protocol. Server must be running on http://localhost:8000');
+                return;
+            }
+            
             try {
                 // Apply edits
                 for (const edit of pendingEdits) {
+                    console.log('Editing:', edit.itemPath, edit.changes);
                     const res = await fetch(`${API_BASE}/api/items/${edit.itemPath}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
@@ -1382,6 +1393,7 @@
                 }
                 // Delete items
                 for (const del of pendingDeletes) {
+                    console.log('Deleting:', del.itemPath);
                     const res = await fetch(`${API_BASE}/api/items/${del.itemPath}`, { method: 'DELETE' });
                     if (!res.ok) {
                         const t = await res.text();
@@ -1390,6 +1402,7 @@
                 }
                 // Add items
                 for (const add of pendingAdds) {
+                    console.log('Adding under:', add.parentPath, add.payload);
                     const url = `${API_BASE}/api/items/${add.parentPath}`;
                     const res = await fetch(url, {
                         method: 'POST',
@@ -1402,6 +1415,7 @@
                     }
                 }
                 // Sync to Google Drive
+                console.log('Syncing to Google Drive...');
                 showNotification('Syncing to Google Drive...');
                 const syncRes = await fetch(`${API_BASE}/api/sync-to-drive`, { method: 'POST' });
                 if (!syncRes.ok) {
@@ -1414,6 +1428,7 @@
                 showNotification('Changes saved and synced to Google Drive. Reloading...');
                 setTimeout(() => { window.location.reload(); }, 800);
             } catch (err) {
+                console.error('Error confirming changes:', err);
                 showNotification('Error confirming changes: ' + err.message, true);
             }
         }
