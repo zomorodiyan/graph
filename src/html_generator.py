@@ -1499,9 +1499,6 @@ class HTMLGenerator:
         layer1_due = item.get("layer1_due")
         layer1_due_html = self._format_due_date(layer1_due) if layer1_due else ""
         
-        layer1_path = item.get("layer1_path")
-        layer1_path_html = f'<div class="item-path">{layer1_path}</div>' if layer1_path else ""
-        
         # Get progress and create underline
         layer1_progress = item.get("layer1_progress")
         layer1_underline = self._create_progress_underline(layer1_progress, color_name, "medium")
@@ -1526,7 +1523,6 @@ class HTMLGenerator:
                 <div class="layer1 {layer1_clickable_class} {layer1_color_class} {time_category_class}" {layer1_onclick} {layer1_data_attrs}>{layer1_name}{layer1_due_html}</div>
                 {layer1_underline}
                 {layer1_context_html}
-                {layer1_path_html}
             </div>
             <div class="layer2-section">
         """
