@@ -4,8 +4,11 @@ Provides REST API for CRUD operations on items.
 """
 from fastapi import FastAPI, HTTPException, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
+from pathlib import Path
 import sys
 import os
 
@@ -20,7 +23,7 @@ from google_drive import download_structure_yaml, upload_structure_yaml
 
 app = FastAPI(title="Hierarchical Graph API", version="1.0")
 
-# Enable CORS for local development
+# Enable CORS for local development and cross-origin requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,6 +35,8 @@ app.add_middleware(
 file_utils = FileUtils()
 hierarchy_builder = HierarchyBuilder()
 html_generator = HTMLGenerator()
+
+# Serve HTML files from /html directory (mount after API routes are defined)
 
 
 class ItemUpdate(BaseModel):
@@ -556,8 +561,22 @@ async def sync_both():
 # Removed duplicate /api/regenerate/{item_id:path} endpoint to avoid conflicts
 
 
+# Root redirect to home page
+@app.get("/")
+async def root():
+    """Redirect root to home.html"""
+    return RedirectResponse(url="/html/home.html")
+
+
+# Mount static HTML files - must be after all API routes
+HTML_DIR = Path(__file__).parent.parent / "html"
+if HTML_DIR.exists():
+    app.mount("/html", StaticFiles(directory=str(HTML_DIR), html=True), name="html")
+
+
 if __name__ == "__main__":
     import uvicorn
     import os
-    port = int(os.getenv("API_PORT", 8000))
+    # Cloud Run uses PORT, local dev uses API_PORT or defaults to 8000
+    port = int(os.getenv("PORT", os.getenv("API_PORT", 8000)))
     uvicorn.run(app, host="0.0.0.0", port=port)

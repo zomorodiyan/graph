@@ -16,11 +16,20 @@ import io
 # Use full Drive scope to allow updating any file by ID
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
-# Paths
+# Paths - support both local development and Cloud Run deployment
 PROJECT_ROOT = Path(__file__).parent.parent
-TOKEN_PATH = PROJECT_ROOT / 'token.pickle'
-CREDENTIALS_PATH = PROJECT_ROOT / 'credentials.json'
-CONFIG_PATH = PROJECT_ROOT / 'config.yaml'
+
+# Cloud Run mounts secrets to /app, local dev uses project root
+def _get_path(filename: str) -> Path:
+    """Get path for a file, checking Cloud Run mount first."""
+    cloud_run_path = Path('/app') / filename
+    if cloud_run_path.exists():
+        return cloud_run_path
+    return PROJECT_ROOT / filename
+
+TOKEN_PATH = _get_path('token.pickle')
+CREDENTIALS_PATH = _get_path('credentials.json')
+CONFIG_PATH = _get_path('config.yaml')
 STRUCTURE_PATH = PROJECT_ROOT / 'structure.txt'
 
 

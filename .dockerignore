@@ -1,0 +1,38 @@
+# Git
+.git/
+.gitignore
+
+# Virtual environment
+env/
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Local secrets (will use Google Secret Manager in Cloud Run)
+credentials.json
+token.pickle
+
+# Documentation
+doc/
+*.md
+
+# Local scripts
+scripts/
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Example files
+*.example.*

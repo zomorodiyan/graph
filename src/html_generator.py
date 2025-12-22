@@ -1331,8 +1331,9 @@ class HTMLGenerator:
         }
         
         async function regenerateCurrentPage() {
-            // API base URL - use current host for phone/remote access support
-            const API_BASE = `http://${window.location.hostname}:8000`;
+            // API base URL - use same origin for Cloud Run, port 8000 for local dev
+            const isCloudRun = window.location.hostname.includes('run.app') || window.location.port === '' || window.location.port === '8080';
+            const API_BASE = isCloudRun ? window.location.origin : `http://${window.location.hostname}:8000`;
             
             // Extract current page ID from filename
             const path = window.location.pathname;
@@ -1354,7 +1355,9 @@ class HTMLGenerator:
         }
         
         async function confirmQueuedChanges() {
-            const API_BASE = `http://${window.location.hostname}:8000`;
+            // API base URL - use same origin for Cloud Run, port 8000 for local dev
+            const isCloudRun = window.location.hostname.includes('run.app') || window.location.port === '' || window.location.port === '8080';
+            const API_BASE = isCloudRun ? window.location.origin : `http://${window.location.hostname}:8000`;
             try {
                 // Apply edits
                 for (const edit of pendingEdits) {
