@@ -541,14 +541,7 @@ async def sync_both():
 # Removed duplicate /api/regenerate/{item_id:path} endpoint to avoid conflicts
 
 
-# Root redirect to home page
-@app.get("/")
-async def root():
-    """Redirect root to home.html"""
-    return RedirectResponse(url="/html/home.html")
-
-
-# Mount static HTML files - must be after all API routes
+# Mount static HTML files - MUST be after all API routes but before root catch-all
 HTML_DIR = Path(__file__).parent.parent / "html"
 print(f"HTML_DIR: {HTML_DIR}, exists: {HTML_DIR.exists()}")
 if HTML_DIR.exists():
@@ -556,6 +549,13 @@ if HTML_DIR.exists():
     app.mount("/html", StaticFiles(directory=str(HTML_DIR), html=True), name="html")
 else:
     print(f"ERROR: HTML directory not found at {HTML_DIR}")
+
+
+# Root redirect to home page - MUST be after StaticFiles mount
+@app.get("/")
+async def root():
+    """Redirect root to home.html"""
+    return RedirectResponse(url="/html/home.html")
 
 
 if __name__ == "__main__":
