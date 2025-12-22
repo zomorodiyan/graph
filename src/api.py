@@ -545,6 +545,10 @@ async def sync_both():
 # Define HTML directory at module level
 HTML_DIR = Path(__file__).parent.parent / "html"
 print(f"HTML_DIR: {HTML_DIR}, exists: {HTML_DIR.exists()}")
+if HTML_DIR.exists():
+    import os
+    files = os.listdir(HTML_DIR)
+    print(f"HTML files: {files[:10]}")  # Print first 10 files
 
 
 # Root redirect to home page
@@ -559,6 +563,7 @@ async def root():
 async def serve_html(filename: str):
     """Serve HTML files from the html directory"""
     file_path = HTML_DIR / filename
+    print(f"Requested file: {filename}, full path: {file_path}, exists: {file_path.exists()}")
     if not file_path.exists() or not file_path.is_file():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path, media_type="text/html")
