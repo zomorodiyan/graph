@@ -16,10 +16,15 @@ __pycache__/
 # Local secrets (will use Google Secret Manager in Cloud Run)
 credentials.json
 token.pickle
+config.yaml
 
 # Documentation
 doc/
 *.md
+
+# Explicitly include html directory
+!html/
+!html/*.html
 
 # Local scripts
 scripts/
