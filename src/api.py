@@ -550,8 +550,12 @@ async def root():
 
 # Mount static HTML files - must be after all API routes
 HTML_DIR = Path(__file__).parent.parent / "html"
+print(f"HTML_DIR: {HTML_DIR}, exists: {HTML_DIR.exists()}")
 if HTML_DIR.exists():
+    print(f"Mounting static files from {HTML_DIR}")
     app.mount("/html", StaticFiles(directory=str(HTML_DIR), html=True), name="html")
+else:
+    print(f"ERROR: HTML directory not found at {HTML_DIR}")
 
 
 if __name__ == "__main__":
