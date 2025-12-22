@@ -233,20 +233,90 @@ class HTMLGenerator:
         .theme-toggle.sun {{
             background: {COLORS['bg']['light_card']};
             color: {COLORS['special']['sun']};
-            border: 2px solid {COLORS['special']['sun']};
+            border: 2px solid {COLORS['gray']['medium']};
         }}
         .theme-toggle.moon {{
             background: {COLORS['text']['dark']};
             color: {COLORS['text']['light']};
-            border: 2px solid {COLORS['text']['light']};
+            border: 2px solid {COLORS['gray']['medium']};
+        }}
+        body.dark-theme .theme-toggle.sun {{
+            background: {COLORS['bg']['light_card']};
+            color: {COLORS['special']['sun']};
+            border: 2px solid {COLORS['gray']['medium']};
+        }}
+        body.dark-theme .theme-toggle.moon {{
+            background: {COLORS['text']['dark']};
+            color: {COLORS['text']['light']};
+            border: 2px solid {COLORS['gray']['medium']};
+        }}
+        /* Edit mode toggle button styles */
+        .edit-toggle {{
+            position: fixed;
+            bottom: 20px;
+            left: 74px;
+            z-index: 3000;
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: {COLORS['bg']['light_card']};
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
+        }}
+        .edit-toggle .icon {{
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }}
+        .edit-toggle.view-mode {{
+            background: {COLORS['bg']['light_card']};
+            color: {COLORS['gray']['medium']};
+            border: 2px solid {COLORS['gray']['medium']};
+        }}
+        .edit-toggle.edit-mode {{
+            background: {COLORS['bg']['light_card']};
+            color: {COLORS['gray']['medium']};
+            border: 2px solid {COLORS['gray']['medium']};
+        }}
+        body.dark-theme .edit-toggle.view-mode {{
+            background: {COLORS['text']['dark']};
+            color: {COLORS['gray']['light']};
+            border: 2px solid {COLORS['gray']['medium']};
+        }}
+        body.dark-theme .edit-toggle.edit-mode {{
+            background: {COLORS['text']['dark']};
+            color: {COLORS['gray']['light']};
+            border: 2px solid {COLORS['gray']['medium']};
+        }}
+        /* Hide new item placeholders in view mode (default) */
+        body:not(.edit-mode) .new-item.placeholder {{
+            display: none;
+        }}
+        body:not(.edit-mode) .new-item-hint {{
+            display: none;
+        }}
+        /* Make items look clickable in edit mode */
+        body.edit-mode [data-item-path] {{
+            cursor: pointer;
+        }}
+        body.edit-mode [data-item-path]:hover {{
+            opacity: 0.8;
         }}
         {dark_theme_css}
         {main_css}
     </style>
 </head>
 <body>
-    <button id=\"themeToggle\" class=\"theme-toggle sun\" title=\"Toggle dark mode\" aria-label=\"Toggle dark mode\">\n        <span class=\"icon\" id=\"themeIcon\">\n            <!-- Sun SVG -->\n            <svg id=\"sunIcon\" xmlns=\"http://www.w3.org/2000/svg\" width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\" fill=\"{COLORS['special']['sun']}\"/><g stroke=\"{COLORS['special']['sun']}\"><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></g></svg>\n            <!-- Moon Emoji (hidden by default) -->\n            <span id=\"moonIcon\" style=\"display:none; font-size: 28px; line-height: 1;\">🌒</span>\n        </span>\n    </button>
-    <div class=\"graph-container\">\n        {breadcrumb_html}\n        <div class=\"pending-actions\" id=\"pendingActions\">\n            <div style=\"flex: 1;\">\n                <div style=\"font-weight: bold; margin-bottom: 8px;\">Pending changes:</div>\n                <ul id=\"changesList\" style=\"margin: 0; padding-left: 20px; font-size: 13px; color: {COLORS['text']['medium']};\"></ul>\n            </div>\n            <div style=\"display: flex; gap: 8px;\">\n                <button id=\"confirmChangesBtn\" class=\"btn-primary\" onclick=\"confirmQueuedChanges()\">Confirm changes</button>\n                <button id=\"cancelChangesBtn\" class=\"btn-secondary\" onclick=\"cancelQueuedChanges()\">Cancel changes</button>\n            </div>\n        </div>\n        {self._build_content_sections(data, current_item_id)}\n        <div class=\"current-date\">Updated: {current_date} <span onclick=\"regenerateCurrentPage()\" class=\"refresh-icon\" title=\"Regenerate page\">↻</span></div>\n    </div>\n    <div id=\"notification\" class=\"notification\"></div>\n    \n    <!-- Edit Modal -->\n    <div id=\"editModal\" class=\"modal\">\n        <div class=\"modal-content\">\n            <h2 id=\"modalTitle\">Edit Item</h2>\n            <div class=\"form-group\">\n                <label for=\"editName\">Item Name:</label>\n                <input type=\"text\" id=\"editName\" placeholder=\"Item name (key)\">\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editProgress\">Progress (0-100):</label>\n                <input type=\"number\" id=\"editProgress\" min=\"0\" max=\"100\" placeholder=\"Clear to remove\">\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editContext\">Context:</label>\n                <textarea id=\"editContext\" rows=\"3\" placeholder=\"Clear to remove\"></textarea>\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editDue\">Due Date (YYYY-MM-DD):</label>\n                <input type=\"date\" id=\"editDue\" placeholder=\"Clear to remove\">\n            </div>\n            <div class=\"modal-buttons\">\n                <button onclick=\"saveEdit()\" class=\"btn-primary\">Save</button>\n                <button onclick=\"closeEditModal()\" class=\"btn-secondary\">Cancel</button>\n                <button onclick=\"deleteItem()\" id=\"deleteButton\" class=\"btn-danger\" style=\"display:none;\">Delete</button>\n            </div>\n        </div>\n    </div>\n    \n    <script>\n        // Theme toggle logic\n        const themeToggle = document.getElementById('themeToggle');\n        const sunIcon = document.getElementById('sunIcon');\n        const moonIcon = document.getElementById('moonIcon');\n        function setTheme(isDark) {{\n            if (isDark) {{\n                document.body.classList.add('dark-theme');\n                themeToggle.classList.remove('sun');\n                themeToggle.classList.add('moon');\n                sunIcon.style.display = 'none';\n                moonIcon.style.display = '';\n            }} else {{\n                document.body.classList.remove('dark-theme');\n                themeToggle.classList.remove('moon');\n                themeToggle.classList.add('sun');\n                sunIcon.style.display = '';\n                moonIcon.style.display = 'none';\n            }}\n        }}\n        // Persist theme in sessionStorage\n        function getThemePref() {{\n            return sessionStorage.getItem('theme') === 'dark';\n        }}\n        function setThemePref(isDark) {{\n            sessionStorage.setItem('theme', isDark ? 'dark' : 'light');\n        }}\n        // Initial theme\n        setTimeout(() => {{\n            setTheme(getThemePref());\n            themeToggle.addEventListener('click', function() {{\n                const isDark = !document.body.classList.contains('dark-theme');\n                setTheme(isDark);\n                setThemePref(isDark);\n            }});\n        }}, 0);\n        {self._get_javascript_functions()}\n    </script>\n</body>\n</html>"""
+    <button id=\"themeToggle\" class=\"theme-toggle sun\" title=\"Toggle dark mode\" aria-label=\"Toggle dark mode\">\n        <span class=\"icon\" id=\"themeIcon\">\n            <!-- Sun SVG -->\n            <svg id=\"sunIcon\" xmlns=\"http://www.w3.org/2000/svg\" width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\" fill=\"{COLORS['special']['sun']}\"/><g stroke=\"{COLORS['special']['sun']}\"><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></g></svg>\n            <!-- Moon Emoji (hidden by default) -->\n            <span id=\"moonIcon\" style=\"display:none; font-size: 28px; line-height: 1;\">🌒</span>\n        </span>\n    </button>\n    <button id=\"editToggle\" class=\"edit-toggle view-mode\" title=\"Toggle edit mode\" aria-label=\"Toggle edit mode\">\n        <span class=\"icon\">\n            <span id=\"eyeIcon\">👁️</span>\n            <span id=\"pencilIcon\" style=\"display:none;\">✏️</span>\n        </span>\n    </button>
+    <div class=\"graph-container\">\n        {breadcrumb_html}\n        <div class=\"pending-actions\" id=\"pendingActions\">\n            <div style=\"flex: 1;\">\n                <div style=\"font-weight: bold; margin-bottom: 8px;\">Pending changes:</div>\n                <ul id=\"changesList\" style=\"margin: 0; padding-left: 20px; font-size: 13px; color: {COLORS['text']['medium']};\"></ul>\n            </div>\n            <div style=\"display: flex; gap: 8px;\">\n                <button id=\"confirmChangesBtn\" class=\"btn-primary\" onclick=\"confirmQueuedChanges()\">Confirm changes</button>\n                <button id=\"cancelChangesBtn\" class=\"btn-secondary\" onclick=\"cancelQueuedChanges()\">Cancel changes</button>\n            </div>\n        </div>\n        {self._build_content_sections(data, current_item_id)}\n        <div class=\"current-date\">Updated: {current_date} <span onclick=\"regenerateCurrentPage()\" class=\"refresh-icon\" title=\"Regenerate page\">↻</span></div>\n    </div>\n    <div id=\"notification\" class=\"notification\"></div>\n    \n    <!-- Edit Modal -->\n    <div id=\"editModal\" class=\"modal\">\n        <div class=\"modal-content\">\n            <h2 id=\"modalTitle\">Edit Item</h2>\n            <div class=\"form-group\">\n                <label for=\"editName\">Item Name:</label>\n                <input type=\"text\" id=\"editName\" placeholder=\"Item name (key)\">\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editProgress\">Progress (0-100):</label>\n                <input type=\"number\" id=\"editProgress\" min=\"0\" max=\"100\" placeholder=\"Clear to remove\">\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editContext\">Context:</label>\n                <textarea id=\"editContext\" rows=\"3\" placeholder=\"Clear to remove\"></textarea>\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editDue\">Due Date (YYYY-MM-DD):</label>\n                <input type=\"date\" id=\"editDue\" placeholder=\"Clear to remove\">\n            </div>\n            <div class=\"modal-buttons\">\n                <button onclick=\"saveEdit()\" class=\"btn-primary\">Save</button>\n                <button onclick=\"closeEditModal()\" class=\"btn-secondary\">Cancel</button>\n                <button onclick=\"deleteItem()\" id=\"deleteButton\" class=\"btn-danger\" style=\"display:none;\">Delete</button>\n            </div>\n        </div>\n    </div>\n    \n    <script>\n        // Theme toggle logic\n        const themeToggle = document.getElementById('themeToggle');\n        const sunIcon = document.getElementById('sunIcon');\n        const moonIcon = document.getElementById('moonIcon');\n        function setTheme(isDark) {{\n            if (isDark) {{\n                document.body.classList.add('dark-theme');\n                themeToggle.classList.remove('sun');\n                themeToggle.classList.add('moon');\n                sunIcon.style.display = 'none';\n                moonIcon.style.display = '';\n            }} else {{\n                document.body.classList.remove('dark-theme');\n                themeToggle.classList.remove('moon');\n                themeToggle.classList.add('sun');\n                sunIcon.style.display = '';\n                moonIcon.style.display = 'none';\n            }}\n        }}\n        // Persist theme in sessionStorage\n        function getThemePref() {{\n            return sessionStorage.getItem('theme') === 'dark';\n        }}\n        function setThemePref(isDark) {{\n            sessionStorage.setItem('theme', isDark ? 'dark' : 'light');\n        }}\n        // Initial theme\n        setTimeout(() => {{\n            setTheme(getThemePref());\n            themeToggle.addEventListener('click', function() {{\n                const isDark = !document.body.classList.contains('dark-theme');\n                setTheme(isDark);\n                setThemePref(isDark);\n            }});\n        }}, 0);\n        \n        // Edit mode toggle logic\n        const editToggle = document.getElementById('editToggle');\n        const eyeIcon = document.getElementById('eyeIcon');\n        const pencilIcon = document.getElementById('pencilIcon');\n        let isEditMode = sessionStorage.getItem('editMode') === 'true';\n        \n        function setEditMode(enabled) {{\n            isEditMode = enabled;\n            if (enabled) {{\n                document.body.classList.add('edit-mode');\n                editToggle.classList.remove('view-mode');\n                editToggle.classList.add('edit-mode');\n                eyeIcon.style.display = 'none';\n                pencilIcon.style.display = '';\n                editToggle.title = 'Switch to view mode';\n            }} else {{\n                document.body.classList.remove('edit-mode');\n                editToggle.classList.remove('edit-mode');\n                editToggle.classList.add('view-mode');\n                eyeIcon.style.display = '';\n                pencilIcon.style.display = 'none';\n                editToggle.title = 'Switch to edit mode';\n            }}\n        }}\n        \n        function getEditModePref() {{\n            return sessionStorage.getItem('editMode') === 'true';\n        }}\n        \n        function setEditModePref(enabled) {{\n            sessionStorage.setItem('editMode', enabled ? 'true' : 'false');\n        }}\n        \n        // Initialize edit mode\n        setEditMode(getEditModePref());\n        \n        editToggle.addEventListener('click', function() {{\n            const newMode = !isEditMode;\n            setEditMode(newMode);\n            setEditModePref(newMode);\n            if (newMode) {{\n                showNotification('click items to edit', 'info');\n            }}\n        }});\n        \n        // Current page context for filtering editable items\n        const currentPage = '{current_item_id}';\n        const isTimePage = currentPage === 'time' || currentPage.startsWith('time_');\n        \n        // Click to edit handler (only in edit mode)\n        document.addEventListener('click', function(e) {{\n            if (!isEditMode) return;\n            const itemElement = e.target.closest('[data-item-path], [data-new-item]');\n            if (itemElement) {{\n                // Check if this is a time item (skip editing for time items)\n                const itemPath = itemElement.getAttribute('data-item-path') || '';\n                const parentPath = itemElement.getAttribute('data-parent-path') || '';\n                const isTimeItem = isTimePage || itemPath.startsWith('time') || parentPath.startsWith('time');\n                if (isTimeItem) return;\n                \n                // In edit mode, always open edit modal for editable items\n                const isNewItem = itemElement.hasAttribute('data-new-item');\n                e.preventDefault();\n                e.stopPropagation();\n                openEditModal(itemElement);\n            }}\n        }}, true);\n        {self._get_javascript_functions()}\n    </script>\n</body>\n</html>"""
         return html_content
     
     def _get_dark_theme_css(self):
@@ -700,6 +770,10 @@ class HTMLGenerator:
         .notification.error {{
             background: {COLORS['special']['danger']};
         }}
+        .notification.info {{
+            background: {COLORS['blue']['dark']};
+            color: white;
+        }}
         .modal {{
             display: none;
             position: fixed;
@@ -1033,60 +1107,6 @@ class HTMLGenerator:
             }
             return `change ${itemName}`;
         }
-        let longPressTimer;
-        let longPressTarget;
-        const LONG_PRESS_DURATION = 800; // milliseconds
-        
-        // Long press handling for edit
-        document.addEventListener('mousedown', function(e) {
-            const itemElement = e.target.closest('[data-item-path], [data-new-item]');
-            if (itemElement) {
-                longPressTarget = itemElement;
-                longPressTimer = setTimeout(() => {
-                    openEditModal(itemElement);
-                }, LONG_PRESS_DURATION);
-            }
-        });
-        
-        document.addEventListener('mouseup', function() {
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-        });
-        
-        document.addEventListener('mousemove', function() {
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-        });
-        
-        // Touch support for mobile
-        document.addEventListener('touchstart', function(e) {
-            const itemElement = e.target.closest('[data-item-path], [data-new-item]');
-            if (itemElement) {
-                longPressTarget = itemElement;
-                longPressTimer = setTimeout(() => {
-                    openEditModal(itemElement);
-                }, LONG_PRESS_DURATION);
-            }
-        });
-        
-        document.addEventListener('touchend', function() {
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-        });
-        
-        document.addEventListener('touchmove', function() {
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-        });
-        
         function openEditModal(element) {
             const isNew = element.hasAttribute('data-new-item');
             const modal = document.getElementById('editModal');
@@ -1273,10 +1293,16 @@ class HTMLGenerator:
             }
         });
         
-        function showNotification(message, isError = false) {
+        function showNotification(message, type = 'success') {
             const notification = document.getElementById('notification');
             notification.textContent = message;
-            notification.className = 'notification' + (isError ? ' error' : '');
+            if (type === 'error' || type === true) {
+                notification.className = 'notification error';
+            } else if (type === 'info') {
+                notification.className = 'notification info';
+            } else {
+                notification.className = 'notification';
+            }
             notification.style.display = 'block';
             setTimeout(() => {
                 notification.style.display = 'none';
@@ -1408,7 +1434,7 @@ class HTMLGenerator:
             <div class=\"layer1-container\">
                 <div class=\"layer1 new-item placeholder\" data-new-item=\"true\" data-parent-path=\"{parent_path}\" data-parent-name=\"{current_item_id}\">New item</div>
                 <div class=\"underline\" style=\"background-color:#e0e0e0;\"></div>
-                <div class=\"context layer1-context new-item-hint\">Long-press to add</div>
+                <div class=\"context layer1-context new-item-hint\">Click to add</div>
             </div>
         </div>"""
 
@@ -1489,7 +1515,7 @@ class HTMLGenerator:
                 <div class="layer2-content">
                     <div class="layer2 new-item placeholder" data-new-item="true" data-parent-path="{layer1_data_path}" data-parent-name="{layer1_name}">New subitem</div>
                     <div class="underline" style="background-color:#e0e0e0;"></div>
-                    <div class="context layer2-context new-item-hint">Long-press to add</div>
+                    <div class="context layer2-context new-item-hint">Click to add</div>
                 </div>
             </div>"""
 
