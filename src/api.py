@@ -468,26 +468,6 @@ def regenerate_html(paths: list):
             print(f"Warning: Failed to regenerate HTML for {path}: {e}")
 
 
-@app.get("/")
-async def root():
-    """API root endpoint."""
-    return {
-        "name": "Hierarchical Graph API",
-        "version": "1.0",
-        "endpoints": {
-            "get_item": "GET /api/items/{path}",
-            "update_item": "PUT /api/items/{path}",
-            "create_item": "POST /api/items/{parent_path}",
-            "delete_item": "DELETE /api/items/{path}",
-            "sync_download": "POST /api/sync/download",
-            "sync_upload": "POST /api/sync/upload",
-            "sync_to_drive": "POST /api/sync-to-drive",
-            "sync_both": "POST /api/sync/both",
-            "regenerate": "POST /api/regenerate/{item_id}"
-        }
-    }
-
-
 @app.post("/api/sync/download")
 async def sync_download():
     """Download structure.txt from Google Drive."""
