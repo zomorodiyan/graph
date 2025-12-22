@@ -12,9 +12,7 @@ structure
       progress: 0
       newtyui
       cardio
-        progress: 5
       flexibility
-        progress: 50
       strength
         progress: 49
     nutrition
