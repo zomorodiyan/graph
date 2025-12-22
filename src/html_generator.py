@@ -7,6 +7,77 @@ from datetime import datetime
 from file_utils import FileUtils
 
 
+# =============================================================================
+# CENTRALIZED COLOR PALETTE
+# =============================================================================
+# All colors used throughout the application are defined here for easy management.
+# Each theme color has light, medium, and dark variants.
+# Gray scale is used for text and UI elements.
+# =============================================================================
+
+COLORS = {
+    # Theme colors (4 main colors with 3 intensity levels each)
+    "green": {
+        "light": "#A5D6A7",    # Light green - used for hover backgrounds, dark mode text
+        "medium": "#388E3C",   # Medium green - used for underlines, accents
+        "dark": "#1B5E20",     # Dark green - used for text, dark mode underlines
+    },
+    "blue": {
+        "light": "#90CAF9",    # Light blue - used for hover backgrounds, dark mode text
+        "medium": "#1976D2",   # Medium blue - used for underlines, accents, buttons
+        "dark": "#0D47A1",     # Dark blue - used for text, dark mode underlines
+    },
+    "purple": {
+        "light": "#B39DDB",    # Light purple - used for hover backgrounds, dark mode text
+        "medium": "#7E57C2",   # Medium purple - used for underlines, accents
+        "dark": "#4527A0",     # Dark purple - used for text, dark mode underlines
+    },
+    "brown": {
+        "light": "#BCAAA4",    # Light brown - used for hover backgrounds, dark mode text
+        "medium": "#795548",   # Medium brown - used for underlines, accents
+        "dark": "#5D4037",     # Dark brown - used for text, dark mode underlines
+    },
+    
+    # Gray scale (for text and UI elements)
+    "gray": {
+        "light": "#bbb",       # Light gray - used for dark mode layer1/layer2 text, contexts
+        "medium": "#888",      # Medium gray - used for placeholders, hints
+        "medium_dark": "#555", # Medium dark gray - used for progress bar backgrounds in dark mode
+        "dark": "#444",        # Dark gray - used for borders, buttons in dark mode
+    },
+    
+    # Background colors
+    "bg": {
+        "light": "#f5f5f5",    # Light mode page background
+        "light_card": "#fff",  # Light mode card/container background
+        "dark": "#23272e",     # Dark mode page background
+        "dark_card": "#2d313a", # Dark mode card/container background
+    },
+    
+    # Text colors
+    "text": {
+        "dark": "#222",        # Dark text for light mode (layer1)
+        "medium": "#333",      # Medium text for light mode (layer2, layer3)
+        "light": "#fff",       # Light text for dark mode
+        "muted": "#666",       # Muted text for dates, paths
+    },
+    
+    # Special colors (used sparingly)
+    "special": {
+        "sun": "#FFD600",      # Sun icon color
+        "danger": "#c62828",   # Danger/delete actions
+        "danger_dark": "#a84444",  # Danger in dark mode
+        "warning": "#ef6c00",  # Warning/today items
+        "success": "#4caf50",  # Success notifications
+    }
+}
+
+
+def get_color(category, shade):
+    """Get a color value from the centralized palette."""
+    return COLORS.get(category, {}).get(shade, "#888")
+
+
 class HTMLGenerator:
     """Generates interactive HTML graphs from YAML-based hierarchy data."""
     
@@ -25,16 +96,10 @@ class HTMLGenerator:
             HTML string for the underline div
         """
         if progress is not None and isinstance(progress, (int, float)) and 0 <= progress <= 100:
-            # Map intensity to color values
-            color_map = {
-                "green": {"light": "#A5D6A7", "medium": "#388E3C", "dark": "#1B5E20"},
-                "blue": {"light": "#90CAF9", "medium": "#1976D2", "dark": "#0D47A1"},
-                "purple": {"light": "#B39DDB", "medium": "#7E57C2", "dark": "#4527A0"},
-                "brown": {"light": "#BCAAA4", "medium": "#795548", "dark": "#3E2723"},
-            }
-            progress_color = color_map.get(color_name, {}).get(intensity, "#388E3C")
-            progress_color_dark = color_map.get(color_name, {}).get("dark", "#1B5E20")
-            progress_color_light = color_map.get(color_name, {}).get("light", "#A5D6A7")
+            # Use centralized color palette
+            progress_color = COLORS.get(color_name, COLORS["green"]).get(intensity, COLORS["green"]["medium"])
+            progress_color_dark = COLORS.get(color_name, COLORS["green"]).get("dark", COLORS["green"]["dark"])
+            progress_color_light = COLORS.get(color_name, COLORS["green"]).get("light", COLORS["green"]["light"])
             return f'<div class="underline-progress" style="--progress-color: {progress_color}; --progress-color-dark: {progress_color_dark}; --progress-color-light: {progress_color_light}; --progress-percent: {progress}%;"></div>'
         else:
             # No progress specified, use solid color underline
@@ -52,19 +117,11 @@ class HTMLGenerator:
             Tuple of (css_class, inline_style) for the text element
         """
         if progress is not None and isinstance(progress, (int, float)) and 0 <= progress <= 100:
-            # Map color name to text color (darkest and medium-dark variant)
-            text_color_map = {
-                "green": ("#0D4F14", "#388E3C"),
-                "blue": ("#063A85", "#1976D2"),
-                "purple": ("#311B92", "#7E57C2"),
-                "brown": ("#3E2723", "#795548"),
-            }
-            colors = text_color_map.get(color_name, ("#0D4F14", "#388E3C"))
-            text_color = colors[0]
-            text_color_medium = colors[1]
+            # Use centralized color palette - dark shade for text
+            text_color = COLORS.get(color_name, COLORS["green"]).get("dark", COLORS["green"]["dark"])
             # Use different class for clickable items with progress, and include color class for hover
             progress_class = "layer3-progress-clickable" if is_clickable else "layer3-progress"
-            return f"{progress_class} color-{color_name}", f"--text-progress-color: {text_color}; --text-progress-color-light: #A0A0A0; --text-progress-percent: {progress}%;"
+            return f"{progress_class} color-{color_name}", f"--text-progress-color: {text_color}; --text-progress-color-light: {COLORS['gray']['medium']}; --text-progress-percent: {progress}%;"
         else:
             # No progress, use regular color class
             return f"color-{color_name}", ""
@@ -136,6 +193,10 @@ class HTMLGenerator:
         from datetime import datetime
         current_date = datetime.now().strftime("%B %d, %Y")
         
+        # Generate CSS with centralized colors
+        dark_theme_css = self._get_dark_theme_css()
+        main_css = self._get_css_styles()
+        
         html_content = f"""
 <!DOCTYPE html>
 <html lang=\"en\">
@@ -154,7 +215,7 @@ class HTMLGenerator:
             height: 44px;
             border: none;
             border-radius: 50%;
-            background: #fff;
+            background: {COLORS['bg']['light_card']};
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
@@ -170,59 +231,71 @@ class HTMLGenerator:
             justify-content: center;
         }}
         .theme-toggle.sun {{
-            background: #fff;
-            color: #FFD600;
-            border: 2px solid #FFD600;
+            background: {COLORS['bg']['light_card']};
+            color: {COLORS['special']['sun']};
+            border: 2px solid {COLORS['special']['sun']};
         }}
         .theme-toggle.moon {{
-            background: #222;
-            color: #fff;
-            border: 2px solid #fff;
+            background: {COLORS['text']['dark']};
+            color: {COLORS['text']['light']};
+            border: 2px solid {COLORS['text']['light']};
         }}
+        {dark_theme_css}
+        {main_css}
+    </style>
+</head>
+<body>
+    <button id=\"themeToggle\" class=\"theme-toggle sun\" title=\"Toggle dark mode\" aria-label=\"Toggle dark mode\">\n        <span class=\"icon\" id=\"themeIcon\">\n            <!-- Sun SVG -->\n            <svg id=\"sunIcon\" xmlns=\"http://www.w3.org/2000/svg\" width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\" fill=\"{COLORS['special']['sun']}\"/><g stroke=\"{COLORS['special']['sun']}\"><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></g></svg>\n            <!-- Moon Emoji (hidden by default) -->\n            <span id=\"moonIcon\" style=\"display:none; font-size: 28px; line-height: 1;\">🌒</span>\n        </span>\n    </button>
+    <div class=\"graph-container\">\n        {breadcrumb_html}\n        <div class=\"pending-actions\" id=\"pendingActions\">\n            <div style=\"flex: 1;\">\n                <div style=\"font-weight: bold; margin-bottom: 8px;\">Pending changes:</div>\n                <ul id=\"changesList\" style=\"margin: 0; padding-left: 20px; font-size: 13px; color: {COLORS['text']['medium']};\"></ul>\n            </div>\n            <div style=\"display: flex; gap: 8px;\">\n                <button id=\"confirmChangesBtn\" class=\"btn-primary\" onclick=\"confirmQueuedChanges()\">Confirm changes</button>\n                <button id=\"cancelChangesBtn\" class=\"btn-secondary\" onclick=\"cancelQueuedChanges()\">Cancel changes</button>\n            </div>\n        </div>\n        {self._build_content_sections(data, current_item_id)}\n        <div class=\"current-date\">Updated: {current_date} <span onclick=\"regenerateCurrentPage()\" class=\"refresh-icon\" title=\"Regenerate page\">↻</span></div>\n    </div>\n    <div id=\"notification\" class=\"notification\"></div>\n    \n    <!-- Edit Modal -->\n    <div id=\"editModal\" class=\"modal\">\n        <div class=\"modal-content\">\n            <h2 id=\"modalTitle\">Edit Item</h2>\n            <div class=\"form-group\">\n                <label for=\"editName\">Item Name:</label>\n                <input type=\"text\" id=\"editName\" placeholder=\"Item name (key)\">\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editProgress\">Progress (0-100):</label>\n                <input type=\"number\" id=\"editProgress\" min=\"0\" max=\"100\" placeholder=\"Clear to remove\">\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editContext\">Context:</label>\n                <textarea id=\"editContext\" rows=\"3\" placeholder=\"Clear to remove\"></textarea>\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editDue\">Due Date (YYYY-MM-DD):</label>\n                <input type=\"date\" id=\"editDue\" placeholder=\"Clear to remove\">\n            </div>\n            <div class=\"modal-buttons\">\n                <button onclick=\"saveEdit()\" class=\"btn-primary\">Save</button>\n                <button onclick=\"closeEditModal()\" class=\"btn-secondary\">Cancel</button>\n                <button onclick=\"deleteItem()\" id=\"deleteButton\" class=\"btn-danger\" style=\"display:none;\">Delete</button>\n            </div>\n        </div>\n    </div>\n    \n    <script>\n        // Theme toggle logic\n        const themeToggle = document.getElementById('themeToggle');\n        const sunIcon = document.getElementById('sunIcon');\n        const moonIcon = document.getElementById('moonIcon');\n        function setTheme(isDark) {{\n            if (isDark) {{\n                document.body.classList.add('dark-theme');\n                themeToggle.classList.remove('sun');\n                themeToggle.classList.add('moon');\n                sunIcon.style.display = 'none';\n                moonIcon.style.display = '';\n            }} else {{\n                document.body.classList.remove('dark-theme');\n                themeToggle.classList.remove('moon');\n                themeToggle.classList.add('sun');\n                sunIcon.style.display = '';\n                moonIcon.style.display = 'none';\n            }}\n        }}\n        // Persist theme in sessionStorage\n        function getThemePref() {{\n            return sessionStorage.getItem('theme') === 'dark';\n        }}\n        function setThemePref(isDark) {{\n            sessionStorage.setItem('theme', isDark ? 'dark' : 'light');\n        }}\n        // Initial theme\n        setTimeout(() => {{\n            setTheme(getThemePref());\n            themeToggle.addEventListener('click', function() {{\n                const isDark = !document.body.classList.contains('dark-theme');\n                setTheme(isDark);\n                setThemePref(isDark);\n            }});\n        }}, 0);\n        {self._get_javascript_functions()}\n    </script>\n</body>\n</html>"""
+        return html_content
+    
+    def _get_dark_theme_css(self):
+        """Generate dark theme CSS using the centralized color palette."""
+        return f"""
         /* Dark theme styles */
         body.dark-theme {{
-            background-color: #23272e !important;
-            color: #fff !important;
+            background-color: {COLORS['bg']['dark']} !important;
+            color: {COLORS['text']['light']} !important;
         }}
         body.dark-theme .graph-container {{
-            background: #2d313a !important;
-            color: #fff !important;
+            background: {COLORS['bg']['dark_card']} !important;
+            color: {COLORS['text']['light']} !important;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }}
         /* Dark mode text colors */
         /* Layer1 and Layer2 use light gray */
         body.dark-theme .layer1 {{
-            color: #bbb !important;
+            color: {COLORS['gray']['light']} !important;
         }}
         body.dark-theme .layer2 {{
-            color: #bbb !important;
+            color: {COLORS['gray']['light']} !important;
         }}
         /* Layer3 uses light group colors */
         body.dark-theme .layer3.color-green {{
-            color: #A5D6A7 !important;
+            color: {COLORS['green']['light']} !important;
         }}
         body.dark-theme .layer3.color-blue {{
-            color: #90CAF9 !important;
+            color: {COLORS['blue']['light']} !important;
         }}
         body.dark-theme .layer3.color-purple {{
-            color: #B39DDB !important;
+            color: {COLORS['purple']['light']} !important;
         }}
         body.dark-theme .layer3.color-brown {{
-            color: #BCAAA4 !important;
+            color: {COLORS['brown']['light']} !important;
         }}
         /* All contexts use light gray */
         body.dark-theme .context,
         body.dark-theme .layer1-context,
         body.dark-theme .layer2-context,
         body.dark-theme .layer3-context {{
-            color: #bbb !important;
+            color: {COLORS['gray']['light']} !important;
         }}
-        /* New item placeholders use medium gray (between #444 dark and #bbb light) */
+        /* New item placeholders use medium gray */
         body.dark-theme .new-item.placeholder {{
-            color: #888 !important;
+            color: {COLORS['gray']['medium']} !important;
         }}
         body.dark-theme .new-item-hint {{
-            color: #888 !important;
+            color: {COLORS['gray']['medium']} !important;
         }}
         body.dark-theme .section {{
             background: transparent !important;
@@ -230,30 +303,30 @@ class HTMLGenerator:
         body.dark-theme .breadcrumb,
         body.dark-theme .modal-content,
         body.dark-theme .current-date {{
-            background: #23272e !important;
-            color: #fff !important;
+            background: {COLORS['bg']['dark']} !important;
+            color: {COLORS['text']['light']} !important;
         }}
         body.dark-theme .modal-content h2,
         body.dark-theme .form-group label {{
-            color: #ccc !important;
+            color: {COLORS['gray']['light']} !important;
         }}
         body.dark-theme .form-group input,
         body.dark-theme .form-group textarea {{
-            background: #2d313a !important;
-            color: #ccc !important;
-            border-color: #444 !important;
+            background: {COLORS['bg']['dark_card']} !important;
+            color: {COLORS['gray']['light']} !important;
+            border-color: {COLORS['gray']['dark']} !important;
         }}
         body.dark-theme .btn-primary {{
-            background-color: #444 !important;
-            color: #fff !important;
+            background-color: {COLORS['gray']['dark']} !important;
+            color: {COLORS['text']['light']} !important;
         }}
         body.dark-theme .btn-secondary {{
             background-color: #333 !important;
-            color: #fff !important;
+            color: {COLORS['text']['light']} !important;
         }}
         body.dark-theme .btn-danger {{
-            background-color: #a84444 !important;
-            color: #fff !important;
+            background-color: {COLORS['special']['danger_dark']} !important;
+            color: {COLORS['text']['light']} !important;
         }}
         body.dark-theme .btn-danger:hover {{
             background-color: #963838 !important;
@@ -261,38 +334,38 @@ class HTMLGenerator:
         /* Underline colors in dark mode */
         /* Layer1 underlines use dark group color */
         body.dark-theme .underline.color-green-medium {{
-            background-color: #1B5E20 !important;
+            background-color: {COLORS['green']['dark']} !important;
         }}
         body.dark-theme .underline.color-blue-medium {{
-            background-color: #0D47A1 !important;
+            background-color: {COLORS['blue']['dark']} !important;
         }}
         body.dark-theme .underline.color-purple-medium {{
-            background-color: #4527A0 !important;
+            background-color: {COLORS['purple']['dark']} !important;
         }}
         body.dark-theme .underline.color-brown-medium {{
-            background-color: #3E2723 !important;
+            background-color: {COLORS['brown']['dark']} !important;
         }}
         /* Layer2 underlines use medium group color */
         body.dark-theme .underline.color-green-light {{
-            background-color: #388E3C !important;
+            background-color: {COLORS['green']['medium']} !important;
         }}
         body.dark-theme .underline.color-blue-light {{
-            background-color: #1976D2 !important;
+            background-color: {COLORS['blue']['medium']} !important;
         }}
         body.dark-theme .underline.color-purple-light {{
-            background-color: #7E57C2 !important;
+            background-color: {COLORS['purple']['medium']} !important;
         }}
         body.dark-theme .underline.color-brown-light {{
-            background-color: #795548 !important;
+            background-color: {COLORS['brown']['medium']} !important;
         }}
         /* fallback for other underlines */
         body.dark-theme .underline,
         body.dark-theme .underline-progress {{
-            background: #444 !important;
+            background: {COLORS['gray']['dark']} !important;
         }}
-        /* Progress underline uses light color for filled section in dark mode to match level 3 items */
+        /* Progress underline uses same color as the intensity passed (medium for layer1, light for layer2) */
         body.dark-theme .underline-progress {{
-            background: linear-gradient(to right, var(--progress-color-light, #A5D6A7) var(--progress-percent), #555 var(--progress-percent)) !important;
+            background: linear-gradient(to right, var(--progress-color, {COLORS['green']['medium']}) var(--progress-percent), {COLORS['gray']['medium_dark']} var(--progress-percent)) !important;
         }}
         body.dark-theme .layer1.color-group-green:hover,
         body.dark-theme .layer2.color-green:hover,
@@ -317,85 +390,79 @@ class HTMLGenerator:
         /* Layer3 progress text uses light group colors in dark mode */
         body.dark-theme .layer3-progress.color-green,
         body.dark-theme .layer3-progress-clickable.color-green {{
-            background: linear-gradient(to right, #A5D6A7 var(--text-progress-percent), #888 var(--text-progress-percent)) !important;
+            background: linear-gradient(to right, {COLORS['green']['light']} var(--text-progress-percent), {COLORS['gray']['medium']} var(--text-progress-percent)) !important;
             -webkit-background-clip: text !important;
             -webkit-text-fill-color: transparent !important;
             background-clip: text !important;
         }}
         body.dark-theme .layer3-progress.color-blue,
         body.dark-theme .layer3-progress-clickable.color-blue {{
-            background: linear-gradient(to right, #90CAF9 var(--text-progress-percent), #888 var(--text-progress-percent)) !important;
+            background: linear-gradient(to right, {COLORS['blue']['light']} var(--text-progress-percent), {COLORS['gray']['medium']} var(--text-progress-percent)) !important;
             -webkit-background-clip: text !important;
             -webkit-text-fill-color: transparent !important;
             background-clip: text !important;
         }}
         body.dark-theme .layer3-progress.color-purple,
         body.dark-theme .layer3-progress-clickable.color-purple {{
-            background: linear-gradient(to right, #B39DDB var(--text-progress-percent), #888 var(--text-progress-percent)) !important;
+            background: linear-gradient(to right, {COLORS['purple']['light']} var(--text-progress-percent), {COLORS['gray']['medium']} var(--text-progress-percent)) !important;
             -webkit-background-clip: text !important;
             -webkit-text-fill-color: transparent !important;
             background-clip: text !important;
         }}
         body.dark-theme .layer3-progress.color-brown,
         body.dark-theme .layer3-progress-clickable.color-brown {{
-            background: linear-gradient(to right, #BCAAA4 var(--text-progress-percent), #888 var(--text-progress-percent)) !important;
+            background: linear-gradient(to right, {COLORS['brown']['light']} var(--text-progress-percent), {COLORS['gray']['medium']} var(--text-progress-percent)) !important;
             -webkit-background-clip: text !important;
             -webkit-text-fill-color: transparent !important;
             background-clip: text !important;
         }}
-        {self._get_css_styles()}
-    </style>
-</head>
-<body>
-    <button id=\"themeToggle\" class=\"theme-toggle sun\" title=\"Toggle dark mode\" aria-label=\"Toggle dark mode\">\n        <span class=\"icon\" id=\"themeIcon\">\n            <!-- Sun SVG -->\n            <svg id=\"sunIcon\" xmlns=\"http://www.w3.org/2000/svg\" width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\" fill=\"#FFD600\"/><g stroke=\"#FFD600\"><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></g></svg>\n            <!-- Moon Emoji (hidden by default) -->\n            <span id=\"moonIcon\" style=\"display:none; font-size: 28px; line-height: 1;\">🌒</span>\n        </span>\n    </button>
-    <div class=\"graph-container\">\n        {breadcrumb_html}\n        <div class=\"pending-actions\" id=\"pendingActions\">\n            <div style=\"flex: 1;\">\n                <div style=\"font-weight: bold; margin-bottom: 8px;\">Pending changes:</div>\n                <ul id=\"changesList\" style=\"margin: 0; padding-left: 20px; font-size: 13px; color: #333;\"></ul>\n            </div>\n            <div style=\"display: flex; gap: 8px;\">\n                <button id=\"confirmChangesBtn\" class=\"btn-primary\" onclick=\"confirmQueuedChanges()\">Confirm changes</button>\n                <button id=\"cancelChangesBtn\" class=\"btn-secondary\" onclick=\"cancelQueuedChanges()\">Cancel changes</button>\n            </div>\n        </div>\n        {self._build_content_sections(data, current_item_id)}\n        <div class=\"current-date\">Updated: {current_date} <span onclick=\"regenerateCurrentPage()\" class=\"refresh-icon\" title=\"Regenerate page\">↻</span></div>\n    </div>\n    <div id=\"notification\" class=\"notification\"></div>\n    \n    <!-- Edit Modal -->\n    <div id=\"editModal\" class=\"modal\">\n        <div class=\"modal-content\">\n            <h2 id=\"modalTitle\">Edit Item</h2>\n            <div class=\"form-group\">\n                <label for=\"editName\">Item Name:</label>\n                <input type=\"text\" id=\"editName\" placeholder=\"Item name (key)\">\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editProgress\">Progress (0-100):</label>\n                <input type=\"number\" id=\"editProgress\" min=\"0\" max=\"100\" placeholder=\"Clear to remove\">\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editContext\">Context:</label>\n                <textarea id=\"editContext\" rows=\"3\" placeholder=\"Clear to remove\"></textarea>\n            </div>\n            <div class=\"form-group\">\n                <label for=\"editDue\">Due Date (YYYY-MM-DD):</label>\n                <input type=\"date\" id=\"editDue\" placeholder=\"Clear to remove\">\n            </div>\n            <div class=\"modal-buttons\">\n                <button onclick=\"saveEdit()\" class=\"btn-primary\">Save</button>\n                <button onclick=\"closeEditModal()\" class=\"btn-secondary\">Cancel</button>\n                <button onclick=\"deleteItem()\" id=\"deleteButton\" class=\"btn-danger\" style=\"display:none;\">Delete</button>\n            </div>\n        </div>\n    </div>\n    \n    <script>\n        // Theme toggle logic\n        const themeToggle = document.getElementById('themeToggle');\n        const sunIcon = document.getElementById('sunIcon');\n        const moonIcon = document.getElementById('moonIcon');\n        function setTheme(isDark) {{\n            if (isDark) {{\n                document.body.classList.add('dark-theme');\n                themeToggle.classList.remove('sun');\n                themeToggle.classList.add('moon');\n                sunIcon.style.display = 'none';\n                moonIcon.style.display = '';\n            }} else {{\n                document.body.classList.remove('dark-theme');\n                themeToggle.classList.remove('moon');\n                themeToggle.classList.add('sun');\n                sunIcon.style.display = '';\n                moonIcon.style.display = 'none';\n            }}\n        }}\n        // Persist theme in sessionStorage\n        function getThemePref() {{\n            return sessionStorage.getItem('theme') === 'dark';\n        }}\n        function setThemePref(isDark) {{\n            sessionStorage.setItem('theme', isDark ? 'dark' : 'light');\n        }}\n        // Initial theme\n        setTimeout(() => {{\n            setTheme(getThemePref());\n            themeToggle.addEventListener('click', function() {{\n                const isDark = !document.body.classList.contains('dark-theme');\n                setTheme(isDark);\n                setThemePref(isDark);\n            }});\n        }}, 0);\n        {self._get_javascript_functions()}\n    </script>\n</body>\n</html>"""
-        return html_content
+        """
     
     def _get_css_styles(self):
-        """Get CSS styles for the HTML page."""
-        return """
-        body {
+        """Get CSS styles for the HTML page using centralized color palette."""
+        return f"""
+        body {{
             font-family: Arial, sans-serif;
             margin: 20px;
-            background-color: #f5f5f5;
-        }
-        .graph-container {
-            background: white;
+            background-color: {COLORS['bg']['light']};
+        }}
+        .graph-container {{
+            background: {COLORS['bg']['light_card']};
             padding: 10px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .layer1 {
+        }}
+        .layer1 {{
             font-size: 16px;
             font-weight: bold;
-            color: #222;
+            color: {COLORS['text']['dark']};
             display: inline-block;
             margin-right: 5px;
             cursor: pointer;
             padding: 3px 8px;
             border-radius: 4px;
             transition: background-color 0.2s;
-        }
-        .layer1:not(.clickable) {
+        }}
+        .layer1:not(.clickable) {{
             cursor: default;
-        }
-        .layer1.color-group-green:hover {
+        }}
+        .layer1.color-group-green:hover {{
             background-color: rgba(165, 214, 167, 0.5);
-        }
-        .layer1.color-group-blue:hover {
+        }}
+        .layer1.color-group-blue:hover {{
             background-color: rgba(144, 202, 249, 0.5);
-        }
-        .layer1.color-group-purple:hover {
-            background-color: rgba(206, 147, 216, 0.5);
-        }
-        .layer1.color-group-brown:hover {
+        }}
+        .layer1.color-group-purple:hover {{
+            background-color: rgba(179, 157, 219, 0.5);
+        }}
+        .layer1.color-group-brown:hover {{
             background-color: rgba(188, 170, 164, 0.5);
-        }
-        .layer2 {
+        }}
+        .layer2 {{
             font-size: 14px;
             font-weight: normal;
             cursor: pointer;
-            color: #333;
+            color: {COLORS['text']['medium']};
             padding: 3px 8px;
             border-radius: 4px;
             margin-right: 10px;
@@ -403,93 +470,93 @@ class HTMLGenerator:
             display: block;
             margin-bottom: 0px;
             min-width: 30px;
-        }
-        .layer2.clickable {
+        }}
+        .layer2.clickable {{
             font-weight: bold;
-        }
-        .layer2.leaf {
+        }}
+        .layer2.leaf {{
             font-weight: bold;
-        }
-        .layer2.color-green:hover {
+        }}
+        .layer2.color-green:hover {{
             background-color: rgba(165, 214, 167, 0.5);
-        }
-        .layer2.color-blue:hover {
+        }}
+        .layer2.color-blue:hover {{
             background-color: rgba(144, 202, 249, 0.5);
-        }
-        .layer2.color-purple:hover {
-            background-color: rgba(206, 147, 216, 0.5);
-        }
-        .layer2.color-group-brown:hover {
+        }}
+        .layer2.color-purple:hover {{
+            background-color: rgba(179, 157, 219, 0.5);
+        }}
+        .layer2.color-group-brown:hover {{
             background-color: rgba(188, 170, 164, 0.5);
-        }
-        .layer2.clickable {
-            border: 0px dashed #2196f3;
-        }
-        .layer2.clickable.color-group-green:hover {
+        }}
+        .layer2.clickable {{
+            border: 0px dashed {COLORS['blue']['medium']};
+        }}
+        .layer2.clickable.color-group-green:hover {{
             background-color: rgba(165, 214, 167, 0.5);
-            border-color: #388E3C;
-        }
-        .layer2.clickable.color-group-blue:hover {
+            border-color: {COLORS['green']['medium']};
+        }}
+        .layer2.clickable.color-group-blue:hover {{
             background-color: rgba(144, 202, 249, 0.5);
-            border-color: #1976D2;
-        }
-        .layer2.clickable.color-group-purple:hover {
-            background-color: rgba(206, 147, 216, 0.5);
-            border-color: #8E24AA;
-        }
-        .layer2.clickable.color-group-brown:hover {
+            border-color: {COLORS['blue']['medium']};
+        }}
+        .layer2.clickable.color-group-purple:hover {{
+            background-color: rgba(179, 157, 219, 0.5);
+            border-color: {COLORS['purple']['medium']};
+        }}
+        .layer2.clickable.color-group-brown:hover {{
             background-color: rgba(188, 170, 164, 0.5);
-            border-color: #795548;
-        }
-        .layer2:not(.clickable) {
+            border-color: {COLORS['brown']['medium']};
+        }}
+        .layer2:not(.clickable) {{
             cursor: default;
-        }
-        .layer2:not(.clickable):hover {
+        }}
+        .layer2:not(.clickable):hover {{
             background-color: transparent;
-        }
-        .context {
-            color: #000;
+        }}
+        .context {{
+            color: {COLORS['text']['dark']};
             font-style: italic;
             margin-top: 1px;
             padding: 1px 8px;
             display: block;
             font-weight: normal;
-        }
-        .layer1-context {
+        }}
+        .layer1-context {{
             font-size: 13px;
-        }
-        .layer2-context {
+        }}
+        .layer2-context {{
             font-size: 12px;
-        }
-        .layer3-context {
+        }}
+        .layer3-context {{
             font-size: 10px;
-            color: #000;
-        }
-        .layer3 {
+            color: {COLORS['text']['dark']};
+        }}
+        .layer3 {{
             font-size: 12px;
-            color: #333;
+            color: {COLORS['text']['medium']};
             font-weight: normal;
             display: block;
             cursor: pointer;
             padding: 1px 6px;
             border-radius: 3px;
             transition: background-color 0.2s;
-        }
-        .layer3.clickable {
+        }}
+        .layer3.clickable {{
             font-weight: bold;
-        }
-        .layer3:not(.clickable) {
+        }}
+        .layer3:not(.clickable) {{
             cursor: default;
-        }
-        .layer3.color-green { color: #0D4F14; }
-        .layer3.color-blue { color: #063A85; }
-        .layer3.color-purple { color: #3A0F6E; }
-        .layer3.color-brown { color: #3E2723; }
-        .layer3.color-green:hover { background-color: rgba(165, 214, 167, 0.5); }
-        .layer3.color-blue:hover { background-color: rgba(144, 202, 249, 0.5); }
-        .layer3.color-purple:hover { background-color: rgba(206, 147, 216, 0.5); }
-        .layer3.color-brown:hover { background-color: rgba(188, 170, 164, 0.5); }
-        .layer3-progress {
+        }}
+        .layer3.color-green {{ color: {COLORS['green']['dark']}; }}
+        .layer3.color-blue {{ color: {COLORS['blue']['dark']}; }}
+        .layer3.color-purple {{ color: {COLORS['purple']['dark']}; }}
+        .layer3.color-brown {{ color: {COLORS['brown']['dark']}; }}
+        .layer3.color-green:hover {{ background-color: rgba(165, 214, 167, 0.5); }}
+        .layer3.color-blue:hover {{ background-color: rgba(144, 202, 249, 0.5); }}
+        .layer3.color-purple:hover {{ background-color: rgba(179, 157, 219, 0.5); }}
+        .layer3.color-brown:hover {{ background-color: rgba(188, 170, 164, 0.5); }}
+        .layer3-progress {{
             background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -498,24 +565,24 @@ class HTMLGenerator:
             padding: 1px 6px;
             border-radius: 3px;
             transition: background-color 0.2s;
-        }
-        .layer3-progress.color-green:hover {
+        }}
+        .layer3-progress.color-green:hover {{
             background: rgba(165, 214, 167, 0.5);
-            -webkit-text-fill-color: #0D4F14;
-        }
-        .layer3-progress.color-blue:hover {
+            -webkit-text-fill-color: {COLORS['green']['dark']};
+        }}
+        .layer3-progress.color-blue:hover {{
             background: rgba(144, 202, 249, 0.5);
-            -webkit-text-fill-color: #063A85;
-        }
-        .layer3-progress.color-purple:hover {
-            background: rgba(206, 147, 216, 0.5);
-            -webkit-text-fill-color: #3A0F6E;
-        }
-        .layer3-progress.color-brown:hover {
+            -webkit-text-fill-color: {COLORS['blue']['dark']};
+        }}
+        .layer3-progress.color-purple:hover {{
+            background: rgba(179, 157, 219, 0.5);
+            -webkit-text-fill-color: {COLORS['purple']['dark']};
+        }}
+        .layer3-progress.color-brown:hover {{
             background: rgba(188, 170, 164, 0.5);
-            -webkit-text-fill-color: #3E2723;
-        }
-        .layer3-progress-clickable {
+            -webkit-text-fill-color: {COLORS['brown']['dark']};
+        }}
+        .layer3-progress-clickable {{
             background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -526,24 +593,24 @@ class HTMLGenerator:
             padding: 2px 6px;
             border-radius: 3px;
             transition: background-color 0.2s;
-        }
-        .layer3-progress-clickable.color-green:hover {
+        }}
+        .layer3-progress-clickable.color-green:hover {{
             background: rgba(165, 214, 167, 0.5);
-            -webkit-text-fill-color: #0D4F14;
-        }
-        .layer3-progress-clickable.color-blue:hover {
+            -webkit-text-fill-color: {COLORS['green']['dark']};
+        }}
+        .layer3-progress-clickable.color-blue:hover {{
             background: rgba(144, 202, 249, 0.5);
-            -webkit-text-fill-color: #063A85;
-        }
-        .layer3-progress-clickable.color-purple:hover {
-            background: rgba(206, 147, 216, 0.5);
-            -webkit-text-fill-color: #3A0F6E;
-        }
-        .layer3-progress-clickable.color-brown:hover {
+            -webkit-text-fill-color: {COLORS['blue']['dark']};
+        }}
+        .layer3-progress-clickable.color-purple:hover {{
+            background: rgba(179, 157, 219, 0.5);
+            -webkit-text-fill-color: {COLORS['purple']['dark']};
+        }}
+        .layer3-progress-clickable.color-brown:hover {{
             background: rgba(188, 170, 164, 0.5);
-            -webkit-text-fill-color: #3E2723;
-        }
-        .underline {
+            -webkit-text-fill-color: {COLORS['brown']['dark']};
+        }}
+        .underline {{
             height: 2px;
             margin-top: 0px;
             margin-bottom: 1px;
@@ -553,8 +620,8 @@ class HTMLGenerator:
             font-size: 0;
             overflow: hidden;
             opacity: 0.6;
-        }
-        .underline-progress {
+        }}
+        .underline-progress {{
             height: 2px;
             margin-top: 0px;
             margin-bottom: 1px;
@@ -565,68 +632,68 @@ class HTMLGenerator:
             overflow: hidden;
             background: linear-gradient(to right, var(--progress-color) var(--progress-percent), #ddd var(--progress-percent));
             opacity: 0.6;
-        }
-        .color-green-light { background-color: #A5D6A7; }
-        .color-green-medium { background-color: #388E3C; }
-        .color-green-dark { background-color: #1B5E20; }
-        .color-blue-light { background-color: #90CAF9; }
-        .color-blue-medium { background-color: #1976D2; }
-        .color-blue-dark { background-color: #0D47A1; }
-        .color-purple-light { background-color: #B39DDB; }
-        .color-purple-medium { background-color: #7E57C2; }
-        .color-purple-dark { background-color: #4527A0; }
-        .color-brown-light { background-color: #BCAAA4; }
-        .color-brown-medium { background-color: #795548; }
-        .color-brown-dark { background-color: #3E2723; }
-        .section {
+        }}
+        .color-green-light {{ background-color: {COLORS['green']['light']}; }}
+        .color-green-medium {{ background-color: {COLORS['green']['medium']}; }}
+        .color-green-dark {{ background-color: {COLORS['green']['dark']}; }}
+        .color-blue-light {{ background-color: {COLORS['blue']['light']}; }}
+        .color-blue-medium {{ background-color: {COLORS['blue']['medium']}; }}
+        .color-blue-dark {{ background-color: {COLORS['blue']['dark']}; }}
+        .color-purple-light {{ background-color: {COLORS['purple']['light']}; }}
+        .color-purple-medium {{ background-color: {COLORS['purple']['medium']}; }}
+        .color-purple-dark {{ background-color: {COLORS['purple']['dark']}; }}
+        .color-brown-light {{ background-color: {COLORS['brown']['light']}; }}
+        .color-brown-medium {{ background-color: {COLORS['brown']['medium']}; }}
+        .color-brown-dark {{ background-color: {COLORS['brown']['dark']}; }}
+        .section {{
             margin-bottom: 10px;
             display: flex;
             align-items: flex-start;
-        }
-        .layer1-container {
+        }}
+        .layer1-container {{
             display: flex;
             flex-direction: column;
             margin-right: 15px;
             flex-shrink: 0;
-        }
-        .layer2-section {
+        }}
+        .layer2-section {{
             display: flex;
             flex-direction: column;
-        }
-        .layer2-container {
+        }}
+        .layer2-container {{
             margin-bottom: 2px;
             display: flex;
             align-items: flex-start;
-        }
-        .layer2-content {
+        }}
+        .layer2-content {{
             margin-right: 10px;
             flex-shrink: 0;
-        }
-        .layer3-container {
+        }}
+        .layer3-container {{
             display: flex;
             flex-direction: row;
             flex-wrap: wrap;
             align-items: center;
-        }
-        .layer3-item {
+        }}
+        .layer3-item {{
             margin-right: 15px;
             margin-bottom: 1px;
-        }
-        .notification {
+        }}
+        .notification {{
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #4caf50;
+            background: {COLORS['special']['success']};
             color: white;
             padding: 10px 20px;
             border-radius: 4px;
             display: none;
             z-index: 1000;
-        }
-        .notification.error {
-            background: #f44336;
-        }
-        .modal {
+        }}
+        .notification.error {{
+            background: {COLORS['special']['danger']};
+        }}
+        .modal {{
             display: none;
             position: fixed;
             z-index: 2000;
@@ -637,274 +704,274 @@ class HTMLGenerator:
             background-color: rgba(0,0,0,0.1);
             align-items: center;
             justify-content: center;
-        }
-        .modal-content {
-            background-color: white;
+        }}
+        .modal-content {{
+            background-color: {COLORS['bg']['light_card']};
             padding: 20px;
             border-radius: 8px;
             max-width: 500px;
             width: 90%;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-        .modal-content h2 {
+        }}
+        .modal-content h2 {{
             margin-top: 0;
-            color: #333;
-        }
-        .form-group {
+            color: {COLORS['text']['medium']};
+        }}
+        .form-group {{
             margin-bottom: 15px;
-        }
-        .form-group label {
+        }}
+        .form-group label {{
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
-            color: #555;
-        }
+            color: {COLORS['text']['muted']};
+        }}
         .form-group input,
-        .form-group textarea {
+        .form-group textarea {{
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
             box-sizing: border-box;
-        }
+        }}
         .form-group input:focus,
-        .form-group textarea:focus {
+        .form-group textarea:focus {{
             outline: none;
-            border-color: #1976d2;
-        }
-        .modal-buttons {
+            border-color: {COLORS['blue']['medium']};
+        }}
+        .modal-buttons {{
             display: flex;
             gap: 10px;
             justify-content: flex-end;
             margin-top: 20px;
-        }
+        }}
         .btn-primary,
-        .btn-secondary {
+        .btn-secondary {{
             padding: 10px 20px;
             border: none;
             border-radius: 4px;
             font-size: 14px;
             cursor: pointer;
             transition: background-color 0.2s;
-        }
-        .btn-primary {
-            background-color: #1976d2;
+        }}
+        .btn-primary {{
+            background-color: {COLORS['blue']['medium']};
             color: white;
-        }
-        .btn-primary:hover {
-            background-color: #1565c0;
-        }
-        .btn-secondary {
+        }}
+        .btn-primary:hover {{
+            background-color: {COLORS['blue']['dark']};
+        }}
+        .btn-secondary {{
             background-color: #f0f0f0;
-            color: #333;
-        }
-        .btn-secondary:hover {
+            color: {COLORS['text']['medium']};
+        }}
+        .btn-secondary:hover {{
             background-color: #e0e0e0;
-        }
-        .btn-danger {
+        }}
+        .btn-danger {{
             padding: 10px 20px;
             border: none;
             border-radius: 4px;
             font-size: 14px;
             cursor: pointer;
             transition: background-color 0.2s;
-            background-color: #d84545;
+            background-color: {COLORS['special']['danger']};
             color: white;
-        }
-        .btn-danger:hover {
+        }}
+        .btn-danger:hover {{
             background-color: #c23838;
-        }
+        }}
         /* Pending actions toolbar */
-        .pending-actions {
+        .pending-actions {{
             margin: 10px 0 15px 0;
             display: none; /* shown when there are queued changes */
             gap: 8px;
-        }
-        body.dark-theme #changesList {
-            color: #bbb !important;
-        }
+        }}
+        body.dark-theme #changesList {{
+            color: {COLORS['gray']['light']} !important;
+        }}
         /* Soft-delete styling */
-        .deleted {
-            color: #c62828;
+        .deleted {{
+            color: {COLORS['special']['danger']};
             text-decoration: line-through;
-            text-decoration-color: #c62828 !important;
-            -webkit-text-decoration-color: #c62828 !important;
+            text-decoration-color: {COLORS['special']['danger']} !important;
+            -webkit-text-decoration-color: {COLORS['special']['danger']} !important;
             opacity: 0.9;
-        }
+        }}
         /* Force strikethrough on progress items that are deleted */
         .deleted.layer3-progress,
-        .deleted.layer3-progress-clickable {
+        .deleted.layer3-progress-clickable {{
             text-decoration: line-through !important;
             -webkit-text-decoration: line-through !important;
-            text-decoration-color: #c62828 !important;
-            -webkit-text-decoration-color: #c62828 !important;
-        }
-        body.dark-theme .deleted {
+            text-decoration-color: {COLORS['special']['danger']} !important;
+            -webkit-text-decoration-color: {COLORS['special']['danger']} !important;
+        }}
+        body.dark-theme .deleted {{
             color: #ff6b6b;
             text-decoration-color: #ff6b6b !important;
             -webkit-text-decoration-color: #ff6b6b !important;
-        }
+        }}
         body.dark-theme .deleted.layer3-progress,
-        body.dark-theme .deleted.layer3-progress-clickable {
+        body.dark-theme .deleted.layer3-progress-clickable {{
             text-decoration-color: #ff6b6b !important;
             -webkit-text-decoration-color: #ff6b6b !important;
-        }
+        }}
         /* Pending add styling */
-        .pending-add::after {
+        .pending-add::after {{
             content: " *";
-            color: #ef6c00;
+            color: {COLORS['special']['warning']};
             font-weight: bold;
-        }
-        .breadcrumb {
+        }}
+        .breadcrumb {{
             margin-bottom: 20px;
             padding: 10px;
             background: #f0f0f0;
             border-radius: 4px;
             font-size: 14px;
-        }
-        .breadcrumb a {
-            color: #1976d2;
+        }}
+        .breadcrumb a {{
+            color: {COLORS['blue']['medium']};
             text-decoration: none;
             cursor: pointer;
-        }
-        .breadcrumb a:hover {
+        }}
+        .breadcrumb a:hover {{
             text-decoration: underline;
-        }
-        .breadcrumb .current {
+        }}
+        .breadcrumb .current {{
             font-weight: bold;
-            color: #333;
-        }
-        body.dark-theme .breadcrumb .current {
-            color: #bbb;
-        }
-        .current-date {
+            color: {COLORS['text']['medium']};
+        }}
+        body.dark-theme .breadcrumb .current {{
+            color: {COLORS['gray']['light']};
+        }}
+        .current-date {{
             margin-top: 20px;
             padding: 5px 10px;
             background: #f8f8f8;
             border-radius: 4px;
             font-size: 12px;
-            color: #666;
+            color: {COLORS['text']['muted']};
             text-align: right;
-        }
-        body.dark-theme .current-date {
-            color: #555;
-        }
-        .refresh-icon {
+        }}
+        body.dark-theme .current-date {{
+            color: {COLORS['gray']['medium_dark']};
+        }}
+        .refresh-icon {{
             cursor: pointer;
             margin-left: 10px;
             display: inline-block;
             font-size: 18px;
-            color: #000;
+            color: {COLORS['text']['dark']};
             background: none;
             border: none;
             padding: 0;
             line-height: 1;
-        }
-        body.dark-theme .refresh-icon {
-            color: #fff;
-        }
-        .due-date {
+        }}
+        body.dark-theme .refresh-icon {{
+            color: {COLORS['text']['light']};
+        }}
+        .due-date {{
             font-size: 10px;
             padding: 1.8px 6px;
             border-radius: 3px;
             display: inline-block;
             margin-left: 8px;
             font-weight: normal;
-        }
-        .due-overdue {
+        }}
+        .due-overdue {{
             background-color: #ffebee;
-            color: #c62828;
-        }
-        .due-today {
+            color: {COLORS['special']['danger']};
+        }}
+        .due-today {{
             background-color: #fff3e0;
-            color: #ef6c00;
-        }
-        .due-soon {
+            color: {COLORS['special']['warning']};
+        }}
+        .due-soon {{
             background-color: #e8f5e9;
             color: #2e7d32;
-        }
-        .due-later {
+        }}
+        .due-later {{
             background-color: #e3f2fd;
-            color: #1565c0;
-        }
+            color: {COLORS['blue']['dark']};
+        }}
         /* Darker backgrounds for time bubbles in dark mode */
-        body.dark-theme .due-overdue {
+        body.dark-theme .due-overdue {{
             background-color: #3a2525;
             color: #ffebee;
-        }
-        body.dark-theme .due-today {
+        }}
+        body.dark-theme .due-today {{
             background-color: #4d3525;
             color: #fff3e0;
-        }
-        body.dark-theme .due-soon {
+        }}
+        body.dark-theme .due-soon {{
             background-color: #2a3e2d;
             color: #e8f5e9;
-        }
-        body.dark-theme .due-later {
+        }}
+        body.dark-theme .due-later {{
             background-color: #253b4d;
             color: #e3f2fd;
-        }
+        }}
         /* Time category items (Over, Day, Week, Month) match time bubble colors */
-        .time-category-over {
-            color: #c62828 !important;
-        }
-        body.dark-theme .time-category-over {
+        .time-category-over {{
+            color: {COLORS['special']['danger']} !important;
+        }}
+        body.dark-theme .time-category-over {{
             color: #ffb3ba !important;
-        }
-        .time-category-day {
-            color: #ef6c00 !important;
-        }
-        body.dark-theme .time-category-day {
+        }}
+        .time-category-day {{
+            color: {COLORS['special']['warning']} !important;
+        }}
+        body.dark-theme .time-category-day {{
             color: #ffd699 !important;
-        }
-        .time-category-week {
+        }}
+        .time-category-week {{
             color: #2e7d32 !important;
-        }
-        body.dark-theme .time-category-week {
+        }}
+        body.dark-theme .time-category-week {{
             color: #b3e5b3 !important;
-        }
-        .time-category-month {
-            color: #1565c0 !important;
-        }
-        body.dark-theme .time-category-month {
+        }}
+        .time-category-month {{
+            color: {COLORS['blue']['dark']} !important;
+        }}
+        body.dark-theme .time-category-month {{
             color: #b3d9f2 !important;
-        }
-        .item-path {
+        }}
+        .item-path {{
             font-size: 11px;
-            color: #666;
+            color: {COLORS['text']['muted']};
             font-style: italic;
             margin-top: 2px;
-        }
-        .back-button {
+        }}
+        .back-button {{
             display: inline-block;
             margin-bottom: 20px;
             padding: 8px 16px;
-            background: #1976d2;
+            background: {COLORS['blue']['medium']};
             color: white;
             text-decoration: none;
             border-radius: 4px;
             cursor: pointer;
             border: none;
             font-size: 14px;
-        }
-        .back-button:hover {
-            background: #1565c0;
-        }
+        }}
+        .back-button:hover {{
+            background: {COLORS['blue']['dark']};
+        }}
         
         /* Responsive layout for narrow screens */
-        @media (max-width: 500px) {
-            .section {
+        @media (max-width: 500px) {{
+            .section {{
                 flex-direction: column;
-            }
-            .layer1-container {
+            }}
+            .layer1-container {{
                 margin-right: 0;
                 margin-bottom: 15px;
-            }
-            .layer2-section {
+            }}
+            .layer2-section {{
                 width: 100%;
-            }
-        }
+            }}
+        }}
         """
     
     def _get_javascript_functions(self):
