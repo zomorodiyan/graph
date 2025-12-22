@@ -556,6 +556,13 @@ class HTMLGenerator:
         .layer3.color-blue:hover {{ background-color: rgba(144, 202, 249, 0.5); }}
         .layer3.color-purple:hover {{ background-color: rgba(179, 157, 219, 0.5); }}
         .layer3.color-brown:hover {{ background-color: rgba(188, 170, 164, 0.5); }}
+        /* New item placeholders use medium gray in both light and dark mode */
+        .new-item.placeholder {{
+            color: {COLORS['gray']['medium']} !important;
+        }}
+        .new-item-hint {{
+            color: {COLORS['gray']['medium']} !important;
+        }}
         .layer3-progress {{
             background: linear-gradient(to right, var(--text-progress-color) var(--text-progress-percent), var(--text-progress-color-light) var(--text-progress-percent));
             -webkit-background-clip: text;
