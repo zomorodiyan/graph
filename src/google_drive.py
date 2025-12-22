@@ -22,7 +22,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 # Cloud Run mounts secrets to /secrets by default, local dev uses project root
 def _get_path(filename: str) -> Path:
     """Get path for a file, checking Cloud Run secrets mount first."""
-    # Cloud Run mounts secrets in subdirectories
+    # Cloud Run mounts secrets in subdirectories (read-only)
     if filename == 'token.pickle':
         cloud_run_path = Path('/secrets/token/token.pickle')
         if cloud_run_path.exists():
@@ -42,7 +42,15 @@ def _get_path(filename: str) -> Path:
         return app_path
     return PROJECT_ROOT / filename
 
+def _get_writable_path(filename: str) -> Path:
+    """Get writable path for a file. Cloud Run /secrets is read-only, so use /tmp."""
+    # On Cloud Run, secrets are mounted read-only, so tokens need to be saved to /tmp
+    if Path('/secrets').exists():
+        return Path('/tmp') / filename
+    return PROJECT_ROOT / filename
+
 TOKEN_PATH = _get_path('token.pickle')
+TOKEN_WRITE_PATH = _get_writable_path('token.pickle')
 CREDENTIALS_PATH = _get_path('credentials.json')
 CONFIG_PATH = _get_path('config.yaml')
 STRUCTURE_PATH = PROJECT_ROOT / 'structure.txt'
@@ -85,7 +93,7 @@ def get_credentials():
                 return None
         
         # Save the credentials for the next run
-        with open(TOKEN_PATH, 'wb') as token:
+        with open(TOKEN_WRITE_PATH, 'wb') as token:
             pickle.dump(creds, token)
     
     return creds
