@@ -47,7 +47,7 @@ def start_server(port):
             pass  # Suppress server logs
     
     try:
-        with socketserver.TCPServer(("", port), Handler) as httpd:
+        with socketserver.TCPServer(("0.0.0.0", port), Handler) as httpd:
             print(f"Server running at http://localhost:{port}/level.html")
             httpd.serve_forever()
     except Exception as e:
