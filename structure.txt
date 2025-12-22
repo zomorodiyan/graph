@@ -10,7 +10,6 @@ structure
       progress: 90
     train
       progress: 0
-      newtyui
       cardio
       flexibility
       strength

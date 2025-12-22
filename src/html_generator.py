@@ -1331,9 +1331,8 @@ class HTMLGenerator:
         }
         
         async function regenerateCurrentPage() {
-            // API base URL - use same origin for Cloud Run, port 8000 for local dev
-            const isCloudRun = window.location.hostname.includes('run.app') || window.location.port === '' || window.location.port === '8080';
-            const API_BASE = isCloudRun ? window.location.origin : `http://${window.location.hostname}:8000`;
+            // API base URL - always use same origin since HTML and API are served from same server
+            const API_BASE = window.location.origin;
             
             // Extract current page ID from filename
             const path = window.location.pathname;
@@ -1355,12 +1354,22 @@ class HTMLGenerator:
         }
         
         async function confirmQueuedChanges() {
-            // API base URL - use same origin for Cloud Run, port 8000 for local dev
-            const isCloudRun = window.location.hostname.includes('run.app') || window.location.port === '' || window.location.port === '8080';
-            const API_BASE = isCloudRun ? window.location.origin : `http://${window.location.hostname}:8000`;
+            // API base URL - always use same origin since HTML and API are served from same server
+            const API_BASE = window.location.origin;
+            console.log('API_BASE:', API_BASE);
+            console.log('Current URL:', window.location.href);
+            
+            // Detect if opened as file:// instead of http://
+            if (API_BASE.startsWith('file://')) {
+                showNotification('Error: Please open via http://localhost:8000/html/home.html, not as a file', true);
+                console.error('Cannot make API calls from file:// protocol. Server must be running on http://localhost:8000');
+                return;
+            }
+            
             try {
                 // Apply edits
                 for (const edit of pendingEdits) {
+                    console.log('Editing:', edit.itemPath, edit.changes);
                     const res = await fetch(`${API_BASE}/api/items/${edit.itemPath}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
@@ -1373,6 +1382,7 @@ class HTMLGenerator:
                 }
                 // Delete items
                 for (const del of pendingDeletes) {
+                    console.log('Deleting:', del.itemPath);
                     const res = await fetch(`${API_BASE}/api/items/${del.itemPath}`, { method: 'DELETE' });
                     if (!res.ok) {
                         const t = await res.text();
@@ -1381,6 +1391,7 @@ class HTMLGenerator:
                 }
                 // Add items
                 for (const add of pendingAdds) {
+                    console.log('Adding under:', add.parentPath, add.payload);
                     const url = `${API_BASE}/api/items/${add.parentPath}`;
                     const res = await fetch(url, {
                         method: 'POST',
@@ -1393,6 +1404,7 @@ class HTMLGenerator:
                     }
                 }
                 // Sync to Google Drive
+                console.log('Syncing to Google Drive...');
                 showNotification('Syncing to Google Drive...');
                 const syncRes = await fetch(`${API_BASE}/api/sync-to-drive`, { method: 'POST' });
                 if (!syncRes.ok) {
@@ -1405,6 +1417,7 @@ class HTMLGenerator:
                 showNotification('Changes saved and synced to Google Drive. Reloading...');
                 setTimeout(() => { window.location.reload(); }, 800);
             } catch (err) {
+                console.error('Error confirming changes:', err);
                 showNotification('Error confirming changes: ' + err.message, true);
             }
         }
