@@ -880,7 +880,7 @@
             <div class="layer1-container">
                 <div class="layer1  color-group-green time-category-over"  >Over</div>
                 <div class="underline color-green-medium"></div>
-                <div class="context layer1-context">13 items</div>
+                <div class="context layer1-context">8 items</div>
                 
             </div>
             <div class="layer2-section">
@@ -901,61 +901,6 @@
                         <div class="layer2 color-group-green leaf"  data-item-path="level.work.ray.tracing.visualization.postprocess.inspiration" data-item-name="Inspiration" data-has-children="false" data-context="Level > Work > Ray Tracing Visualization > Postprocess" data-due="2025-12-06">Inspiration<span class="due-date due-overdue">Overdue</span></div>
                         <div class="underline color-green-light"></div>
                         <div class="context layer2-context">Level > Work > Ray Tracing Visualization > Postprocess</div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf"  data-item-path="level.study.iiot.termpaper" data-item-name="Termpaper" data-has-children="false" data-context="Level > Study > Iiot" data-due="2025-12-07">Termpaper<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-green-light"></div>
-                        <div class="context layer2-context">Level > Study > Iiot</div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf"  data-item-path="level.study.iiot.lab5" data-item-name="Lab5" data-has-children="false" data-context="Level > Study > Iiot" data-due="2025-12-07">Lab5<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-green-light"></div>
-                        <div class="context layer2-context">Level > Study > Iiot</div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf"  data-item-path="level.study.iiot.lab10" data-item-name="Lab10" data-has-children="false" data-context="Level > Study > Iiot" data-due="2025-12-07">Lab10<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-green-light"></div>
-                        <div class="context layer2-context">Level > Study > Iiot</div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf"  data-item-path="level.study.iiot.lab14" data-item-name="Lab14" data-has-children="false" data-context="Level > Study > Iiot" data-due="2025-12-07">Lab14<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-green-light"></div>
-                        <div class="context layer2-context">Level > Study > Iiot</div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf"  data-item-path="level.study.iiot.fullpaper" data-item-name="Fullpaper" data-has-children="false" data-context="Level > Study > Iiot" data-due="2025-12-08">Fullpaper<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-green-light"></div>
-                        <div class="context layer2-context">Level > Study > Iiot</div>
                     </div>
                     <div class="layer3-container">
         
@@ -1502,8 +1447,9 @@
         }
         
         async function confirmQueuedChanges() {
-            // API base URL - always use same origin since HTML and API are served from same server
-            const API_BASE = window.location.origin;
+            // API base URL - smart detection for local vs cloud deployment
+            const isLocalDev = window.location.hostname === 'localhost' && window.location.port === '8080';
+            const API_BASE = isLocalDev ? 'http://localhost:8000' : window.location.origin;
             console.log('API_BASE:', API_BASE);
             console.log('Current URL:', window.location.href);
             

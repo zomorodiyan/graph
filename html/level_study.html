@@ -896,72 +896,6 @@
         </div>
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 clickable color-group-brown " onclick="navigateToItem('level_study_iiot')" data-item-path="level.study.iiot" data-item-name="Iiot" data-has-children="true" data-context="Industrial IoT course">Iiot</div>
-                <div class="underline color-brown-medium"></div>
-                <div class="context layer1-context">Industrial IoT course</div>
-                
-            </div>
-            <div class="layer2-section">
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-brown leaf"  data-item-path="level.study.iiot.termpaper" data-item-name="Termpaper" data-has-children="false" data-context="Expanded Outline" data-due="2025-12-07">Termpaper<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-brown-light"></div>
-                        <div class="context layer2-context">Expanded Outline</div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-brown leaf"  data-item-path="level.study.iiot.fullpaper" data-item-name="Fullpaper" data-has-children="false" data-context="Full paper" data-due="2025-12-08">Fullpaper<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-brown-light"></div>
-                        <div class="context layer2-context">Full paper</div>
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-brown leaf"  data-item-path="level.study.iiot.lab5" data-item-name="Lab5" data-has-children="false" data-due="2025-12-07">Lab5<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-brown-light"></div>
-                        
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-brown leaf"  data-item-path="level.study.iiot.lab10" data-item-name="Lab10" data-has-children="false" data-due="2025-12-07">Lab10<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-brown-light"></div>
-                        
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-                <div class="layer2-container">
-                    <div class="layer2-content">
-                        <div class="layer2 color-group-brown leaf"  data-item-path="level.study.iiot.lab14" data-item-name="Lab14" data-has-children="false" data-due="2025-12-07">Lab14<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-brown-light"></div>
-                        
-                    </div>
-                    <div class="layer3-container">
-        
-                    </div>
-                </div>
-        
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
                 <div class="layer1 new-item placeholder" data-new-item="true" data-parent-path="level.study" data-parent-name="level_study">New item</div>
                 <div class="underline" style="background-color:#e0e0e0;"></div>
                 <div class="context layer1-context new-item-hint">Click to add</div>
@@ -1395,8 +1329,9 @@
         }
         
         async function confirmQueuedChanges() {
-            // API base URL - always use same origin since HTML and API are served from same server
-            const API_BASE = window.location.origin;
+            // API base URL - smart detection for local vs cloud deployment
+            const isLocalDev = window.location.hostname === 'localhost' && window.location.port === '8080';
+            const API_BASE = isLocalDev ? 'http://localhost:8000' : window.location.origin;
             console.log('API_BASE:', API_BASE);
             console.log('Current URL:', window.location.href);
             

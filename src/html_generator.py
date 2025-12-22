@@ -1354,8 +1354,9 @@ class HTMLGenerator:
         }
         
         async function confirmQueuedChanges() {
-            // API base URL - always use same origin since HTML and API are served from same server
-            const API_BASE = window.location.origin;
+            // API base URL - smart detection for local vs cloud deployment
+            const isLocalDev = window.location.hostname === 'localhost' && window.location.port === '8080';
+            const API_BASE = isLocalDev ? 'http://localhost:8000' : window.location.origin;
             console.log('API_BASE:', API_BASE);
             console.log('Current URL:', window.location.href);
             

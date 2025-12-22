@@ -47,23 +47,6 @@ structure
       sibling
       niece
   level
-    study
-      asu_craft
-        context: Meet Xavier & Zixun
-      iiot
-        context: Industrial IoT course
-        termpaper
-          context: Expanded Outline
-          due: 2025-12-07
-        fullpaper
-          context: Full paper
-          due: 2025-12-08
-        lab5
-          due: 2025-12-07
-        lab10
-          due: 2025-12-07
-        lab14
-          due: 2025-12-07
     work
       go_melt
         progress: 40
