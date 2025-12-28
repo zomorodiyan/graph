@@ -21,9 +21,9 @@ structure
     shop
       groceries
       household
-      dine_out
       outfit
       gift
+      dine_outt
     recur
       budget
         progress: 31
@@ -50,39 +50,26 @@ structure
     work
       go_melt
         progress: 40
-        context: Update heat-source & outline publishing
-        delay_effect
-          context: Effect of delay on surface temperature readings
-          due: 2025-12-04
-        outline
-          context: Draft outline for publication
-          due: 2025-12-10
+        context: Dynamic heat-source
         inherent_strain
           context: Spare time
+        publication
+          context: Draft outline for publication
+          due: 2026-01-01
       aps_data
-        context: Process high-speed data for porosity
-        due: 2025-12-08
-        read
-          context: Read image processing article
-          due: 2025-12-08
         code
           context: Implement image processing method
-          due: 2025-12-09
+          due: 2025-12-30
       ray_tracing_visualization
         progress: 0
-        context: First ray-traced renders on Blackwell
-        postprocess
-          inspiration
-            due: 2025-12-06
-          generation
-            due: 2025-12-09
+        context: free-time
     goal
       article
         context: Submit Adaptive heat source Manuscript
         due: 2026-01-01
       teamwork
         context: Implement Article Zixun
-        due: 2025-12-09
+        due: 2026-01-02
     habit
       morning
         progress: 40

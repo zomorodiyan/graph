@@ -70,7 +70,7 @@ class ItemCreate(BaseModel):
 def _clean_structure_for_save(data: dict) -> dict:
     """
     Remove auto-generated fields (id, title, children wrapper) before saving.
-    This preserves the original structure format.
+    This preserves the original structure format and item order.
     """
     import copy
     cleaned = copy.deepcopy(data)
@@ -79,26 +79,27 @@ def _clean_structure_for_save(data: dict) -> dict:
         if not isinstance(item, dict):
             return item
         
-        # Create a new cleaned dict to avoid modification-during-iteration issues
+        # Preserve order by iterating through all keys and building result in order
         result = {}
         
-        # Copy properties (not children or auto-generated fields)
-        for key in ['progress', 'context', 'due']:
-            if key in item:
-                result[key] = item[key]
-        
-        # Handle children: flatten them into the result
-        if 'children' in item:
-            for child_key, child_value in item['children'].items():
-                result[child_key] = clean_item(child_value)
-        
-        # Handle any other nested dicts (that aren't properties or children)
+        # First, handle all keys in their original order
         for key, value in item.items():
-            if key not in {'id', 'title', 'children', 'progress', 'context', 'due'}:
-                if isinstance(value, dict):
-                    result[key] = clean_item(value)
-                else:
-                    result[key] = value
+            if key in {'id', 'title'}:
+                # Skip auto-generated fields
+                continue
+            elif key == 'children':
+                # Flatten children into result (preserve their order)
+                for child_key, child_value in value.items():
+                    result[child_key] = clean_item(child_value)
+            elif key in {'progress', 'context', 'due'}:
+                # Copy properties as-is
+                result[key] = value
+            elif isinstance(value, dict):
+                # Recursively clean nested dicts
+                result[key] = clean_item(value)
+            else:
+                # Copy other values as-is
+                result[key] = value
         
         return result
     
@@ -237,8 +238,17 @@ async def update_item(path: str, request: Request):
             new_name = new_name.lower().replace(' ', '_')
             if new_name in parent and new_name != item_key:
                 raise HTTPException(status_code=400, detail=f"Item '{new_name}' already exists at this level")
-            # Rename the item by moving its value to new key
-            parent[new_name] = parent.pop(item_key)
+            # Rename the item while preserving its position in the parent dictionary
+            # Create a new dict with the same order, but with the renamed key
+            new_parent = {}
+            for key, value in parent.items():
+                if key == item_key:
+                    new_parent[new_name] = value
+                else:
+                    new_parent[key] = value
+            # Replace parent's contents with the new order
+            parent.clear()
+            parent.update(new_parent)
             item_value = parent[new_name]  # Update reference to the renamed item
             renamed = True
             print(f"DEBUG: Renamed item from '{item_key}' to '{new_name}'")
@@ -449,14 +459,19 @@ def get_affected_paths(item_path: str) -> list:
     """
     Get list of item paths that need HTML regeneration.
     Includes the item itself and all ancestors (for breadcrumb updates).
+    When a child is added, the parent needs regeneration even if it was a leaf before.
     """
     affected = []
+    
+    # Handle root/home case
+    if not item_path or item_path in ('root', 'home'):
+        affected.append('root')
+        return affected
+    
     keys = path_to_keys(item_path)
     
-    # Add the item itself
-    affected.append(item_path)
-    
-    # Add all ancestors
+    # Add all ancestors (including the item itself)
+    # This ensures parent nodes get HTML generated when children are added
     for i in range(len(keys)):
         ancestor_path = '.'.join(keys[:i+1])
         if ancestor_path not in affected:
@@ -482,7 +497,17 @@ def regenerate_html(paths: list):
             else:
                 item_id = path.replace('.', '_')
             
-            app.generate_graph_for_item(item_id)
+            # Check if this item should have an HTML file generated
+            # Generate HTML if:
+            # 1. It's home/root, OR
+            # 2. It has children (non-leaf node)
+            # This ensures that when a subitem is added to a leaf node,
+            # the parent node gets its HTML file generated
+            if path == 'root' or not file_utils.is_leaf_node(item_id):
+                app.generate_graph_for_item(item_id)
+                print(f"Generated HTML for {item_id}")
+            else:
+                print(f"Skipped HTML generation for leaf node {item_id}")
         except Exception as e:
             print(f"Warning: Failed to regenerate HTML for {path}: {e}")
 

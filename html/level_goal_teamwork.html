@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Graph - Level Habit Midday</title>
+    <title>Knowledge Graph - Level Goal Teamwork</title>
     <style>
         /* Theme toggle button styles */
         .theme-toggle {
@@ -864,7 +864,7 @@
         </span>
     </button>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('home.html')">Home</a> > <a href="#" onclick="loadGraph('level.html')">Level</a> > <a href="#" onclick="loadGraph('level_habit.html')">Habit</a> > <span class="current">Midday</span></div>
+        <div class="breadcrumb"><a href="#" onclick="loadGraph('home.html')">Home</a> > <a href="#" onclick="loadGraph('level.html')">Level</a> > <a href="#" onclick="loadGraph('level_goal.html')">Goal</a> > <span class="current">Teamwork</span></div>
         <div class="pending-actions" id="pendingActions">
             <div style="flex: 1;">
                 <div style="font-weight: bold; margin-bottom: 8px;">Pending changes:</div>
@@ -878,63 +878,12 @@
         
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1  color-group-green "  data-item-path="level.habit.midday.lunch" data-item-name="Lunch" data-has-children="false">Lunch</div>
-                <div class="underline color-green-medium"></div>
-                
-            </div>
-            <div class="layer2-section">
-        
-            <div class="layer2-container">
-                <div class="layer2-content">
-                    <div class="layer2 new-item placeholder" data-new-item="true" data-parent-path="level.habit.midday.lunch" data-parent-name="Lunch">New subitem</div>
-                    <div class="underline" style="background-color:#e0e0e0;"></div>
-                    <div class="context layer2-context new-item-hint">Click to add</div>
-                </div>
-            </div>
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1  color-group-brown "  data-item-path="level.habit.midday.rest" data-item-name="Rest" data-has-children="false">Rest</div>
-                <div class="underline color-brown-medium"></div>
-                
-            </div>
-            <div class="layer2-section">
-        
-            <div class="layer2-container">
-                <div class="layer2-content">
-                    <div class="layer2 new-item placeholder" data-new-item="true" data-parent-path="level.habit.midday.rest" data-parent-name="Rest">New subitem</div>
-                    <div class="underline" style="background-color:#e0e0e0;"></div>
-                    <div class="context layer2-context new-item-hint">Click to add</div>
-                </div>
-            </div>
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1  color-group-blue "  data-item-path="level.habit.midday.socialize" data-item-name="Socialize" data-has-children="false">Socialize</div>
-                <div class="underline color-blue-medium"></div>
-                
-            </div>
-            <div class="layer2-section">
-        
-            <div class="layer2-container">
-                <div class="layer2-content">
-                    <div class="layer2 new-item placeholder" data-new-item="true" data-parent-path="level.habit.midday.socialize" data-parent-name="Socialize">New subitem</div>
-                    <div class="underline" style="background-color:#e0e0e0;"></div>
-                    <div class="context layer2-context new-item-hint">Click to add</div>
-                </div>
-            </div>
-            </div>
-        </div>
-        <div class="section">
-            <div class="layer1-container">
-                <div class="layer1 new-item placeholder" data-new-item="true" data-parent-path="level.habit.midday" data-parent-name="level_habit_midday">New item</div>
+                <div class="layer1 new-item placeholder" data-new-item="true" data-parent-path="level.goal.teamwork" data-parent-name="level_goal_teamwork">New item</div>
                 <div class="underline" style="background-color:#e0e0e0;"></div>
                 <div class="context layer1-context new-item-hint">Click to add</div>
             </div>
         </div>
-        <div class="current-date">Updated: December 27, 2025 <span onclick="regenerateCurrentPage()" class="refresh-icon" title="Regenerate page">↻</span></div>
+        <div class="current-date">Updated: December 23, 2025 <span onclick="regenerateCurrentPage()" class="refresh-icon" title="Regenerate page">↻</span></div>
     </div>
     <div id="notification" class="notification"></div>
     
@@ -1049,7 +998,7 @@
         });
         
         // Current page context for filtering editable items
-        const currentPage = 'level_habit_midday';
+        const currentPage = 'level_goal_teamwork';
         const isTimePage = currentPage === 'time' || currentPage.startsWith('time_');
         
         // Click to edit handler (only in edit mode)
