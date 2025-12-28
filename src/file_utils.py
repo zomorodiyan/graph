@@ -244,6 +244,28 @@ class FileUtils:
         result = find_item_recursive(structure['structure'])
         return result if result is not None else False
     
+    def get_descendants_with_children(self, parent_id):
+        """Get all descendant item IDs that have children (non-leaf nodes) under a given parent."""
+        structure = self.load_yaml_structure()
+        descendants = []
+        
+        def find_and_collect_descendants(items_dict):
+            for key, item in items_dict.items():
+                item_id = item.get('id')
+                if item_id and item_id.startswith(parent_id + '_'):
+                    # This is a descendant of parent_id
+                    children = item.get('children', {})
+                    if children and len(children) > 0:
+                        descendants.append(item_id)
+                        # Continue searching in children
+                        find_and_collect_descendants(children)
+                elif 'children' in item and item['children']:
+                    # Keep searching
+                    find_and_collect_descendants(item['children'])
+        
+        find_and_collect_descendants(structure['structure'])
+        return descendants
+    
     def search_items(self, query):
         """Search for items matching a query."""
         all_items = self.get_all_items()

@@ -485,12 +485,36 @@ def get_affected_paths(item_path: str) -> list:
 
 
 def regenerate_html(paths: list):
-    """Regenerate HTML files for specific paths."""
+    """Regenerate HTML files for specific paths and their descendants."""
     from graph import GraphApp
     
     app = GraphApp()
     
+    # Collect all paths including descendants of affected paths
+    all_paths_to_regenerate = set()
+    
     for path in paths:
+        # Add the path itself
+        all_paths_to_regenerate.add(path)
+        
+        # Get all descendants of this path that have children
+        if path == 'root':
+            # If regenerating root, get all non-leaf items
+            all_non_leaf = file_utils.get_all_non_leaf_items()
+            for item in all_non_leaf:
+                item_path = item.get('id', '').replace('_', '.')
+                if item_path:
+                    all_paths_to_regenerate.add(item_path)
+        else:
+            # Get all non-leaf descendants of this path
+            item_id = path.replace('.', '_')
+            descendants = file_utils.get_descendants_with_children(item_id)
+            for desc_id in descendants:
+                desc_path = desc_id.replace('_', '.')
+                all_paths_to_regenerate.add(desc_path)
+    
+    # Generate HTML for all collected paths
+    for path in all_paths_to_regenerate:
         try:
             if path == 'root':
                 item_id = 'home'
@@ -501,8 +525,6 @@ def regenerate_html(paths: list):
             # Generate HTML if:
             # 1. It's home/root, OR
             # 2. It has children (non-leaf node)
-            # This ensures that when a subitem is added to a leaf node,
-            # the parent node gets its HTML file generated
             if path == 'root' or not file_utils.is_leaf_node(item_id):
                 app.generate_graph_for_item(item_id)
                 print(f"Generated HTML for {item_id}")
