@@ -26,11 +26,19 @@ app = FastAPI(title="Hierarchical Graph API", version="1.0")
 
 @app.on_event("startup")
 async def startup_event():
-    """Download structure from Google Drive on startup."""
+    """Download structure from Google Drive and regenerate HTML files on startup."""
     print("📥 Downloading structure from Google Drive...")
     success = download_structure_yaml()
     if success:
         print("✅ Structure downloaded successfully")
+        print("🔄 Regenerating HTML files from structure...")
+        try:
+            from graph import GraphApp
+            graph_app = GraphApp()
+            graph_app.generate_all_graphs()
+            print("✅ HTML files regenerated successfully")
+        except Exception as e:
+            print(f"⚠️  Warning: Failed to regenerate HTML files: {e}")
     else:
         print("⚠️  Warning: Could not download structure from Google Drive")
 

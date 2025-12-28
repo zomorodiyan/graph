@@ -10,10 +10,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY src/ ./src/
-COPY html/ ./html/
 
-# Debug: List html directory contents during build
-RUN ls -la html/ && echo "HTML files found: $(ls html/ | wc -l)"
+# Create empty html directory (will be generated from structure.txt at runtime)
+RUN mkdir -p html
 
 # Create placeholder files (will be overridden by secrets at runtime)
 RUN touch config.yaml
