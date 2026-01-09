@@ -23,3 +23,7 @@ credentials.json
 token.pickle
 config.yaml
 credentials.zip
+
+# Frontend dependencies
+frontend/node_modules/
+frontend/dist/

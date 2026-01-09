@@ -168,6 +168,16 @@ def find_item(structure: dict, keys: list) -> tuple:
     return current, final_key, current[final_key]
 
 
+@app.get("/api/structure")
+async def get_structure():
+    """Get the full structure with all items."""
+    try:
+        data = file_utils.load_yaml_structure()
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/items/{path:path}")
 async def get_item(path: str):
     """Get an item by its path."""
