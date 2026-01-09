@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse, FileResponse
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 from pathlib import Path
 import sys
 import os
@@ -73,6 +73,11 @@ class ItemCreate(BaseModel):
     progress: Optional[int] = Field(None, ge=0, le=100)
     context: Optional[str] = None
     due: Optional[str] = Field(None, pattern=r'^\d{4}-\d{2}-\d{2}$')
+
+
+class EmptyBody(BaseModel):
+    """Empty body for endpoints that don't need input."""
+    pass
 
 
 def _clean_structure_for_save(data: dict) -> dict:
@@ -325,6 +330,99 @@ async def update_item(path: str, request: Request):
             "path": final_path,
             "updated": item_value
         }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/items/{path:path}/move-up")
+async def move_item_up(path: str, request: Request):
+    """Move an item up in the order within its parent."""
+    # Consume and ignore any request body
+    try:
+        await request.body()
+    except:
+        pass
+    
+    # Strip trailing dots from path
+    path = path.rstrip('.')
+    
+    try:
+        # Load the PROCESSED structure (with id, title, children)
+        data = file_utils.load_yaml_structure()
+        keys = path_to_keys(path)
+        
+        if not keys:
+            raise HTTPException(status_code=400, detail="Invalid path")
+        
+        print(f"DEBUG: Path keys: {keys}")
+        
+        # Navigate to the parent's 'children' dict that contains our item
+        if len(keys) == 1:
+            # Top-level item - parent is data['structure']
+            parent_children_dict = data['structure']
+            item_key = keys[0]
+        else:
+            # Navigate through the hierarchy to find parent
+            current = data['structure']
+            
+            # Navigate to the parent item (all keys except last)
+            for i, key in enumerate(keys[:-1]):
+                if key not in current:
+                    raise HTTPException(status_code=404, detail=f"Key '{key}' not found at level {i}. Available: {list(current.keys())}")
+                
+                current = current[key]
+                
+                # Move into children dict if we're not at the last parent level
+                if 'children' in current:
+                    current = current['children']
+                else:
+                    raise HTTPException(status_code=400, detail=f"Item '{key}' has no children")
+            
+            parent_children_dict = current
+            item_key = keys[-1]
+        
+        print(f"DEBUG: item_key='{item_key}', parent keys: {list(parent_children_dict.keys())}")
+        
+        # Check if item exists
+        if item_key not in parent_children_dict:
+            raise HTTPException(status_code=404, detail=f"Item '{item_key}' not found in parent. Available: {list(parent_children_dict.keys())}")
+        
+        # Get ordered list of keys
+        all_keys = list(parent_children_dict.keys())
+        current_index = all_keys.index(item_key)
+        
+        # Check if already at top
+        if current_index == 0:
+            raise HTTPException(status_code=400, detail="Item is already at the top")
+        
+        # Swap with item above
+        all_keys[current_index], all_keys[current_index - 1] = all_keys[current_index - 1], all_keys[current_index]
+        
+        # Rebuild dict in new order
+        new_parent = {}
+        for key in all_keys:
+            new_parent[key] = parent_children_dict[key]
+        
+        # Replace parent's contents
+        parent_children_dict.clear()
+        parent_children_dict.update(new_parent)
+        
+        # Clean (remove id/title/children wrappers) and save
+        data_to_save = _clean_structure_for_save(data)
+        file_utils.save_structure(data_to_save)
+        
+        # Sync to Google Drive
+        upload_structure_yaml()
+        
+        return {
+            "success": True,
+            "message": f"Moved {item_key} up",
+            "new_position": current_index - 1
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         traceback.print_exc()

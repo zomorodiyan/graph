@@ -15,8 +15,8 @@ structure
       strength
         progress: 49
     nutrition
-      cook
       eat
+      cook
   finance
     shop
       groceries

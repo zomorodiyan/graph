@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Graph - Time</title>
+    <title>Knowledge Graph - Mindbody Nutrition Eat</title>
     <style>
         /* Theme toggle button styles */
         .theme-toggle {
@@ -903,7 +903,7 @@
         </span>
     </button>
     <div class="graph-container">
-        <div class="breadcrumb"><a href="#" onclick="loadGraph('home.html')">Home</a> > <span class="current">Time</span></div>
+        <div class="breadcrumb"><span class="current">Home</span></div>
         <div class="pending-actions" id="pendingActions">
             <div style="flex: 1;">
                 <div style="font-weight: bold; margin-bottom: 8px;">Pending changes:</div>
@@ -918,19 +918,19 @@
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1-wrapper">
-                    
-                    <div class="layer1  color-group-green time-category-over"  >Over</div>
+                    <span class="order-indicator dot">•</span>
+                    <div class="layer1 clickable color-group-green " onclick="navigateToItem('mindBody')" data-item-path="mindBody" data-item-name="Mindbody" data-has-children="true">Mindbody</div>
                 </div>
                 <div class="underline color-green-medium"></div>
-                <div class="context layer1-context">4 items</div>
+                
             </div>
             <div class="layer2-section">
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf"  data-item-path="level_work_aps_data_code" data-item-name="Code" data-has-children="false" data-context="Level > Work > Aps Data" data-due="2025-12-30">Code<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-green-light"></div>
-                        <div class="context layer2-context">Level > Work > Aps Data</div>
+                        <div class="layer2 color-group-green leaf"  data-item-path="mindBody.mood" data-item-name="Mood" data-has-children="false" data-progress="80">Mood</div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-dark: #1B5E20; --progress-color-light: #A5D6A7; --progress-percent: 80%;"></div>
+                        
                     </div>
                     <div class="layer3-container">
         
@@ -939,9 +939,9 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf"  data-item-path="level_work_go_melt_publication" data-item-name="Publication" data-has-children="false" data-context="Level > Work > Go Melt" data-due="2026-01-01">Publication<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-green-light"></div>
-                        <div class="context layer2-context">Level > Work > Go Melt</div>
+                        <div class="layer2 color-group-green leaf"  data-item-path="mindBody.rest" data-item-name="Rest" data-has-children="false" data-progress="90">Rest</div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-dark: #1B5E20; --progress-color-light: #A5D6A7; --progress-percent: 90%;"></div>
+                        
                     </div>
                     <div class="layer3-container">
         
@@ -950,23 +950,23 @@
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf"  data-item-path="level_goal_article" data-item-name="Article" data-has-children="false" data-context="Level > Goal" data-due="2026-01-01">Article<span class="due-date due-overdue">Overdue</span></div>
-                        <div class="underline color-green-light"></div>
-                        <div class="context layer2-context">Level > Goal</div>
+                        <div class="layer2 color-group-green clickable" onclick="navigateToItem('mindBody_train')" data-item-path="mindBody.train" data-item-name="Train" data-has-children="true" data-progress="0">Train</div>
+                        <div class="underline-progress" style="--progress-color: #A5D6A7; --progress-color-dark: #1B5E20; --progress-color-light: #A5D6A7; --progress-percent: 0%;"></div>
+                        
                     </div>
                     <div class="layer3-container">
-        
+        <div class="layer3-item"><span class="layer3  color-green"   data-item-path="mindBody.train.cardio" data-item-name="Cardio" data-has-children="false">Cardio</span></div><div class="layer3-item"><span class="layer3  color-green"   data-item-path="mindBody.train.flexibility" data-item-name="Flexibility" data-has-children="false">Flexibility</span></div><div class="layer3-item"><span class="layer3  layer3-progress color-green" style="--text-progress-color: #1B5E20; --text-progress-color-light: #888; --text-progress-percent: 49%;"  data-item-path="mindBody.train.strength" data-item-name="Strength" data-has-children="false" data-progress="49">Strength</span></div>
                     </div>
                 </div>
         
                 <div class="layer2-container">
                     <div class="layer2-content">
-                        <div class="layer2 color-group-green leaf"  data-item-path="level_goal_teamwork" data-item-name="Teamwork" data-has-children="false" data-context="Level > Goal" data-due="2026-01-02">Teamwork<span class="due-date due-overdue">Overdue</span></div>
+                        <div class="layer2 color-group-green clickable" onclick="navigateToItem('mindBody_nutrition')" data-item-path="mindBody.nutrition" data-item-name="Nutrition" data-has-children="true">Nutrition</div>
                         <div class="underline color-green-light"></div>
-                        <div class="context layer2-context">Level > Goal</div>
+                        
                     </div>
                     <div class="layer3-container">
-        
+        <div class="layer3-item"><span class="layer3  color-green"   data-item-path="mindBody.nutrition.cook" data-item-name="Cook" data-has-children="false">Cook</span></div><div class="layer3-item"><span class="layer3  color-green"   data-item-path="mindBody.nutrition.eat." data-item-name="Eat." data-has-children="false">Eat.</span></div>
                     </div>
                 </div>
         
@@ -975,40 +975,192 @@
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1-wrapper">
-                    
-                    <div class="layer1  color-group-brown time-category-day"  >Day</div>
+                    <span class="order-indicator arrow-up" onclick="event.stopPropagation(); moveItemUp('finance');" title="Move up">▲</span>
+                    <div class="layer1 clickable color-group-brown " onclick="navigateToItem('finance')" data-item-path="finance" data-item-name="Finance" data-has-children="true">Finance</div>
                 </div>
                 <div class="underline color-brown-medium"></div>
-                <div class="context layer1-context">No items</div>
+                
             </div>
             <div class="layer2-section">
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-brown clickable" onclick="navigateToItem('finance_shop')" data-item-path="finance.shop" data-item-name="Shop" data-has-children="true">Shop</div>
+                        <div class="underline color-brown-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3  color-brown"   data-item-path="finance.shop.groceries" data-item-name="Groceries" data-has-children="false">Groceries</span></div><div class="layer3-item"><span class="layer3  color-brown"   data-item-path="finance.shop.household" data-item-name="Household" data-has-children="false">Household</span></div><div class="layer3-item"><span class="layer3  color-brown"   data-item-path="finance.shop.outfit" data-item-name="Outfit" data-has-children="false">Outfit</span></div><div class="layer3-item"><span class="layer3  color-brown"   data-item-path="finance.shop.gift" data-item-name="Gift" data-has-children="false">Gift</span></div><div class="layer3-item"><span class="layer3  color-brown"   data-item-path="finance.shop.dine.outt" data-item-name="Dine Outt" data-has-children="false">Dine Outt</span></div>
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-brown clickable" onclick="navigateToItem('finance_recur')" data-item-path="finance.recur" data-item-name="Recur" data-has-children="true">Recur</div>
+                        <div class="underline color-brown-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3  layer3-progress color-brown" style="--text-progress-color: #5D4037; --text-progress-color-light: #888; --text-progress-percent: 31%;"  data-item-path="finance.recur.budget" data-item-name="Budget" data-has-children="false" data-progress="31">Budget</span></div><div class="layer3-item"><span class="layer3  color-brown"   data-item-path="finance.recur.stipend" data-item-name="Stipend" data-has-children="false">Stipend</span></div><div class="layer3-item"><span class="layer3  color-brown"   data-item-path="finance.recur.rent" data-item-name="Rent" data-has-children="false" data-context="lots of $s">Rent</span><div class="context layer3-context">lots of $s</div></div><div class="layer3-item"><span class="layer3  color-brown"   data-item-path="finance.recur.subscriptions" data-item-name="Subscriptions" data-has-children="false">Subscriptions</span></div><div class="layer3-item"><span class="layer3  color-brown"   data-item-path="finance.recur.installments" data-item-name="Installments" data-has-children="false">Installments</span></div>
+                    </div>
+                </div>
         
             </div>
         </div>
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1-wrapper">
-                    
-                    <div class="layer1  color-group-blue time-category-week"  >Week</div>
+                    <span class="order-indicator arrow-up" onclick="event.stopPropagation(); moveItemUp('interaction');" title="Move up">▲</span>
+                    <div class="layer1 clickable color-group-blue " onclick="navigateToItem('interaction')" data-item-path="interaction" data-item-name="Interaction" data-has-children="true">Interaction</div>
                 </div>
                 <div class="underline color-blue-medium"></div>
-                <div class="context layer1-context">No items</div>
+                
             </div>
             <div class="layer2-section">
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('interaction_community')" data-item-path="interaction.community" data-item-name="Community" data-has-children="true" data-progress="60">Community</div>
+                        <div class="underline-progress" style="--progress-color: #90CAF9; --progress-color-dark: #0D47A1; --progress-color-light: #90CAF9; --progress-percent: 60%;"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3  color-blue"   data-item-path="interaction.community.supervisor" data-item-name="Supervisor" data-has-children="false">Supervisor</span></div><div class="layer3-item"><span class="layer3  color-blue"   data-item-path="interaction.community.colleague" data-item-name="Colleague" data-has-children="false">Colleague</span></div>
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('interaction_friends')" data-item-path="interaction.friends" data-item-name="Friends" data-has-children="true" data-progress="60">Friends</div>
+                        <div class="underline-progress" style="--progress-color: #90CAF9; --progress-color-dark: #0D47A1; --progress-color-light: #90CAF9; --progress-percent: 60%;"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3  color-blue"   data-item-path="interaction.friends.childhood" data-item-name="Childhood" data-has-children="false">Childhood</span></div><div class="layer3-item"><span class="layer3  color-blue"   data-item-path="interaction.friends.highschool" data-item-name="Highschool" data-has-children="false">Highschool</span></div><div class="layer3-item"><span class="layer3  color-blue"   data-item-path="interaction.friends.college" data-item-name="College" data-has-children="false">College</span></div>
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-blue clickable" onclick="navigateToItem('interaction_family')" data-item-path="interaction.family" data-item-name="Family" data-has-children="true">Family</div>
+                        <div class="underline color-blue-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3  color-blue"   data-item-path="interaction.family.parent" data-item-name="Parent" data-has-children="false">Parent</span></div><div class="layer3-item"><span class="layer3  color-blue"   data-item-path="interaction.family.sibling" data-item-name="Sibling" data-has-children="false">Sibling</span></div><div class="layer3-item"><span class="layer3  color-blue"   data-item-path="interaction.family.niece" data-item-name="Niece" data-has-children="false">Niece</span></div>
+                    </div>
+                </div>
         
             </div>
         </div>
         <div class="section">
             <div class="layer1-container">
                 <div class="layer1-wrapper">
-                    
-                    <div class="layer1  color-group-purple time-category-month"  >Month</div>
+                    <span class="order-indicator arrow-up" onclick="event.stopPropagation(); moveItemUp('level');" title="Move up">▲</span>
+                    <div class="layer1 clickable color-group-purple " onclick="navigateToItem('level')" data-item-path="level" data-item-name="Level" data-has-children="true">Level</div>
                 </div>
                 <div class="underline color-purple-medium"></div>
-                <div class="context layer1-context">No items</div>
+                
             </div>
             <div class="layer2-section">
         
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-purple clickable" onclick="navigateToItem('level_work')" data-item-path="level.work" data-item-name="Work" data-has-children="true">Work</div>
+                        <div class="underline color-purple-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3 clickable layer3-progress-clickable color-purple" style="--text-progress-color: #4527A0; --text-progress-color-light: #888; --text-progress-percent: 40%;" onclick="navigateToItem('level_work_go_melt')" data-item-path="level.work.go.melt" data-item-name="Go Melt" data-has-children="true" data-progress="40" data-context="Dynamic heat-source">Go Melt</span><div class="context layer3-context">Dynamic heat-source</div></div><div class="layer3-item"><span class="layer3 clickable color-purple"  onclick="navigateToItem('level_work_aps_data')" data-item-path="level.work.aps.data" data-item-name="Aps Data" data-has-children="true">Aps Data</span></div><div class="layer3-item"><span class="layer3  layer3-progress color-purple" style="--text-progress-color: #4527A0; --text-progress-color-light: #888; --text-progress-percent: 0%;"  data-item-path="level.work.ray.tracing.visualization" data-item-name="Ray Tracing Visualization" data-has-children="false" data-progress="0" data-context="free-time">Ray Tracing Visualization</span><div class="context layer3-context">free-time</div></div>
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-purple clickable" onclick="navigateToItem('level_goal')" data-item-path="level.goal" data-item-name="Goal" data-has-children="true">Goal</div>
+                        <div class="underline color-purple-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3  color-purple"   data-item-path="level.goal.article" data-item-name="Article" data-has-children="false" data-context="Submit Adaptive heat source Manuscript" data-due="2026-01-01">Article<span class="due-date due-overdue">Overdue</span></span><div class="context layer3-context">Submit Adaptive heat source Manuscript</div></div><div class="layer3-item"><span class="layer3  color-purple"   data-item-path="level.goal.teamwork" data-item-name="Teamwork" data-has-children="false" data-context="Implement Article Zixun" data-due="2026-01-02">Teamwork<span class="due-date due-overdue">Overdue</span></span><div class="context layer3-context">Implement Article Zixun</div></div>
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-purple clickable" onclick="navigateToItem('level_habit')" data-item-path="level.habit" data-item-name="Habit" data-has-children="true">Habit</div>
+                        <div class="underline color-purple-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3 clickable layer3-progress-clickable color-purple" style="--text-progress-color: #4527A0; --text-progress-color-light: #888; --text-progress-percent: 40%;" onclick="navigateToItem('level_habit_morning')" data-item-path="level.habit.morning" data-item-name="Morning" data-has-children="true" data-progress="40" data-context="7-9">Morning</span><div class="context layer3-context">7-9</div></div><div class="layer3-item"><span class="layer3 clickable layer3-progress-clickable color-purple" style="--text-progress-color: #4527A0; --text-progress-color-light: #888; --text-progress-percent: 50%;" onclick="navigateToItem('level_habit_midday')" data-item-path="level.habit.midday" data-item-name="Midday" data-has-children="true" data-progress="50" data-context="13-14">Midday</span><div class="context layer3-context">13-14</div></div><div class="layer3-item"><span class="layer3 clickable layer3-progress-clickable color-purple" style="--text-progress-color: #4527A0; --text-progress-color-light: #888; --text-progress-percent: 65%;" onclick="navigateToItem('level_habit_evening')" data-item-path="level.habit.evening" data-item-name="Evening" data-has-children="true" data-progress="65" data-context="18-19">Evening</span><div class="context layer3-context">18-19</div></div><div class="layer3-item"><span class="layer3 clickable color-purple"  onclick="navigateToItem('level_habit_night')" data-item-path="level.habit.night" data-item-name="Night" data-has-children="true" data-context="23-24">Night</span><div class="context layer3-context">23-24</div></div>
+                    </div>
+                </div>
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1-wrapper">
+                    <span class="order-indicator arrow-up" onclick="event.stopPropagation(); moveItemUp('time');" title="Move up">▲</span>
+                    <div class="layer1 clickable color-group-green " onclick="navigateToItem('time')" data-item-path="time" data-item-name="Time" data-has-children="true">Time</div>
+                </div>
+                <div class="underline color-green-medium"></div>
+                
+            </div>
+            <div class="layer2-section">
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-green time-category-over"  >Over</div>
+                        <div class="underline color-green-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        <div class="layer3-item"><span class="layer3  color-green"   data-item-path="level.work.aps.data.code" data-item-name="Code" data-has-children="false" data-context="Level > Work > Aps Data" data-due="2025-12-30">Code<span class="due-date due-overdue">Overdue</span></span><div class="context layer3-context">Level > Work > Aps Data</div></div><div class="layer3-item"><span class="layer3  color-green"   data-item-path="level.work.go.melt.publication" data-item-name="Publication" data-has-children="false" data-context="Level > Work > Go Melt" data-due="2026-01-01">Publication<span class="due-date due-overdue">Overdue</span></span><div class="context layer3-context">Level > Work > Go Melt</div></div><div class="layer3-item"><span class="layer3  color-green"   data-item-path="level.goal.article" data-item-name="Article" data-has-children="false" data-context="Level > Goal" data-due="2026-01-01">Article<span class="due-date due-overdue">Overdue</span></span><div class="context layer3-context">Level > Goal</div></div><div class="layer3-item"><span class="layer3  color-green"   data-item-path="level.goal.teamwork" data-item-name="Teamwork" data-has-children="false" data-context="Level > Goal" data-due="2026-01-02">Teamwork<span class="due-date due-overdue">Overdue</span></span><div class="context layer3-context">Level > Goal</div></div>
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-green time-category-day"  >Day</div>
+                        <div class="underline color-green-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-green time-category-week"  >Week</div>
+                        <div class="underline color-green-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+                <div class="layer2-container">
+                    <div class="layer2-content">
+                        <div class="layer2 color-group-green time-category-month"  >Month</div>
+                        <div class="underline color-green-light"></div>
+                        
+                    </div>
+                    <div class="layer3-container">
+        
+                    </div>
+                </div>
+        
+            </div>
+        </div>
+        <div class="section">
+            <div class="layer1-container">
+                <div class="layer1 new-item placeholder" data-new-item="true" data-parent-path="mindBody_nutrition_eat" data-parent-name="mindBody_nutrition_eat">New item</div>
+                <div class="underline" style="background-color:#e0e0e0;"></div>
+                <div class="context layer1-context new-item-hint">Click to add</div>
             </div>
         </div>
         <div class="current-date">Updated: January 09, 2026 <span onclick="regenerateCurrentPage()" class="refresh-icon" title="Regenerate page">↻</span></div>
@@ -1126,7 +1278,7 @@
         });
         
         // Current page context for filtering editable items
-        const currentPage = 'time';
+        const currentPage = 'mindBody_nutrition_eat';
         const isTimePage = currentPage === 'time' || currentPage.startsWith('time_');
         
         // Click to edit handler (only in edit mode)

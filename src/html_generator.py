@@ -737,6 +737,45 @@ class HTMLGenerator:
             margin-right: 15px;
             flex-shrink: 0;
         }}
+        .layer1-wrapper {{
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }}
+        .order-indicator {{
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+            min-width: 12px;
+            display: none;
+            text-align: center;
+        }}
+        body.edit-mode .order-indicator {{
+            display: inline-block;
+        }}
+        .order-indicator.dot {{
+            cursor: default;
+            color: {COLORS['gray']['medium']};
+            opacity: 0.5;
+        }}
+        .order-indicator.arrow-up {{
+            color: {COLORS['gray']['medium']};
+            opacity: 0.6;
+            transition: opacity 0.2s, color 0.2s;
+        }}
+        .order-indicator.arrow-up:hover {{
+            opacity: 1;
+            color: {COLORS['text']['dark']};
+        }}
+        body.dark-theme .order-indicator.arrow-up {{
+            color: {COLORS['gray']['light']};
+        }}
+        body.dark-theme .order-indicator.arrow-up:hover {{
+            color: {COLORS['text']['light']};
+        }}
+        body.dark-theme .order-indicator.dot {{
+            color: {COLORS['gray']['medium_dark']};
+        }}
         .layer2-section {{
             display: flex;
             flex-direction: column;
@@ -1329,6 +1368,33 @@ class HTMLGenerator:
             window.location.href = htmlFileName;
         }
 
+        async function moveItemUp(itemPath) {
+            // API base URL - smart detection for local vs cloud deployment
+            const isLocalDev = window.location.hostname === 'localhost' && window.location.port === '8080';
+            const API_BASE = isLocalDev ? 'http://localhost:8000' : window.location.origin;
+            
+            try {
+                showNotification('Moving item up...');
+                const res = await fetch(`${API_BASE}/api/items/${itemPath}/move-up`, {
+                    method: 'POST'
+                });
+                
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(errorText || `Failed to move item: ${res.status}`);
+                }
+                
+                const result = await res.json();
+                showNotification(result.message || 'Item moved successfully. Reloading...');
+                
+                // Reload the page after a short delay to show the updated order
+                setTimeout(() => { window.location.reload(); }, 500);
+            } catch (err) {
+                console.error('Error moving item:', err);
+                showNotification('Error moving item: ' + err.message, true);
+            }
+        }
+
         function loadGraph(filePath) {
             // Navigate to breadcrumb target
             window.location.href = filePath;
@@ -1454,7 +1520,8 @@ class HTMLGenerator:
 
         for idx, item in enumerate(data):
             color_name = base_colors[idx % 4][0]  # Only get the color name
-            content += self._build_layer1_section(item, color_name)
+            is_first_item = (idx == 0)  # First item should get a dot instead of arrow
+            content += self._build_layer1_section(item, color_name, is_first_item)
 
         # Add a grayed-out "New item" placeholder after all level 1 items (skip for time page)
         if current_item_id != 'time':
@@ -1469,7 +1536,7 @@ class HTMLGenerator:
 
         return content
     
-    def _build_layer1_section(self, item, color_name):
+    def _build_layer1_section(self, item, color_name, is_first_item=False):
         """Build a layer1 section with all its children."""
         layer1_name = item["layer1"]
         layer1_id = item.get("layer1_id", "")
@@ -1517,10 +1584,24 @@ class HTMLGenerator:
             if layer1_due:
                 layer1_data_attrs += f' data-due="{layer1_due}"'
 
+        # Create the arrow button or dot for first item
+        # Skip arrows for time categories
+        if is_time_category:
+            arrow_button = ""
+        elif is_first_item:
+            # First item gets a dot instead of an arrow
+            arrow_button = '<span class="order-indicator dot">•</span>'
+        else:
+            # Other items get an up arrow
+            arrow_button = f'<span class="order-indicator arrow-up" onclick="event.stopPropagation(); moveItemUp(\'{layer1_data_path}\');" title="Move up">▲</span>'
+
         content = f"""
         <div class="section">
             <div class="layer1-container">
-                <div class="layer1 {layer1_clickable_class} {layer1_color_class} {time_category_class}" {layer1_onclick} {layer1_data_attrs}>{layer1_name}{layer1_due_html}</div>
+                <div class="layer1-wrapper">
+                    {arrow_button}
+                    <div class="layer1 {layer1_clickable_class} {layer1_color_class} {time_category_class}" {layer1_onclick} {layer1_data_attrs}>{layer1_name}{layer1_due_html}</div>
+                </div>
                 {layer1_underline}
                 {layer1_context_html}
             </div>
