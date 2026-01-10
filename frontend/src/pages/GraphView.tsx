@@ -330,7 +330,9 @@ function GraphView() {
       
       const itemKey = relativeParts[relativeParts.length - 1]
       const newName = data.name
-      const isRename = newName && newName !== itemKey
+      // Normalize name the same way the server does
+      const normalizedNewName = newName ? newName.toLowerCase().replace(/ /g, '_') : null
+      const isRename = normalizedNewName && normalizedNewName !== itemKey
       
       // IMMEDIATELY update local state for instant visual feedback
       setLocalItems(prev => {
@@ -382,7 +384,7 @@ function GraphView() {
         // Handle name change (rename)
         if (isRename) {
           delete target[itemKey]
-          target[newName!] = { ...updatedItem, title: newName }
+          target[normalizedNewName!] = { ...updatedItem, title: newName }
         } else {
           target[itemKey] = updatedItem
         }
@@ -393,7 +395,7 @@ function GraphView() {
       // Update local order if renaming a top-level item
       if (isRename && relativeParts.length === 1) {
         setLocalOrder(prev => 
-          prev ? prev.map(k => k === itemKey ? newName! : k) : prev
+          prev ? prev.map(k => k === itemKey ? normalizedNewName! : k) : prev
         )
       }
       

@@ -11,8 +11,10 @@ structure
       strength
         progress: 49
     nutrition
-      eat
       cook
+      meat
+      vegie
+      grain
     mood
       progress: 80
     new
