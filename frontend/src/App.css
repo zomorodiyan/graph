@@ -350,34 +350,55 @@
   background: #b71c1c;
 }
 
-/* Edit buttons */
-.edit-btn {
-  background: none;
-  border: none;
+/* Split button - left half for edit, right half for navigate */
+.split-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.split-button .item-title {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.split-left,
+.split-right,
+.full-click {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   cursor: pointer;
-  font-size: 14px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  opacity: 0.6;
-  transition: all 0.2s;
 }
 
-.edit-btn:hover {
-  opacity: 1;
-  background: var(--bg-primary);
+.split-left {
+  left: 0;
+  width: 25%;
 }
 
-.edit-btn-small {
-  font-size: 12px;
-  padding: 2px 6px;
+.split-right {
+  right: 0;
+  width: 75%;
 }
 
-.edit-btn-tiny {
-  font-size: 11px;
-  padding: 2px 4px;
+.full-click {
+  left: 0;
+  right: 0;
+  width: 100%;
 }
 
-/* Layer wrappers for edit buttons */
+/* Hover effects for split zones */
+.split-button .split-left:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.split-button .split-right:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Layer wrappers */
 .layer2-wrapper,
 .layer3-wrapper {
   display: flex;
