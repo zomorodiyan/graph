@@ -3,21 +3,6 @@ metadata
   version: 2.0
   updated_at: '2025-11-04T14:00:00.000000'
 structure
-  mindBody
-    train
-      progress: 0
-      cardio
-      flexibility
-      strength
-        progress: 49
-    nutrition
-      eat
-      cook
-    rest
-      progress: 90
-    mood
-      progress: 80
-    meditate
   finance
     recur
       budget
@@ -33,6 +18,21 @@ structure
       outfit
       gift
       dine_outt
+  mindBody
+    train
+      progress: 0
+      cardio
+      flexibility
+      strength
+        progress: 49
+    nutrition
+      eat
+      cook
+    rest
+      progress: 90
+    mood
+      progress: 80
+    medic
   interaction
     community
       progress: 60

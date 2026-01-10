@@ -30,6 +30,9 @@ function GraphView() {
   // LOCAL order state - this is what controls the visual display
   const [localOrder, setLocalOrder] = useState<string[] | null>(null)
   
+  // LOCAL items state - for immediate visual updates on edits
+  const [localItems, setLocalItems] = useState<Record<string, StructureItem> | null>(null)
+  
   // Modal state - now supports both edit and create modes
   const [modalState, setModalState] = useState<{
     mode: 'edit' | 'create'
@@ -189,13 +192,29 @@ function GraphView() {
   const rawItemsKeyString = Object.keys(rawItems).join(',')
   const serverKeys = useMemo(() => Object.keys(rawItems), [rawItemsKeyString])
   
-  // Sync local order when server data changes or path changes
+  // Sync local state when PATH changes OR when data first loads (localItems is null)
+  // This prevents server response from overwriting our local optimistic updates during edits
   useEffect(() => {
-    setLocalOrder(serverKeys)
-  }, [serverKeys, path])
+    // Only sync if:
+    // 1. localItems is null (initial load or path changed)
+    // 2. OR path changed (handled by dependency array)
+    if (localItems === null && Object.keys(rawItems).length > 0) {
+      setLocalOrder(Object.keys(rawItems))
+      setLocalItems(rawItems)
+    }
+  }, [rawItemsKeyString, localItems])
+  
+  // Reset local state when path changes (navigating to different view)
+  useEffect(() => {
+    setLocalOrder(null)
+    setLocalItems(null)
+  }, [path])
   
   // The display order: use local order if available, otherwise server order
   const displayOrder = localOrder || serverKeys
+  
+  // The display items: use local items if available, otherwise raw items from server
+  const displayItems = localItems || rawItems
 
   // Build breadcrumb
   const getBreadcrumb = () => {
@@ -239,41 +258,176 @@ function GraphView() {
     })
   }
 
-  // Handle save (edit or create)
-  const handleSave = async (data: UpdatePayload) => {
+  // Handle save (edit or create) - uses local state for instant feedback
+  const handleSave = (data: UpdatePayload) => {
     if (!modalState) return
     
-    try {
-      showNotification('Syncing...', 'syncing')
-      
-      if (modalState.mode === 'create') {
-        // Create new item
-        await createItem.mutateAsync({ parentPath: modalState.path, data })
-        showNotification('Created!')
-      } else {
-        // Update existing item
-        await updateItem.mutateAsync({ path: modalState.path, data })
-        showNotification('Saved!')
+    const { mode, path: itemPath } = modalState
+    
+    // Close modal immediately
+    setModalState(null)
+    
+    if (mode === 'create') {
+      // IMMEDIATELY update local state for instant visual feedback (like handleDrop)
+      if (data.name) {
+        const newItem: StructureItem = {
+          title: data.name,
+          ...(typeof data.progress === 'number' && { progress: data.progress }),
+          ...(data.context && { context: data.context }),
+          ...(data.due && { due: data.due }),
+        }
+        
+        // Use callback pattern to avoid stale closure
+        setLocalItems(prev => prev ? { ...prev, [data.name!]: newItem } : { [data.name!]: newItem })
+        setLocalOrder(prev => prev ? [...prev, data.name!] : [data.name!])
       }
       
-      setModalState(null)
-    } catch (err) {
-      showNotification(modalState.mode === 'create' ? 'Failed to create' : 'Failed to save', 'error')
+      // Then sync to server in background
+      createItem.mutate(
+        { parentPath: itemPath, data },
+        {
+          onSuccess: () => showNotification('Created!'),
+          onError: () => showNotification('Failed to create', 'error'),
+        }
+      )
+    } else {
+      // Get the path parts to determine nesting level
+      const pathParts = itemPath.split('.')
+      const currentPathParts = path ? path.split('.') : []
+      
+      // Calculate relative path from current view
+      // If we're at root and editing "level.work", relativeParts = ["level", "work"]
+      // If we're at "level" and editing "level.work", relativeParts = ["work"]
+      const relativeParts = pathParts.slice(currentPathParts.length)
+      
+      const itemKey = relativeParts[relativeParts.length - 1]
+      const newName = data.name
+      const isRename = newName && newName !== itemKey
+      
+      // IMMEDIATELY update local state for instant visual feedback
+      setLocalItems(prev => {
+        if (!prev) return prev
+        
+        // Deep clone to avoid mutation
+        const newItems = JSON.parse(JSON.stringify(prev))
+        
+        // Navigate to the correct item
+        let target = newItems
+        
+        for (let i = 0; i < relativeParts.length - 1; i++) {
+          const key = relativeParts[i]
+          if (target[key]) {
+            // Navigate into children if they exist, otherwise stay at current level
+            target = target[key].children || target[key]
+          } else {
+            return prev // Item not found, don't update
+          }
+        }
+        
+        if (!target[itemKey]) return prev // Item not found
+        
+        const updatedItem = { ...target[itemKey] }
+        
+        // Update properties
+        if (data.progress !== undefined) {
+          if (data.progress === '') {
+            delete updatedItem.progress
+          } else {
+            updatedItem.progress = data.progress as number
+          }
+        }
+        if (data.context !== undefined) {
+          if (data.context === '') {
+            delete updatedItem.context
+          } else {
+            updatedItem.context = data.context
+          }
+        }
+        if (data.due !== undefined) {
+          if (data.due === '') {
+            delete updatedItem.due
+          } else {
+            updatedItem.due = data.due
+          }
+        }
+        
+        // Handle name change (rename)
+        if (isRename) {
+          delete target[itemKey]
+          target[newName!] = { ...updatedItem, title: newName }
+        } else {
+          target[itemKey] = updatedItem
+        }
+        
+        return newItems
+      })
+      
+      // Update local order if renaming a top-level item
+      if (isRename && relativeParts.length === 1) {
+        setLocalOrder(prev => 
+          prev ? prev.map(k => k === itemKey ? newName! : k) : prev
+        )
+      }
+      
+      // Then sync to server in background
+      updateItem.mutate(
+        { path: itemPath, data },
+        {
+          onSuccess: () => showNotification('Saved!'),
+          onError: () => showNotification('Failed to save', 'error'),
+        }
+      )
     }
   }
 
-  // Handle delete
-  const handleDelete = async () => {
+  // Handle delete - uses local state for instant feedback (like handleDrop)
+  const handleDelete = () => {
     if (!modalState || modalState.mode !== 'edit') return
     
-    try {
-      showNotification('Deleting...', 'syncing')
-      await deleteItemMutation.mutateAsync(modalState.path)
-      setModalState(null)
-      showNotification('Deleted!')
-    } catch (err) {
-      showNotification('Failed to delete', 'error')
+    const pathToDelete = modalState.path
+    const pathParts = pathToDelete.split('.')
+    const currentPathParts = path ? path.split('.') : []
+    
+    // Calculate relative path from current view
+    const relativeParts = pathParts.slice(currentPathParts.length)
+    const itemKey = relativeParts[relativeParts.length - 1]
+    
+    // Close modal immediately
+    setModalState(null)
+    
+    // IMMEDIATELY update local state for instant visual feedback
+    setLocalItems(prev => {
+      if (!prev) return prev
+      
+      // Deep clone to avoid mutation
+      const newItems = JSON.parse(JSON.stringify(prev))
+      
+      // Navigate to the parent of the item to delete
+      let target = newItems
+      for (let i = 0; i < relativeParts.length - 1; i++) {
+        const key = relativeParts[i]
+        if (target[key]) {
+          target = target[key].children || target[key]
+        } else {
+          return prev // Item not found
+        }
+      }
+      
+      if (!target[itemKey]) return prev
+      delete target[itemKey]
+      return newItems
+    })
+    
+    // Only update local order if deleting a top-level item
+    if (relativeParts.length === 1) {
+      setLocalOrder(prev => prev ? prev.filter(k => k !== itemKey) : prev)
     }
+    
+    // Then sync to server in background
+    deleteItemMutation.mutate(pathToDelete, {
+      onSuccess: () => showNotification('Deleted!'),
+      onError: () => showNotification('Failed to delete', 'error'),
+    })
   }
 
   // Drag and drop handlers
@@ -356,7 +510,7 @@ function GraphView() {
 
         {/* Sections - rendered in local order for instant drag feedback */}
         {displayOrder.map((key, index) => {
-          const item = rawItems[key]
+          const item = displayItems[key]
           if (!item) return null
           return (
             <div

@@ -60,7 +60,7 @@ export function useUpdateItem() {
   })
 }
 
-// Hook for creating a new item
+// Hook for creating a new item with optimistic updates
 export function useCreateItem() {
   const queryClient = useQueryClient()
 
@@ -68,7 +68,27 @@ export function useCreateItem() {
     mutationFn: ({ parentPath, data }: { parentPath: string; data: UpdatePayload }) =>
       createItem(parentPath, data),
     
-    onSuccess: () => {
+    // Optimistic update - show new item immediately
+    onMutate: async ({ parentPath, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['structure'] })
+      const previousStructure = queryClient.getQueryData(['structure'])
+
+      queryClient.setQueryData(['structure'], (old: any) => {
+        if (!old || !data.name) return old
+        return applyOptimisticCreate(old, parentPath, data)
+      })
+
+      return { previousStructure }
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previousStructure) {
+        queryClient.setQueryData(['structure'], context.previousStructure)
+      }
+    },
+
+    onSettled: () => {
+      // Refetch to get server's response (in case of name conflicts, etc)
       queryClient.invalidateQueries({ queryKey: ['structure'] })
       syncToDrive().catch(console.error)
     },
@@ -222,25 +242,85 @@ function applyOptimisticUpdate(structure: any, path: string, data: UpdatePayload
 
   const finalKey = keys[keys.length - 1]
   if (current[finalKey]) {
-    if (data.progress !== undefined && data.progress !== '') {
-      current[finalKey].progress = data.progress
-    } else if (data.progress === '') {
-      delete current[finalKey].progress
+    // Handle name change (rename)
+    if (data.name !== undefined && data.name !== '' && data.name !== finalKey) {
+      const newKey = data.name
+      // Preserve order by rebuilding the object
+      const newCurrent: Record<string, any> = {}
+      for (const key of Object.keys(current)) {
+        if (key === finalKey) {
+          newCurrent[newKey] = current[finalKey]
+        } else {
+          newCurrent[key] = current[key]
+        }
+      }
+      // Replace current contents
+      Object.keys(current).forEach(k => delete current[k])
+      Object.assign(current, newCurrent)
+      // Update reference for property changes below
+      current = newCurrent
     }
     
-    if (data.context !== undefined && data.context !== '') {
-      current[finalKey].context = data.context
-    } else if (data.context === '') {
-      delete current[finalKey].context
-    }
+    // Get the item (might have been renamed)
+    const itemKey = data.name && data.name !== finalKey ? data.name : finalKey
+    const item = current[itemKey]
     
-    if (data.due !== undefined && data.due !== '') {
-      current[finalKey].due = data.due
-    } else if (data.due === '') {
-      delete current[finalKey].due
+    if (item) {
+      if (data.progress !== undefined && data.progress !== '') {
+        item.progress = data.progress
+      } else if (data.progress === '') {
+        delete item.progress
+      }
+      
+      if (data.context !== undefined && data.context !== '') {
+        item.context = data.context
+      } else if (data.context === '') {
+        delete item.context
+      }
+      
+      if (data.due !== undefined && data.due !== '') {
+        item.due = data.due
+      } else if (data.due === '') {
+        delete item.due
+      }
     }
   }
 
+  return newStructure
+}
+
+// Helper function to apply optimistic create
+function applyOptimisticCreate(structure: any, parentPath: string, data: UpdatePayload): any {
+  const newStructure = JSON.parse(JSON.stringify(structure))
+  
+  // Navigate to parent container
+  let parentContainer = newStructure.structure
+  if (parentPath) {
+    const keys = parentPath.split('.')
+    for (const key of keys) {
+      if (parentContainer[key]?.children) {
+        parentContainer = parentContainer[key].children
+      } else if (parentContainer[key]) {
+        parentContainer = parentContainer[key]
+      }
+    }
+  }
+  
+  // Add new item
+  if (data.name) {
+    const newItem: Record<string, any> = {}
+    if (data.progress !== undefined && data.progress !== '') {
+      newItem.progress = data.progress
+    }
+    if (data.context !== undefined && data.context !== '') {
+      newItem.context = data.context
+    }
+    if (data.due !== undefined && data.due !== '') {
+      newItem.due = data.due
+    }
+    parentContainer[data.name] = newItem
+  }
+  
   return newStructure
 }
 
