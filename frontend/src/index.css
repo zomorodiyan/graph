@@ -49,3 +49,55 @@ body {
 .app {
   min-height: 100vh;
 }
+
+/* Drag and Drop styles */
+.section-wrapper {
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+.section-wrapper:active {
+  cursor: grabbing;
+}
+
+.section-wrapper.dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+}
+
+.section-wrapper.drag-over {
+  position: relative;
+}
+
+.section-wrapper.drag-over::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #4CAF50, #2196F3);
+  border-radius: 2px;
+  animation: pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+
+.drag-handle {
+  opacity: 0.4;
+  font-size: 14px;
+  cursor: grab;
+  user-select: none;
+  color: var(--text-secondary);
+}
+
+.section-wrapper:hover .drag-handle {
+  opacity: 0.8;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}

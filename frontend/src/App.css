@@ -23,8 +23,8 @@
 
 .section {
   display: flex;
-  margin-bottom: 24px;
-  padding: 16px;
+  margin-bottom: 12px;
+  padding: 12px;
   background: var(--bg-secondary);
   border-radius: 8px;
 }
@@ -88,6 +88,64 @@
 .layer3-item:hover {
   background-color: var(--bg-primary);
   color: var(--text-primary);
+}
+
+/* Context and due date display */
+.item-context {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.item-due {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.due-overdue {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.due-today {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.due-soon {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.due-later {
+  background-color: #e3f2fd;
+  color: #0D47A1;
+}
+
+[data-theme='dark'] .due-overdue {
+  background-color: #3a2525;
+  color: #ffebee;
+}
+
+[data-theme='dark'] .due-today {
+  background-color: #4d3525;
+  color: #fff3e0;
+}
+
+[data-theme='dark'] .due-soon {
+  background-color: #2a3e2d;
+  color: #e8f5e9;
+}
+
+[data-theme='dark'] .due-later {
+  background-color: #253b4d;
+  color: #e3f2fd;
 }
 
 /* Progress bar */

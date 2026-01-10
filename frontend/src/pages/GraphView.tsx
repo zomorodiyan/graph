@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useStructure, useUpdateItem, useDeleteItem, useReorderItem, getItemByPath } from '../hooks/useGraph'
 import { useTheme } from '../context/ThemeContext'
@@ -25,6 +25,9 @@ function GraphView() {
   // Drag state
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  
+  // LOCAL order state - this is what controls the visual display
+  const [localOrder, setLocalOrder] = useState<string[] | null>(null)
   
   const [editingItem, setEditingItem] = useState<{
     path: string
@@ -176,6 +179,21 @@ function GraphView() {
     return {}
   }
 
+  // Get the raw items from structure
+  const rawItems = getCurrentItems()
+  
+  // Server keys - stable reference using JSON string comparison
+  const rawItemsKeyString = Object.keys(rawItems).join(',')
+  const serverKeys = useMemo(() => Object.keys(rawItems), [rawItemsKeyString])
+  
+  // Sync local order when server data changes or path changes
+  useEffect(() => {
+    setLocalOrder(serverKeys)
+  }, [serverKeys, path])
+  
+  // The display order: use local order if available, otherwise server order
+  const displayOrder = localOrder || serverKeys
+
   // Build breadcrumb
   const getBreadcrumb = () => {
     if (!path) return [{ label: 'Home', path: '/' }]
@@ -255,13 +273,30 @@ function GraphView() {
     if (!draggedItem) return
     
     const itemToReorder = draggedItem
+    const draggedKey = itemToReorder.split('.').pop()!
+    
     setDraggedItem(null)
     setDragOverIndex(null)
     
+    // IMMEDIATELY update local order for instant visual feedback
+    setLocalOrder(prevOrder => {
+      if (!prevOrder) return prevOrder
+      const currentIndex = prevOrder.indexOf(draggedKey)
+      if (currentIndex === -1) return prevOrder
+      
+      const newOrder = [...prevOrder]
+      newOrder.splice(currentIndex, 1)
+      newOrder.splice(targetIndex, 0, draggedKey)
+      return newOrder
+    })
+    
+    // Then sync to server in background
     try {
       await reorderItem.mutateAsync({ path: itemToReorder, targetIndex })
       showNotification('Reordered!')
     } catch (err) {
+      // Rollback on error - reset to server order
+      setLocalOrder(serverKeys)
       showNotification('Failed to reorder', 'error')
     }
   }
@@ -274,7 +309,6 @@ function GraphView() {
     return <div className="error">Error loading structure: {(error as Error).message}</div>
   }
 
-  const items = getCurrentItems()
   const breadcrumb = getBreadcrumb()
 
   return (
@@ -298,30 +332,34 @@ function GraphView() {
           ))}
         </nav>
 
-        {/* Sections */}
-        {Object.entries(items).map(([key, item], index) => (
-          <div
-            key={key}
-            draggable
-            onDragStart={() => handleDragStart(path ? `${path}.${key}` : key)}
-            onDragOver={(e) => handleDragOver(e, index)}
-            onDragEnd={handleDragEnd}
-            onDrop={() => handleDrop(index)}
-            className={`section-wrapper ${draggedItem === (path ? `${path}.${key}` : key) ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''}`}
-          >
-            <Section
+        {/* Sections - rendered in local order for instant drag feedback */}
+        {displayOrder.map((key, index) => {
+          const item = rawItems[key]
+          if (!item) return null
+          return (
+            <div
               key={key}
-              itemKey={key}
-              item={item as StructureItem}
-              parentPath={path || ''}
-              colorIndex={index % COLORS.length}
-              onItemClick={handleItemClick}
-              onEditClick={handleEditClick}
-            />
-          </div>
-        ))}
+              draggable
+              onDragStart={() => handleDragStart(path ? `${path}.${key}` : key)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+              onDrop={() => handleDrop(index)}
+              className={`section-wrapper ${draggedItem === (path ? `${path}.${key}` : key) ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''}`}
+            >
+              <Section
+                key={key}
+                itemKey={key}
+                item={item as StructureItem}
+                parentPath={path || ''}
+                colorIndex={index % COLORS.length}
+                onItemClick={handleItemClick}
+                onEditClick={handleEditClick}
+              />
+            </div>
+          )
+        })}
 
-        {Object.keys(items).length === 0 && (
+        {displayOrder.length === 0 && (
           <div className="loading">No items at this level</div>
         )}
       </div>

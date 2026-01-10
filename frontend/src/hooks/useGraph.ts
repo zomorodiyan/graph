@@ -106,7 +106,7 @@ export function useDeleteItem() {
   })
 }
 
-// Hook for reordering items
+// Hook for reordering items (up/down buttons) with optimistic updates
 export function useMoveItem() {
   const queryClient = useQueryClient()
 
@@ -114,14 +114,58 @@ export function useMoveItem() {
     mutationFn: ({ path, direction }: { path: string; direction: 'up' | 'down' }) =>
       direction === 'up' ? moveItemUp(path) : moveItemDown(path),
     
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['structure'] })
+    // Optimistic update
+    onMutate: async ({ path, direction }) => {
+      await queryClient.cancelQueries({ queryKey: ['structure'] })
+      const previousStructure = queryClient.getQueryData(['structure'])
+
+      // Calculate target index based on direction
+      queryClient.setQueryData(['structure'], (old: any) => {
+        if (!old) return old
+        
+        const keys = path.split('.')
+        const itemKey = keys[keys.length - 1]
+        
+        // Get parent container
+        let parentContainer = old.structure
+        for (let i = 0; i < keys.length - 1; i++) {
+          if (parentContainer[keys[i]]?.children) {
+            parentContainer = parentContainer[keys[i]].children
+          } else if (parentContainer[keys[i]]) {
+            parentContainer = parentContainer[keys[i]]
+          }
+        }
+        
+        const orderedKeys = Object.keys(parentContainer)
+        const currentIndex = orderedKeys.indexOf(itemKey)
+        
+        if (currentIndex === -1) return old
+        
+        const targetIndex = direction === 'up' 
+          ? Math.max(0, currentIndex - 1)
+          : Math.min(orderedKeys.length - 1, currentIndex + 1)
+        
+        if (targetIndex === currentIndex) return old
+        
+        return applyOptimisticReorder(old, path, targetIndex)
+      })
+
+      return { previousStructure }
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previousStructure) {
+        queryClient.setQueryData(['structure'], context.previousStructure)
+      }
+    },
+
+    onSettled: () => {
       syncToDrive().catch(console.error)
     },
   })
 }
 
-// Hook for drag-and-drop reordering
+// Hook for drag-and-drop reordering with optimistic updates
 export function useReorderItem() {
   const queryClient = useQueryClient()
 
@@ -129,14 +173,35 @@ export function useReorderItem() {
     mutationFn: ({ path, targetIndex }: { path: string; targetIndex: number }) =>
       reorderItem(path, targetIndex),
     
-    onSuccess: async () => {
-      // Refetch the structure to get the updated order from server
-      await queryClient.invalidateQueries({ queryKey: ['structure'] })
-      syncToDrive().catch(console.error)
+    // Optimistic update - immediately show the reordered items
+    onMutate: async ({ path, targetIndex }) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['structure'] })
+
+      // Snapshot the previous value for rollback
+      const previousStructure = queryClient.getQueryData(['structure'])
+
+      // Optimistically update the cache to show new order immediately
+      queryClient.setQueryData(['structure'], (old: any) => {
+        if (!old) return old
+        return applyOptimisticReorder(old, path, targetIndex)
+      })
+
+      // Return context with the snapshot for rollback
+      return { previousStructure }
     },
 
-    onError: (err) => {
-      console.error('Reorder error:', err)
+    // Rollback on error
+    onError: (_err, _vars, context) => {
+      console.error('Reorder error:', _err)
+      if (context?.previousStructure) {
+        queryClient.setQueryData(['structure'], context.previousStructure)
+      }
+    },
+
+    // Background sync after success or error
+    onSettled: () => {
+      syncToDrive().catch(console.error)
     },
   })
 }

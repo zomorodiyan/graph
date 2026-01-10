@@ -4,10 +4,6 @@ metadata
   updated_at: '2025-11-04T14:00:00.000000'
 structure
   mindBody
-    mood
-      progress: 80
-    rest
-      progress: 90
     train
       progress: 0
       cardio
@@ -17,21 +13,10 @@ structure
     nutrition
       eat
       cook
-  finance
-    shop
-      groceries
-      household
-      outfit
-      gift
-      dine_outt
-    recur
-      budget
-        progress: 31
-      stipend
-      rent
-        context: lots of $s
-      subscriptions
-      installments
+    rest
+      progress: 90
+    mood
+      progress: 80
   interaction
     community
       progress: 60
@@ -46,6 +31,21 @@ structure
       parent
       sibling
       niece
+  finance
+    recur
+      budget
+        progress: 31
+      stipend
+      rent
+        context: lots of $s
+      subscriptions
+      installments
+    shop
+      groceries
+      household
+      outfit
+      gift
+      dine_outt
   level
     work
       go_melt

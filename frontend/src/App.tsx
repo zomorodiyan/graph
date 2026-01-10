@@ -9,7 +9,7 @@ function App() {
       <div className="app">
         <Routes>
           <Route path="/" element={<GraphView />} />
-          <Route path="/:path" element={<GraphView />} />
+          <Route path="/*" element={<GraphView />} />
         </Routes>
       </div>
     </ThemeProvider>
