@@ -6,6 +6,7 @@ import {
   deleteItem,
   moveItemUp,
   moveItemDown,
+  reorderItem,
   syncToDrive,
   UpdatePayload,
   StructureItem,
@@ -120,6 +121,26 @@ export function useMoveItem() {
   })
 }
 
+// Hook for drag-and-drop reordering
+export function useReorderItem() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ path, targetIndex }: { path: string; targetIndex: number }) =>
+      reorderItem(path, targetIndex),
+    
+    onSuccess: async () => {
+      // Refetch the structure to get the updated order from server
+      await queryClient.invalidateQueries({ queryKey: ['structure'] })
+      syncToDrive().catch(console.error)
+    },
+
+    onError: (err) => {
+      console.error('Reorder error:', err)
+    },
+  })
+}
+
 // Helper function to apply optimistic update
 function applyOptimisticUpdate(structure: any, path: string, data: UpdatePayload): any {
   const keys = path.split('.')
@@ -175,6 +196,48 @@ function applyOptimisticDelete(structure: any, path: string): any {
   const finalKey = keys[keys.length - 1]
   delete current[finalKey]
 
+  return newStructure
+}
+
+// Helper function to apply optimistic reorder
+function applyOptimisticReorder(structure: any, path: string, targetIndex: number): any {
+  const keys = path.split('.')
+  const newStructure = JSON.parse(JSON.stringify(structure))
+  
+  const itemKey = keys[keys.length - 1]
+  
+  // Get parent container
+  let parentContainer = newStructure.structure
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (parentContainer[keys[i]]?.children) {
+      parentContainer = parentContainer[keys[i]].children
+    } else if (parentContainer[keys[i]]) {
+      parentContainer = parentContainer[keys[i]]
+    }
+  }
+  
+  // Get ordered keys and reorder
+  const orderedKeys = Object.keys(parentContainer)
+  const currentIndex = orderedKeys.indexOf(itemKey)
+  
+  if (currentIndex === -1) return structure
+  
+  // Remove from current position
+  orderedKeys.splice(currentIndex, 1)
+  // Insert at target position
+  const safeTargetIndex = Math.min(targetIndex, orderedKeys.length)
+  orderedKeys.splice(safeTargetIndex, 0, itemKey)
+  
+  // Rebuild parent container in new order
+  const newParent: Record<string, any> = {}
+  for (const key of orderedKeys) {
+    newParent[key] = parentContainer[key]
+  }
+  
+  // Replace parent contents
+  Object.keys(parentContainer).forEach(k => delete parentContainer[k])
+  Object.assign(parentContainer, newParent)
+  
   return newStructure
 }
 

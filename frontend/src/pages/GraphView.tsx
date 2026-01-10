@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useStructure, useUpdateItem, useDeleteItem, useMoveItem, getItemByPath } from '../hooks/useGraph'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
+import { useStructure, useUpdateItem, useDeleteItem, useReorderItem, getItemByPath } from '../hooks/useGraph'
 import { useTheme } from '../context/ThemeContext'
 import { StructureItem, UpdatePayload } from '../api/client'
 import EditModal from '../components/EditModal'
@@ -11,14 +11,20 @@ import Section from '../components/Section'
 const COLORS = ['green', 'blue', 'purple', 'brown']
 
 function GraphView() {
-  const { path } = useParams()
+  const location = useLocation()
+  // Convert URL path to dot notation (e.g., /level/work/go_melt -> level.work.go_melt)
+  const path = location.pathname === '/' ? '' : location.pathname.slice(1).replace(/\//g, '.')
   const navigate = useNavigate()
   const { theme, toggleTheme } = useTheme()
-  const { data: structure, isLoading, error } = useStructure()
+  const { data: structure, isLoading, error, refetch } = useStructure()
   
   const updateItem = useUpdateItem()
   const deleteItemMutation = useDeleteItem()
-  const moveItem = useMoveItem()
+  const reorderItem = useReorderItem()
+  
+  // Drag state
+  const [draggedItem, setDraggedItem] = useState<string | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   
   const [editingItem, setEditingItem] = useState<{
     path: string
@@ -37,13 +43,130 @@ function GraphView() {
     setTimeout(() => setNotification(null), 3000)
   }
 
+  // Helper to get due category
+  const getDueCategory = (dueDate: string): 'over' | 'day' | 'week' | 'month' | null => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const due = new Date(dueDate)
+    due.setHours(0, 0, 0, 0)
+    
+    const diffTime = due.getTime() - today.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays < 0) return 'over'
+    if (diffDays === 0) return 'day'
+    if (diffDays <= 7) return 'week'
+    if (diffDays <= 30) return 'month'
+    return null
+  }
+
+  // Collect all items with due dates from the structure
+  const collectDueItems = (items: Record<string, StructureItem>, parentPath: string = ''): Array<{path: string, item: StructureItem, title: string}> => {
+    const result: Array<{path: string, item: StructureItem, title: string}> = []
+    
+    for (const [key, item] of Object.entries(items)) {
+      const itemPath = parentPath ? `${parentPath}.${key}` : key
+      
+      if (item.due) {
+        result.push({ path: itemPath, item, title: item.title || key })
+      }
+      
+      if (item.children) {
+        result.push(...collectDueItems(item.children, itemPath))
+      }
+    }
+    
+    return result
+  }
+
+  // Build virtual children for time categories
+  const getTimeChildren = (category: 'over' | 'day' | 'week' | 'month'): Record<string, StructureItem> => {
+    if (!structure?.structure) return {}
+    
+    const allItems = collectDueItems(structure.structure)
+    const filtered = allItems.filter(({ item }) => {
+      if (!item.due) return false
+      return getDueCategory(item.due) === category
+    })
+    
+    const result: Record<string, StructureItem> = {}
+    for (const { path: itemPath, item, title } of filtered) {
+      // Use a unique key based on the path
+      const key = itemPath.replace(/\./g, '_')
+      result[key] = {
+        ...item,
+        title: title,
+        context: `📍 ${itemPath.replace(/\./g, ' › ')}`,
+        children: undefined // Don't show nested children in time view
+      }
+    }
+    
+    return result
+  }
+
   // Get current level items
   const getCurrentItems = () => {
     if (!structure?.structure) return {}
     
     if (!path) {
-      // Root level
-      return structure.structure
+      // Root level - enhance time section with counts
+      const items = { ...structure.structure }
+      
+      // If time exists, add counts to its children
+      if (items.time?.children) {
+        const enhancedTimeChildren: Record<string, StructureItem> = {}
+        for (const [key, child] of Object.entries(items.time.children)) {
+          const category = key as 'over' | 'day' | 'week' | 'month'
+          if (['over', 'day', 'week', 'month'].includes(category)) {
+            const dueItems = getTimeChildren(category)
+            const count = Object.keys(dueItems).length
+            enhancedTimeChildren[key] = {
+              ...(child as StructureItem),
+              title: `${(child as StructureItem).title || key} (${count})`,
+              children: dueItems
+            }
+          } else {
+            enhancedTimeChildren[key] = child as StructureItem
+          }
+        }
+        items.time = { ...items.time, children: enhancedTimeChildren }
+      }
+      
+      return items
+    }
+    
+    // Check if we're viewing "time" - show enhanced time categories
+    if (path === 'time') {
+      const timeItem = getItemByPath(structure, 'time')
+      if (timeItem?.children) {
+        const enhancedChildren: Record<string, StructureItem> = {}
+        for (const [key, child] of Object.entries(timeItem.children)) {
+          const category = key as 'over' | 'day' | 'week' | 'month'
+          if (['over', 'day', 'week', 'month'].includes(category)) {
+            const dueItems = getTimeChildren(category)
+            const count = Object.keys(dueItems).length
+            enhancedChildren[key] = {
+              ...(child as StructureItem),
+              title: `${(child as StructureItem).title || key} (${count})`,
+              children: dueItems
+            }
+          } else {
+            enhancedChildren[key] = child as StructureItem
+          }
+        }
+        return enhancedChildren
+      }
+    }
+    
+    // Check if we're in a time category (time.over, time.day, time.week, time.month)
+    const pathParts = path.split('.')
+    if (pathParts[0] === 'time' && pathParts.length === 2) {
+      const category = pathParts[1] as 'over' | 'day' | 'week' | 'month'
+      if (['over', 'day', 'week', 'month'].includes(category)) {
+        // Return the items directly as sections
+        return getTimeChildren(category)
+      }
     }
     
     const item = getItemByPath(structure, path)
@@ -113,13 +236,33 @@ function GraphView() {
     }
   }
 
-  // Handle move
-  const handleMove = async (itemPath: string, direction: 'up' | 'down') => {
+  // Drag and drop handlers
+  const handleDragStart = (itemPath: string) => {
+    setDraggedItem(itemPath)
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedItem(null)
+    setDragOverIndex(null)
+  }
+
+  const handleDrop = async (targetIndex: number) => {
+    if (!draggedItem) return
+    
+    const itemToReorder = draggedItem
+    setDraggedItem(null)
+    setDragOverIndex(null)
+    
     try {
-      await moveItem.mutateAsync({ path: itemPath, direction })
-      showNotification('Moved!')
+      await reorderItem.mutateAsync({ path: itemToReorder, targetIndex })
+      showNotification('Reordered!')
     } catch (err) {
-      showNotification('Failed to move', 'error')
+      showNotification('Failed to reorder', 'error')
     }
   }
 
@@ -157,17 +300,25 @@ function GraphView() {
 
         {/* Sections */}
         {Object.entries(items).map(([key, item], index) => (
-          <Section
+          <div
             key={key}
-            itemKey={key}
-            item={item as StructureItem}
-            parentPath={path || ''}
-            colorIndex={index % COLORS.length}
-            onItemClick={handleItemClick}
-            onEditClick={handleEditClick}
-            onMoveUp={(p) => handleMove(p, 'up')}
-            onMoveDown={(p) => handleMove(p, 'down')}
-          />
+            draggable
+            onDragStart={() => handleDragStart(path ? `${path}.${key}` : key)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragEnd={handleDragEnd}
+            onDrop={() => handleDrop(index)}
+            className={`section-wrapper ${draggedItem === (path ? `${path}.${key}` : key) ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''}`}
+          >
+            <Section
+              key={key}
+              itemKey={key}
+              item={item as StructureItem}
+              parentPath={path || ''}
+              colorIndex={index % COLORS.length}
+              onItemClick={handleItemClick}
+              onEditClick={handleEditClick}
+            />
+          </div>
         ))}
 
         {Object.keys(items).length === 0 && (

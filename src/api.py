@@ -439,6 +439,88 @@ async def move_item_up(path: str, request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class ReorderPayload(BaseModel):
+    """Model for reordering an item."""
+    target_index: int = Field(..., ge=0, description="Target position index (0-based)")
+
+
+@app.post("/api/items/{path:path}/reorder")
+async def reorder_item(path: str, payload: ReorderPayload):
+    """Reorder an item to a specific position within its parent."""
+    try:
+        # Strip trailing dots from path
+        path = path.rstrip('.')
+        
+        data = file_utils.load_yaml_structure()
+        keys = path_to_keys(path)
+        
+        if len(keys) == 0:
+            raise HTTPException(status_code=400, detail="Invalid path")
+        
+        item_key = keys[-1]
+        print(f"DEBUG: Reordering item '{item_key}' to index {payload.target_index}")
+        
+        # Get parent container
+        if len(keys) == 1:
+            # Top-level item
+            parent_children_dict = data['structure']
+        else:
+            parent_keys = keys[:-1]
+            _, parent_key, parent_value = find_item(data['structure'], parent_keys)
+            if parent_value is None:
+                raise HTTPException(status_code=404, detail=f"Parent not found for path: {path}")
+            
+            if isinstance(parent_value, dict) and 'children' in parent_value:
+                parent_children_dict = parent_value['children']
+            else:
+                parent_children_dict = parent_value
+        
+        print(f"DEBUG: item_key='{item_key}', parent keys: {list(parent_children_dict.keys())}")
+        
+        if item_key not in parent_children_dict:
+            raise HTTPException(status_code=404, detail=f"Item '{item_key}' not found")
+        
+        # Get ordered list of keys
+        all_keys = list(parent_children_dict.keys())
+        current_index = all_keys.index(item_key)
+        target_index = min(payload.target_index, len(all_keys) - 1)
+        
+        if current_index == target_index:
+            return {"success": True, "message": "Item is already at target position"}
+        
+        # Remove from current position and insert at target
+        all_keys.pop(current_index)
+        all_keys.insert(target_index, item_key)
+        
+        # Rebuild dict in new order
+        new_parent = {}
+        for key in all_keys:
+            new_parent[key] = parent_children_dict[key]
+        
+        # Replace parent's contents
+        parent_children_dict.clear()
+        parent_children_dict.update(new_parent)
+        
+        # Clean and save
+        data_to_save = _clean_structure_for_save(data)
+        file_utils.save_structure(data_to_save)
+        
+        # Sync to Google Drive
+        upload_structure_yaml()
+        
+        return {
+            "success": True,
+            "message": f"Moved {item_key} from position {current_index} to {target_index}",
+            "new_position": target_index
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/items/{parent_path:path}")
 async def create_item(parent_path: str, item: ItemCreate):
     """Create a new item under a parent."""

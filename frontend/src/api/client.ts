@@ -90,6 +90,17 @@ export async function moveItemDown(path: string): Promise<{ success: boolean; me
   return res.json()
 }
 
+// Reorder item to a specific position
+export async function reorderItem(path: string, targetIndex: number): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE}/items/${path}/reorder`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ target_index: targetIndex }),
+  })
+  if (!res.ok) throw new Error(`Failed to reorder item: ${path}`)
+  return res.json()
+}
+
 // Sync to Google Drive
 export async function syncToDrive(): Promise<{ success: boolean; message: string }> {
   const res = await fetch(`${API_BASE}/sync-to-drive`, { method: 'POST' })
