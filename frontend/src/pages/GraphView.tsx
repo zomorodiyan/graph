@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
-import { useStructure, useUpdateItem, useDeleteItem, useReorderItem, getItemByPath } from '../hooks/useGraph'
+import { useStructure, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useTheme } from '../context/ThemeContext'
 import { StructureItem, UpdatePayload } from '../api/client'
 import EditModal from '../components/EditModal'
@@ -21,6 +21,7 @@ function GraphView() {
   const updateItem = useUpdateItem()
   const deleteItemMutation = useDeleteItem()
   const reorderItem = useReorderItem()
+  const createItem = useCreateItem()
   
   // Drag state
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
@@ -29,7 +30,9 @@ function GraphView() {
   // LOCAL order state - this is what controls the visual display
   const [localOrder, setLocalOrder] = useState<string[] | null>(null)
   
-  const [editingItem, setEditingItem] = useState<{
+  // Modal state - now supports both edit and create modes
+  const [modalState, setModalState] = useState<{
+    mode: 'edit' | 'create'
     path: string
     name: string
     data: StructureItem
@@ -223,31 +226,50 @@ function GraphView() {
 
   // Handle edit click
   const handleEditClick = (itemPath: string, name: string, data: StructureItem) => {
-    setEditingItem({ path: itemPath, name, data })
+    setModalState({ mode: 'edit', path: itemPath, name, data })
   }
 
-  // Handle save
+  // Handle add new item click
+  const handleAddClick = () => {
+    setModalState({
+      mode: 'create',
+      path: path || '', // Current path is the parent for new item
+      name: '',
+      data: {} as StructureItem
+    })
+  }
+
+  // Handle save (edit or create)
   const handleSave = async (data: UpdatePayload) => {
-    if (!editingItem) return
+    if (!modalState) return
     
     try {
       showNotification('Syncing...', 'syncing')
-      await updateItem.mutateAsync({ path: editingItem.path, data })
-      setEditingItem(null)
-      showNotification('Saved!')
+      
+      if (modalState.mode === 'create') {
+        // Create new item
+        await createItem.mutateAsync({ parentPath: modalState.path, data })
+        showNotification('Created!')
+      } else {
+        // Update existing item
+        await updateItem.mutateAsync({ path: modalState.path, data })
+        showNotification('Saved!')
+      }
+      
+      setModalState(null)
     } catch (err) {
-      showNotification('Failed to save', 'error')
+      showNotification(modalState.mode === 'create' ? 'Failed to create' : 'Failed to save', 'error')
     }
   }
 
   // Handle delete
   const handleDelete = async () => {
-    if (!editingItem) return
+    if (!modalState || modalState.mode !== 'edit') return
     
     try {
       showNotification('Deleting...', 'syncing')
-      await deleteItemMutation.mutateAsync(editingItem.path)
-      setEditingItem(null)
+      await deleteItemMutation.mutateAsync(modalState.path)
+      setModalState(null)
       showNotification('Deleted!')
     } catch (err) {
       showNotification('Failed to delete', 'error')
@@ -360,19 +382,25 @@ function GraphView() {
         })}
 
         {displayOrder.length === 0 && (
-          <div className="loading">No items at this level</div>
+          <div className="empty-state">No items at this level</div>
         )}
+
+        {/* Add New Item Button */}
+        <button className="add-item-btn" onClick={handleAddClick}>
+          + Add New Item
+        </button>
       </div>
 
-      {/* Edit Modal */}
-      {editingItem && (
+      {/* Edit/Create Modal */}
+      {modalState && (
         <EditModal
-          name={editingItem.name}
-          data={editingItem.data}
+          name={modalState.name}
+          data={modalState.data}
           onSave={handleSave}
-          onDelete={handleDelete}
-          onClose={() => setEditingItem(null)}
-          isSaving={updateItem.isPending}
+          onDelete={modalState.mode === 'edit' ? handleDelete : undefined}
+          onClose={() => setModalState(null)}
+          isSaving={updateItem.isPending || createItem.isPending}
+          mode={modalState.mode}
         />
       )}
 

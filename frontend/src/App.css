@@ -51,7 +51,7 @@
   flex: 1;
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 0px;
 }
 
 .layer2-container {
@@ -348,6 +348,72 @@
 
 .btn-danger:hover {
   background: #b71c1c;
+}
+
+/* Edit buttons */
+.edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  opacity: 0.6;
+  transition: all 0.2s;
+}
+
+.edit-btn:hover {
+  opacity: 1;
+  background: var(--bg-primary);
+}
+
+.edit-btn-small {
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+.edit-btn-tiny {
+  font-size: 11px;
+  padding: 2px 4px;
+}
+
+/* Layer wrappers for edit buttons */
+.layer2-wrapper,
+.layer3-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Add Item Button */
+.add-item-btn {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 20px auto;
+  padding: 12px 24px;
+  background: var(--bg-secondary);
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-item-btn:hover {
+  border-color: var(--blue-medium);
+  color: var(--blue-medium);
+  background: var(--bg-primary);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+  font-size: 16px;
 }
 
 /* Responsive */

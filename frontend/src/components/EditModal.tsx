@@ -5,12 +5,14 @@ interface EditModalProps {
   name: string
   data: StructureItem
   onSave: (data: UpdatePayload) => void
-  onDelete: () => void
+  onDelete?: () => void
   onClose: () => void
   isSaving: boolean
+  mode?: 'edit' | 'create'
 }
 
-function EditModal({ name, data, onSave, onDelete, onClose, isSaving }: EditModalProps) {
+function EditModal({ name, data, onSave, onDelete, onClose, isSaving, mode = 'edit' }: EditModalProps) {
+  const isCreate = mode === 'create'
   const [formName, setFormName] = useState(name)
   const [progress, setProgress] = useState(data.progress?.toString() || '')
   const [context, setContext] = useState(data.context || '')
@@ -30,8 +32,11 @@ function EditModal({ name, data, onSave, onDelete, onClose, isSaving }: EditModa
     
     const payload: UpdatePayload = {}
     
-    // Only include changed fields
-    if (formName !== name) {
+    // For create mode, always include the name
+    if (isCreate) {
+      payload.name = formName.trim()
+    } else if (formName !== name) {
+      // For edit mode, only include if changed
       payload.name = formName
     }
     
@@ -59,7 +64,7 @@ function EditModal({ name, data, onSave, onDelete, onClose, isSaving }: EditModa
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal">
-        <h2>Edit Item</h2>
+        <h2>{isCreate ? 'Add New Item' : 'Edit Item'}</h2>
         
         <form onSubmit={handleSubmit}>
           <div className="modal-field">
@@ -107,14 +112,16 @@ function EditModal({ name, data, onSave, onDelete, onClose, isSaving }: EditModa
           </div>
           
           <div className="modal-actions">
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={onDelete}
-              disabled={isSaving}
-            >
-              Delete
-            </button>
+            {!isCreate && onDelete && (
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={onDelete}
+                disabled={isSaving}
+              >
+                Delete
+              </button>
+            )}
             <button
               type="button"
               className="btn btn-secondary"
@@ -126,9 +133,9 @@ function EditModal({ name, data, onSave, onDelete, onClose, isSaving }: EditModa
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={isSaving}
+              disabled={isSaving || (isCreate && !formName.trim())}
             >
-              {isSaving ? 'Saving...' : 'Save'}
+              {isSaving ? 'Saving...' : (isCreate ? 'Create' : 'Save')}
             </button>
           </div>
         </form>

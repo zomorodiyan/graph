@@ -17,20 +17,7 @@ structure
       progress: 90
     mood
       progress: 80
-  interaction
-    community
-      progress: 60
-      supervisor
-      colleague
-    friends
-      progress: 60
-      childhood
-      highschool
-      college
-    family
-      parent
-      sibling
-      niece
+    meditate
   finance
     recur
       budget
@@ -46,6 +33,20 @@ structure
       outfit
       gift
       dine_outt
+  interaction
+    community
+      progress: 60
+      supervisor
+      colleague
+    friends
+      progress: 60
+      childhood
+      highschool
+      college
+    family
+      parent
+      sibling
+      niece
   level
     work
       go_melt
