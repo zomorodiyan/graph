@@ -239,11 +239,9 @@ function GraphView() {
     return crumbs
   }
 
-  // Handle item click - navigate to children
-  const handleItemClick = (itemPath: string, hasChildren: boolean) => {
-    if (hasChildren) {
-      navigate(`/${itemPath.replace(/\./g, '/')}`)
-    }
+  // Handle item click - navigate to item page (always, even without children)
+  const handleItemClick = (itemPath: string, _hasChildren: boolean) => {
+    navigate(`/${itemPath.replace(/\./g, '/')}`)
   }
 
   // Handle edit click

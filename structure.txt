@@ -17,8 +17,6 @@ structure
       grain
     mood
       progress: 80
-    new
-    m
     rest
       progress: 90
   finance
