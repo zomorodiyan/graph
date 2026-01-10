@@ -2,9 +2,9 @@
 # Deploy to Google Cloud Run
 
 # Configuration
-PROJECT_ID="your-project-id"  # Replace with your GCP project ID
-REGION="us-central1"           # Choose your region
-SERVICE_NAME="graph-app"
+PROJECT_ID="zomograph-personal"  # Your existing GCP project
+REGION="us-central1"              # Your region
+SERVICE_NAME="graph-api"          # Your existing service name
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
 
 echo "🚀 Deploying Graph App to Google Cloud Run"
@@ -28,9 +28,9 @@ gcloud services enable \
     run.googleapis.com \
     secretmanager.googleapis.com
 
-# Build image using Cloud Build
+# Build image using Cloud Build with custom Dockerfile
 echo "🏗️  Building Docker image..."
-gcloud builds submit --tag ${IMAGE_NAME} -f Dockerfile.prod .
+gcloud builds submit --tag ${IMAGE_NAME}
 
 if [ $? -ne 0 ]; then
     echo "❌ Build failed"
@@ -52,7 +52,7 @@ gcloud run deploy ${SERVICE_NAME} \
     --timeout 300 \
     --max-instances 10 \
     --set-env-vars "PRODUCTION=true" \
-    --set-secrets "config.yaml=graph-config:latest,credentials.json=graph-credentials:latest"
+    --set-secrets "config.yaml=graph-config:latest,token.pickle=graph-token:latest"
 
 if [ $? -ne 0 ]; then
     echo "❌ Deployment failed"

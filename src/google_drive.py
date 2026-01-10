@@ -22,7 +22,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 # Cloud Run mounts secrets to /secrets by default, local dev uses project root
 def _get_path(filename: str) -> Path:
     """Get path for a file, checking Cloud Run secrets mount first."""
-    # Cloud Run mounts secrets in subdirectories (read-only)
+    # Cloud Run: secrets mounted in separate subdirectories
     if filename == 'token.pickle':
         cloud_run_path = Path('/secrets/token/token.pickle')
         if cloud_run_path.exists():
@@ -31,11 +31,6 @@ def _get_path(filename: str) -> Path:
         cloud_run_path = Path('/secrets/config/config.yaml')
         if cloud_run_path.exists():
             return cloud_run_path
-    
-    # Fallback to /secrets root for backward compatibility
-    cloud_run_path = Path('/secrets') / filename
-    if cloud_run_path.exists():
-        return cloud_run_path
     # Also check /app for compatibility
     app_path = Path('/app') / filename
     if app_path.exists():

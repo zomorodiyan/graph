@@ -16,7 +16,7 @@ function GraphView() {
   const path = location.pathname === '/' ? '' : location.pathname.slice(1).replace(/\//g, '.')
   const navigate = useNavigate()
   const { theme, toggleTheme } = useTheme()
-  const { data: structure, isLoading, error, refetch } = useStructure()
+  const { data: structure, isLoading, error } = useStructure()
   
   const updateItem = useUpdateItem()
   const deleteItemMutation = useDeleteItem()
