@@ -9,6 +9,8 @@ interface SectionProps {
   colorIndex: number
   onItemClick: (path: string, hasChildren: boolean) => void
   onEditClick: (path: string, name: string, data: StructureItem) => void
+  isPending?: boolean  // Item is being synced
+  isTimeView?: boolean // Items in time view can't be edited (they're virtual)
 }
 
 // Helper to calculate due date category
@@ -57,11 +59,17 @@ function Section({
   colorIndex,
   onItemClick,
   onEditClick,
+  isPending = false,
+  isTimeView = false,
 }: SectionProps) {
   const color = COLORS[colorIndex]
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
   const hasChildren = !!item.children && Object.keys(item.children).length > 0
   const title = item.title || itemKey
+  
+  // Don't show edit buttons in time view or when pending
+  const showEditButton = !isTimeView
+  const showLoading = isPending
 
   // Get child items for layer2
   const children = item.children || {}
@@ -72,23 +80,27 @@ function Section({
       {/* Layer 1 - Main category */}
       <div className="layer1-container">
         <div className="layer1-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span className="drag-handle" title="Drag to reorder">⠿</span>
+          {!isTimeView && <span className="drag-handle" title="Drag to reorder">⠿</span>}
           <div
             className={`layer1 color-${color}`}
             onClick={() => onItemClick(itemPath, hasChildren)}
           >
             {title}
           </div>
-          <button
-            className="edit-btn"
-            onClick={(e) => {
-              e.stopPropagation()
-              onEditClick(itemPath, title, item)
-            }}
-            title="Edit item"
-          >
-            🖊️
-          </button>
+          {showLoading ? (
+            <span className="loading-spinner" title="Syncing...">⟳</span>
+          ) : showEditButton ? (
+            <button
+              className="edit-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEditClick(itemPath, title, item)
+              }}
+              title="Edit item"
+            >
+              🖊️
+            </button>
+          ) : null}
         </div>
         {/* Progress bar */}
         {item.progress !== undefined && (
@@ -133,16 +145,18 @@ function Section({
                     </span>
                   )}
                 </div>
-                <button
-                  className="edit-btn edit-btn-small"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onEditClick(childPath, childTitle, childItem as StructureItem)
-                  }}
-                  title="Edit item"
-                >
-                  🖊️
-                </button>
+                {showEditButton && (
+                  <button
+                    className="edit-btn edit-btn-small"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onEditClick(childPath, childTitle, childItem as StructureItem)
+                    }}
+                    title="Edit item"
+                  >
+                    🖊️
+                  </button>
+                )}
               </div>
               {/* Due date for layer2 */}
               {(childItem as StructureItem).due && (
@@ -177,16 +191,18 @@ function Section({
                               </span>
                             )}
                           </div>
-                          <button
-                            className="edit-btn edit-btn-tiny"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onEditClick(grandPath, grandTitle, grandItem as StructureItem)
-                            }}
-                            title="Edit item"
-                          >
-                            🖊️
-                          </button>
+                          {showEditButton && (
+                            <button
+                              className="edit-btn edit-btn-tiny"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onEditClick(grandPath, grandTitle, grandItem as StructureItem)
+                              }}
+                              title="Edit item"
+                            >
+                              🖊️
+                            </button>
+                          )}
                         </div>
                         {/* Due date for layer3 */}
                         {(grandItem as StructureItem).due && (

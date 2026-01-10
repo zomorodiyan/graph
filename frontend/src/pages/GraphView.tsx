@@ -33,6 +33,9 @@ function GraphView() {
   // LOCAL items state - for immediate visual updates on edits
   const [localItems, setLocalItems] = useState<Record<string, StructureItem> | null>(null)
   
+  // Track items that are being synced (pending) - these show loading and can't be dragged
+  const [pendingItems, setPendingItems] = useState<Set<string>>(new Set())
+  
   // Modal state - now supports both edit and create modes
   const [modalState, setModalState] = useState<{
     mode: 'edit' | 'create'
@@ -270,6 +273,9 @@ function GraphView() {
     if (mode === 'create') {
       // IMMEDIATELY update local state for instant visual feedback (like handleDrop)
       if (data.name) {
+        // Normalize name the same way the server does
+        const normalizedName = data.name.toLowerCase().replace(/ /g, '_')
+        
         const newItem: StructureItem = {
           title: data.name,
           ...(typeof data.progress === 'number' && { progress: data.progress }),
@@ -278,18 +284,40 @@ function GraphView() {
         }
         
         // Use callback pattern to avoid stale closure
-        setLocalItems(prev => prev ? { ...prev, [data.name!]: newItem } : { [data.name!]: newItem })
-        setLocalOrder(prev => prev ? [...prev, data.name!] : [data.name!])
-      }
+        setLocalItems(prev => prev ? { ...prev, [normalizedName]: newItem } : { [normalizedName]: newItem })
+        setLocalOrder(prev => prev ? [...prev, normalizedName] : [normalizedName])
+        
+        // Mark as pending with normalized path
+        const newItemPath = itemPath ? `${itemPath}.${normalizedName}` : normalizedName
+        setPendingItems(prev => new Set(prev).add(newItemPath))
       
-      // Then sync to server in background
-      createItem.mutate(
-        { parentPath: itemPath, data },
-        {
-          onSuccess: () => showNotification('Created!'),
-          onError: () => showNotification('Failed to create', 'error'),
-        }
-      )
+        // Then sync to server in background
+        createItem.mutate(
+          { parentPath: itemPath, data },
+          {
+            onSuccess: () => showNotification('Created!'),
+            onError: () => {
+              showNotification('Failed to create', 'error')
+              // On error, remove from local state since it wasn't created
+              setLocalItems(prev => {
+                if (!prev) return prev
+                const newItems = { ...prev }
+                delete newItems[normalizedName]
+                return newItems
+              })
+              setLocalOrder(prev => prev ? prev.filter(k => k !== normalizedName) : prev)
+            },
+            onSettled: () => {
+              // Clear pending status - item can now be dragged
+              setPendingItems(prev => {
+                const next = new Set(prev)
+                next.delete(newItemPath)
+                return next
+              })
+            }
+          }
+        )
+      }
     } else {
       // Get the path parts to determine nesting level
       const pathParts = itemPath.split('.')
@@ -369,12 +397,23 @@ function GraphView() {
         )
       }
       
+      // Mark as pending
+      setPendingItems(prev => new Set(prev).add(itemPath))
+      
       // Then sync to server in background
       updateItem.mutate(
         { path: itemPath, data },
         {
           onSuccess: () => showNotification('Saved!'),
           onError: () => showNotification('Failed to save', 'error'),
+          onSettled: () => {
+            // Clear pending status
+            setPendingItems(prev => {
+              const next = new Set(prev)
+              next.delete(itemPath)
+              return next
+            })
+          }
         }
       )
     }
@@ -454,14 +493,20 @@ function GraphView() {
     setDraggedItem(null)
     setDragOverIndex(null)
     
+    // Check if dropped in same position - do nothing
+    const currentIndex = localOrder?.indexOf(draggedKey) ?? -1
+    if (currentIndex === targetIndex || currentIndex === -1) {
+      return
+    }
+    
     // IMMEDIATELY update local order for instant visual feedback
     setLocalOrder(prevOrder => {
       if (!prevOrder) return prevOrder
-      const currentIndex = prevOrder.indexOf(draggedKey)
-      if (currentIndex === -1) return prevOrder
+      const idx = prevOrder.indexOf(draggedKey)
+      if (idx === -1) return prevOrder
       
       const newOrder = [...prevOrder]
-      newOrder.splice(currentIndex, 1)
+      newOrder.splice(idx, 1)
       newOrder.splice(targetIndex, 0, draggedKey)
       return newOrder
     })
@@ -486,6 +531,9 @@ function GraphView() {
   }
 
   const breadcrumb = getBreadcrumb()
+  
+  // Check if we're in a time view (time itself or time subcategories)
+  const isTimeView = path === 'time' || path?.startsWith('time.')
 
   return (
     <>
@@ -512,15 +560,19 @@ function GraphView() {
         {displayOrder.map((key, index) => {
           const item = displayItems[key]
           if (!item) return null
+          const itemPath = path ? `${path}.${key}` : key
+          const isPending = pendingItems.has(itemPath)
+          const canDrag = !isPending && !isTimeView
+          
           return (
             <div
               key={key}
-              draggable
-              onDragStart={() => handleDragStart(path ? `${path}.${key}` : key)}
+              draggable={canDrag}
+              onDragStart={canDrag ? () => handleDragStart(itemPath) : undefined}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
               onDrop={() => handleDrop(index)}
-              className={`section-wrapper ${draggedItem === (path ? `${path}.${key}` : key) ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''}`}
+              className={`section-wrapper ${draggedItem === itemPath ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''} ${isPending ? 'pending' : ''}`}
             >
               <Section
                 key={key}
@@ -530,6 +582,8 @@ function GraphView() {
                 colorIndex={index % COLORS.length}
                 onItemClick={handleItemClick}
                 onEditClick={handleEditClick}
+                isPending={isPending}
+                isTimeView={isTimeView}
               />
             </div>
           )
@@ -539,10 +593,12 @@ function GraphView() {
           <div className="empty-state">No items at this level</div>
         )}
 
-        {/* Add New Item Button */}
-        <button className="add-item-btn" onClick={handleAddClick}>
-          + Add New Item
-        </button>
+        {/* Add New Item Button - hide in time view */}
+        {!isTimeView && (
+          <button className="add-item-btn" onClick={handleAddClick}>
+            + Add New Item
+          </button>
+        )}
       </div>
 
       {/* Edit/Create Modal */}
