@@ -814,11 +814,18 @@ if HTML_DIR.exists():
     print(f"HTML files: {files[:10]}")  # Print first 10 files
 
 
-# Root redirect to home page
+# Root redirect to frontend app
 @app.get("/")
 async def root():
-    """Redirect root to home.html"""
-    return RedirectResponse(url="/html/home.html")
+    """Serve the frontend React app"""
+    # Check if we're in production mode (frontend-dist exists)
+    frontend_dist = Path(__file__).parent.parent / "frontend-dist"
+    if frontend_dist.exists() and os.getenv("PRODUCTION"):
+        # Production: serve React app
+        return FileResponse(frontend_dist / "index.html")
+    else:
+        # Development: redirect to old HTML
+        return RedirectResponse(url="/html/home.html")
 
 
 # Serve individual HTML files
@@ -830,6 +837,29 @@ async def serve_html(filename: str):
     if not file_path.exists() or not file_path.is_file():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path, media_type="text/html")
+
+
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    """Health check for Cloud Run"""
+    return {"status": "healthy", "service": "graph-api"}
+
+
+# Mount static files for production frontend
+frontend_dist = Path(__file__).parent.parent / "frontend-dist"
+if frontend_dist.exists() and os.getenv("PRODUCTION"):
+    # Serve React app static assets
+    app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="static-assets")
+    
+    # Catch-all route for React Router (must be last)
+    @app.get("/{full_path:path}")
+    async def serve_react_app(full_path: str):
+        """Serve React app for all non-API routes"""
+        # Don't interfere with API routes
+        if full_path.startswith("api/") or full_path.startswith("html/"):
+            raise HTTPException(status_code=404)
+        return FileResponse(frontend_dist / "index.html")
 
 
 if __name__ == "__main__":

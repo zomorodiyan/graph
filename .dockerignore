@@ -13,18 +13,26 @@ __pycache__/
 *$py.class
 *.so
 
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+frontend/dist/
+frontend/.vite/
+
 # Local secrets (will use Google Secret Manager in Cloud Run)
 credentials.json
 token.pickle
 config.yaml
 
+# Generated files (will be created at runtime)
+html/
+structure.txt
+
 # Documentation
 doc/
 *.md
-
-# Explicitly include html directory
-!html/
-!html/*.html
 
 # Local scripts
 scripts/
