@@ -1,5 +1,5 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '$TAG_NAME', '-f', 'Dockerfile.prod', '.']
+    args: ['build', '-t', '$TAG_NAME', '-f', 'Dockerfile', '.']
 images:
   - '$TAG_NAME'
