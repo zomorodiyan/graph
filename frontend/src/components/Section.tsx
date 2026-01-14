@@ -134,43 +134,45 @@ function Section({
 
           return (
             <div key={childKey} className="layer2-container">
-              <div className="layer2-wrapper">
-                <div className={`layer2 color-${color} ${showEditButton ? 'split-button' : ''}`}>
-                  {showEditButton && (
-                    <div
-                      className="split-left"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onEditClick(childPath, childTitle, childItem as StructureItem)
-                      }}
-                      title="Edit item"
-                    />
-                  )}
-                  <span className="item-title">
-                    {childTitle}
-                    {(childItem as StructureItem).progress !== undefined && (
-                      <span style={{ marginLeft: '8px', opacity: 0.7, fontSize: '12px' }}>
-                        {(childItem as StructureItem).progress}%
-                      </span>
+              <div className="layer2-content">
+                <div className="layer2-wrapper">
+                  <div className={`layer2 color-${color} ${showEditButton ? 'split-button' : ''}`}>
+                    {showEditButton && (
+                      <div
+                        className="split-left"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEditClick(childPath, childTitle, childItem as StructureItem)
+                        }}
+                        title="Edit item"
+                      />
                     )}
-                  </span>
-                  <div
-                    className={showEditButton ? "split-right" : "full-click"}
-                    onClick={() => onItemClick(childPath, childHasChildren)}
-                    title={showEditButton ? "Open item" : undefined}
-                  />
+                    <span className="item-title">
+                      {childTitle}
+                      {(childItem as StructureItem).progress !== undefined && (
+                        <span style={{ marginLeft: '8px', opacity: 0.7, fontSize: '12px' }}>
+                          {(childItem as StructureItem).progress}%
+                        </span>
+                      )}
+                    </span>
+                    <div
+                      className={showEditButton ? "split-right" : "full-click"}
+                      onClick={() => onItemClick(childPath, childHasChildren)}
+                      title={showEditButton ? "Open item" : undefined}
+                    />
+                  </div>
                 </div>
+                {/* Due date for layer2 */}
+                {(childItem as StructureItem).due && (
+                  <div className={`item-due due-${getDueCategory((childItem as StructureItem).due)}`}>
+                    {formatDueDate((childItem as StructureItem).due!)}
+                  </div>
+                )}
+                {/* Context for layer2 */}
+                {(childItem as StructureItem).context && (
+                  <div className="item-context">{(childItem as StructureItem).context}</div>
+                )}
               </div>
-              {/* Due date for layer2 */}
-              {(childItem as StructureItem).due && (
-                <div className={`item-due due-${getDueCategory((childItem as StructureItem).due)}`}>
-                  {formatDueDate((childItem as StructureItem).due!)}
-                </div>
-              )}
-              {/* Context for layer2 */}
-              {(childItem as StructureItem).context && (
-                <div className="item-context">{(childItem as StructureItem).context}</div>
-              )}
 
               {/* Layer 3 - Items */}
               {Object.keys(grandchildren).length > 0 && (

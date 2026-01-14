@@ -50,12 +50,19 @@
 .layer2-section {
   flex: 1;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0px;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .layer2-container {
-  min-width: 150px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.layer2-content {
+  flex-shrink: 0;
 }
 
 .layer2 {
@@ -72,8 +79,11 @@
 }
 
 .layer3-container {
-  margin-top: 8px;
-  padding-left: 12px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .layer3-item {
