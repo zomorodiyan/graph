@@ -1,14 +1,17 @@
 import { Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import { NavigationHistoryProvider } from './context/NavigationHistoryContext'
+import { usePinchZoom } from './hooks/usePinchZoom'
 import GraphView from './pages/GraphView'
 import StructuresView from './pages/StructuresView'
+import ZoomNotification from './components/ZoomNotification'
 import './App.css'
 
-function App() {
+function AppContent() {
+  const { notification } = usePinchZoom()
+  
   return (
-    <ThemeProvider>
-      <NavigationHistoryProvider>
+    <>
       <div className="app">
         <Routes>
           {/* Root: list of all graphs */}
@@ -21,6 +24,18 @@ function App() {
           <Route path="/*" element={<GraphView />} />
         </Routes>
       </div>
+      {notification && (
+        <ZoomNotification message={notification.message} type={notification.type} />
+      )}
+    </>
+  )
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <NavigationHistoryProvider>
+        <AppContent />
       </NavigationHistoryProvider>
     </ThemeProvider>
   )

@@ -1,0 +1,51 @@
+.zoom-notification {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 9999;
+  animation: zoomFadeInOut 1.5s ease-in-out;
+  background: rgba(128, 128, 128, 0.15);
+  color: rgba(128, 128, 128, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.zoom-notification.limit {
+  background: rgba(255, 180, 100, 0.15);
+  color: rgba(200, 150, 80, 0.8);
+}
+
+@keyframes zoomFadeInOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  85% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .zoom-notification {
+  background: rgba(180, 180, 180, 0.1);
+  color: rgba(180, 180, 180, 0.6);
+}
+
+[data-theme="dark"] .zoom-notification.limit {
+  background: rgba(255, 200, 120, 0.1);
+  color: rgba(220, 180, 100, 0.7);
+}
