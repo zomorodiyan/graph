@@ -237,11 +237,19 @@
   }
 }
 
-/* Theme toggle */
-.theme-toggle {
+/* Top buttons container */
+.top-buttons {
   position: fixed;
   bottom: 20px;
   left: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 1000;
+}
+
+/* Theme toggle */
+.theme-toggle,
+.copy-btn {
   width: 44px;
   height: 44px;
   border: 2px solid var(--border-color);
@@ -253,10 +261,10 @@
   justify-content: center;
   font-size: 20px;
   transition: all 0.3s;
-  z-index: 1000;
 }
 
-.theme-toggle:hover {
+.theme-toggle:hover,
+.copy-btn:hover {
   transform: scale(1.1);
 }
 

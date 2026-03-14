@@ -178,6 +178,22 @@ async def get_structure():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/structure/text")
+async def get_structure_text():
+    """Get the raw structure.txt file content as plain text."""
+    try:
+        structure_path = file_utils.structure_path
+        if not os.path.exists(structure_path):
+            raise HTTPException(status_code=404, detail="structure.txt not found")
+        with open(structure_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return {"content": content}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/items/{path:path}")
 async def get_item(path: str):
     """Get an item by its path."""

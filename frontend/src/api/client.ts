@@ -107,3 +107,11 @@ export async function syncToDrive(): Promise<{ success: boolean; message: string
   if (!res.ok) throw new Error('Failed to sync to Google Drive')
   return res.json()
 }
+
+// Fetch structure as raw text (same format as Google Drive file)
+export async function fetchStructureText(): Promise<string> {
+  const res = await fetch(`${API_BASE}/structure/text`)
+  if (!res.ok) throw new Error('Failed to fetch structure text')
+  const data = await res.json()
+  return data.content
+}

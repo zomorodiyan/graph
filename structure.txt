@@ -5,35 +5,33 @@ metadata
 structure
   mindBody
     train
-      progress: 0
       cardio
       flexibility
       strength
-        progress: 49
     nutrition
-      cook
-      meat
-      vegie
-      grain
-    mood
-      progress: 80
-    rest
-      progress: 90
+      meat_&_dairy
+      starch
+      vegie_&_fruit
+      nuts
+      oil
+      sweet
+    sugar-level
+    water-intake
   finance
     recur
       budget
-        progress: 31
       stipend
       rent
-        context: lots of $s
       subscriptions
       installments
+      save
+      invest
     shop
       groceries
       household
       outfit
       gift
-      dine_outt
+      dine_out
   interaction
     community
       progress: 60
@@ -50,31 +48,77 @@ structure
       niece
   level
     work
-      go_melt
-        progress: 40
-        context: Dynamic heat-source
-        inherent_strain
-          context: Spare time
-        publication
-          context: Draft outline for publication
-          due: 2026-01-01
-      aps_data
-        code
-          context: Implement image processing method
-          due: 2025-12-30
-      ray_tracing_visualization
-        progress: 0
-        context: free-time
+      lbf3
+        context: visualize
+        test
+          24h_run
+            2mm_track
+              context: 44um radius, 1m/s
+          slide
+            simulation_details
+            mesh-independence
+            post-process
+        aps
+      dynamic
+        context: dynamic heat source article
+        implement
+          context: todo
+          cylindrical
+            context: heat source
+        run&post
+          calibration
+          validation
+          prediction
+        slides
+          calibration
+          validation
+            image
+            plot
+            table
+            animation
+          prediction
+            triangle
+            spiral
+        article
+          literature
+            part-scale
+              context: part-scale thermal model representative articles
+            cfd_models
+              context: point out they are hard to get part scale simulation
+          figure
+            toolpath
+              context: replace icon with actual
+      symmetry
+        reference
+        notes
+      amcfd
+        model
+        calibrate
+      surrogate
+        context: assume lack of fusion coefficients
+    admin
+      travel_grant
+        progress: 50
+        asu
+          context: Todo
+          apply
+            context: explain conference fellowship
+          ticket
+          hotel
+          commute
+        conference
+          context: submitted
+          zhengtao.pdf
+          apply
+          why?
+          up_cv
+      usnctam26
     goal
       article
-        context: Submit Adaptive heat source Manuscript
-        due: 2026-01-01
+        due: 2026-03-21
       teamwork
-        context: Implement Article Zixun
-        due: 2026-01-02
     habit
       morning
-        progress: 40
         context: 7-9
         clean
         meal
@@ -83,13 +127,11 @@ structure
         shower
         plan
       midday
-        progress: 50
         context: 13-14
         lunch
         rest
         socialize
       evening
-        progress: 65
         context: 18-19
         commuteHome
         cook

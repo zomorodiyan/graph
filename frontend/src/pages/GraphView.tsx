@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useStructure, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useTheme } from '../context/ThemeContext'
-import { StructureItem, UpdatePayload } from '../api/client'
+import { StructureItem, UpdatePayload, fetchStructureText } from '../api/client'
 import EditModal from '../components/EditModal'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
@@ -48,6 +48,57 @@ function GraphView() {
     message: string
     type: 'success' | 'error' | 'syncing'
   } | null>(null)
+
+  // Swipe navigation state
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
+  const SWIPE_THRESHOLD = 100 // minimum distance for swipe
+  const SWIPE_VERTICAL_LIMIT = 75 // max vertical movement to still count as horizontal swipe
+
+  // Navigate to parent path
+  const navigateToParent = useCallback(() => {
+    if (!path) return // Already at home
+    const parts = path.split('.')
+    if (parts.length === 1) {
+      navigate('/') // Go to home
+    } else {
+      const parentPath = parts.slice(0, -1).join('.')
+      navigate(`/${parentPath.replace(/\./g, '/')}`)
+    }
+  }, [path, navigate])
+
+  // Swipe gesture handlers
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX
+      touchStartY.current = e.touches[0].clientY
+    }
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (touchStartX.current === null || touchStartY.current === null) return
+
+      const touchEndX = e.changedTouches[0].clientX
+      const touchEndY = e.changedTouches[0].clientY
+      const deltaX = touchEndX - touchStartX.current
+      const deltaY = Math.abs(touchEndY - touchStartY.current)
+
+      // Check for left-to-right swipe (positive deltaX, limited vertical movement)
+      if (deltaX > SWIPE_THRESHOLD && deltaY < SWIPE_VERTICAL_LIMIT) {
+        navigateToParent()
+      }
+
+      touchStartX.current = null
+      touchStartY.current = null
+    }
+
+    document.addEventListener('touchstart', handleTouchStart)
+    document.addEventListener('touchend', handleTouchEnd)
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart)
+      document.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [navigateToParent])
 
   // Show notification helper
   const showNotification = (message: string, type: 'success' | 'error' | 'syncing' = 'success') => {
@@ -537,9 +588,22 @@ function GraphView() {
 
   return (
     <>
-      <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
-        {theme === 'light' ? '🌙' : '☀️'}
-      </button>
+      <div className="top-buttons">
+        <button className="copy-btn" onClick={async () => {
+          try {
+            const text = await fetchStructureText()
+            await navigator.clipboard.writeText(text)
+            showNotification('Copied to clipboard!')
+          } catch (err) {
+            showNotification('Failed to copy', 'error')
+          }
+        }} title="Copy structure to clipboard">
+          📋
+        </button>
+        <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
+          {theme === 'light' ? '🌙' : '☀️'}
+        </button>
+      </div>
 
       <div className="graph-container">
         {/* Breadcrumb */}
