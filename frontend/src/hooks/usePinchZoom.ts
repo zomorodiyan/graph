@@ -5,14 +5,9 @@ const MAX_ZOOM = 2.0
 const ZOOM_STEP = 0.05
 const STORAGE_KEY = 'graph-font-zoom'
 
-interface ZoomNotification {
-  message: string
-  type: 'limit' | 'normal'
-}
-
 /**
  * Hook that handles pinch gestures to control font size zoom
- * Returns current zoom level and notification state
+ * Returns current zoom level
  */
 export function usePinchZoom() {
   // Load initial zoom from localStorage
@@ -29,28 +24,14 @@ export function usePinchZoom() {
     return 1.0
   })
   
-  const [notification, setNotification] = useState<ZoomNotification | null>(null)
-  
   const initialDistance = useRef<number | null>(null)
   const initialZoom = useRef<number>(zoom)
-  const notificationTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const hasNotifiedLimit = useRef<'min' | 'max' | null>(null)
 
   // Apply zoom to document
   useEffect(() => {
     document.documentElement.style.fontSize = `${zoom * 100}%`
     localStorage.setItem(STORAGE_KEY, zoom.toString())
   }, [zoom])
-
-  const showNotification = useCallback((message: string, type: 'limit' | 'normal' = 'normal') => {
-    if (notificationTimeout.current) {
-      clearTimeout(notificationTimeout.current)
-    }
-    setNotification({ message, type })
-    notificationTimeout.current = setTimeout(() => {
-      setNotification(null)
-    }, 1500)
-  }, [])
 
   const getDistance = useCallback((touches: TouchList): number => {
     if (touches.length < 2) return 0
@@ -65,7 +46,6 @@ export function usePinchZoom() {
         e.preventDefault()
         initialDistance.current = getDistance(e.touches)
         initialZoom.current = zoom
-        hasNotifiedLimit.current = null // Reset limit notification for new gesture
       }
     }
 
@@ -76,24 +56,6 @@ export function usePinchZoom() {
         const scale = currentDistance / initialDistance.current
         
         let newZoom = initialZoom.current * scale
-        
-        // Clamp and notify (only once per gesture per limit)
-        if (newZoom <= MIN_ZOOM) {
-          newZoom = MIN_ZOOM
-          if (hasNotifiedLimit.current !== 'min') {
-            hasNotifiedLimit.current = 'min'
-            showNotification('Minimum zoom', 'limit')
-          }
-        } else if (newZoom >= MAX_ZOOM) {
-          newZoom = MAX_ZOOM
-          if (hasNotifiedLimit.current !== 'max') {
-            hasNotifiedLimit.current = 'max'
-            showNotification('Maximum zoom', 'limit')
-          }
-        } else {
-          // Clear limit notification state if back in valid range
-          hasNotifiedLimit.current = null
-        }
         
         // Round to nearest step for smoother changes
         newZoom = Math.round(newZoom / ZOOM_STEP) * ZOOM_STEP
@@ -120,11 +82,8 @@ export function usePinchZoom() {
       document.removeEventListener('touchstart', handleTouchStart)
       document.removeEventListener('touchmove', handleTouchMove)
       document.removeEventListener('touchend', handleTouchEnd)
-      if (notificationTimeout.current) {
-        clearTimeout(notificationTimeout.current)
-      }
     }
-  }, [zoom, getDistance, showNotification])
+  }, [zoom, getDistance])
 
-  return { zoom, notification }
+  return { zoom }
 }

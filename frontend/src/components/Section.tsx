@@ -79,9 +79,22 @@ function Section({
 
   return (
     <div className="section">
+      {/* Copy button at top-right */}
+      {!isTimeView && onCopyClick && (
+        <span 
+          className="copy-handle" 
+          title="Copy to clipboard"
+          onClick={(e) => {
+            e.stopPropagation()
+            onCopyClick(itemKey, item)
+          }}
+        >
+          📋
+        </span>
+      )}
       {/* Layer 1 - Main category */}
       <div className="layer1-container">
-        <div className="layer1-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div className="layer1-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
           {!isTimeView && <span className="drag-handle" title="Drag to reorder">⠿</span>}
           {showLoading && <span className="loading-spinner" title="Syncing...">⟳</span>}
           <div className={`layer1 color-${color} ${showEditButton ? 'split-button' : ''}`}>
@@ -104,18 +117,6 @@ function Section({
               title={showEditButton ? "Open item" : undefined}
             />
           </div>
-          {!isTimeView && onCopyClick && (
-            <span 
-              className="copy-handle" 
-              title="Copy to clipboard"
-              onClick={(e) => {
-                e.stopPropagation()
-                onCopyClick(itemKey, item)
-              }}
-            >
-              📋
-            </span>
-          )}
         </div>
         {/* Progress bar */}
         {item.progress !== undefined && (
@@ -164,7 +165,7 @@ function Section({
                     <span className="item-title">
                       {childTitle}
                       {(childItem as StructureItem).progress !== undefined && (
-                        <span style={{ marginLeft: '8px', opacity: 0.7, fontSize: '12px' }}>
+                        <span style={{ marginLeft: '0.5rem', opacity: 0.7, fontSize: '0.75rem' }}>
                           {(childItem as StructureItem).progress}%
                         </span>
                       )}
@@ -213,7 +214,7 @@ function Section({
                             <span className="item-title">
                               {grandTitle}
                               {(grandItem as StructureItem).progress !== undefined && (
-                                <span style={{ marginLeft: '6px', opacity: 0.6, fontSize: '11px' }}>
+                                <span style={{ marginLeft: '0.375rem', opacity: 0.6, fontSize: '0.6875rem' }}>
                                   {(grandItem as StructureItem).progress}%
                                 </span>
                               )}
@@ -227,13 +228,13 @@ function Section({
                         </div>
                         {/* Due date for layer3 */}
                         {(grandItem as StructureItem).due && (
-                          <div className={`item-due due-${getDueCategory((grandItem as StructureItem).due)}`} style={{ marginLeft: '8px' }}>
+                          <div className={`item-due due-${getDueCategory((grandItem as StructureItem).due)}`} style={{ marginLeft: '0.5rem' }}>
                             {formatDueDate((grandItem as StructureItem).due!)}
                           </div>
                         )}
                         {/* Context for layer3 */}
                         {(grandItem as StructureItem).context && (
-                          <div className="item-context" style={{ marginLeft: '8px' }}>
+                          <div className="item-context" style={{ marginLeft: '0.5rem' }}>
                             {(grandItem as StructureItem).context}
                           </div>
                         )}

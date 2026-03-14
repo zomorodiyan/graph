@@ -2,7 +2,7 @@
 
 .structures-view {
   min-height: 100vh;
-  padding: 40px 20px;
+  padding: 2.5rem 1.25rem;
   background: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -10,13 +10,13 @@
 /* Header */
 .structures-header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 3rem;
 }
 
 .structures-header h1 {
   font-size: 2.5rem;
   font-weight: 700;
-  margin: 0 0 12px;
+  margin: 0 0 0.75rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -32,11 +32,11 @@
 /* Graphs container */
 .graphs-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 24px;
-  max-width: 1200px;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1.5rem;
+  max-width: 75rem;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 1.25rem;
 }
 
 /* Graph card */
@@ -44,33 +44,33 @@
   position: relative;
   background: var(--bg-secondary);
   border: 2px solid var(--border-color);
-  border-radius: 16px;
-  padding: 28px 24px;
+  border-radius: 1rem;
+  padding: 1.75rem 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  min-height: 180px;
+  min-height: 11.25rem;
 }
 
 .graph-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  transform: translateY(-0.25rem);
+  box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.15);
   border-color: #667eea;
 }
 
 .graph-icon {
   font-size: 3rem;
-  margin-bottom: 16px;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 0.25rem 0.5rem rgba(0, 0, 0, 0.1));
 }
 
 .graph-name {
   font-size: 1.25rem;
   font-weight: 600;
-  margin: 0 0 8px;
+  margin: 0 0 0.5rem;
   color: var(--text-primary);
 }
 
@@ -82,7 +82,7 @@
 }
 
 .graph-meta {
-  margin-top: 16px;
+  margin-top: 1rem;
   font-size: 0.75rem;
   color: var(--text-secondary);
   opacity: 0.7;
@@ -90,10 +90,10 @@
 
 .delete-btn {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 28px;
-  height: 28px;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 1.75rem;
+  height: 1.75rem;
   border: none;
   border-radius: 50%;
   background: rgba(200, 50, 50, 0.1);
@@ -126,7 +126,7 @@
 .add-card:hover {
   border-color: #667eea;
   background: rgba(102, 126, 234, 0.05);
-  transform: translateY(-4px);
+  transform: translateY(-0.25rem);
   box-shadow: none;
 }
 
@@ -135,7 +135,7 @@
   color: #667eea;
   font-weight: 300;
   line-height: 1;
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 
 .add-text {
@@ -147,7 +147,7 @@
 /* Empty state */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 3.75rem 1.25rem;
   color: var(--text-secondary);
 }
 
@@ -167,37 +167,37 @@
 
 .structures-view .modal {
   background: var(--bg-primary);
-  border-radius: 16px;
-  padding: 32px;
+  border-radius: 1rem;
+  padding: 2rem;
   width: 90%;
-  max-width: 400px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 25rem;
+  box-shadow: 0 1.25rem 3.75rem rgba(0, 0, 0, 0.3);
 }
 
 .structures-view .modal h2 {
-  margin: 0 0 24px;
+  margin: 0 0 1.5rem;
   font-size: 1.5rem;
   text-align: center;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 
 .form-group label {
   display: block;
   font-size: 0.9rem;
   font-weight: 500;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
   color: var(--text-secondary);
 }
 
 .form-group input {
   width: 100%;
-  padding: 12px 16px;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
   border: 2px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: var(--bg-secondary);
   color: var(--text-primary);
   transition: border-color 0.2s;
@@ -210,17 +210,17 @@
 
 .modal-actions {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
   justify-content: flex-end;
-  margin-top: 28px;
+  margin-top: 1.75rem;
 }
 
 .btn-secondary,
 .btn-primary {
-  padding: 10px 20px;
+  padding: 0.625rem 1.25rem;
   font-size: 0.95rem;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -255,7 +255,7 @@
 .structures-view .loading,
 .structures-view .error {
   text-align: center;
-  padding: 80px 20px;
+  padding: 5rem 1.25rem;
   font-size: 1.1rem;
 }
 
@@ -271,11 +271,11 @@
   
   .graphs-container {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 1rem;
   }
   
   .graph-card {
-    min-height: 150px;
-    padding: 24px 20px;
+    min-height: 9.375rem;
+    padding: 1.5rem 1.25rem;
   }
 }
