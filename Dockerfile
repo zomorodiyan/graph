@@ -30,8 +30,11 @@ COPY run.py ./
 # Copy built frontend from stage 1
 COPY --from=frontend-builder /frontend/dist ./frontend-dist
 
+# Copy structures (graphs)
+COPY structures/ ./structures/
+
 # Create directories for runtime data
-RUN mkdir -p html data structures
+RUN mkdir -p html data
 
 # Create placeholder config files (will be overridden by mounted secrets)
 RUN touch config.yaml credentials.json structure.txt

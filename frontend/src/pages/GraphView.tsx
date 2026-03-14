@@ -30,6 +30,11 @@ function GraphView() {
   
   const path = getPathFromLocation()
   const navigate = useNavigate()
+  
+  // Browser-like navigation history
+  const historyRef = useRef<string[]>([location.pathname])
+  const historyIndexRef = useRef<number>(0)
+  const isNavigatingRef = useRef<boolean>(false)
   const { theme, toggleTheme } = useTheme()
   const { data: structure, isLoading, error } = useStructure(graphName)
   
@@ -70,24 +75,56 @@ function GraphView() {
   const SWIPE_THRESHOLD = 100 // minimum distance for swipe
   const SWIPE_VERTICAL_LIMIT = 75 // max vertical movement to still count as horizontal swipe
 
-  // Navigate to parent path
-  const navigateToParent = useCallback(() => {
-    const base = graphName ? `/g/${graphName}` : ''
-    if (!path) {
-      // Already at graph home, go to structures list
-      if (graphName) {
-        navigate('/')
-      }
+  // Track navigation history (browser-like back/forward)
+  useEffect(() => {
+    if (isNavigatingRef.current) {
+      // Navigation was triggered by back/forward, don't add to history
+      isNavigatingRef.current = false
       return
     }
-    const parts = path.split('.')
-    if (parts.length === 1) {
-      navigate(base || '/') // Go to graph home
+    
+    const currentPath = location.pathname
+    const historyIndex = historyIndexRef.current
+    const history = historyRef.current
+    
+    // If navigating normally (not back/forward), add to history
+    if (history[historyIndex] !== currentPath) {
+      // Truncate forward history when making a new navigation
+      historyRef.current = [...history.slice(0, historyIndex + 1), currentPath]
+      historyIndexRef.current = historyRef.current.length - 1
+    }
+  }, [location.pathname])
+
+  // Navigate back in history
+  const navigateBack = useCallback(() => {
+    if (historyIndexRef.current > 0) {
+      isNavigatingRef.current = true
+      historyIndexRef.current--
+      navigate(historyRef.current[historyIndexRef.current])
     } else {
-      const parentPath = parts.slice(0, -1).join('.')
-      navigate(`${base}/${parentPath.replace(/\./g, '/')}`)
+      // At beginning of history, try to go to parent or structures list
+      const base = graphName ? `/g/${graphName}` : ''
+      if (!path) {
+        if (graphName) navigate('/')
+      } else {
+        isNavigatingRef.current = true
+        const parts = path.split('.')
+        const newPath = parts.length === 1 ? (base || '/') : `${base}/${parts.slice(0, -1).join('.').replace(/\./g, '/')}`
+        historyRef.current = [...historyRef.current.slice(0, historyIndexRef.current + 1), newPath]
+        historyIndexRef.current = historyRef.current.length - 1
+        navigate(newPath)
+      }
     }
   }, [path, navigate, graphName])
+
+  // Navigate forward in history
+  const navigateForward = useCallback(() => {
+    if (historyIndexRef.current < historyRef.current.length - 1) {
+      isNavigatingRef.current = true
+      historyIndexRef.current++
+      navigate(historyRef.current[historyIndexRef.current])
+    }
+  }, [navigate])
 
   // Swipe gesture handlers
   useEffect(() => {
@@ -104,9 +141,15 @@ function GraphView() {
       const deltaX = touchEndX - touchStartX.current
       const deltaY = Math.abs(touchEndY - touchStartY.current)
 
-      // Check for left-to-right swipe (positive deltaX, limited vertical movement)
-      if (deltaX > SWIPE_THRESHOLD && deltaY < SWIPE_VERTICAL_LIMIT) {
-        navigateToParent()
+      // Check for horizontal swipe with limited vertical movement
+      if (Math.abs(deltaX) > SWIPE_THRESHOLD && deltaY < SWIPE_VERTICAL_LIMIT) {
+        if (deltaX > 0) {
+          // Swipe right = go back
+          navigateBack()
+        } else {
+          // Swipe left = go forward
+          navigateForward()
+        }
       }
 
       touchStartX.current = null
@@ -120,7 +163,7 @@ function GraphView() {
       document.removeEventListener('touchstart', handleTouchStart)
       document.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [navigateToParent])
+  }, [navigateBack, navigateForward])
 
   // Show notification helper
   const showNotification = (message: string, type: 'success' | 'error' | 'syncing' = 'success') => {
