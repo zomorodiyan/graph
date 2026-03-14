@@ -31,7 +31,7 @@ COPY run.py ./
 COPY --from=frontend-builder /frontend/dist ./frontend-dist
 
 # Create directories for runtime data
-RUN mkdir -p html data
+RUN mkdir -p html data structures
 
 # Create placeholder config files (will be overridden by mounted secrets)
 RUN touch config.yaml credentials.json structure.txt
