@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useStructure, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
+import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useTheme } from '../context/ThemeContext'
 import { StructureItem, UpdatePayload, fetchStructureText } from '../api/client'
 import EditModal from '../components/EditModal'
@@ -31,10 +32,8 @@ function GraphView() {
   const path = getPathFromLocation()
   const navigate = useNavigate()
   
-  // Browser-like navigation history
-  const historyRef = useRef<string[]>([location.pathname])
-  const historyIndexRef = useRef<number>(0)
-  const isNavigatingRef = useRef<boolean>(false)
+  // Enable swipe navigation (browser-like back/forward)
+  useSwipeNavigation()
   const { theme, toggleTheme } = useTheme()
   const { data: structure, isLoading, error } = useStructure(graphName)
   
@@ -68,102 +67,6 @@ function GraphView() {
     message: string
     type: 'success' | 'error' | 'syncing'
   } | null>(null)
-
-  // Swipe navigation state
-  const touchStartX = useRef<number | null>(null)
-  const touchStartY = useRef<number | null>(null)
-  const SWIPE_THRESHOLD = 100 // minimum distance for swipe
-  const SWIPE_VERTICAL_LIMIT = 75 // max vertical movement to still count as horizontal swipe
-
-  // Track navigation history (browser-like back/forward)
-  useEffect(() => {
-    if (isNavigatingRef.current) {
-      // Navigation was triggered by back/forward, don't add to history
-      isNavigatingRef.current = false
-      return
-    }
-    
-    const currentPath = location.pathname
-    const historyIndex = historyIndexRef.current
-    const history = historyRef.current
-    
-    // If navigating normally (not back/forward), add to history
-    if (history[historyIndex] !== currentPath) {
-      // Truncate forward history when making a new navigation
-      historyRef.current = [...history.slice(0, historyIndex + 1), currentPath]
-      historyIndexRef.current = historyRef.current.length - 1
-    }
-  }, [location.pathname])
-
-  // Navigate back in history
-  const navigateBack = useCallback(() => {
-    if (historyIndexRef.current > 0) {
-      isNavigatingRef.current = true
-      historyIndexRef.current--
-      navigate(historyRef.current[historyIndexRef.current])
-    } else {
-      // At beginning of history, try to go to parent or structures list
-      const base = graphName ? `/g/${graphName}` : ''
-      if (!path) {
-        if (graphName) navigate('/')
-      } else {
-        isNavigatingRef.current = true
-        const parts = path.split('.')
-        const newPath = parts.length === 1 ? (base || '/') : `${base}/${parts.slice(0, -1).join('.').replace(/\./g, '/')}`
-        historyRef.current = [...historyRef.current.slice(0, historyIndexRef.current + 1), newPath]
-        historyIndexRef.current = historyRef.current.length - 1
-        navigate(newPath)
-      }
-    }
-  }, [path, navigate, graphName])
-
-  // Navigate forward in history
-  const navigateForward = useCallback(() => {
-    if (historyIndexRef.current < historyRef.current.length - 1) {
-      isNavigatingRef.current = true
-      historyIndexRef.current++
-      navigate(historyRef.current[historyIndexRef.current])
-    }
-  }, [navigate])
-
-  // Swipe gesture handlers
-  useEffect(() => {
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartX.current = e.touches[0].clientX
-      touchStartY.current = e.touches[0].clientY
-    }
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (touchStartX.current === null || touchStartY.current === null) return
-
-      const touchEndX = e.changedTouches[0].clientX
-      const touchEndY = e.changedTouches[0].clientY
-      const deltaX = touchEndX - touchStartX.current
-      const deltaY = Math.abs(touchEndY - touchStartY.current)
-
-      // Check for horizontal swipe with limited vertical movement
-      if (Math.abs(deltaX) > SWIPE_THRESHOLD && deltaY < SWIPE_VERTICAL_LIMIT) {
-        if (deltaX > 0) {
-          // Swipe right = go back
-          navigateBack()
-        } else {
-          // Swipe left = go forward
-          navigateForward()
-        }
-      }
-
-      touchStartX.current = null
-      touchStartY.current = null
-    }
-
-    document.addEventListener('touchstart', handleTouchStart)
-    document.addEventListener('touchend', handleTouchEnd)
-
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart)
-      document.removeEventListener('touchend', handleTouchEnd)
-    }
-  }, [navigateBack, navigateForward])
 
   // Show notification helper
   const showNotification = (message: string, type: 'success' | 'error' | 'syncing' = 'success') => {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { GraphInfo, fetchGraphs, createGraph, deleteGraph } from '../api/client'
+import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import Notification from '../components/Notification'
 import './StructuresView.css'
 
@@ -27,6 +28,9 @@ function StructuresView() {
     message: string
     type: 'success' | 'error'
   } | null>(null)
+
+  // Enable swipe navigation (back/forward)
+  useSwipeNavigation()
 
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type })
