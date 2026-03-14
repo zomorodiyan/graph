@@ -13,31 +13,31 @@ import {
 } from '../api/client'
 
 // Hook to fetch and cache the full structure
-export function useStructure() {
+export function useStructure(graphName?: string) {
   return useQuery({
-    queryKey: ['structure'],
-    queryFn: fetchStructure,
+    queryKey: ['structure', graphName],
+    queryFn: () => fetchStructure(graphName),
   })
 }
 
 // Hook for updating an item with optimistic updates
-export function useUpdateItem() {
+export function useUpdateItem(graphName?: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({ path, data }: { path: string; data: UpdatePayload }) =>
-      updateItem(path, data),
+      updateItem(path, data, graphName),
     
     // Optimistic update
     onMutate: async ({ path, data }) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['structure'] })
+      await queryClient.cancelQueries({ queryKey: ['structure', graphName] })
 
       // Snapshot previous value
-      const previousStructure = queryClient.getQueryData(['structure'])
+      const previousStructure = queryClient.getQueryData(['structure', graphName])
 
       // Optimistically update the cache
-      queryClient.setQueryData(['structure'], (old: any) => {
+      queryClient.setQueryData(['structure', graphName], (old: any) => {
         if (!old) return old
         return applyOptimisticUpdate(old, path, data)
       })
@@ -48,7 +48,7 @@ export function useUpdateItem() {
     // Rollback on error
     onError: (_err, _vars, context) => {
       if (context?.previousStructure) {
-        queryClient.setQueryData(['structure'], context.previousStructure)
+        queryClient.setQueryData(['structure', graphName], context.previousStructure)
       }
     },
 
@@ -61,19 +61,19 @@ export function useUpdateItem() {
 }
 
 // Hook for creating a new item with optimistic updates
-export function useCreateItem() {
+export function useCreateItem(graphName?: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({ parentPath, data }: { parentPath: string; data: UpdatePayload }) =>
-      createItem(parentPath, data),
+      createItem(parentPath, data, graphName),
     
     // Optimistic update - show new item immediately
     onMutate: async ({ parentPath, data }) => {
-      await queryClient.cancelQueries({ queryKey: ['structure'] })
-      const previousStructure = queryClient.getQueryData(['structure'])
+      await queryClient.cancelQueries({ queryKey: ['structure', graphName] })
+      const previousStructure = queryClient.getQueryData(['structure', graphName])
 
-      queryClient.setQueryData(['structure'], (old: any) => {
+      queryClient.setQueryData(['structure', graphName], (old: any) => {
         if (!old || !data.name) return old
         return applyOptimisticCreate(old, parentPath, data)
       })
@@ -83,30 +83,30 @@ export function useCreateItem() {
 
     onError: (_err, _vars, context) => {
       if (context?.previousStructure) {
-        queryClient.setQueryData(['structure'], context.previousStructure)
+        queryClient.setQueryData(['structure', graphName], context.previousStructure)
       }
     },
 
     onSettled: () => {
       // Refetch to get server's response (in case of name conflicts, etc)
-      queryClient.invalidateQueries({ queryKey: ['structure'] })
+      queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
       syncToDrive().catch(console.error)
     },
   })
 }
 
 // Hook for deleting an item with optimistic update
-export function useDeleteItem() {
+export function useDeleteItem(graphName?: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (path: string) => deleteItem(path),
+    mutationFn: (path: string) => deleteItem(path, graphName),
     
     onMutate: async (path) => {
-      await queryClient.cancelQueries({ queryKey: ['structure'] })
-      const previousStructure = queryClient.getQueryData(['structure'])
+      await queryClient.cancelQueries({ queryKey: ['structure', graphName] })
+      const previousStructure = queryClient.getQueryData(['structure', graphName])
 
-      queryClient.setQueryData(['structure'], (old: any) => {
+      queryClient.setQueryData(['structure', graphName], (old: any) => {
         if (!old) return old
         return applyOptimisticDelete(old, path)
       })
@@ -116,7 +116,7 @@ export function useDeleteItem() {
 
     onError: (_err, _path, context) => {
       if (context?.previousStructure) {
-        queryClient.setQueryData(['structure'], context.previousStructure)
+        queryClient.setQueryData(['structure', graphName], context.previousStructure)
       }
     },
 
@@ -127,20 +127,20 @@ export function useDeleteItem() {
 }
 
 // Hook for reordering items (up/down buttons) with optimistic updates
-export function useMoveItem() {
+export function useMoveItem(graphName?: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({ path, direction }: { path: string; direction: 'up' | 'down' }) =>
-      direction === 'up' ? moveItemUp(path) : moveItemDown(path),
+      direction === 'up' ? moveItemUp(path, graphName) : moveItemDown(path, graphName),
     
     // Optimistic update
     onMutate: async ({ path, direction }) => {
-      await queryClient.cancelQueries({ queryKey: ['structure'] })
-      const previousStructure = queryClient.getQueryData(['structure'])
+      await queryClient.cancelQueries({ queryKey: ['structure', graphName] })
+      const previousStructure = queryClient.getQueryData(['structure', graphName])
 
       // Calculate target index based on direction
-      queryClient.setQueryData(['structure'], (old: any) => {
+      queryClient.setQueryData(['structure', graphName], (old: any) => {
         if (!old) return old
         
         const keys = path.split('.')
@@ -175,7 +175,7 @@ export function useMoveItem() {
 
     onError: (_err, _vars, context) => {
       if (context?.previousStructure) {
-        queryClient.setQueryData(['structure'], context.previousStructure)
+        queryClient.setQueryData(['structure', graphName], context.previousStructure)
       }
     },
 
@@ -186,23 +186,23 @@ export function useMoveItem() {
 }
 
 // Hook for drag-and-drop reordering with optimistic updates
-export function useReorderItem() {
+export function useReorderItem(graphName?: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({ path, targetIndex }: { path: string; targetIndex: number }) =>
-      reorderItem(path, targetIndex),
+      reorderItem(path, targetIndex, graphName),
     
     // Optimistic update - immediately show the reordered items
     onMutate: async ({ path, targetIndex }) => {
       // Cancel any outgoing refetches so they don't overwrite our optimistic update
-      await queryClient.cancelQueries({ queryKey: ['structure'] })
+      await queryClient.cancelQueries({ queryKey: ['structure', graphName] })
 
       // Snapshot the previous value for rollback
-      const previousStructure = queryClient.getQueryData(['structure'])
+      const previousStructure = queryClient.getQueryData(['structure', graphName])
 
       // Optimistically update the cache to show new order immediately
-      queryClient.setQueryData(['structure'], (old: any) => {
+      queryClient.setQueryData(['structure', graphName], (old: any) => {
         if (!old) return old
         return applyOptimisticReorder(old, path, targetIndex)
       })
@@ -215,7 +215,7 @@ export function useReorderItem() {
     onError: (_err, _vars, context) => {
       console.error('Reorder error:', _err)
       if (context?.previousStructure) {
-        queryClient.setQueryData(['structure'], context.previousStructure)
+        queryClient.setQueryData(['structure', graphName], context.previousStructure)
       }
     },
 

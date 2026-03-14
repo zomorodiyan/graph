@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { useLocation, useNavigate, Link } from 'react-router-dom'
+import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useStructure, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useTheme } from '../context/ThemeContext'
 import { StructureItem, UpdatePayload, fetchStructureText } from '../api/client'
@@ -12,16 +12,31 @@ const COLORS = ['green', 'blue', 'purple', 'brown']
 
 function GraphView() {
   const location = useLocation()
-  // Convert URL path to dot notation (e.g., /level/work/go_melt -> level.work.go_melt)
-  const path = location.pathname === '/' ? '' : location.pathname.slice(1).replace(/\//g, '.')
+  const { graphName } = useParams<{ graphName?: string }>()
+  
+  // Parse path from URL, handling both /g/{graphName}/... and legacy /... routes
+  const getPathFromLocation = () => {
+    const pathname = location.pathname
+    if (graphName) {
+      // Route: /g/{graphName}/path/to/item -> path.to.item
+      const prefix = `/g/${graphName}`
+      const remaining = pathname.startsWith(prefix) ? pathname.slice(prefix.length) : pathname
+      return remaining === '' || remaining === '/' ? '' : remaining.slice(1).replace(/\//g, '.')
+    } else {
+      // Legacy route: /path/to/item -> path.to.item
+      return pathname === '/' ? '' : pathname.slice(1).replace(/\//g, '.')
+    }
+  }
+  
+  const path = getPathFromLocation()
   const navigate = useNavigate()
   const { theme, toggleTheme } = useTheme()
-  const { data: structure, isLoading, error } = useStructure()
+  const { data: structure, isLoading, error } = useStructure(graphName)
   
-  const updateItem = useUpdateItem()
-  const deleteItemMutation = useDeleteItem()
-  const reorderItem = useReorderItem()
-  const createItem = useCreateItem()
+  const updateItem = useUpdateItem(graphName)
+  const deleteItemMutation = useDeleteItem(graphName)
+  const reorderItem = useReorderItem(graphName)
+  const createItem = useCreateItem(graphName)
   
   // Drag state
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
@@ -57,15 +72,22 @@ function GraphView() {
 
   // Navigate to parent path
   const navigateToParent = useCallback(() => {
-    if (!path) return // Already at home
+    const base = graphName ? `/g/${graphName}` : ''
+    if (!path) {
+      // Already at graph home, go to structures list
+      if (graphName) {
+        navigate('/')
+      }
+      return
+    }
     const parts = path.split('.')
     if (parts.length === 1) {
-      navigate('/') // Go to home
+      navigate(base || '/') // Go to graph home
     } else {
       const parentPath = parts.slice(0, -1).join('.')
-      navigate(`/${parentPath.replace(/\./g, '/')}`)
+      navigate(`${base}/${parentPath.replace(/\./g, '/')}`)
     }
-  }, [path, navigate])
+  }, [path, navigate, graphName])
 
   // Swipe gesture handlers
   useEffect(() => {
@@ -270,20 +292,34 @@ function GraphView() {
   // The display items: use local items if available, otherwise raw items from server
   const displayItems = localItems || rawItems
 
+  // Helper to build URL paths with optional graph prefix
+  const buildPath = (itemPath: string) => {
+    const base = graphName ? `/g/${graphName}` : ''
+    return itemPath ? `${base}/${itemPath.replace(/\./g, '/')}` : base || '/'
+  }
+
   // Build breadcrumb
   const getBreadcrumb = () => {
-    if (!path) return [{ label: 'Home', path: '/' }]
+    const crumbs = []
+    
+    // Add "Graphs" link if we're in a specific graph
+    if (graphName) {
+      crumbs.push({ label: '📊', path: '/', isRoot: true })
+      crumbs.push({ label: graphName.replace(/_/g, ' ').replace(/-/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '), path: `/g/${graphName}` })
+    } else {
+      crumbs.push({ label: 'Home', path: '/' })
+    }
+    
+    if (!path) return crumbs
     
     const parts = path.split('.')
-    const crumbs = [{ label: 'Home', path: '/' }]
-    
     let currentPath = ''
     for (const part of parts) {
       currentPath = currentPath ? `${currentPath}.${part}` : part
       const item = getItemByPath(structure, currentPath)
       crumbs.push({
         label: item?.title || part,
-        path: `/${currentPath.replace(/\./g, '/')}`
+        path: buildPath(currentPath)
       })
     }
     
@@ -292,7 +328,7 @@ function GraphView() {
 
   // Handle item click - navigate to item page (always, even without children)
   const handleItemClick = (itemPath: string, _hasChildren: boolean) => {
-    navigate(`/${itemPath.replace(/\./g, '/')}`)
+    navigate(buildPath(itemPath))
   }
 
   // Handle edit click
@@ -591,7 +627,7 @@ function GraphView() {
       <div className="top-buttons">
         <button className="copy-btn" onClick={async () => {
           try {
-            const text = await fetchStructureText()
+            const text = await fetchStructureText(graphName)
             await navigator.clipboard.writeText(text)
             showNotification('Copied to clipboard!')
           } catch (err) {

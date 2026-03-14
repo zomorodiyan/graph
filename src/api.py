@@ -19,6 +19,7 @@ from file_utils import FileUtils
 from hierarchy_builder import HierarchyBuilder
 from html_generator import HTMLGenerator
 from google_drive import download_structure_yaml, upload_structure_yaml
+from structures_manager import StructuresManager
 
 
 app = FastAPI(title="Hierarchical Graph API", version="1.0")
@@ -55,8 +56,65 @@ app.add_middleware(
 file_utils = FileUtils()
 hierarchy_builder = HierarchyBuilder()
 html_generator = HTMLGenerator()
+structures_manager = StructuresManager()
 
 # Serve HTML files from /html directory (mount after API routes are defined)
+
+
+# ============================================================================
+# STRUCTURES (GRAPHS) ENDPOINTS
+# ============================================================================
+
+class StructureCreate(BaseModel):
+    """Model for creating a new structure."""
+    name: str = Field(..., description="Structure name (will be sanitized)")
+    description: Optional[str] = Field("", description="Structure description")
+
+
+@app.get("/api/graphs")
+async def list_graphs():
+    """List all available graphs/structures."""
+    try:
+        return structures_manager.list_structures()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/graphs")
+async def create_graph(data: StructureCreate):
+    """Create a new graph/structure."""
+    try:
+        return structures_manager.create_structure(data.name, data.description)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/graphs/{name}")
+async def delete_graph(name: str):
+    """Delete a graph/structure."""
+    try:
+        return structures_manager.delete_structure(name)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def get_file_utils_for_graph(graph_name: str = None) -> FileUtils:
+    """Get FileUtils instance for a specific graph or default."""
+    if graph_name and graph_name != "default":
+        if not structures_manager.structure_exists(graph_name):
+            raise HTTPException(status_code=404, detail=f"Graph '{graph_name}' not found")
+        return structures_manager.get_file_utils(graph_name)
+    # Fall back to default structure.txt for backwards compatibility
+    return file_utils
+
+
+# ============================================================================
+# ITEM ENDPOINTS
+# ============================================================================
 
 
 class ItemUpdate(BaseModel):
@@ -170,7 +228,7 @@ def find_item(structure: dict, keys: list) -> tuple:
 
 @app.get("/api/structure")
 async def get_structure():
-    """Get the full structure with all items."""
+    """Get the full structure with all items (default structure)."""
     try:
         data = file_utils.load_yaml_structure()
         return data
@@ -178,13 +236,41 @@ async def get_structure():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/graphs/{graph_name}/structure")
+async def get_graph_structure(graph_name: str):
+    """Get the full structure for a specific graph."""
+    try:
+        fu = get_file_utils_for_graph(graph_name)
+        data = fu.load_yaml_structure()
+        return data
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/structure/text")
 async def get_structure_text():
-    """Get the raw structure.txt file content as plain text."""
+    """Get the raw structure.txt file content as plain text (default structure)."""
     try:
         structure_path = file_utils.structure_path
         if not os.path.exists(structure_path):
             raise HTTPException(status_code=404, detail="structure.txt not found")
+        with open(structure_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return {"content": content}
+    except HTTPException:
+        raise
+
+
+@app.get("/api/graphs/{graph_name}/structure/text")
+async def get_graph_structure_text(graph_name: str):
+    """Get the raw structure file content for a specific graph."""
+    try:
+        fu = get_file_utils_for_graph(graph_name)
+        structure_path = fu.structure_path
+        if not os.path.exists(structure_path):
+            raise HTTPException(status_code=404, detail=f"Structure file not found for graph '{graph_name}'")
         with open(structure_path, 'r', encoding='utf-8') as f:
             content = f.read()
         return {"content": content}
@@ -196,7 +282,7 @@ async def get_structure_text():
 
 @app.get("/api/items/{path:path}")
 async def get_item(path: str):
-    """Get an item by its path."""
+    """Get an item by its path (default structure)."""
     try:
         data = file_utils.load_yaml_structure()
         keys = path_to_keys(path)
@@ -211,6 +297,30 @@ async def get_item(path: str):
             "name": item_key,
             "data": item_value
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/graphs/{graph_name}/items/{path:path}")
+async def get_graph_item(graph_name: str, path: str):
+    """Get an item by its path from a specific graph."""
+    try:
+        fu = get_file_utils_for_graph(graph_name)
+        data = fu.load_yaml_structure()
+        keys = path_to_keys(path)
+        
+        parent, item_key, item_value = find_item(data['structure'], keys)
+        
+        if parent is None:
+            raise HTTPException(status_code=404, detail=f"Item not found: {path}")
+        
+        return {
+            "path": path,
+            "name": item_key,
+            "data": item_value
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

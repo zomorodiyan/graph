@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import GraphView from './pages/GraphView'
+import StructuresView from './pages/StructuresView'
 import './App.css'
 
 function App() {
@@ -8,7 +9,13 @@ function App() {
     <ThemeProvider>
       <div className="app">
         <Routes>
-          <Route path="/" element={<GraphView />} />
+          {/* Root: list of all graphs */}
+          <Route path="/" element={<StructuresView />} />
+          
+          {/* Graph view: /g/{graphName}/* */}
+          <Route path="/g/:graphName/*" element={<GraphView />} />
+          
+          {/* Backwards compatibility: old routes without graph prefix (uses default) */}
           <Route path="/*" element={<GraphView />} />
         </Routes>
       </div>

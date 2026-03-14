@@ -20,6 +20,11 @@ class FileUtils:
             else os.path.join(project_root, "structure.txt")
         )
     
+    @property
+    def structure_path(self):
+        """Return the structure file path (alias for API compatibility)."""
+        return self.structure_file_path
+    
     def load_yaml_structure(self):
         """Load structure from file and auto-generate IDs based on key paths."""
         try:
