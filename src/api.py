@@ -779,6 +779,256 @@ async def delete_item(path: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============================================================================
+# GRAPH-SPECIFIC ITEM ENDPOINTS (for multi-structure support)
+# ============================================================================
+
+@app.put("/api/graphs/{graph_name}/items/{path:path}")
+async def update_graph_item(graph_name: str, path: str, request: Request):
+    """Update an item's properties in a specific graph."""
+    try:
+        fu = get_file_utils_for_graph(graph_name)
+        update_data = await request.json()
+        print(f"DEBUG: Updating item at path: {path} in graph: {graph_name}")
+        
+        remove_progress = update_data.get('progress') == ''
+        remove_context = update_data.get('context') == ''
+        remove_due = update_data.get('due') == ''
+        
+        if remove_progress:
+            update_data['progress'] = None
+        if remove_context:
+            update_data['context'] = None
+        if remove_due:
+            update_data['due'] = None
+        
+        data = fu.load_yaml_structure()
+        keys = path_to_keys(path)
+        parent, item_key, item_value = find_item(data['structure'], keys)
+        
+        if parent is None:
+            raise HTTPException(status_code=404, detail=f"Item not found: {path}")
+        
+        if not isinstance(item_value, dict):
+            item_value = {}
+            parent[item_key] = item_value
+        
+        new_name = update_data.get('name')
+        renamed = False
+        if new_name is not None and new_name != item_key:
+            new_name = new_name.lower().replace(' ', '_')
+            if new_name in parent and new_name != item_key:
+                raise HTTPException(status_code=400, detail=f"Item '{new_name}' already exists at this level")
+            new_parent = {}
+            for key, value in parent.items():
+                if key == item_key:
+                    new_parent[new_name] = value
+                else:
+                    new_parent[key] = value
+            parent.clear()
+            parent.update(new_parent)
+            item_value = parent[new_name]
+            renamed = True
+        
+        if remove_progress:
+            item_value.pop('progress', None)
+        elif 'progress' in update_data and update_data['progress'] is not None:
+            item_value['progress'] = int(update_data['progress'])
+        
+        if remove_context:
+            item_value.pop('context', None)
+        elif 'context' in update_data and update_data['context'] is not None:
+            item_value['context'] = update_data['context']
+            
+        if remove_due:
+            item_value.pop('due', None)
+        elif 'due' in update_data and update_data['due'] is not None:
+            import re
+            if not re.match(r'^\d{4}-\d{2}-\d{2}$', update_data['due']):
+                raise HTTPException(status_code=400, detail=f"Invalid date format: {update_data['due']}. Must be YYYY-MM-DD")
+            item_value['due'] = update_data['due']
+        
+        data_to_save = _clean_structure_for_save(data)
+        fu.save_structure(data_to_save)
+        
+        final_path = path
+        if renamed:
+            path_parts = keys[:-1] + [new_name]
+            final_path = '.'.join(path_parts) if path_parts else new_name
+        
+        return {
+            "success": True,
+            "path": final_path,
+            "updated": item_value
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/graphs/{graph_name}/items/{parent_path:path}")
+async def create_graph_item(graph_name: str, parent_path: str, item: ItemCreate):
+    """Create a new item under a parent in a specific graph."""
+    try:
+        fu = get_file_utils_for_graph(graph_name)
+        print(f"DEBUG: Creating item under parent_path: '{parent_path}' in graph: {graph_name}")
+        
+        data = fu.load_yaml_structure()
+        
+        if parent_path in ("", "root", "home"):
+            keys = []
+        else:
+            keys = path_to_keys(parent_path)
+
+        if not keys:
+            parent_children = data.get('structure', {})
+        else:
+            parent, parent_key, parent_value = find_item(data['structure'], keys)
+            if parent is None:
+                raise HTTPException(status_code=404, detail=f"Parent not found: {parent_path}")
+            
+            if not isinstance(parent_value, dict):
+                parent_value = {}
+                parent[parent_key] = parent_value
+            
+            parent_children = parent_value
+
+        new_name = item.name.lower().replace(' ', '_')
+        
+        if new_name in parent_children:
+            raise HTTPException(status_code=400, detail=f"Item '{new_name}' already exists under this parent")
+
+        new_item = {}
+        if item.progress is not None:
+            new_item['progress'] = item.progress
+        if item.context:
+            new_item['context'] = item.context
+        if item.due:
+            new_item['due'] = item.due
+        
+        parent_children[new_name] = new_item
+        
+        data_to_save = _clean_structure_for_save(data)
+        fu.save_structure(data_to_save)
+        
+        if not parent_path or parent_path in ("root", "home"):
+            new_path = new_name
+        else:
+            new_path = f"{parent_path}.{new_name}"
+        
+        return {
+            "success": True,
+            "path": new_path,
+            "created": new_item
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/graphs/{graph_name}/items/{path:path}")
+async def delete_graph_item(graph_name: str, path: str):
+    """Delete an item from a specific graph."""
+    try:
+        fu = get_file_utils_for_graph(graph_name)
+        print(f"DEBUG: Deleting item at path: {path} in graph: {graph_name}")
+        
+        data = fu.load_yaml_structure()
+        keys = path_to_keys(path)
+        
+        parent, item_key, item_value = find_item(data['structure'], keys)
+        
+        if parent is None:
+            raise HTTPException(status_code=404, detail=f"Item not found: {path}")
+        
+        del parent[item_key]
+        
+        data_to_save = _clean_structure_for_save(data)
+        fu.save_structure(data_to_save)
+        
+        return {
+            "success": True,
+            "deleted": path
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/graphs/{graph_name}/items/{path:path}/reorder")
+async def reorder_graph_item(graph_name: str, path: str, body: dict = Body(...)):
+    """Reorder an item to a specific position in a specific graph."""
+    try:
+        fu = get_file_utils_for_graph(graph_name)
+        target_index = body.get('targetIndex')
+        if target_index is None:
+            raise HTTPException(status_code=400, detail="targetIndex is required")
+        
+        data = fu.load_yaml_structure()
+        keys = path_to_keys(path)
+        
+        if len(keys) < 1:
+            raise HTTPException(status_code=400, detail="Cannot reorder root item")
+        
+        if len(keys) == 1:
+            parent_dict = data['structure']
+        else:
+            parent_keys = keys[:-1]
+            parent, _, parent_value = find_item(data['structure'], parent_keys)
+            if parent is None:
+                raise HTTPException(status_code=404, detail=f"Parent not found: {'.'.join(parent_keys)}")
+            parent_dict = parent_value
+        
+        item_key = keys[-1]
+        if item_key not in parent_dict:
+            raise HTTPException(status_code=404, detail=f"Item not found: {path}")
+        
+        current_order = list(parent_dict.keys())
+        current_order = [k for k in current_order if k not in ['children', 'progress', 'context', 'due', 'id', 'title']]
+        
+        if item_key not in current_order:
+            raise HTTPException(status_code=404, detail=f"Item not found in siblings")
+        
+        current_index = current_order.index(item_key)
+        current_order.pop(current_index)
+        target_index = max(0, min(target_index, len(current_order)))
+        current_order.insert(target_index, item_key)
+        
+        new_parent = {}
+        for prop in ['progress', 'context', 'due']:
+            if prop in parent_dict:
+                new_parent[prop] = parent_dict[prop]
+        for key in current_order:
+            new_parent[key] = parent_dict[key]
+        
+        parent_dict.clear()
+        parent_dict.update(new_parent)
+        
+        data_to_save = _clean_structure_for_save(data)
+        fu.save_structure(data_to_save)
+        
+        return {
+            "success": True,
+            "path": path,
+            "new_position": target_index
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 def get_affected_paths(item_path: str) -> list:
     """
     Get list of item paths that need HTML regeneration.
