@@ -9,6 +9,7 @@ interface SectionProps {
   colorIndex: number
   onItemClick: (path: string, hasChildren: boolean) => void
   onEditClick: (path: string, name: string, data: StructureItem) => void
+  onCopyClick?: (itemKey: string, item: StructureItem) => void
   isPending?: boolean  // Item is being synced
   isTimeView?: boolean // Items in time view can't be edited (they're virtual)
 }
@@ -59,6 +60,7 @@ function Section({
   colorIndex,
   onItemClick,
   onEditClick,
+  onCopyClick,
   isPending = false,
   isTimeView = false,
 }: SectionProps) {
@@ -102,6 +104,18 @@ function Section({
               title={showEditButton ? "Open item" : undefined}
             />
           </div>
+          {!isTimeView && onCopyClick && (
+            <span 
+              className="copy-handle" 
+              title="Copy to clipboard"
+              onClick={(e) => {
+                e.stopPropagation()
+                onCopyClick(itemKey, item)
+              }}
+            >
+              📋
+            </span>
+          )}
         </div>
         {/* Progress bar */}
         {item.progress !== undefined && (

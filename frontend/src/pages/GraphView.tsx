@@ -3,7 +3,7 @@ import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useStructure, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useTheme } from '../context/ThemeContext'
-import { StructureItem, UpdatePayload, fetchStructureText } from '../api/client'
+import { StructureItem, UpdatePayload } from '../api/client'
 import EditModal from '../components/EditModal'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
@@ -568,20 +568,45 @@ function GraphView() {
   // Check if we're in a time view (time itself or time subcategories)
   const isTimeView = path === 'time' || path?.startsWith('time.')
 
+  // Serialize an item and its children to structure.txt format
+  const serializeItem = (key: string, item: StructureItem, indent: number = 0): string => {
+    const spaces = '  '.repeat(indent)
+    let result = `${spaces}${key}\n`
+    
+    // Add properties
+    if (item.progress !== undefined) {
+      result += `${spaces}  progress: ${item.progress}\n`
+    }
+    if (item.context) {
+      result += `${spaces}  context: ${item.context}\n`
+    }
+    if (item.due) {
+      result += `${spaces}  due: ${item.due}\n`
+    }
+    
+    // Add children
+    if (item.children) {
+      for (const [childKey, childItem] of Object.entries(item.children)) {
+        result += serializeItem(childKey, childItem as StructureItem, indent + 1)
+      }
+    }
+    
+    return result
+  }
+
+  const handleCopyItem = async (itemKey: string, item: StructureItem) => {
+    try {
+      const text = serializeItem(itemKey, item, 0)
+      await navigator.clipboard.writeText(text.trimEnd())
+      showNotification('Copied!')
+    } catch (err) {
+      showNotification('Failed to copy', 'error')
+    }
+  }
+
   return (
     <>
       <div className="top-buttons">
-        <button className="copy-btn" onClick={async () => {
-          try {
-            const text = await fetchStructureText(graphName)
-            await navigator.clipboard.writeText(text)
-            showNotification('Copied to clipboard!')
-          } catch (err) {
-            showNotification('Failed to copy', 'error')
-          }
-        }} title="Copy structure to clipboard">
-          📋
-        </button>
         <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
           {theme === 'light' ? '🌙' : '☀️'}
         </button>
@@ -628,6 +653,7 @@ function GraphView() {
                 colorIndex={index % COLORS.length}
                 onItemClick={handleItemClick}
                 onEditClick={handleEditClick}
+                onCopyClick={handleCopyItem}
                 isPending={isPending}
                 isTimeView={isTimeView}
               />

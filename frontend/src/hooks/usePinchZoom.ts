@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 
-const MIN_ZOOM = 0.7
-const MAX_ZOOM = 1.5
+const MIN_ZOOM = 0.5
+const MAX_ZOOM = 2.0
 const ZOOM_STEP = 0.05
 const STORAGE_KEY = 'graph-font-zoom'
 
@@ -34,6 +34,7 @@ export function usePinchZoom() {
   const initialDistance = useRef<number | null>(null)
   const initialZoom = useRef<number>(zoom)
   const notificationTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasNotifiedLimit = useRef<'min' | 'max' | null>(null)
 
   // Apply zoom to document
   useEffect(() => {
@@ -64,6 +65,7 @@ export function usePinchZoom() {
         e.preventDefault()
         initialDistance.current = getDistance(e.touches)
         initialZoom.current = zoom
+        hasNotifiedLimit.current = null // Reset limit notification for new gesture
       }
     }
 
@@ -75,17 +77,22 @@ export function usePinchZoom() {
         
         let newZoom = initialZoom.current * scale
         
-        // Clamp and notify
+        // Clamp and notify (only once per gesture per limit)
         if (newZoom <= MIN_ZOOM) {
           newZoom = MIN_ZOOM
-          if (zoom !== MIN_ZOOM) {
+          if (hasNotifiedLimit.current !== 'min') {
+            hasNotifiedLimit.current = 'min'
             showNotification('Minimum zoom', 'limit')
           }
         } else if (newZoom >= MAX_ZOOM) {
           newZoom = MAX_ZOOM
-          if (zoom !== MAX_ZOOM) {
+          if (hasNotifiedLimit.current !== 'max') {
+            hasNotifiedLimit.current = 'max'
             showNotification('Maximum zoom', 'limit')
           }
+        } else {
+          // Clear limit notification state if back in valid range
+          hasNotifiedLimit.current = null
         }
         
         // Round to nearest step for smoother changes
