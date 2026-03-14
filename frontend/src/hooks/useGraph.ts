@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   fetchStructure,
+  fetchGraphs,
   updateItem,
   createItem,
   deleteItem,
@@ -11,6 +12,15 @@ import {
   UpdatePayload,
   StructureItem,
 } from '../api/client'
+
+// Hook to fetch and cache the list of graphs
+export function useGraphs() {
+  return useQuery({
+    queryKey: ['graphs'],
+    queryFn: fetchGraphs,
+    staleTime: 1000 * 60 * 5, // 5 minutes - graphs list rarely changes
+  })
+}
 
 // Hook to fetch and cache the full structure
 export function useStructure(graphName?: string) {

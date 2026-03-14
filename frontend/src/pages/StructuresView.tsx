@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTheme } from '../context/ThemeContext'
-import { GraphInfo, fetchGraphs, createGraph, deleteGraph } from '../api/client'
+import { createGraph, deleteGraph } from '../api/client'
+import { useGraphs } from '../hooks/useGraph'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import Notification from '../components/Notification'
 import './StructuresView.css'
@@ -16,10 +18,9 @@ function getIconForGraph(name: string): string {
 
 function StructuresView() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { theme, toggleTheme } = useTheme()
-  const [graphs, setGraphs] = useState<GraphInfo[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: graphs = [], isLoading, error } = useGraphs()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newGraphName, setNewGraphName] = useState('')
   const [newGraphDescription, setNewGraphDescription] = useState('')
@@ -37,23 +38,6 @@ function StructuresView() {
     setTimeout(() => setNotification(null), 3000)
   }
 
-  const loadGraphs = async () => {
-    try {
-      setIsLoading(true)
-      const data = await fetchGraphs()
-      setGraphs(data)
-      setError(null)
-    } catch (err) {
-      setError((err as Error).message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadGraphs()
-  }, [])
-
   const handleGraphClick = (graphName: string) => {
     navigate(`/g/${graphName}`)
   }
@@ -68,7 +52,7 @@ function StructuresView() {
       setShowCreateModal(false)
       setNewGraphName('')
       setNewGraphDescription('')
-      loadGraphs()
+      queryClient.invalidateQueries({ queryKey: ['graphs'] })
     } catch (err) {
       showNotification((err as Error).message, 'error')
     } finally {
@@ -83,7 +67,7 @@ function StructuresView() {
     try {
       await deleteGraph(name)
       showNotification(`Deleted "${name}"`)
-      loadGraphs()
+      queryClient.invalidateQueries({ queryKey: ['graphs'] })
     } catch (err) {
       showNotification((err as Error).message, 'error')
     }
@@ -100,7 +84,7 @@ function StructuresView() {
   if (error) {
     return (
       <div className="structures-view">
-        <div className="error">Error: {error}</div>
+        <div className="error">Error: {(error as Error).message}</div>
       </div>
     )
   }
