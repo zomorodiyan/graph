@@ -113,28 +113,28 @@ structure
   version: 1.0
   updated_at: '{datetime.now().isoformat()}'
 structure
-  1_tap_to_navigate
-    context: Tap any item title to open its page
-  2_add_items
+  1_tap_left_to_edit
+    context: Tap the LEFT side of item titles to edit (name, context, due, progress)
+  2_tap_right_to_navigate
+    context: Tap the RIGHT side of item titles to open the item's page
+  3_add_items
     context: Use the + Add New Item button at the bottom
-  3_edit_items
-    context: Tap the pencil icon to edit name, context, due, or progress
   4_swipe_navigation
     context: Swipe left/right to go back/forward (like browser)
   5_pinch_to_zoom
     context: Pinch with two fingers to zoom in/out
   6_due_dates
-    context: Add a due date to any item and see it appear in Time section
+    context: Add a due date and see this item appear in Time section at root
     due: 2026-03-20
   7_progress_tracking
-    context: Add progress (0-100) to track completion in Progress section
+    context: Add progress (0-100) to see this item in Progress section at root
     progress: 50
   8_drag_to_reorder
-    context: Drag the grip handle to reorganize items
+    context: Drag the grip handle (left of title) to reorganize items
   9_copy_structure
-    context: Tap copy icon (top-right) to copy item as text
+    context: Tap copy icon (top-right corner) to copy item as text
   10_create_from_paste
-    context: Go to main page, tap New Graph, then Paste to import copied text
+    context: Go to main page → New Graph → Paste to import copied text
 """
         
         with open(file_path, 'w', encoding='utf-8') as f:
