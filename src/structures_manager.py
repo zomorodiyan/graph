@@ -113,25 +113,28 @@ structure
   version: 1.0
   updated_at: '{datetime.now().isoformat()}'
 structure
-  start
-    tap_left_to_edit
-      context: ← edit me
-    tap_right_to_enter
-      context: enter me →
-      swipe_right_to_return
-        context: swipe → to go back
-  try
-    add_item
-      context: + button below
-    drag_to_reorder
-      context: grab handle
-    set_due
-      context: add due: 2026-04-01
-    set_progress
-      context: add progress: 25
-  extras
-    pinch_zoom
-    copy_paste
+  navigation
+    tap_left
+      context: opens edit modal
+    tap_right
+      context: enters this item
+      swipe_right
+        context: returns here
+  organize
+    tap_plus
+      context: adds new item
+    drag_handle
+      context: reorders items
+  tracking
+    add_due
+      context: shows in Time section at root
+    add_progress
+      context: shows in Progress section at root
+  sharing
+    pinch
+      context: zooms sections
+    copy
+      context: exports as text
 """
         
         with open(file_path, 'w', encoding='utf-8') as f:

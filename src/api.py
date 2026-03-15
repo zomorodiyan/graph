@@ -1004,13 +1004,16 @@ async def reorder_graph_item(graph_name: str, path: str, body: dict = Body(...))
             raise HTTPException(status_code=400, detail="Cannot reorder root item")
         
         if len(keys) == 1:
+            # Root level items - use structure directly
             parent_dict = data['structure']
         else:
+            # Nested items - find parent and use its children
             parent_keys = keys[:-1]
             parent, _, parent_value = find_item(data['structure'], parent_keys)
             if parent is None:
                 raise HTTPException(status_code=404, detail=f"Parent not found: {'.'.join(parent_keys)}")
-            parent_dict = parent_value
+            # Items are stored in 'children' key after loading
+            parent_dict = parent_value.get('children', parent_value)
         
         item_key = keys[-1]
         if item_key not in parent_dict:
