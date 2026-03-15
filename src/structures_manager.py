@@ -114,15 +114,17 @@ structure
   updated_at: '{datetime.now().isoformat()}'
 structure
   navigation
-    lll
-      context: tap left to edit
-    rrrrrrr
-      context: tap right to enter
+    ttt
+      context: tap righttt to enter
       swipe_right
         context: to go back
   organize
+    lll
+      context: tap lllleft to edit
+    drag
+      context: to reorder items
     tap_+_button
-    drag_the_handle
+      context: to add new items
   tracking
     add_due
       context: notice addition of "Time"
