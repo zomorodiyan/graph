@@ -506,11 +506,18 @@
 }
 
 /* Add Item Button */
+.add-item-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem auto;
+  max-width: 20rem;
+}
+
 .add-item-btn {
   display: block;
-  width: 100%;
-  max-width: 18.75rem;
-  margin: 1.25rem auto;
+  flex: 1;
   padding: 0.75rem 1.5rem;
   background: var(--bg-secondary);
   border: 2px dashed var(--border-color);
@@ -526,6 +533,52 @@
   border-color: var(--blue-medium);
   color: var(--blue-medium);
   background: var(--bg-primary);
+}
+
+/* Paste item button - rectangle with + icon */
+.paste-item-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--bg-secondary);
+  border: 2px dashed var(--border-color);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.paste-item-btn:hover {
+  border-color: var(--blue-medium);
+  background: var(--bg-primary);
+}
+
+.paste-item-btn::before {
+  content: '';
+  width: 0.875rem;
+  height: 1rem;
+  border: 2px solid var(--text-secondary);
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+.paste-item-btn::after {
+  content: '+';
+  position: absolute;
+  font-size: 0.6rem;
+  font-weight: bold;
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.paste-item-btn:hover::before {
+  border-color: var(--blue-medium);
+}
+
+.paste-item-btn:hover::after {
+  color: var(--blue-medium);
 }
 
 /* Empty state */

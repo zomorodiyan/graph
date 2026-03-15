@@ -761,6 +761,86 @@ async def create_item(parent_path: str, item: ItemCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class PasteContent(BaseModel):
+    """Model for pasting content from clipboard."""
+    content: str = Field(..., description="Content to paste (in structure.txt format)")
+
+
+@app.post("/api/items/{parent_path:path}/paste")
+async def paste_item(parent_path: str, data: PasteContent):
+    """Paste content from clipboard, creating items under the specified parent."""
+    try:
+        print(f"DEBUG: Pasting content under parent_path: '{parent_path}'")
+        
+        structure_data = file_utils.load_yaml_structure()
+        
+        # Handle special cases: empty path, "root", or "home" all mean add to top-level structure
+        if parent_path in ("", "root", "home"):
+            keys = []
+        else:
+            keys = path_to_keys(parent_path)
+        
+        # Locate parent container
+        if not keys:
+            parent_container = structure_data.get('structure', {})
+        else:
+            parent, parent_key, parent_value = find_item(structure_data['structure'], keys)
+            if parent is None:
+                raise HTTPException(status_code=404, detail=f"Parent not found: {parent_path}")
+            
+            if not isinstance(parent_value, dict):
+                parent_value = {}
+                parent[parent_key] = parent_value
+            
+            parent_container = parent_value
+        
+        # Parse the pasted content - wrap it in a structure section for parsing
+        wrapped_content = f"metadata\nstructure\n"
+        for line in data.content.strip().split('\n'):
+            wrapped_content += f"  {line}\n"
+        
+        parsed = SimpleParser.parse_string(wrapped_content)
+        
+        if 'structure' not in parsed or not parsed['structure']:
+            raise HTTPException(status_code=400, detail="Could not parse pasted content")
+        
+        # Add parsed items to parent container
+        added_items = []
+        for item_key, item_value in parsed['structure'].items():
+            # Skip metadata properties
+            if item_key in ['id', 'title', 'children']:
+                continue
+            
+            # Check for name collision
+            if item_key in parent_container:
+                # Add suffix to make unique
+                base_key = item_key
+                counter = 2
+                while f"{base_key}_{counter}" in parent_container:
+                    counter += 1
+                item_key = f"{base_key}_{counter}"
+            
+            parent_container[item_key] = item_value
+            added_items.append(item_key)
+        
+        # Clean and save structure
+        data_to_save = _clean_structure_for_save(structure_data)
+        file_utils.save_structure(data_to_save)
+        
+        return {
+            "success": True,
+            "added": added_items,
+            "parent_path": parent_path
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"DEBUG ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.delete("/api/items/{path:path}")
 async def delete_item(path: str):
     """Delete an item."""
@@ -947,6 +1027,74 @@ async def create_graph_item(graph_name: str, parent_path: str, item: ItemCreate)
             "success": True,
             "path": new_path,
             "created": new_item
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/graphs/{graph_name}/items/{parent_path:path}/paste")
+async def paste_graph_item(graph_name: str, parent_path: str, data: PasteContent):
+    """Paste content from clipboard, creating items under the specified parent in a specific graph."""
+    try:
+        fu = get_file_utils_for_graph(graph_name)
+        print(f"DEBUG: Pasting content under parent_path: '{parent_path}' in graph: {graph_name}")
+        
+        structure_data = fu.load_yaml_structure()
+        
+        if parent_path in ("", "root", "home"):
+            keys = []
+        else:
+            keys = path_to_keys(parent_path)
+        
+        if not keys:
+            parent_container = structure_data.get('structure', {})
+        else:
+            parent, parent_key, parent_value = find_item(structure_data['structure'], keys)
+            if parent is None:
+                raise HTTPException(status_code=404, detail=f"Parent not found: {parent_path}")
+            
+            if not isinstance(parent_value, dict):
+                parent_value = {}
+                parent[parent_key] = parent_value
+            
+            parent_container = parent_value
+        
+        # Parse the pasted content
+        wrapped_content = f"metadata\nstructure\n"
+        for line in data.content.strip().split('\n'):
+            wrapped_content += f"  {line}\n"
+        
+        parsed = SimpleParser.parse_string(wrapped_content)
+        
+        if 'structure' not in parsed or not parsed['structure']:
+            raise HTTPException(status_code=400, detail="Could not parse pasted content")
+        
+        added_items = []
+        for item_key, item_value in parsed['structure'].items():
+            if item_key in ['id', 'title', 'children']:
+                continue
+            
+            if item_key in parent_container:
+                base_key = item_key
+                counter = 2
+                while f"{base_key}_{counter}" in parent_container:
+                    counter += 1
+                item_key = f"{base_key}_{counter}"
+            
+            parent_container[item_key] = item_value
+            added_items.append(item_key)
+        
+        data_to_save = _clean_structure_for_save(structure_data)
+        fu.save_structure(data_to_save)
+        
+        return {
+            "success": True,
+            "added": added_items,
+            "parent_path": parent_path
         }
     except HTTPException:
         raise

@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useStructure, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useTheme } from '../context/ThemeContext'
-import { StructureItem, UpdatePayload } from '../api/client'
+import { StructureItem, UpdatePayload, pasteItems } from '../api/client'
 import EditModal from '../components/EditModal'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
@@ -31,6 +32,7 @@ function GraphView() {
   
   const path = getPathFromLocation()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   
   // Enable swipe navigation (browser-like back/forward)
   useSwipeNavigation()
@@ -473,6 +475,28 @@ function GraphView() {
     })
   }
 
+  // Handle paste item from clipboard
+  const handlePasteItem = async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      if (!text.trim()) {
+        showNotification('Clipboard is empty', 'error')
+        return
+      }
+      
+      const parentPath = path || ''
+      
+      const result = await pasteItems(parentPath, text, graphName)
+      if (result.success) {
+        showNotification(`Pasted ${result.added.length} item(s)!`)
+        // Refresh the structure
+        queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
+      }
+    } catch (err) {
+      showNotification('Failed to paste', 'error')
+    }
+  }
+
   // Handle save (edit or create) - uses local state for instant feedback
   const handleSave = (data: UpdatePayload) => {
     if (!modalState) return
@@ -867,9 +891,16 @@ function GraphView() {
 
         {/* Add New Item Button - hide in virtual views */}
         {!isVirtualView && (
-          <button className="add-item-btn" onClick={handleAddClick}>
-            + Add New Item
-          </button>
+          <div className="add-item-container">
+            <button className="add-item-btn" onClick={handleAddClick}>
+              + Add New Item
+            </button>
+            <button 
+              className="paste-item-btn" 
+              onClick={handlePasteItem}
+              title="Paste item from clipboard"
+            />
+          </div>
         )}
       </div>
 
