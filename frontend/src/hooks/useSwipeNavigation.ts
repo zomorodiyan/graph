@@ -7,8 +7,8 @@ const SWIPE_VERTICAL_LIMIT = 75 // max vertical movement to still count as horiz
 
 /**
  * Hook that adds swipe gesture handlers for tree navigation
- * Swipe right: go one level up in tree hierarchy (toward main page), remembers where we were
- * Swipe left: go back to child path (only if we came up from there)
+ * Swipe right: go one level up toward main page, push current to forward stack
+ * Swipe left: pop from forward stack and navigate to that deeper path
  */
 export function useSwipeNavigation() {
   const { navigateUp, navigateForward, canGoForward } = useNavigationHistory()
@@ -33,32 +33,15 @@ export function useSwipeNavigation() {
       // Check for horizontal swipe with limited vertical movement
       if (Math.abs(deltaX) > SWIPE_THRESHOLD && deltaY < SWIPE_VERTICAL_LIMIT) {
         if (deltaX > 0) {
-          // Swipe right = go up one level in tree (toward main page)
-          const path = location.pathname
-          
-          if (path === '/') {
-            // Already at root, do nothing
-          } else if (path.startsWith('/g/')) {
-            // Graph path: /g/{graphName}/... -> go to parent
-            const parts = path.split('/').filter(Boolean) // ['g', 'graphName', ...rest]
-            if (parts.length <= 2) {
-              // At graph root (/g/graphName), go to main structures page
-              navigateUp('/')
-            } else {
-              // Go to parent path within graph
-              const parentPath = '/' + parts.slice(0, -1).join('/')
-              navigateUp(parentPath)
-            }
-          } else {
-            // Other paths - go to root
-            navigateUp('/')
+          // Swipe right = go up one level (toward main page)
+          if (location.pathname !== '/') {
+            navigateUp()
           }
         } else {
-          // Swipe left = go back to child path (if we came from there)
+          // Swipe left = go back to deeper path (if we have forward history)
           if (canGoForward()) {
             navigateForward()
           }
-          // Otherwise do nothing
         }
       }
 
