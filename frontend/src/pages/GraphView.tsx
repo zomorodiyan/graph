@@ -683,10 +683,7 @@ function GraphView() {
           return (
             <div
               key={key}
-              draggable={canDrag}
-              onDragStart={canDrag ? () => handleDragStart(itemPath) : undefined}
               onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
               onDrop={() => handleDrop(index)}
               className={`section-wrapper ${draggedItem === itemPath ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''} ${isPending ? 'pending' : ''}`}
             >
@@ -699,6 +696,9 @@ function GraphView() {
                 onItemClick={handleItemClick}
                 onEditClick={handleEditClick}
                 onCopyClick={handleCopyItem}
+                onDragStart={() => handleDragStart(itemPath)}
+                onDragEnd={handleDragEnd}
+                canDrag={canDrag}
                 isPending={isPending}
                 isTimeView={isTimeView}
               />

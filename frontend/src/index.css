@@ -88,10 +88,13 @@ body {
 
 .drag-handle {
   opacity: 0.4;
-  font-size: 0.875rem;
+  font-size: 1rem;
   cursor: grab;
   user-select: none;
   color: var(--text-secondary);
+  padding: 0.5rem;
+  margin: -0.5rem;
+  touch-action: none;
 }
 
 .section-wrapper:hover .drag-handle {
@@ -100,4 +103,5 @@ body {
 
 .drag-handle:active {
   cursor: grabbing;
+  opacity: 1;
 }
