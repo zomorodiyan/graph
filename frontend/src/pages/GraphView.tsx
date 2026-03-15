@@ -429,7 +429,7 @@ function GraphView() {
 
   // Handle item click - navigate to item page (always, even without children)
   const handleItemClick = (itemPath: string, _hasChildren: boolean) => {
-    // For time view items that have an originalPath, navigate there instead
+    // For time/progress view items that have an originalPath, navigate to the parent location
     const currentItems = getCurrentItems()
     
     // Traverse the path to find the item
@@ -447,8 +447,12 @@ function GraphView() {
     }
     
     if (targetItem?.originalPath) {
-      // Navigate to the original location
-      navigate(buildPath(targetItem.originalPath as string))
+      // Navigate to the parent location (where the item appears)
+      const originalPath = targetItem.originalPath as string
+      const originalParts = originalPath.split('.')
+      // Go to the parent path (remove the item name itself)
+      const parentPath = originalParts.slice(0, -1).join('.')
+      navigate(buildPath(parentPath || ''))
     } else {
       navigate(buildPath(itemPath))
     }
