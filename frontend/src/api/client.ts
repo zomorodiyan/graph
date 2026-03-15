@@ -29,6 +29,13 @@ export interface GraphInfo {
   size: number
   description: string
   version: string
+  icon: string
+}
+
+export interface GraphUpdatePayload {
+  display_name?: string
+  description?: string
+  icon?: string
 }
 
 export interface ItemResponse {
@@ -171,6 +178,20 @@ export async function createGraph(name: string, description?: string): Promise<G
 export async function deleteGraph(name: string): Promise<void> {
   const res = await fetch(`${API_BASE}/graphs/${name}`, { method: 'DELETE' })
   if (!res.ok) throw new Error(`Failed to delete graph: ${name}`)
+}
+
+// Update a graph's metadata
+export async function updateGraph(name: string, data: GraphUpdatePayload): Promise<GraphInfo> {
+  const res = await fetch(`${API_BASE}/graphs/${name}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.detail || `Failed to update graph: ${name}`)
+  }
+  return res.json()
 }
 
 // Fetch structure for a specific graph

@@ -43,12 +43,13 @@ class StructuresManager:
                 
                 structures.append({
                     "name": name,
-                    "display_name": self._name_to_display(name),
+                    "display_name": metadata.get("display_name") or self._name_to_display(name),
                     "path": file_path,
                     "modified_at": datetime.fromtimestamp(stats.st_mtime).isoformat(),
                     "size": stats.st_size,
                     "description": metadata.get("description", ""),
                     "version": metadata.get("version", "1.0"),
+                    "icon": metadata.get("icon", ""),
                 })
         
         # Sort by name
@@ -127,3 +128,78 @@ structure
             raise ValueError(f"Structure '{name}' not found")
         
         return FileUtils(self.get_structure_path(name))
+    
+    def update_structure(self, name, display_name=None, description=None, icon=None):
+        """
+        Update a structure's metadata.
+        Returns the updated structure info.
+        """
+        if not self.structure_exists(name):
+            raise ValueError(f"Structure '{name}' not found")
+        
+        file_path = self.get_structure_path(name)
+        
+        # Load current content
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        lines = content.split('\n')
+        new_lines = []
+        in_metadata = False
+        found_description = False
+        found_display_name = False
+        found_icon = False
+        
+        for line in lines:
+            stripped = line.strip()
+            
+            # Track if we're in metadata section
+            if stripped == 'metadata':
+                in_metadata = True
+                new_lines.append(line)
+                continue
+            elif stripped == 'structure':
+                # Before leaving metadata, add missing fields
+                if in_metadata:
+                    if display_name and not found_display_name:
+                        new_lines.append(f"  display_name: {display_name}")
+                    if description is not None and not found_description:
+                        new_lines.append(f"  description: {description}")
+                    if icon and not found_icon:
+                        new_lines.append(f"  icon: {icon}")
+                in_metadata = False
+                new_lines.append(line)
+                continue
+            
+            if in_metadata:
+                if stripped.startswith('description:'):
+                    found_description = True
+                    if description is not None:
+                        indent = len(line) - len(line.lstrip())
+                        new_lines.append(' ' * indent + f"description: {description}")
+                        continue
+                elif stripped.startswith('display_name:'):
+                    found_display_name = True
+                    if display_name:
+                        indent = len(line) - len(line.lstrip())
+                        new_lines.append(' ' * indent + f"display_name: {display_name}")
+                        continue
+                elif stripped.startswith('icon:'):
+                    found_icon = True
+                    if icon:
+                        indent = len(line) - len(line.lstrip())
+                        new_lines.append(' ' * indent + f"icon: {icon}")
+                        continue
+            
+            new_lines.append(line)
+        
+        # Write updated content
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(new_lines))
+        
+        return {
+            "name": name,
+            "display_name": display_name or self._name_to_display(name),
+            "description": description or "",
+            "icon": icon or "",
+        }

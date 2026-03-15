@@ -102,6 +102,29 @@ async def delete_graph(name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class GraphUpdate(BaseModel):
+    """Model for updating a graph's metadata."""
+    display_name: Optional[str] = Field(None, description="Display name for the graph")
+    description: Optional[str] = Field(None, description="Graph description")
+    icon: Optional[str] = Field(None, description="Emoji icon for the graph")
+
+
+@app.put("/api/graphs/{name}")
+async def update_graph(name: str, data: GraphUpdate):
+    """Update a graph's metadata (display name, description, icon)."""
+    try:
+        return structures_manager.update_structure(
+            name,
+            display_name=data.display_name,
+            description=data.description,
+            icon=data.icon
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 def get_file_utils_for_graph(graph_name: str = None) -> FileUtils:
     """Get FileUtils instance for a specific graph or default."""
     if graph_name and graph_name != "default":

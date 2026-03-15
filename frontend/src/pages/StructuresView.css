@@ -14,9 +14,9 @@
 }
 
 .structures-header h1 {
-  font-size: 2.5rem;
+  font-size: 40px;
   font-weight: 700;
-  margin: 0 0 0.75rem;
+  margin: 0 0 12px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -107,6 +107,44 @@
 }
 
 .graph-card .copy-handle:hover {
+  opacity: 0.8;
+}
+
+/* Edit handle for graph cards - hamburger style */
+.graph-card .edit-handle {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 10;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+}
+
+.graph-card .edit-handle::before,
+.graph-card .edit-handle::after,
+.graph-card .edit-handle span {
+  content: '';
+  display: block;
+  width: 14px;
+  height: 2px;
+  background: var(--text-primary);
+  border-radius: 1px;
+}
+
+.graph-card:hover .edit-handle {
+  opacity: 0.4;
+}
+
+.graph-card .edit-handle:hover {
   opacity: 0.8;
 }
 
@@ -210,7 +248,8 @@
 }
 
 .btn-secondary,
-.btn-primary {
+.btn-primary,
+.btn-danger {
   padding: 0.625rem 1.25rem;
   font-size: 0.95rem;
   font-weight: 500;
@@ -245,6 +284,21 @@
   cursor: not-allowed;
 }
 
+.btn-danger {
+  background: #dc3545;
+  border: none;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Loading and error states */
 .structures-view .loading,
 .structures-view .error {
@@ -260,7 +314,7 @@
 /* Responsive */
 @media (max-width: 600px) {
   .structures-header h1 {
-    font-size: 2rem;
+    font-size: 32px;
   }
   
   .graphs-container {
