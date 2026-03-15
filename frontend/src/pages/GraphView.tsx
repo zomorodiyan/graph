@@ -493,6 +493,7 @@ function GraphView() {
         queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
       }
     } catch (err) {
+      console.error('Paste error:', err)
       showNotification('Failed to paste', 'error')
     }
   }

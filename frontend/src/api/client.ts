@@ -106,12 +106,18 @@ export async function deleteItem(path: string, graphName?: string): Promise<void
 // Paste content from clipboard to create items
 export async function pasteItems(parentPath: string, content: string, graphName?: string): Promise<{ success: boolean; added: string[] }> {
   const basePath = buildApiPath(graphName)
-  const res = await fetch(`${basePath}/items/${parentPath}/paste`, {
+  // Use 'root' for empty path to avoid double slash
+  const safePath = parentPath || 'root'
+  const res = await fetch(`${basePath}/items/${safePath}/paste`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content }),
   })
-  if (!res.ok) throw new Error(`Failed to paste items under: ${parentPath}`)
+  if (!res.ok) {
+    const errorText = await res.text()
+    console.error('Paste error:', errorText)
+    throw new Error(`Failed to paste items: ${errorText}`)
+  }
   return res.json()
 }
 

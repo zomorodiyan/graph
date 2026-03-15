@@ -792,7 +792,8 @@ async def paste_item(parent_path: str, data: PasteContent):
                 parent_value = {}
                 parent[parent_key] = parent_value
             
-            parent_container = parent_value
+            # Items are stored under 'children' key after loading
+            parent_container = parent_value.get('children', parent_value)
         
         # Parse the pasted content - wrap it in a structure section for parsing
         wrapped_content = f"metadata\nstructure\n"
@@ -1061,7 +1062,8 @@ async def paste_graph_item(graph_name: str, parent_path: str, data: PasteContent
                 parent_value = {}
                 parent[parent_key] = parent_value
             
-            parent_container = parent_value
+            # Items are stored under 'children' key after loading
+            parent_container = parent_value.get('children', parent_value)
         
         # Parse the pasted content
         wrapped_content = f"metadata\nstructure\n"

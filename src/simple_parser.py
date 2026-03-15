@@ -16,6 +16,12 @@ class SimpleParser:
         return SimpleParser._parse_lines(lines)
     
     @staticmethod
+    def parse_string(content):
+        """Parse a string containing simple indented structure."""
+        lines = content.split('\n')
+        return SimpleParser._parse_lines(lines)
+    
+    @staticmethod
     def _parse_lines(lines):
         """Parse lines into nested dictionary structure."""
         root = {}
