@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 interface NavigationHistoryContextType {
   navigateBack: () => void
   navigateForward: () => void
+  navigateUp: (parentPath: string) => void
   canGoBack: () => boolean
   canGoForward: () => boolean
 }
@@ -14,59 +15,68 @@ export function NavigationHistoryProvider({ children }: { children: ReactNode })
   const location = useLocation()
   const navigate = useNavigate()
   
-  // Browser-like navigation history
-  const historyRef = useRef<string[]>([location.pathname])
-  const historyIndexRef = useRef<number>(0)
+  // Tree navigation: track child path when going up
+  const childPathRef = useRef<string | null>(null)
   const isNavigatingRef = useRef<boolean>(false)
 
-  // Track navigation history
+  // Reset child path when navigating to a new deeper path
   useEffect(() => {
     if (isNavigatingRef.current) {
-      // Navigation was triggered by back/forward, don't add to history
       isNavigatingRef.current = false
       return
     }
-    
-    const currentPath = location.pathname
-    const historyIndex = historyIndexRef.current
-    const history = historyRef.current
-    
-    // If navigating normally (not back/forward), add to history
-    if (history[historyIndex] !== currentPath) {
-      // Truncate forward history when making a new navigation
-      historyRef.current = [...history.slice(0, historyIndex + 1), currentPath]
-      historyIndexRef.current = historyRef.current.length - 1
-    }
+    // User clicked to go deeper - clear the child path
+    childPathRef.current = null
   }, [location.pathname])
 
   const canGoBack = useCallback(() => {
-    return historyIndexRef.current > 0
-  }, [])
+    // For tree nav, we can always go back if not at root
+    return location.pathname !== '/'
+  }, [location.pathname])
 
   const canGoForward = useCallback(() => {
-    return historyIndexRef.current < historyRef.current.length - 1
+    return childPathRef.current !== null
   }, [])
 
-  // Navigate back in history
-  const navigateBack = useCallback(() => {
-    if (historyIndexRef.current > 0) {
-      isNavigatingRef.current = true
-      historyIndexRef.current--
-      navigate(historyRef.current[historyIndexRef.current])
-    }
-  }, [navigate])
+  // Navigate to parent (swipe right) - remembers current path
+  const navigateUp = useCallback((parentPath: string) => {
+    isNavigatingRef.current = true
+    childPathRef.current = location.pathname
+    navigate(parentPath)
+  }, [navigate, location.pathname])
 
-  // Navigate forward in history
+  // Navigate back - same as navigateUp but auto-calculates parent
+  const navigateBack = useCallback(() => {
+    const path = location.pathname
+    if (path === '/') return
+    
+    isNavigatingRef.current = true
+    childPathRef.current = path
+    
+    if (path.startsWith('/g/')) {
+      const parts = path.split('/').filter(Boolean)
+      if (parts.length <= 2) {
+        navigate('/')
+      } else {
+        navigate('/' + parts.slice(0, -1).join('/'))
+      }
+    } else {
+      navigate('/')
+    }
+  }, [navigate, location.pathname])
+
+  // Navigate forward (swipe left) - goes to saved child path
   const navigateForward = useCallback(() => {
-    if (historyIndexRef.current < historyRef.current.length - 1) {
+    if (childPathRef.current) {
       isNavigatingRef.current = true
-      historyIndexRef.current++
-      navigate(historyRef.current[historyIndexRef.current])
+      const target = childPathRef.current
+      childPathRef.current = null
+      navigate(target)
     }
   }, [navigate])
 
   return (
-    <NavigationHistoryContext.Provider value={{ navigateBack, navigateForward, canGoBack, canGoForward }}>
+    <NavigationHistoryContext.Provider value={{ navigateBack, navigateForward, navigateUp, canGoBack, canGoForward }}>
       {children}
     </NavigationHistoryContext.Provider>
   )
