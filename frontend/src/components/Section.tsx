@@ -88,9 +88,7 @@ function Section({
             e.stopPropagation()
             onCopyClick(itemKey, item)
           }}
-        >
-          ⠿
-        </span>
+        />
       )}
       {/* Layer 1 - Main category */}
       <div className="layer1-container">
