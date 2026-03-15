@@ -6,9 +6,9 @@
 
 .breadcrumb {
   display: flex;
-  gap: 16px;
-  margin-bottom: 40px;
-  font-size: 28px;
+  gap: 8px;
+  margin-bottom: 0.75rem;
+  font-size: 16px;
   color: var(--text-secondary);
 }
 
