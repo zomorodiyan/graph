@@ -113,40 +113,27 @@ structure
   version: 1.0
   updated_at: '{datetime.now().isoformat()}'
 structure
-  welcome
-    context: Follow each section in order to learn all features
-  basics
-    context: Essential interactions to get started
-    edit_items
-      context: Tap the LEFT side of this text to edit it - try now!
-    navigate_deeper
-      context: Tap the RIGHT side to enter this item, then come back
-    go_back
-      context: Swipe RIGHT or tap the back arrow to return
-  gestures
-    context: Touch gestures for faster navigation
-    swipe_navigation
-      context: Swipe LEFT/RIGHT anywhere to go back/forward like a browser
-    pinch_to_zoom
-      context: Pinch with two fingers to zoom sections in/out
-  content
-    context: Build your knowledge graph
-    add_items
-      context: Tap the + button at the bottom to add new items
-    drag_to_reorder
-      context: Drag the grip handle on the left to reorganize items
-  tracking
-    context: Track deadlines and progress on any item
-    try_due_date
-      context: Edit this item, add "due: 2026-03-20" then check Time section at root
-    try_progress
-      context: Edit this, add "progress: 50" then check Progress section at root
-  sharing
-    context: Copy and share your knowledge
-    copy_content
-      context: Tap the copy icon (top-right of items) to copy as text
-    paste_to_create
-      context: Main page → New Graph → paste clipboard to import content
+  start_here
+    tap_left_to_edit
+      context: ← tap left side of any item to edit
+    tap_right_to_enter
+      context: tap right side to go deeper →
+    swipe_back
+      context: swipe right to return
+  try_it
+    add_something
+      context: use + button below
+    drag_me
+      context: grab the handle to reorder
+    set_a_due_date
+      context: edit this, add due: 2026-04-01
+    track_progress
+      context: edit this, add progress: 25
+  more
+    pinch_zoom
+      context: pinch to resize sections
+    copy_paste
+      context: copy icon exports, paste imports
 """
         
         with open(file_path, 'w', encoding='utf-8') as f:
