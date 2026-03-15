@@ -180,7 +180,9 @@ function StructuresView() {
               onClick={(e) => handleEditClick(e, graph)}
               title="Edit graph"
             >
-              <span></span>
+              <span className="line"></span>
+              <span className="line"></span>
+              <span className="line"></span>
             </span>
             <div className="graph-icon">{graph.icon || getIconForGraph(graph.name)}</div>
             <h3 className="graph-name">{graph.display_name}</h3>
@@ -261,7 +263,7 @@ function StructuresView() {
                 value={editIcon}
                 onChange={(e) => setEditIcon(e.target.value)}
                 placeholder="📊"
-                style={{ fontSize: '1.5rem', textAlign: 'center' }}
+                className="emoji-input"
               />
             </div>
             <div className="form-group">

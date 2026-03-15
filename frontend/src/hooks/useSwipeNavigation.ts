@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useNavigationHistory } from '../context/NavigationHistoryContext'
 
-const SWIPE_THRESHOLD = 100 // minimum distance for swipe
+const SWIPE_THRESHOLD = 50 // minimum distance for swipe
 const SWIPE_VERTICAL_LIMIT = 75 // max vertical movement to still count as horizontal swipe
 
 /**
