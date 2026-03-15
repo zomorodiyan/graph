@@ -6,6 +6,7 @@
 
 .breadcrumb {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 0.75rem;
   font-size: 16px;
