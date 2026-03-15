@@ -69,8 +69,8 @@ function Section({
   const hasChildren = !!item.children && Object.keys(item.children).length > 0
   const title = item.title || itemKey
   
-  // Don't show edit buttons in time view or when pending
-  const showEditButton = !isTimeView
+  // Don't show edit buttons in time view, when pending, or for non-editable items
+  const showEditButton = !isTimeView && !item.nonEditable
   const showLoading = isPending
 
   // Get child items for layer2
@@ -144,13 +144,15 @@ function Section({
           const childTitle = (childItem as StructureItem).title || childKey
           const childHasChildren = !!(childItem as StructureItem).children
           const grandchildren = (childItem as StructureItem).children || {}
+          // Check if this child item is editable
+          const childEditable = showEditButton && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
 
           return (
             <div key={childKey} className="layer2-container">
               <div className="layer2-content">
                 <div className="layer2-wrapper">
-                  <div className={`layer2 color-${color} ${showEditButton ? 'split-button' : ''}`}>
-                    {showEditButton && (
+                  <div className={`layer2 color-${color} ${childEditable ? 'split-button' : ''}`}>
+                    {childEditable && (
                       <div
                         className="split-left"
                         onClick={(e) => {
@@ -169,9 +171,9 @@ function Section({
                       )}
                     </span>
                     <div
-                      className={showEditButton ? "split-right" : "full-click"}
+                      className={childEditable ? "split-right" : "full-click"}
                       onClick={() => onItemClick(childPath, childHasChildren)}
-                      title={showEditButton ? "Open item" : undefined}
+                      title={childEditable ? "Open item" : undefined}
                     />
                   </div>
                 </div>
@@ -194,12 +196,14 @@ function Section({
                     const grandPath = `${childPath}.${grandKey}`
                     const grandTitle = (grandItem as StructureItem).title || grandKey
                     const grandHasChildren = !!(grandItem as StructureItem).children
+                    // Check if this grandchild item is editable
+                    const grandEditable = showEditButton && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
 
                     return (
                       <div key={grandKey}>
                         <div className="layer3-wrapper">
-                          <div className={`layer3-item color-${color} ${showEditButton ? 'split-button' : ''}`}>
-                            {showEditButton && (
+                          <div className={`layer3-item color-${color} ${grandEditable ? 'split-button' : ''}`}>
+                            {grandEditable && (
                               <div
                                 className="split-left"
                                 onClick={(e) => {
@@ -218,9 +222,9 @@ function Section({
                               )}
                             </span>
                             <div
-                              className={showEditButton ? "split-right" : "full-click"}
+                              className={grandEditable ? "split-right" : "full-click"}
                               onClick={() => onItemClick(grandPath, grandHasChildren)}
-                              title={showEditButton ? "Open item" : undefined}
+                              title={grandEditable ? "Open item" : undefined}
                             />
                           </div>
                         </div>

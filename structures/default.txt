@@ -143,8 +143,4 @@ structure
           context: clothes
         sleep
           context: 00:00
-  time
-    over
-    day
-    week
-    month
+

@@ -115,7 +115,11 @@ function GraphView() {
   const getTimeChildren = (category: 'over' | 'day' | 'week' | 'month'): Record<string, StructureItem> => {
     if (!structure?.structure) return {}
     
-    const allItems = collectDueItems(structure.structure)
+    // Collect from structure, excluding the 'time' section itself
+    const structureWithoutTime = { ...structure.structure }
+    delete structureWithoutTime.time
+    
+    const allItems = collectDueItems(structureWithoutTime)
     const filtered = allItems.filter(({ item }) => {
       if (!item.due) return false
       return getDueCategory(item.due) === category
@@ -125,10 +129,15 @@ function GraphView() {
     for (const { path: itemPath, item, title } of filtered) {
       // Use a unique key based on the path
       const key = itemPath.replace(/\./g, '_')
+      // Show parent path only (remove the item name itself)
+      const pathParts = itemPath.split('.')
+      const parentPath = pathParts.slice(0, -1).map(p => p.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(' › ')
       result[key] = {
         ...item,
         title: title,
-        context: `📍 ${itemPath.replace(/\./g, ' › ')}`,
+        context: parentPath ? `📍 ${parentPath}` : undefined,
+        originalPath: itemPath, // Store original path for navigation
+        nonEditable: true, // Time items are not editable - they navigate to original
         children: undefined // Don't show nested children in time view
       }
     }
@@ -136,58 +145,66 @@ function GraphView() {
     return result
   }
 
+  // Build auto-generated Time section if any items have due dates
+  const buildTimeSection = (): StructureItem | null => {
+    if (!structure?.structure) return null
+    
+    // Check if any items have due dates (excluding time section)
+    const structureWithoutTime = { ...structure.structure }
+    delete structureWithoutTime.time
+    
+    const allDueItems = collectDueItems(structureWithoutTime)
+    if (allDueItems.length === 0) return null
+    
+    // Build the time section with categories
+    const categories = ['over', 'day', 'week', 'month'] as const
+    const timeChildren: Record<string, StructureItem> = {}
+    
+    for (const category of categories) {
+      const dueItems = getTimeChildren(category)
+      const count = Object.keys(dueItems).length
+      const titles = { over: 'Over', day: 'Day', week: 'Week', month: 'Month' }
+      timeChildren[category] = {
+        title: `${titles[category]} (${count})`,
+        nonEditable: true,
+        children: dueItems
+      }
+    }
+    
+    return {
+      title: 'Time',
+      nonEditable: true,
+      children: timeChildren
+    }
+  }
+
   // Get current level items
   const getCurrentItems = () => {
     if (!structure?.structure) return {}
     
     if (!path) {
-      // Root level - enhance time section with counts
+      // Root level - auto-generate time section if any items have due dates
       const items = { ...structure.structure }
       
-      // If time exists, add counts to its children
-      if (items.time?.children) {
-        const enhancedTimeChildren: Record<string, StructureItem> = {}
-        for (const [key, child] of Object.entries(items.time.children)) {
-          const category = key as 'over' | 'day' | 'week' | 'month'
-          if (['over', 'day', 'week', 'month'].includes(category)) {
-            const dueItems = getTimeChildren(category)
-            const count = Object.keys(dueItems).length
-            enhancedTimeChildren[key] = {
-              ...(child as StructureItem),
-              title: `${(child as StructureItem).title || key} (${count})`,
-              children: dueItems
-            }
-          } else {
-            enhancedTimeChildren[key] = child as StructureItem
-          }
-        }
-        items.time = { ...items.time, children: enhancedTimeChildren }
+      // Remove any existing time from structure (it's auto-generated)
+      delete items.time
+      
+      // Auto-generate Time section if there are items with due dates
+      const timeSection = buildTimeSection()
+      if (timeSection) {
+        items.time = timeSection
       }
       
       return items
     }
     
-    // Check if we're viewing "time" - show enhanced time categories
+    // Check if we're viewing "time" - show auto-generated time categories
     if (path === 'time') {
-      const timeItem = getItemByPath(structure, 'time')
-      if (timeItem?.children) {
-        const enhancedChildren: Record<string, StructureItem> = {}
-        for (const [key, child] of Object.entries(timeItem.children)) {
-          const category = key as 'over' | 'day' | 'week' | 'month'
-          if (['over', 'day', 'week', 'month'].includes(category)) {
-            const dueItems = getTimeChildren(category)
-            const count = Object.keys(dueItems).length
-            enhancedChildren[key] = {
-              ...(child as StructureItem),
-              title: `${(child as StructureItem).title || key} (${count})`,
-              children: dueItems
-            }
-          } else {
-            enhancedChildren[key] = child as StructureItem
-          }
-        }
-        return enhancedChildren
+      const timeSection = buildTimeSection()
+      if (timeSection?.children) {
+        return timeSection.children
       }
+      return {}
     }
     
     // Check if we're in a time category (time.over, time.day, time.week, time.month)
@@ -274,7 +291,29 @@ function GraphView() {
 
   // Handle item click - navigate to item page (always, even without children)
   const handleItemClick = (itemPath: string, _hasChildren: boolean) => {
-    navigate(buildPath(itemPath))
+    // For time view items that have an originalPath, navigate there instead
+    const currentItems = getCurrentItems()
+    
+    // Traverse the path to find the item
+    const pathParts = itemPath.split('.')
+    const basePath = path ? path.split('.') : []
+    const relativeParts = pathParts.slice(basePath.length)
+    
+    let targetItem: StructureItem | undefined = undefined
+    let current: Record<string, StructureItem> | undefined = currentItems
+    
+    for (const part of relativeParts) {
+      if (!current) break
+      targetItem = current[part]
+      current = targetItem?.children
+    }
+    
+    if (targetItem?.originalPath) {
+      // Navigate to the original location
+      navigate(buildPath(targetItem.originalPath as string))
+    } else {
+      navigate(buildPath(itemPath))
+    }
   }
 
   // Handle edit click
