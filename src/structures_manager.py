@@ -114,27 +114,26 @@ structure
   updated_at: '{datetime.now().isoformat()}'
 structure
   navigation
-    LLL_______
-      context: tap LLLeft to edit
-    ___RRRRRR
-      context: tap RRRRight to enter
-      >>>
-        context: swipe right to go back
+    lll
+      context: tap left to edit
+    rrrrrrr
+      context: tap right to enter
+      swipe_right
+        context: to go back
   organize
-    +
-      context: tap + button below
-    ≡
-      context: drag handle to reorder
+    tap_+_button
+    drag_the_handle
   tracking
     add_due
-      context: appears in Time at root
+      context: notice addition of "Time"
     add_progress
-      context: appears in Progress at root
+      context: notice addition of "Progress"
   more
-    pinch
-      context: zoom sections
+    pinch_to_zoom
     copy
       context: export as text
+    create_new
+      context: main page → new graph → paste
 """
         
         with open(file_path, 'w', encoding='utf-8') as f:
