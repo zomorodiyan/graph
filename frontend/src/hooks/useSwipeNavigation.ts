@@ -35,14 +35,16 @@ export function useSwipeNavigation() {
       if (Math.abs(deltaX) > SWIPE_THRESHOLD && deltaY < SWIPE_VERTICAL_LIMIT) {
         if (deltaX > 0) {
           // Swipe right = go back
-          if (canGoBack()) {
+          const path = location.pathname
+          
+          // At main page - do nothing
+          if (path === '/') {
+            // Already at root, do nothing
+          } else if (canGoBack()) {
             navigateBack()
           } else {
             // No back history - navigate to parent path
-            const path = location.pathname
-            if (path === '/') {
-              // Already at root, do nothing
-            } else if (path.startsWith('/g/')) {
+            if (path.startsWith('/g/')) {
               // Graph path: /g/{graphName}/... -> go to parent or main page
               const parts = path.split('/').filter(Boolean) // ['g', 'graphName', ...rest]
               if (parts.length <= 2) {

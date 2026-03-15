@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 
 const MIN_ZOOM = 0.5
-const MAX_ZOOM = 1.0
+const MAX_ZOOM = 1.5
 const ZOOM_STEP = 0.05
 const STORAGE_KEY = 'graph-font-zoom'
 
