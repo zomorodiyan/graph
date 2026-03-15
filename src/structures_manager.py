@@ -113,27 +113,25 @@ structure
   version: 1.0
   updated_at: '{datetime.now().isoformat()}'
 structure
-  start_here
+  start
     tap_left_to_edit
-      context: ← tap left side of any item to edit
+      context: ← edit me
     tap_right_to_enter
-      context: tap right side to go deeper →
-    swipe_back
-      context: swipe right to return
-  try_it
-    add_something
-      context: use + button below
-    drag_me
-      context: grab the handle to reorder
-    set_a_due_date
-      context: edit this, add due: 2026-04-01
-    track_progress
-      context: edit this, add progress: 25
-  more
+      context: enter me →
+      swipe_right_to_return
+        context: swipe → to go back
+  try
+    add_item
+      context: + button below
+    drag_to_reorder
+      context: grab handle
+    set_due
+      context: add due: 2026-04-01
+    set_progress
+      context: add progress: 25
+  extras
     pinch_zoom
-      context: pinch to resize sections
     copy_paste
-      context: copy icon exports, paste imports
 """
         
         with open(file_path, 'w', encoding='utf-8') as f:
