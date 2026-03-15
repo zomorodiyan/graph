@@ -89,7 +89,7 @@ function Section({
             onCopyClick(itemKey, item)
           }}
         >
-          📋
+          ⠿
         </span>
       )}
       {/* Layer 1 - Main category */}

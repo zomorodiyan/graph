@@ -30,20 +30,22 @@
   border-radius: 0.5rem;
 }
 
-/* Copy handle - positioned at top-right of section */
+/* Copy handle - positioned at top-right, aligned with layer1 text */
 .copy-handle {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  font-size: 1rem;
+  top: 0.75rem;
+  right: 0.75rem;
+  font-size: 0.875rem;
   cursor: pointer;
-  opacity: 0.5;
+  opacity: 0.4;
   transition: opacity 0.2s;
   z-index: 10;
+  padding: 0.5rem 0;
+  color: var(--text-secondary);
 }
 
 .copy-handle:hover {
-  opacity: 1;
+  opacity: 0.8;
 }
 
 .layer1-container {
