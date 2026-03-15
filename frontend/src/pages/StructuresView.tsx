@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTheme } from '../context/ThemeContext'
-import { createGraph, deleteGraph } from '../api/client'
+import { createGraph, fetchStructureText } from '../api/client'
 import { useGraphs } from '../hooks/useGraph'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import Notification from '../components/Notification'
@@ -60,14 +60,13 @@ function StructuresView() {
     }
   }
 
-  const handleDeleteGraph = async (e: React.MouseEvent, name: string) => {
+  const handleCopyGraph = async (e: React.MouseEvent, name: string) => {
     e.stopPropagation()
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return
 
     try {
-      await deleteGraph(name)
-      showNotification(`Deleted "${name}"`)
-      queryClient.invalidateQueries({ queryKey: ['graphs'] })
+      const text = await fetchStructureText(name)
+      await navigator.clipboard.writeText(text)
+      showNotification('Copied structure!')
     } catch (err) {
       showNotification((err as Error).message, 'error')
     }
@@ -126,13 +125,11 @@ function StructuresView() {
             {graph.description && (
               <p className="graph-description">{graph.description}</p>
             )}
-            <button
-              className="delete-btn"
-              onClick={(e) => handleDeleteGraph(e, graph.name)}
-              title="Delete graph"
-            >
-              ×
-            </button>
+            <span
+              className="copy-handle"
+              onClick={(e) => handleCopyGraph(e, graph.name)}
+              title="Copy structure"
+            />
           </div>
         ))}
       </div>
