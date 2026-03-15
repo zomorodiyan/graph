@@ -92,6 +92,17 @@ function GraphView() {
     return null
   }
 
+  // Helper to get progress category
+  const getProgressCategory = (progress: number): 'blocked' | 'low' | 'mid' | 'high' | 'done' | null => {
+    if (progress < 0 || progress > 100) return null
+    if (progress === 0) return 'blocked'
+    if (progress < 25) return 'low'
+    if (progress < 75) return 'mid'
+    if (progress < 100) return 'high'
+    if (progress === 100) return 'done'
+    return null
+  }
+
   // Collect all items with due dates from the structure
   const collectDueItems = (items: Record<string, StructureItem>, parentPath: string = ''): Array<{path: string, item: StructureItem, title: string}> => {
     const result: Array<{path: string, item: StructureItem, title: string}> = []
@@ -111,15 +122,35 @@ function GraphView() {
     return result
   }
 
+  // Collect all items with progress values from the structure
+  const collectProgressItems = (items: Record<string, StructureItem>, parentPath: string = ''): Array<{path: string, item: StructureItem, title: string}> => {
+    const result: Array<{path: string, item: StructureItem, title: string}> = []
+    
+    for (const [key, item] of Object.entries(items)) {
+      const itemPath = parentPath ? `${parentPath}.${key}` : key
+      
+      if (item.progress !== undefined && item.progress !== null) {
+        result.push({ path: itemPath, item, title: item.title || key })
+      }
+      
+      if (item.children) {
+        result.push(...collectProgressItems(item.children, itemPath))
+      }
+    }
+    
+    return result
+  }
+
   // Build virtual children for time categories
   const getTimeChildren = (category: 'over' | 'day' | 'week' | 'month'): Record<string, StructureItem> => {
     if (!structure?.structure) return {}
     
-    // Collect from structure, excluding the 'time' section itself
-    const structureWithoutTime = { ...structure.structure }
-    delete structureWithoutTime.time
+    // Collect from structure, excluding the 'time' and 'progress' sections
+    const structureWithoutVirtual = { ...structure.structure }
+    delete structureWithoutVirtual.time
+    delete structureWithoutVirtual.progress
     
-    const allItems = collectDueItems(structureWithoutTime)
+    const allItems = collectDueItems(structureWithoutVirtual)
     const filtered = allItems.filter(({ item }) => {
       if (!item.due) return false
       return getDueCategory(item.due) === category
@@ -145,15 +176,51 @@ function GraphView() {
     return result
   }
 
+  // Build virtual children for progress categories
+  const getProgressChildren = (category: 'blocked' | 'low' | 'mid' | 'high' | 'done'): Record<string, StructureItem> => {
+    if (!structure?.structure) return {}
+    
+    // Collect from structure, excluding the 'time' and 'progress' sections
+    const structureWithoutVirtual = { ...structure.structure }
+    delete structureWithoutVirtual.time
+    delete structureWithoutVirtual.progress
+    
+    const allItems = collectProgressItems(structureWithoutVirtual)
+    const filtered = allItems.filter(({ item }) => {
+      if (item.progress === undefined || item.progress === null) return false
+      return getProgressCategory(item.progress) === category
+    })
+    
+    const result: Record<string, StructureItem> = {}
+    for (const { path: itemPath, item, title } of filtered) {
+      // Use a unique key based on the path
+      const key = itemPath.replace(/\./g, '_')
+      // Show parent path only (remove the item name itself)
+      const pathParts = itemPath.split('.')
+      const parentPath = pathParts.slice(0, -1).map(p => p.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(' › ')
+      result[key] = {
+        ...item,
+        title: title,
+        context: parentPath ? `📍 ${parentPath}` : undefined,
+        originalPath: itemPath, // Store original path for navigation
+        nonEditable: true, // Progress items are not editable - they navigate to original
+        children: undefined // Don't show nested children in progress view
+      }
+    }
+    
+    return result
+  }
+
   // Build auto-generated Time section if any items have due dates
   const buildTimeSection = (): StructureItem | null => {
     if (!structure?.structure) return null
     
-    // Check if any items have due dates (excluding time section)
-    const structureWithoutTime = { ...structure.structure }
-    delete structureWithoutTime.time
+    // Check if any items have due dates (excluding virtual sections)
+    const structureWithoutVirtual = { ...structure.structure }
+    delete structureWithoutVirtual.time
+    delete structureWithoutVirtual.progress
     
-    const allDueItems = collectDueItems(structureWithoutTime)
+    const allDueItems = collectDueItems(structureWithoutVirtual)
     if (allDueItems.length === 0) return null
     
     // Build the time section with categories - only include non-empty ones
@@ -184,21 +251,68 @@ function GraphView() {
     }
   }
 
+  // Build auto-generated Progress section if any items have progress values
+  const buildProgressSection = (): StructureItem | null => {
+    if (!structure?.structure) return null
+    
+    // Check if any items have progress (excluding virtual sections)
+    const structureWithoutVirtual = { ...structure.structure }
+    delete structureWithoutVirtual.time
+    delete structureWithoutVirtual.progress
+    
+    const allProgressItems = collectProgressItems(structureWithoutVirtual)
+    if (allProgressItems.length === 0) return null
+    
+    // Build the progress section with categories - only include non-empty ones
+    const categories = ['blocked', 'low', 'mid', 'high', 'done'] as const
+    const progressChildren: Record<string, StructureItem> = {}
+    
+    for (const category of categories) {
+      const progressItems = getProgressChildren(category)
+      const count = Object.keys(progressItems).length
+      // Only include category if it has items
+      if (count > 0) {
+        const titles = { blocked: 'Blocked (0%)', low: 'Low (1-24%)', mid: 'Mid (25-74%)', high: 'High (75-99%)', done: 'Done (100%)' }
+        progressChildren[category] = {
+          title: `${titles[category]} (${count})`,
+          nonEditable: true,
+          children: progressItems
+        }
+      }
+    }
+    
+    // Only return Progress section if at least one category has items
+    if (Object.keys(progressChildren).length === 0) return null
+    
+    return {
+      title: 'Progress',
+      nonEditable: true,
+      children: progressChildren
+    }
+  }
+
   // Get current level items
   const getCurrentItems = () => {
     if (!structure?.structure) return {}
     
     if (!path) {
-      // Root level - auto-generate time section if any items have due dates
+      // Root level - auto-generate time and progress sections
       const items = { ...structure.structure }
       
-      // Remove any existing time from structure (it's auto-generated)
+      // Remove any existing virtual sections (they're auto-generated)
       delete items.time
+      delete items.progress
       
       // Auto-generate Time section if there are items with due dates
       const timeSection = buildTimeSection()
       if (timeSection) {
         items.time = timeSection
+      }
+      
+      // Auto-generate Progress section if there are items with progress values
+      const progressSection = buildProgressSection()
+      if (progressSection) {
+        items.progress = progressSection
       }
       
       return items
@@ -220,6 +334,24 @@ function GraphView() {
       if (['over', 'day', 'week', 'month'].includes(category)) {
         // Return the items directly as sections
         return getTimeChildren(category)
+      }
+    }
+    
+    // Check if we're viewing "progress" - show auto-generated progress categories
+    if (path === 'progress') {
+      const progressSection = buildProgressSection()
+      if (progressSection?.children) {
+        return progressSection.children
+      }
+      return {}
+    }
+    
+    // Check if we're in a progress category (progress.blocked, progress.low, etc.)
+    if (pathParts[0] === 'progress' && pathParts.length === 2) {
+      const category = pathParts[1] as 'blocked' | 'low' | 'mid' | 'high' | 'done'
+      if (['blocked', 'low', 'mid', 'high', 'done'].includes(category)) {
+        // Return the items directly as sections
+        return getProgressChildren(category)
       }
     }
     
@@ -610,8 +742,8 @@ function GraphView() {
 
   const breadcrumb = getBreadcrumb()
   
-  // Check if we're in a time view (time itself or time subcategories)
-  const isTimeView = path === 'time' || path?.startsWith('time.')
+  // Check if we're in a virtual view (time or progress - items can't be edited/reordered)
+  const isVirtualView = path === 'time' || path?.startsWith('time.') || path === 'progress' || path?.startsWith('progress.')
 
   // Serialize an item and its children to structure.txt format
   const serializeItem = (key: string, item: StructureItem, indent: number = 0): string => {
@@ -678,7 +810,7 @@ function GraphView() {
           if (!item) return null
           const itemPath = path ? `${path}.${key}` : key
           const isPending = pendingItems.has(itemPath)
-          const canDrag = !isPending && !isTimeView
+          const canDrag = !isPending && !isVirtualView
           
           return (
             <div
@@ -719,7 +851,7 @@ function GraphView() {
                 onEditClick={handleEditClick}
                 onCopyClick={handleCopyItem}
                 isPending={isPending}
-                isTimeView={isTimeView}
+                isTimeView={isVirtualView}
               />
             </div>
           )
@@ -729,8 +861,8 @@ function GraphView() {
           <div className="empty-state">No items at this level</div>
         )}
 
-        {/* Add New Item Button - hide in time view */}
-        {!isTimeView && (
+        {/* Add New Item Button - hide in virtual views */}
+        {!isVirtualView && (
           <button className="add-item-btn" onClick={handleAddClick}>
             + Add New Item
           </button>
