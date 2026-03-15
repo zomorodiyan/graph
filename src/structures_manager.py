@@ -114,27 +114,27 @@ structure
   updated_at: '{datetime.now().isoformat()}'
 structure
   navigation
-    tap_left
-      context: opens edit modal
-    tap_right
-      context: enters this item
-      swipe_right
-        context: returns here
+    LLL_______
+      context: tap LLLeft to edit
+    ___RRRRRR
+      context: tap RRRRight to enter
+      >>>
+        context: swipe right to go back
   organize
-    tap_plus
-      context: adds new item
-    drag_handle
-      context: reorders items
+    +
+      context: tap + button below
+    ≡
+      context: drag handle to reorder
   tracking
     add_due
-      context: shows in Time section at root
+      context: appears in Time at root
     add_progress
-      context: shows in Progress section at root
-  sharing
+      context: appears in Progress at root
+  more
     pinch
-      context: zooms sections
+      context: zoom sections
     copy
-      context: exports as text
+      context: export as text
 """
         
         with open(file_path, 'w', encoding='utf-8') as f:
