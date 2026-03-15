@@ -225,10 +225,28 @@
   line-height: 1;
 }
 
-/* Paste from clipboard button */
-.paste-btn {
-  width: 100%;
-  margin-bottom: 1rem;
+/* Label with action button (like paste icon) */
+.label-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.label-with-action label {
+  margin-bottom: 0;
+}
+
+.paste-icon {
+  cursor: pointer;
+  font-size: 1.2rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  padding: 0.25rem;
+}
+
+.paste-icon:hover {
+  opacity: 1;
 }
 
 /* Textarea for structure content */
