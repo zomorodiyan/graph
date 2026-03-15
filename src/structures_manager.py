@@ -47,9 +47,9 @@ class StructuresManager:
                     "path": file_path,
                     "modified_at": datetime.fromtimestamp(stats.st_mtime).isoformat(),
                     "size": stats.st_size,
-                    "description": metadata.get("description", ""),
+                    "description": str(metadata.get("description", "")) if metadata.get("description") else "",
                     "version": metadata.get("version", "1.0"),
-                    "icon": metadata.get("icon", ""),
+                    "icon": str(metadata.get("icon", "")) if metadata.get("icon") else "",
                 })
         
         # Sort by name
