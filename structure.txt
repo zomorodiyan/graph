@@ -8,6 +8,9 @@ structure
       cardio
       flexibility
       strength
+        push
+        pull
+        legs
     nutrition
       meat_&_dairy
       starch

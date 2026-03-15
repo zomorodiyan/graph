@@ -992,9 +992,9 @@ async def reorder_graph_item(graph_name: str, path: str, body: dict = Body(...))
     """Reorder an item to a specific position in a specific graph."""
     try:
         fu = get_file_utils_for_graph(graph_name)
-        target_index = body.get('targetIndex')
+        target_index = body.get('target_index')
         if target_index is None:
-            raise HTTPException(status_code=400, detail="targetIndex is required")
+            raise HTTPException(status_code=400, detail="target_index is required")
         
         data = fu.load_yaml_structure()
         keys = path_to_keys(path)

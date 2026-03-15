@@ -683,7 +683,29 @@ function GraphView() {
           return (
             <div
               key={key}
+              draggable={canDrag}
+              onDragStart={(e) => {
+                // Only allow drag from background, not from text or interactive elements
+                const target = e.target as HTMLElement
+                if (
+                  target.classList.contains('item-title') ||
+                  target.classList.contains('layer2-item') ||
+                  target.classList.contains('layer3-item') ||
+                  target.classList.contains('layer2-title') ||
+                  target.classList.contains('layer3-title') ||
+                  target.classList.contains('copy-handle') ||
+                  target.classList.contains('split-left') ||
+                  target.classList.contains('split-right') ||
+                  target.tagName === 'BUTTON' ||
+                  target.tagName === 'A'
+                ) {
+                  e.preventDefault()
+                  return
+                }
+                handleDragStart(itemPath)
+              }}
               onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
               onDrop={() => handleDrop(index)}
               className={`section-wrapper ${draggedItem === itemPath ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''} ${isPending ? 'pending' : ''}`}
             >
@@ -696,9 +718,6 @@ function GraphView() {
                 onItemClick={handleItemClick}
                 onEditClick={handleEditClick}
                 onCopyClick={handleCopyItem}
-                onDragStart={() => handleDragStart(itemPath)}
-                onDragEnd={handleDragEnd}
-                canDrag={canDrag}
                 isPending={isPending}
                 isTimeView={isTimeView}
               />

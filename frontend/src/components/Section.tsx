@@ -10,9 +10,6 @@ interface SectionProps {
   onItemClick: (path: string, hasChildren: boolean) => void
   onEditClick: (path: string, name: string, data: StructureItem) => void
   onCopyClick?: (itemKey: string, item: StructureItem) => void
-  onDragStart?: () => void
-  onDragEnd?: () => void
-  canDrag?: boolean
   isPending?: boolean  // Item is being synced
   isTimeView?: boolean // Items in time view can't be edited (they're virtual)
 }
@@ -64,9 +61,6 @@ function Section({
   onItemClick,
   onEditClick,
   onCopyClick,
-  onDragStart,
-  onDragEnd,
-  canDrag = false,
   isPending = false,
   isTimeView = false,
 }: SectionProps) {
@@ -103,9 +97,6 @@ function Section({
             <span 
               className="drag-handle" 
               title="Drag to reorder"
-              draggable={canDrag}
-              onDragStart={canDrag ? onDragStart : undefined}
-              onDragEnd={canDrag ? onDragEnd : undefined}
             >
               ⠿
             </span>
