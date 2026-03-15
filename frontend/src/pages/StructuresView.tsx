@@ -246,7 +246,6 @@ function StructuresView() {
                 value={newGraphName}
                 onChange={(e) => setNewGraphName(e.target.value)}
                 placeholder="Leave empty for auto-generated name"
-                autoFocus
               />
             </div>
             <div className="form-group">
