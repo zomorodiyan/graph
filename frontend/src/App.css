@@ -6,9 +6,9 @@
 
 .breadcrumb {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-  font-size: 0.875rem;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
   color: var(--text-secondary);
 }
 
@@ -281,17 +281,17 @@
 /* Top buttons container */
 .top-buttons {
   position: fixed;
-  bottom: 1.25rem;
-  left: 1.25rem;
+  bottom: 20px;
+  left: 20px;
   display: flex;
-  gap: 0.625rem;
+  gap: 10px;
   z-index: 1000;
 }
 
 /* Theme toggle */
 .theme-toggle {
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 50%;
   background: #2d2d2d;
@@ -300,7 +300,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 20px;
   transition: all 0.3s;
 }
 
@@ -310,8 +310,8 @@
 }
 
 .copy-btn {
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 44px;
+  height: 44px;
   border: 2px solid var(--border-color);
   border-radius: 50%;
   background: var(--bg-secondary);
@@ -319,7 +319,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 20px;
   transition: all 0.3s;
 }
 

@@ -101,7 +101,6 @@ function StructuresView() {
       {/* Header */}
       <header className="structures-header">
         <h1>Knowledge Graphs</h1>
-        <p className="subtitle">Select a graph to explore or create a new one</p>
       </header>
 
       {/* Graphs grid */}
@@ -127,9 +126,6 @@ function StructuresView() {
             {graph.description && (
               <p className="graph-description">{graph.description}</p>
             )}
-            <div className="graph-meta">
-              <span className="graph-version">v{graph.version}</span>
-            </div>
             <button
               className="delete-btn"
               onClick={(e) => handleDeleteGraph(e, graph.name)}

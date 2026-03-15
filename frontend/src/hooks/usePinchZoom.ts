@@ -55,7 +55,8 @@ export function usePinchZoom() {
         const currentDistance = getDistance(e.touches)
         const scale = currentDistance / initialDistance.current
         
-        let newZoom = initialZoom.current * scale
+        // Reduce sensitivity by half: scale change is halved
+        let newZoom = initialZoom.current * (1 + (scale - 1) * 0.5)
         
         // Round to nearest step for smoother changes
         newZoom = Math.round(newZoom / ZOOM_STEP) * ZOOM_STEP
