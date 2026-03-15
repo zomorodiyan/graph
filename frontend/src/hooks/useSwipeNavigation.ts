@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useNavigationHistory } from '../context/NavigationHistoryContext'
 
 const SWIPE_THRESHOLD = 100 // minimum distance for swipe
@@ -6,9 +7,13 @@ const SWIPE_VERTICAL_LIMIT = 75 // max vertical movement to still count as horiz
 
 /**
  * Hook that adds swipe gesture handlers for back/forward navigation
+ * Swipe right: go back in history, or to parent path if no history
+ * Swipe left: go forward in history
  */
 export function useSwipeNavigation() {
-  const { navigateBack, navigateForward } = useNavigationHistory()
+  const { navigateBack, navigateForward, canGoBack } = useNavigationHistory()
+  const location = useLocation()
+  const navigate = useNavigate()
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
 
@@ -30,7 +35,29 @@ export function useSwipeNavigation() {
       if (Math.abs(deltaX) > SWIPE_THRESHOLD && deltaY < SWIPE_VERTICAL_LIMIT) {
         if (deltaX > 0) {
           // Swipe right = go back
-          navigateBack()
+          if (canGoBack()) {
+            navigateBack()
+          } else {
+            // No back history - navigate to parent path
+            const path = location.pathname
+            if (path === '/') {
+              // Already at root, do nothing
+            } else if (path.startsWith('/g/')) {
+              // Graph path: /g/{graphName}/... -> go to parent or main page
+              const parts = path.split('/').filter(Boolean) // ['g', 'graphName', ...rest]
+              if (parts.length <= 2) {
+                // At graph root (/g/graphName), go to main structures page
+                navigate('/')
+              } else {
+                // Go to parent path within graph
+                const parentPath = '/' + parts.slice(0, -1).join('/')
+                navigate(parentPath)
+              }
+            } else {
+              // Other paths - go to root
+              navigate('/')
+            }
+          }
         } else {
           // Swipe left = go forward
           navigateForward()
@@ -48,5 +75,5 @@ export function useSwipeNavigation() {
       document.removeEventListener('touchstart', handleTouchStart)
       document.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [navigateBack, navigateForward])
+  }, [navigateBack, navigateForward, canGoBack, location.pathname, navigate])
 }
