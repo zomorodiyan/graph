@@ -161,11 +161,15 @@ export async function fetchGraphs(): Promise<GraphInfo[]> {
 }
 
 // Create a new graph
-export async function createGraph(name: string, description?: string): Promise<GraphInfo> {
+export async function createGraph(name: string, description?: string, initialContent?: string): Promise<GraphInfo> {
   const res = await fetch(`${API_BASE}/graphs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, description: description || '' }),
+    body: JSON.stringify({ 
+      name, 
+      description: description || '',
+      initial_content: initialContent || null 
+    }),
   })
   if (!res.ok) {
     const error = await res.json()

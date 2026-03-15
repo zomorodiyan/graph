@@ -24,6 +24,8 @@ function StructuresView() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newGraphName, setNewGraphName] = useState('')
   const [newGraphDescription, setNewGraphDescription] = useState('')
+  const [newGraphContent, setNewGraphContent] = useState('')
+  const [showContentField, setShowContentField] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [notification, setNotification] = useState<{
     message: string
@@ -54,16 +56,32 @@ function StructuresView() {
 
     try {
       setIsCreating(true)
-      await createGraph(newGraphName, newGraphDescription)
+      await createGraph(
+        newGraphName, 
+        newGraphDescription, 
+        showContentField && newGraphContent.trim() ? newGraphContent : undefined
+      )
       showNotification(`Created "${newGraphName}"!`)
       setShowCreateModal(false)
       setNewGraphName('')
       setNewGraphDescription('')
+      setNewGraphContent('')
+      setShowContentField(false)
       queryClient.invalidateQueries({ queryKey: ['graphs'] })
     } catch (err) {
       showNotification((err as Error).message, 'error')
     } finally {
       setIsCreating(false)
+    }
+  }
+
+  const handlePasteContent = async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      setNewGraphContent(text)
+      setShowContentField(true)
+    } catch (err) {
+      showNotification('Failed to read clipboard', 'error')
     }
   }
 
@@ -205,7 +223,11 @@ function StructuresView() {
 
       {/* Create modal */}
       {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+        <div className="modal-overlay" onClick={() => {
+          setShowCreateModal(false)
+          setNewGraphContent('')
+          setShowContentField(false)
+        }}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Create New Graph</h2>
             <div className="form-group">
@@ -229,10 +251,35 @@ function StructuresView() {
                 placeholder="What is this graph about?"
               />
             </div>
+            {!showContentField && (
+              <button
+                className="btn-secondary paste-btn"
+                onClick={handlePasteContent}
+                type="button"
+              >
+                📋 Paste Structure from Clipboard
+              </button>
+            )}
+            {showContentField && (
+              <div className="form-group">
+                <label htmlFor="graph-content">Initial Content</label>
+                <textarea
+                  id="graph-content"
+                  value={newGraphContent}
+                  onChange={(e) => setNewGraphContent(e.target.value)}
+                  placeholder="Paste structure content here..."
+                  rows={8}
+                />
+              </div>
+            )}
             <div className="modal-actions">
               <button 
                 className="btn-secondary"
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false)
+                  setNewGraphContent('')
+                  setShowContentField(false)
+                }}
               >
                 Cancel
               </button>

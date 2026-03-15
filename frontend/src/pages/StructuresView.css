@@ -225,6 +225,32 @@
   line-height: 1;
 }
 
+/* Paste from clipboard button */
+.paste-btn {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* Textarea for structure content */
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  font-family: monospace;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: border-color 0.2s;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
 .modal-actions {
   display: flex;
   gap: 0.75rem;

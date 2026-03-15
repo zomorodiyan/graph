@@ -79,9 +79,10 @@ class StructuresManager:
         """Check if a structure exists."""
         return os.path.exists(self.get_structure_path(name))
     
-    def create_structure(self, name, description=""):
+    def create_structure(self, name, description="", initial_content=None):
         """
-        Create a new empty structure.
+        Create a new structure.
+        If initial_content is provided, use it to populate the structure.
         Returns the created structure info.
         """
         safe_name = re.sub(r'[^a-zA-Z0-9_-]', '', name.lower().replace(' ', '_'))
@@ -94,8 +95,20 @@ class StructuresManager:
         
         file_path = self.get_structure_path(safe_name)
         
-        # Create structure with minimal content
-        content = f"""metadata
+        if initial_content:
+            # Use provided content wrapped in metadata and structure sections
+            content = f"""metadata
+  description: {description or 'A new knowledge graph'}
+  version: 1.0
+  updated_at: '{datetime.now().isoformat()}'
+structure
+"""
+            # Indent the initial content by 2 spaces to put it under structure
+            for line in initial_content.strip().split('\n'):
+                content += f"  {line}\n"
+        else:
+            # Create structure with minimal content
+            content = f"""metadata
   description: {description or 'A new knowledge graph'}
   version: 1.0
   updated_at: '{datetime.now().isoformat()}'

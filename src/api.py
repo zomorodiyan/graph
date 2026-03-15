@@ -69,6 +69,7 @@ class StructureCreate(BaseModel):
     """Model for creating a new structure."""
     name: str = Field(..., description="Structure name (will be sanitized)")
     description: Optional[str] = Field("", description="Structure description")
+    initial_content: Optional[str] = Field(None, description="Initial structure content in structure.txt format")
 
 
 @app.get("/api/graphs")
@@ -84,7 +85,7 @@ async def list_graphs():
 async def create_graph(data: StructureCreate):
     """Create a new graph/structure."""
     try:
-        return structures_manager.create_structure(data.name, data.description)
+        return structures_manager.create_structure(data.name, data.description, data.initial_content)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
