@@ -180,9 +180,7 @@ function StructuresView() {
               onClick={(e) => handleEditClick(e, graph)}
               title="Edit graph"
             >
-              <span className="line"></span>
-              <span className="line"></span>
-              <span className="line"></span>
+              ☰
             </span>
             <div className="graph-icon">{graph.icon || getIconForGraph(graph.name)}</div>
             <h3 className="graph-name">{graph.display_name}</h3>
