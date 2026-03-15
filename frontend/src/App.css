@@ -34,7 +34,7 @@
 /* Copy handle - positioned at top-right, aligned with layer1 text */
 .copy-handle {
   position: absolute;
-  top: 0.75rem;
+  top: 0.6rem;
   right: 0.75rem;
   width: 0.75rem;
   height: 0.875rem;
