@@ -266,7 +266,7 @@ function StructuresView() {
                   onClick={handlePasteContent}
                   title="Paste from clipboard"
                 >
-                  📋
+                  📋 Paste
                 </span>
               </div>
               <textarea

@@ -107,14 +107,34 @@ structure
             for line in initial_content.strip().split('\n'):
                 content += f"  {line}\n"
         else:
-            # Create structure with minimal content
+            # Create structure with tutorial content
             content = f"""metadata
   description: {description or 'A new knowledge graph'}
   version: 1.0
   updated_at: '{datetime.now().isoformat()}'
 structure
-  getting_started
-    context: Add your first items here
+  1_tap_to_navigate
+    context: Tap any item title to open its page
+  2_add_items
+    context: Use the + Add New Item button at the bottom
+  3_edit_items
+    context: Tap the pencil icon to edit name, context, due, or progress
+  4_swipe_navigation
+    context: Swipe left/right to go back/forward (like browser)
+  5_pinch_to_zoom
+    context: Pinch with two fingers to zoom in/out
+  6_due_dates
+    context: Add a due date to any item and see it appear in Time section
+    due: 2026-03-20
+  7_progress_tracking
+    context: Add progress (0-100) to track completion in Progress section
+    progress: 50
+  8_drag_to_reorder
+    context: Drag the grip handle to reorganize items
+  9_copy_structure
+    context: Tap copy icon (top-right) to copy item as text
+  10_create_from_paste
+    context: Go to main page, tap New Graph, then Paste to import copied text
 """
         
         with open(file_path, 'w', encoding='utf-8') as f:
