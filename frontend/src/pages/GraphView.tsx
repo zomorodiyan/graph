@@ -156,20 +156,26 @@ function GraphView() {
     const allDueItems = collectDueItems(structureWithoutTime)
     if (allDueItems.length === 0) return null
     
-    // Build the time section with categories
+    // Build the time section with categories - only include non-empty ones
     const categories = ['over', 'day', 'week', 'month'] as const
     const timeChildren: Record<string, StructureItem> = {}
     
     for (const category of categories) {
       const dueItems = getTimeChildren(category)
       const count = Object.keys(dueItems).length
-      const titles = { over: 'Over', day: 'Day', week: 'Week', month: 'Month' }
-      timeChildren[category] = {
-        title: `${titles[category]} (${count})`,
-        nonEditable: true,
-        children: dueItems
+      // Only include category if it has items
+      if (count > 0) {
+        const titles = { over: 'Over', day: 'Day', week: 'Week', month: 'Month' }
+        timeChildren[category] = {
+          title: `${titles[category]} (${count})`,
+          nonEditable: true,
+          children: dueItems
+        }
       }
     }
+    
+    // Only return Time section if at least one category has items
+    if (Object.keys(timeChildren).length === 0) return null
     
     return {
       title: 'Time',
