@@ -405,7 +405,7 @@ function GraphView() {
     
     // Add "Graphs" link if we're in a specific graph
     if (graphName) {
-      crumbs.push({ label: '📊', path: '/', isRoot: true })
+      crumbs.push({ label: '⛩', path: '/', isRoot: true })
       crumbs.push({ label: graphName.replace(/_/g, ' ').replace(/-/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '), path: `/g/${graphName}` })
     } else {
       crumbs.push({ label: 'Home', path: '/' })
