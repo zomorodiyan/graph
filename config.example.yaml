@@ -2,6 +2,11 @@
 # Copy to config.yaml and fill with your own Drive file ID.
 
 google_drive:
-  # Google Drive file ID that points to your structure.yaml
+  # Google Drive file ID that points to your structure.yaml (default structure)
   # Example Drive URL: https://drive.google.com/file/d/FILE_ID_HERE/view
   file_id: YOUR_GOOGLE_DRIVE_FILE_ID
+  
+  # Google Drive folder ID for user-created graphs
+  # Leave empty to auto-create a 'graph-structures' folder on first use
+  # Or paste a folder ID to use an existing folder
+  graphs_folder_id:

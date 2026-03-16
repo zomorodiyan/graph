@@ -65,7 +65,7 @@ export function useUpdateItem(graphName?: string) {
     // Always refetch after success or error
     onSettled: () => {
       // Background sync to drive
-      syncToDrive().catch(console.error)
+      syncToDrive(graphName).catch(console.error)
     },
   })
 }
@@ -100,7 +100,7 @@ export function useCreateItem(graphName?: string) {
     onSettled: () => {
       // Refetch to get server's response (in case of name conflicts, etc)
       queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
-      syncToDrive().catch(console.error)
+      syncToDrive(graphName).catch(console.error)
     },
   })
 }
@@ -131,7 +131,7 @@ export function useDeleteItem(graphName?: string) {
     },
 
     onSettled: () => {
-      syncToDrive().catch(console.error)
+      syncToDrive(graphName).catch(console.error)
     },
   })
 }
@@ -190,7 +190,7 @@ export function useMoveItem(graphName?: string) {
     },
 
     onSettled: () => {
-      syncToDrive().catch(console.error)
+      syncToDrive(graphName).catch(console.error)
     },
   })
 }
@@ -231,7 +231,7 @@ export function useReorderItem(graphName?: string) {
 
     // Background sync after success or error
     onSettled: () => {
-      syncToDrive().catch(console.error)
+      syncToDrive(graphName).catch(console.error)
     },
   })
 }

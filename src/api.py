@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from file_utils import FileUtils
 from hierarchy_builder import HierarchyBuilder
 from html_generator import HTMLGenerator
-from google_drive import download_structure_yaml, upload_structure_yaml
+from google_drive import download_structure_yaml, upload_structure_yaml, download_all_graphs, upload_graph
 from structures_manager import StructuresManager
 from simple_parser import SimpleParser
 
@@ -120,6 +120,13 @@ async def startup_event():
             print(f"⚠️  Warning: Failed to regenerate HTML files: {e}")
     else:
         print("⚠️  Warning: Could not download structure from Google Drive")
+    
+    # Download all user graphs from Google Drive
+    print("📥 Downloading user graphs from Google Drive...")
+    try:
+        download_all_graphs()
+    except Exception as e:
+        print(f"⚠️  Warning: Could not download graphs: {e}")
 
 
 # Enable CORS for local development and cross-origin requests
@@ -1454,6 +1461,24 @@ async def sync_to_drive():
         "action": "upload",
         "message": "Uploaded structure.txt to Google Drive" if success else "Upload failed"
     }
+
+
+@app.post("/api/graphs/{graph_name}/sync")
+async def sync_graph_to_drive(graph_name: str):
+    """Upload a specific graph to Google Drive."""
+    try:
+        success = upload_graph(graph_name)
+        return {
+            "success": success,
+            "graph": graph_name,
+            "message": f"Synced {graph_name} to Google Drive" if success else "Sync failed"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "graph": graph_name,
+            "message": str(e)
+        }
 
 
 @app.post("/api/regenerate/{item_id}")

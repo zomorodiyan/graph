@@ -442,3 +442,264 @@ def upload_structure_yaml():
     except Exception as e:
         print(f"❌ Upload failed: {e}")
         return False
+
+
+# ============================================================================
+# MULTI-GRAPH FOLDER SYNC FUNCTIONS
+# ============================================================================
+
+STRUCTURES_DIR = PROJECT_ROOT / 'structures'
+
+
+def get_folder_id_from_config():
+    """
+    Reads the Google Drive folder ID for graphs from config.yaml.
+    
+    Returns:
+        Folder ID string or None if not found
+    """
+    import yaml
+    
+    if not CONFIG_PATH.exists():
+        return None
+    
+    try:
+        with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        
+        return config.get('google_drive', {}).get('graphs_folder_id')
+    except Exception:
+        return None
+
+
+def update_config_folder_id(folder_id: str) -> bool:
+    """Update config.yaml with a new graphs_folder_id."""
+    import yaml
+    try:
+        config = {}
+        if CONFIG_PATH.exists():
+            with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f) or {}
+        config.setdefault('google_drive', {})
+        config['google_drive']['graphs_folder_id'] = folder_id
+        with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(config, f, sort_keys=False)
+        print(f"🔁 Updated config.yaml with graphs_folder_id: {folder_id}")
+        return True
+    except Exception as e:
+        print(f"⚠️  Failed to update config.yaml: {e}")
+        return False
+
+
+def ensure_graphs_folder(service) -> str:
+    """
+    Ensure a 'graph-structures' folder exists in Drive.
+    Creates one if it doesn't exist, or uses the configured folder_id.
+    
+    Returns:
+        Folder ID string or None on failure
+    """
+    folder_id = get_folder_id_from_config()
+    
+    if folder_id:
+        # Verify folder exists
+        try:
+            meta = service.files().get(fileId=folder_id, fields='id, name, mimeType').execute()
+            if meta.get('mimeType') == 'application/vnd.google-apps.folder':
+                print(f"✓ Using existing graphs folder: {meta.get('name')}")
+                return folder_id
+        except Exception as e:
+            print(f"⚠️  Configured folder not accessible: {e}")
+    
+    # Create a new folder
+    try:
+        folder_metadata = {
+            'name': 'graph-structures',
+            'mimeType': 'application/vnd.google-apps.folder'
+        }
+        folder = service.files().create(body=folder_metadata, fields='id').execute()
+        new_folder_id = folder.get('id')
+        print(f"✅ Created new graphs folder with ID: {new_folder_id}")
+        update_config_folder_id(new_folder_id)
+        return new_folder_id
+    except Exception as e:
+        print(f"❌ Failed to create graphs folder: {e}")
+        return None
+
+
+def download_all_graphs():
+    """
+    Downloads all .txt graph files from the Google Drive graphs folder.
+    
+    Returns:
+        bool: True if download succeeded, False otherwise
+    """
+    print("📥 Downloading all graphs from Google Drive...")
+    
+    creds = get_credentials()
+    if not creds:
+        print("⚠️  Authentication failed, cannot download graphs")
+        return False
+    
+    try:
+        service = build('drive', 'v3', credentials=creds)
+        
+        folder_id = get_folder_id_from_config()
+        if not folder_id:
+            print("⚠️  No graphs folder configured, skipping graph download")
+            return False
+        
+        # Ensure structures directory exists
+        STRUCTURES_DIR.mkdir(parents=True, exist_ok=True)
+        
+        # List all .txt files in the folder
+        query = f"'{folder_id}' in parents and mimeType='text/plain' and trashed=false"
+        results = service.files().list(
+            q=query,
+            fields="files(id, name, modifiedTime)",
+            pageSize=100
+        ).execute()
+        
+        files = results.get('files', [])
+        print(f"  Found {len(files)} graph file(s) in Drive")
+        
+        for file_info in files:
+            file_id = file_info['id']
+            file_name = file_info['name']
+            
+            # Ensure .txt extension
+            if not file_name.endswith('.txt'):
+                file_name += '.txt'
+            
+            local_path = STRUCTURES_DIR / file_name
+            
+            # Download file content
+            request = service.files().get_media(fileId=file_id)
+            file_handle = io.BytesIO()
+            downloader = MediaIoBaseDownload(file_handle, request)
+            
+            done = False
+            while not done:
+                status, done = downloader.next_chunk()
+            
+            # Write to local file
+            with open(local_path, 'wb') as f:
+                f.write(file_handle.getvalue())
+            
+            print(f"  ✓ Downloaded: {file_name}")
+        
+        print(f"✅ Downloaded {len(files)} graph(s) to {STRUCTURES_DIR}")
+        return True
+    
+    except Exception as e:
+        print(f"❌ Failed to download graphs: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def upload_graph(graph_name: str) -> bool:
+    """
+    Uploads a specific graph file to the Google Drive graphs folder.
+    Creates new file or updates existing one.
+    
+    Args:
+        graph_name: Name of the graph (without .txt extension)
+    
+    Returns:
+        bool: True if upload succeeded, False otherwise
+    """
+    from googleapiclient.http import MediaFileUpload
+    
+    local_path = STRUCTURES_DIR / f"{graph_name}.txt"
+    
+    if not local_path.exists():
+        print(f"❌ Graph file not found: {local_path}")
+        return False
+    
+    creds = get_credentials()
+    if not creds:
+        print(f"⚠️  Authentication failed, cannot upload graph {graph_name}")
+        return False
+    
+    try:
+        service = build('drive', 'v3', credentials=creds)
+        
+        folder_id = ensure_graphs_folder(service)
+        if not folder_id:
+            print(f"⚠️  Cannot upload graph: no folder available")
+            return False
+        
+        # Check if file already exists in folder
+        query = f"'{folder_id}' in parents and name='{graph_name}.txt' and trashed=false"
+        results = service.files().list(q=query, fields="files(id)").execute()
+        existing_files = results.get('files', [])
+        
+        media = MediaFileUpload(local_path, mimetype='text/plain', resumable=True)
+        
+        if existing_files:
+            # Update existing file
+            file_id = existing_files[0]['id']
+            request = service.files().update(
+                fileId=file_id,
+                media_body=media
+            )
+        else:
+            # Create new file
+            file_metadata = {
+                'name': f"{graph_name}.txt",
+                'parents': [folder_id]
+            }
+            request = service.files().create(
+                body=file_metadata,
+                media_body=media,
+                fields='id'
+            )
+        
+        response = None
+        while response is None:
+            status, response = request.next_chunk()
+        
+        print(f"  ✓ Synced graph to Drive: {graph_name}")
+        return True
+    
+    except Exception as e:
+        print(f"❌ Failed to upload graph {graph_name}: {e}")
+        return False
+
+
+def delete_graph_from_drive(graph_name: str) -> bool:
+    """
+    Deletes a graph file from Google Drive.
+    
+    Args:
+        graph_name: Name of the graph (without .txt extension)
+    
+    Returns:
+        bool: True if deletion succeeded, False otherwise
+    """
+    creds = get_credentials()
+    if not creds:
+        return False
+    
+    try:
+        service = build('drive', 'v3', credentials=creds)
+        
+        folder_id = get_folder_id_from_config()
+        if not folder_id:
+            return False
+        
+        # Find the file
+        query = f"'{folder_id}' in parents and name='{graph_name}.txt' and trashed=false"
+        results = service.files().list(q=query, fields="files(id)").execute()
+        files = results.get('files', [])
+        
+        for file_info in files:
+            service.files().delete(fileId=file_info['id']).execute()
+            print(f"  ✓ Deleted from Drive: {graph_name}")
+        
+        return True
+    
+    except Exception as e:
+        print(f"⚠️  Failed to delete graph from Drive: {e}")
+        return False

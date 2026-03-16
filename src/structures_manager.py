@@ -7,6 +7,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from file_utils import FileUtils
+from google_drive import upload_graph, delete_graph_from_drive
 
 
 class StructuresManager:
@@ -107,39 +108,39 @@ structure
             for line in initial_content.strip().split('\n'):
                 content += f"  {line}\n"
         else:
-            # Create structure with tutorial content
+                        # Create structure with minimal action-based tutorial content
             content = f"""metadata
   description: {description or 'A new knowledge graph'}
   version: 1.0
   updated_at: '{datetime.now().isoformat()}'
 structure
-  navigation
-    ttt
-      context: tap righttt to enter
-      swipe_right
-        context: to go back
-  organize
-    lll
-      context: tap lllleft to edit
-    drag
-      context: to reorder items
-    tap_+_button
-      context: to add new items
-  tracking
-    add_due
-      context: notice addition of "Time"
-    add_progress
-      context: notice addition of "Progress"
-  more
-    pinch_to_zoom
-    copy
-      context: export as text
-    create_new
-      context: main page → new graph → paste
+    swipe
+        right 
+            context: to go back
+        left 
+            context: to go forward
+    tap
+        here <<<<< (left third)
+            context: to edit 
+        add due
+            context: Notice Time card
+        add progress
+            context: Notice Progress card
+    Duplicate
+        tap ⧉ (top right)
+            context: to copy
+        tap ▯ (bottom right)
+            context: to paste
 """
         
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
+        
+        # Sync new graph to Google Drive
+        try:
+            upload_graph(safe_name)
+        except Exception as e:
+            print(f"⚠️  Failed to sync new graph to Drive: {e}")
         
         return {
             "name": safe_name,
@@ -154,6 +155,13 @@ structure
         
         file_path = self.get_structure_path(name)
         os.remove(file_path)
+        
+        # Delete from Google Drive
+        try:
+            delete_graph_from_drive(name)
+        except Exception as e:
+            print(f"⚠️  Failed to delete graph from Drive: {e}")
+        
         return {"deleted": name}
     
     def get_file_utils(self, name):
