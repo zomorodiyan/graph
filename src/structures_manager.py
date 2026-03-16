@@ -114,23 +114,25 @@ structure
   version: 1.0
   updated_at: '{datetime.now().isoformat()}'
 structure
-    swipe
-        right 
-            context: to go back
-        left 
-            context: to go forward
-    tap
-        here <<<<< (left third)
-            context: to edit 
-        add due
-            context: Notice Time card
-        add progress
-            context: Notice Progress card
-    Duplicate
-        tap ⧉ (top right)
-            context: to copy
-        tap ▯ (bottom right)
-            context: to paste
+    nav
+        swipe
+            right (to go back)
+            left (to go forward)
+        tap
+            items (to open)
+    mod
+        tap
+            here (to edit)
+                context: left third 
+            add due (notice Time card)
+                context: find in edit 
+            add progress (notice Progress card)
+                context: find in edit
+        duplicate
+            tap ⧉ (to copy)
+                context: top right
+            tap ▯ (to paste)
+                context: bottom right
 """
         
         with open(file_path, 'w', encoding='utf-8') as f:

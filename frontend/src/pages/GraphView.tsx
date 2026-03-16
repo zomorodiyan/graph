@@ -70,26 +70,6 @@ function GraphView() {
     type: 'success' | 'error' | 'syncing'
   } | null>(null)
 
-  // Track if scrolled to bottom for fading UI elements
-  const [isScrolledToBottom, setIsScrolledToBottom] = useState(false)
-
-  // Scroll listener to detect when at bottom
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.scrollY
-      const windowHeight = window.innerHeight
-      const docHeight = document.documentElement.scrollHeight
-      // Consider "at bottom" if within 50px of the bottom
-      const atBottom = scrollTop + windowHeight >= docHeight - 50
-      setIsScrolledToBottom(atBottom)
-    }
-    
-    window.addEventListener('scroll', handleScroll)
-    // Use setTimeout to ensure DOM has updated after navigation
-    setTimeout(handleScroll, 0)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [path])
-
   // Show notification helper
   const showNotification = (message: string, type: 'success' | 'error' | 'syncing' = 'success') => {
     setNotification({ message, type })
@@ -834,7 +814,7 @@ function GraphView() {
 
   return (
     <>
-      <div className="top-buttons" style={{ opacity: isScrolledToBottom ? 0.1 : 1, transition: 'opacity 0.3s' }}>
+      <div className="top-buttons" style={{ opacity: 0.5 }}>
         <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
           {theme === 'light' ? '🌙' : '☀️'}
         </button>
