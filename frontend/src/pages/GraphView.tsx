@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useStructure, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
+import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useTheme } from '../context/ThemeContext'
 import { StructureItem, UpdatePayload, pasteItems } from '../api/client'
@@ -69,6 +70,8 @@ function GraphView() {
     message: string
     type: 'success' | 'error' | 'syncing'
   } | null>(null)
+
+  useModalBackButton(Boolean(modalState), () => setModalState(null))
 
   // Show notification helper
   const showNotification = (message: string, type: 'success' | 'error' | 'syncing' = 'success') => {
@@ -488,9 +491,10 @@ function GraphView() {
       
       const result = await pasteItems(parentPath, text, graphName)
       if (result.success) {
+        await queryClient.refetchQueries({ queryKey: ['structure', graphName], exact: true })
+        setLocalOrder(null)
+        setLocalItems(null)
         showNotification(`Pasted ${result.added.length} item(s)!`)
-        // Refresh the structure
-        queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
       }
     } catch (err: any) {
       console.error('Paste error:', err)

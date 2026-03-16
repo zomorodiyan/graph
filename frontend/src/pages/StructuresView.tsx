@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useTheme } from '../context/ThemeContext'
 import { createGraph, fetchStructureText, updateGraph, deleteGraph, GraphInfo } from '../api/client'
 import { useGraphs } from '../hooks/useGraph'
+import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import Notification from '../components/Notification'
 import './StructuresView.css'
@@ -37,6 +38,9 @@ function StructuresView() {
   const [editDescription, setEditDescription] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
+  useModalBackButton(showCreateModal, () => setShowCreateModal(false))
+  useModalBackButton(Boolean(editingGraph), () => setEditingGraph(null))
+
   // Enable swipe navigation (back/forward)
   useSwipeNavigation()
 
@@ -62,11 +66,14 @@ function StructuresView() {
   }
 
   const handleCreateGraph = async () => {
-    const graphName = newGraphName.trim() || generateUniqueName()
+    const trimmedName = newGraphName.trim()
+    const trimmedDescription = newGraphDescription.trim()
+    const createGuide = !trimmedName && !trimmedDescription
+    const graphName = createGuide ? 'guide' : (trimmedName || generateUniqueName())
 
     try {
       setIsCreating(true)
-      await createGraph(graphName, newGraphDescription)
+      await createGraph(graphName, trimmedDescription)
       showNotification(`Created "${graphName}"!`)
       setShowCreateModal(false)
       setNewGraphName('')
@@ -257,7 +264,7 @@ function StructuresView() {
                 type="text"
                 value={newGraphName}
                 onChange={(e) => setNewGraphName(e.target.value)}
-                placeholder="Leave empty for auto-generated name"
+                placeholder="Leave empty to create guide"
               />
             </div>
             <div className="form-group">
@@ -284,7 +291,7 @@ function StructuresView() {
                 onClick={handleCreateGraph}
                 disabled={isCreating}
               >
-                {isCreating ? 'Creating...' : 'Create'}
+                {isCreating ? 'Creating...' : (!newGraphName.trim() && !newGraphDescription.trim() ? 'Guide' : 'Create')}
               </button>
             </div>
           </div>

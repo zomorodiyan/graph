@@ -7,7 +7,19 @@ import re
 from datetime import datetime
 from pathlib import Path
 from file_utils import FileUtils
-from google_drive import upload_graph, delete_graph_from_drive
+from gcs_graph_store import upload_graph_to_gcs, delete_graph_from_gcs
+
+
+class GraphFileUtils(FileUtils):
+    """File utils that mirror graph changes to GCS after local saves."""
+
+    def __init__(self, graph_name: str, structure_file_path=None):
+        super().__init__(structure_file_path)
+        self.graph_name = graph_name
+
+    def save_structure(self, data):
+        super().save_structure(data)
+        upload_graph_to_gcs(self.graph_name, self.structure_file_path)
 
 
 class StructuresManager:
@@ -86,7 +98,20 @@ class StructuresManager:
         If initial_content is provided, use it to populate the structure.
         Returns the created structure info.
         """
-        safe_name = re.sub(r'[^a-zA-Z0-9_-]', '', name.lower().replace(' ', '_'))
+        normalized_name = (name or '').strip()
+        normalized_description = (description or '').strip()
+        normalized_key = normalized_name.lower().replace(' ', '_')
+        create_guide = (
+            not initial_content
+            and not normalized_description
+            and (not normalized_name or normalized_key == 'guide')
+        )
+
+        safe_name = re.sub(
+            r'[^a-zA-Z0-9_-]',
+            '',
+            ('guide' if create_guide else normalized_key)
+        )
         
         if not safe_name:
             raise ValueError("Invalid structure name")
@@ -107,42 +132,54 @@ structure
             # Indent the initial content by 2 spaces to put it under structure
             for line in initial_content.strip().split('\n'):
                 content += f"  {line}\n"
-        else:
-                        # Create structure with minimal action-based tutorial content
+        elif create_guide:
+            # Create structure with minimal action-based tutorial content
             content = f"""metadata
   description: {description or 'A new knowledge graph'}
   version: 1.0
   updated_at: '{datetime.now().isoformat()}'
 structure
-    nav
+    navigate
         swipe
-            right (to go back)
-            left (to go forward)
+            right, to go back
+            left, to go forward
         tap
-            items (to open)
-    mod
+            items, to open
+                context: right two-third 
+        zoom 
+            pinch, to zoom out
+            spread, to zoom in
+    modify
         tap
-            here (to edit)
-                context: left third 
-            add due (notice Time card)
+            here, to edit
+                context: left one-third 
+            add due, notice Time card
                 context: find in edit 
-            add progress (notice Progress card)
+            add progress, notice Progress card
                 context: find in edit
         duplicate
-            tap ⧉ (to copy)
+            tap ⧉, to copy
                 context: top right
-            tap ▯ (to paste)
+            tap ▯, to paste
                 context: bottom right
+"""
+        else:
+            content = f"""metadata
+  description: {description or 'A new knowledge graph'}
+  version: 1.0
+  updated_at: '{datetime.now().isoformat()}'
+structure
+  item
 """
         
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        # Sync new graph to Google Drive
+        # Sync new graph to GCS
         try:
-            upload_graph(safe_name)
+            upload_graph_to_gcs(safe_name, file_path)
         except Exception as e:
-            print(f"⚠️  Failed to sync new graph to Drive: {e}")
+            print(f"⚠️  Failed to sync new graph to GCS: {e}")
         
         return {
             "name": safe_name,
@@ -158,11 +195,11 @@ structure
         file_path = self.get_structure_path(name)
         os.remove(file_path)
         
-        # Delete from Google Drive
+        # Delete from GCS
         try:
-            delete_graph_from_drive(name)
+            delete_graph_from_gcs(name)
         except Exception as e:
-            print(f"⚠️  Failed to delete graph from Drive: {e}")
+            print(f"⚠️  Failed to delete graph from GCS: {e}")
         
         return {"deleted": name}
     
@@ -171,7 +208,7 @@ structure
         if not self.structure_exists(name):
             raise ValueError(f"Structure '{name}' not found")
         
-        return FileUtils(self.get_structure_path(name))
+        return GraphFileUtils(name, self.get_structure_path(name))
     
     def update_structure(self, name, display_name=None, description=None, icon=None):
         """
@@ -240,6 +277,11 @@ structure
         # Write updated content
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write('\n'.join(new_lines))
+
+        try:
+            upload_graph_to_gcs(name, file_path)
+        except Exception as e:
+            print(f"⚠️  Failed to sync updated graph to GCS: {e}")
         
         return {
             "name": name,

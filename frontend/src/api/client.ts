@@ -149,22 +149,22 @@ export async function reorderItem(path: string, targetIndex: number, graphName?:
   return res.json()
 }
 
-// Sync to Google Drive (default structure or specific graph)
+// Sync to Google Cloud Storage (default structure or specific graph)
 export async function syncToDrive(graphName?: string): Promise<{ success: boolean; message: string }> {
   if (graphName) {
     // Sync specific graph
     const res = await fetch(`${API_BASE}/graphs/${graphName}/sync`, { method: 'POST' })
-    if (!res.ok) throw new Error(`Failed to sync graph ${graphName} to Google Drive`)
+    if (!res.ok) throw new Error(`Failed to sync graph ${graphName} to Google Cloud Storage`)
     return res.json()
   } else {
     // Sync default structure
     const res = await fetch(`${API_BASE}/sync-to-drive`, { method: 'POST' })
-    if (!res.ok) throw new Error('Failed to sync to Google Drive')
+    if (!res.ok) throw new Error('Failed to sync to Google Cloud Storage')
     return res.json()
   }
 }
 
-// Fetch structure as raw text (same format as Google Drive file)
+// Fetch structure as raw text
 export async function fetchStructureText(graphName?: string): Promise<string> {
   const url = graphName 
     ? `${API_BASE}/graphs/${graphName}/structure/text`

@@ -18,7 +18,13 @@ sys.path.insert(0, os.path.dirname(__file__))
 from file_utils import FileUtils
 from hierarchy_builder import HierarchyBuilder
 from html_generator import HTMLGenerator
-from google_drive import download_structure_yaml, upload_structure_yaml, download_all_graphs, upload_graph
+from gcs_graph_store import (
+    GCSBackedFileUtils,
+    download_all_graphs_from_gcs,
+    download_default_structure_from_gcs,
+    upload_default_structure_to_gcs,
+    upload_graph_to_gcs,
+)
 from structures_manager import StructuresManager
 from simple_parser import SimpleParser
 
@@ -105,9 +111,9 @@ app = FastAPI(title="Hierarchical Graph API", version="1.0")
 
 @app.on_event("startup")
 async def startup_event():
-    """Download structure from Google Drive and regenerate HTML files on startup."""
-    print("📥 Downloading structure from Google Drive...")
-    success = download_structure_yaml()
+    """Download structures from Google Cloud Storage and regenerate HTML files on startup."""
+    print("📥 Downloading default structure from Google Cloud Storage...")
+    success = download_default_structure_from_gcs()
     if success:
         print("✅ Structure downloaded successfully")
         print("🔄 Regenerating HTML files from structure...")
@@ -119,12 +125,12 @@ async def startup_event():
         except Exception as e:
             print(f"⚠️  Warning: Failed to regenerate HTML files: {e}")
     else:
-        print("⚠️  Warning: Could not download structure from Google Drive")
+        print("⚠️  Warning: Could not download default structure from Google Cloud Storage")
     
-    # Download all user graphs from Google Drive
-    print("📥 Downloading user graphs from Google Drive...")
+    # Download all user graphs from Google Cloud Storage
+    print("📥 Downloading user graphs from Google Cloud Storage...")
     try:
-        download_all_graphs()
+        download_all_graphs_from_gcs()
     except Exception as e:
         print(f"⚠️  Warning: Could not download graphs: {e}")
 
@@ -138,7 +144,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-file_utils = FileUtils()
+file_utils = GCSBackedFileUtils()
 hierarchy_builder = HierarchyBuilder()
 html_generator = HTMLGenerator()
 structures_manager = StructuresManager()
@@ -241,7 +247,7 @@ def get_file_utils_for_graph(graph_name: str = None) -> FileUtils:
         if not structures_manager.structure_exists(graph_name):
             raise HTTPException(status_code=404, detail=f"Graph '{graph_name}' not found")
         return structures_manager.get_file_utils(graph_name)
-    # Fall back to default structure.txt for backwards compatibility
+    # Fall back to the default structure
     return file_utils
 
 
@@ -682,8 +688,8 @@ async def move_item_up(path: str, request: Request):
         data_to_save = _clean_structure_for_save(data)
         file_utils.save_structure(data_to_save)
         
-        # Sync to Google Drive
-        upload_structure_yaml()
+        # Sync to Google Cloud Storage
+        upload_default_structure_to_gcs()
         
         return {
             "success": True,
@@ -764,8 +770,8 @@ async def reorder_item(path: str, payload: ReorderPayload):
         data_to_save = _clean_structure_for_save(data)
         file_utils.save_structure(data_to_save)
         
-        # Sync to Google Drive
-        upload_structure_yaml()
+        # Sync to Google Cloud Storage
+        upload_default_structure_to_gcs()
         
         return {
             "success": True,
@@ -1432,46 +1438,46 @@ def regenerate_html(paths: list):
 
 @app.post("/api/sync/download")
 async def sync_download():
-    """Download structure.txt from Google Drive."""
-    success = download_structure_yaml()
+    """Download structure.txt from Google Cloud Storage."""
+    success = download_default_structure_from_gcs()
     return {
         "success": success,
         "action": "download",
-        "message": "Downloaded structure.txt from Google Drive" if success else "Download failed"
+        "message": "Downloaded structure.txt from Google Cloud Storage" if success else "Download failed"
     }
 
 
 @app.post("/api/sync/upload")
 async def sync_upload():
-    """Upload structure.txt to Google Drive."""
-    success = upload_structure_yaml()
+    """Upload structure.txt to Google Cloud Storage."""
+    success = upload_default_structure_to_gcs()
     return {
         "success": success,
         "action": "upload",
-        "message": "Uploaded structure.txt to Google Drive" if success else "Upload failed"
+        "message": "Uploaded structure.txt to Google Cloud Storage" if success else "Upload failed"
     }
 
 
 @app.post("/api/sync-to-drive")
 async def sync_to_drive():
-    """Alias for uploading structure.txt to Google Drive."""
-    success = upload_structure_yaml()
+    """Alias for uploading structure.txt to Google Cloud Storage."""
+    success = upload_default_structure_to_gcs()
     return {
         "success": success,
         "action": "upload",
-        "message": "Uploaded structure.txt to Google Drive" if success else "Upload failed"
+        "message": "Uploaded structure.txt to Google Cloud Storage" if success else "Upload failed"
     }
 
 
 @app.post("/api/graphs/{graph_name}/sync")
 async def sync_graph_to_drive(graph_name: str):
-    """Upload a specific graph to Google Drive."""
+    """Upload a specific graph to Google Cloud Storage."""
     try:
-        success = upload_graph(graph_name)
+        success = upload_graph_to_gcs(graph_name)
         return {
             "success": success,
             "graph": graph_name,
-            "message": f"Synced {graph_name} to Google Drive" if success else "Sync failed"
+            "message": f"Synced {graph_name} to Google Cloud Storage" if success else "Sync failed"
         }
     except Exception as e:
         return {
@@ -1500,7 +1506,7 @@ async def regenerate_page(item_id: str):
 @app.post("/api/sync/both")
 async def sync_both():
     """Download then upload (download wins in conflicts)."""
-    download_success = download_structure_yaml()
+    download_success = download_default_structure_from_gcs()
     if not download_success:
         return {
             "success": False,
@@ -1509,7 +1515,7 @@ async def sync_both():
             "message": "Sync failed: could not download"
         }
     
-    upload_success = upload_structure_yaml()
+    upload_success = upload_default_structure_to_gcs()
     return {
         "success": upload_success,
         "download": download_success,

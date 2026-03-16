@@ -15,11 +15,7 @@ import socketserver
 import socket
 from pathlib import Path
 
-# Import Google Drive integration
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-from google_drive import download_structure_yaml, authenticate
-from google_drive import upload_structure_yaml
-from google_drive import set_drive_file_id
 
 def is_port_free(port):
     """Check if a port is free"""
@@ -92,14 +88,6 @@ def main():
     # Handle command line arguments
     command = sys.argv[1] if len(sys.argv) > 1 else "api"
     
-    # Handle auth command separately (before YAML sync)
-    if command == "auth":
-        success = authenticate()
-        sys.exit(0 if success else 1)
-    
-    # Sync structure.txt from Google Drive (falls back to local if it fails)
-    download_structure_yaml()
-    
     # Check if structure.txt exists
     if not check_yaml_file():
         return
@@ -149,13 +137,11 @@ def main():
         print()
         print("  generate       Generate HTML files only (no servers)")
         print("  search:<query> Search for items matching query")
-        print("  auth           Authenticate with Google Drive")
         print("  help           Show this help message")
         print()
         print("Quick Start:")
-        print("  1. First time: python run.py auth")
-        print("  2. Run server: python run.py")
-        print("  3. Or run all-in-one: python run.py serve")
+        print("  1. Run server: python run.py")
+        print("  2. Or run all-in-one: python run.py serve")
         print()
         print("Editing:")
         print("  - Long-press (0.8 sec) any item to open edit modal")
@@ -167,12 +153,8 @@ def main():
         print("  PUT    /api/items/{path}           - Update item")
         print("  POST   /api/items/{parent_path}    - Create item")
         print("  DELETE /api/items/{path}           - Delete item")
-        print("  POST   /api/sync/download          - Download from Google Drive")
-        print("  POST   /api/sync/upload            - Upload to Google Drive")
-        print()
-        print("Direct commands:")
-        print("  upload         Upload local structure.txt to Google Drive (no servers)")
-        print("  set-file:<URL or ID>  Set Google Drive file_id in config.yaml")
+        print("  POST   /api/sync/download          - Download from GCS")
+        print("  POST   /api/sync/upload            - Upload to GCS")
         print()
         print("API Documentation:")
         print("  http://localhost:8000/docs         - Interactive API docs")
@@ -302,22 +284,6 @@ def main():
         except KeyboardInterrupt:
             print("\nShutting down servers...")
             sys.exit(0)
-    
-    elif command == "upload":
-        # Upload local structure.txt to Google Drive
-        print("Uploading structure.txt to Google Drive...")
-        success = upload_structure_yaml()
-        sys.exit(0 if success else 1)
-    
-    elif command.startswith("set-file:"):
-        url_or_id = command[len("set-file:"):].strip()
-        if not url_or_id:
-            print("Usage: python run.py set-file:<URL or ID>")
-            sys.exit(1)
-        print("Setting Google Drive file ID in config.yaml...")
-        ok = set_drive_file_id(url_or_id)
-        sys.exit(0 if ok else 1)
-    
     
     else:
         print(f"Unknown command: {command}")
