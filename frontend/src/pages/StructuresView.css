@@ -91,8 +91,8 @@
 /* Copy handle for graph cards - reuses App.css .copy-handle styles */
 .graph-card .copy-handle {
   position: absolute;
-  top: 0.6rem;
-  right: 0.75rem;
+  top: 0.75rem;
+  right: 0.9rem;
   width: 1rem;
   height: 1.125rem;
   cursor: pointer;
@@ -109,14 +109,14 @@
 /* Edit handle for graph cards - hamburger style */
 .graph-card .edit-handle {
   position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
+  top: 0.42rem;
+  left: 0.525rem;
   cursor: pointer;
   opacity: 0.4;
   transition: opacity 0.2s;
   z-index: 10;
   padding: 0.5rem;
-  font-size: 1.5rem;
+  font-size: 1.125rem;
   line-height: 1;
   color: var(--text-primary);
 }
@@ -130,72 +130,16 @@
   position: relative;
   border: 2px dashed var(--border-color);
   background: transparent;
-  justify-content: center;
-}
-
-.add-card-button {
-  background: none;
-  border: none;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  padding: 1.75rem 1.5rem;
 }
 
 .add-card:hover {
   border-color: #667eea;
   background: rgba(102, 126, 234, 0.05);
   transform: translateY(-0.25rem);
-  box-shadow: none;
 }
 
-/* Paste handle on add card - rectangle with + */
-.paste-handle {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.75rem;
-  width: 0.875rem;
-  height: 1rem;
-  cursor: pointer;
-  opacity: 0.4;
-  transition: opacity 0.2s;
-  z-index: 10;
-  padding: 0.5rem;
-  box-sizing: content-box;
-}
-
-.paste-handle:hover {
-  opacity: 0.8;
-}
-
-.paste-handle::before {
-  content: '';
-  position: absolute;
-  top: 0.5rem;
-  left: 0.5rem;
-  width: 0.875rem;
-  height: 1rem;
-  border: 2px solid currentColor;
-  border-radius: 2px;
-  box-sizing: border-box;
-}
-
-.paste-handle::after {
-  content: '+';
-  position: absolute;
-  top: calc(0.5rem + 0.5rem);
-  left: calc(0.5rem + 0.4375rem);
-  transform: translate(-50%, -50%);
-  font-size: 0.65rem;
-  font-weight: bold;
-  line-height: 1;
-  color: currentColor;
-}
-
-.add-icon {
+.add-card .add-icon {
   font-size: 3rem;
   color: #667eea;
   font-weight: 300;
@@ -203,10 +147,44 @@
   margin-bottom: 0.75rem;
 }
 
-.add-text {
-  font-size: 1rem;
-  font-weight: 500;
+.add-card .add-text {
+  font-size: 1.25rem;
+  font-weight: 600;
   color: #667eea;
+}
+
+/* Paste handle on add card */
+.add-card .paste-handle {
+  position: absolute;
+  top: 0.42rem;
+  right: 0.525rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+  z-index: 10;
+  padding: 0.5rem;
+}
+
+.add-card .paste-handle:hover {
+  opacity: 0.8;
+}
+
+.add-card .paste-handle-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.add-card .paste-handle::after {
+  content: '';
+  width: 0.975rem;
+  height: 1.14rem;
+  border: 1.5px solid var(--text-secondary);
+  border-radius: 2px;
+  box-sizing: border-box;
 }
 
 /* Empty state */

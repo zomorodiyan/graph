@@ -93,14 +93,6 @@ function Section({
       {/* Layer 1 - Main category */}
       <div className="layer1-container">
         <div className="layer1-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          {!isTimeView && (
-            <span 
-              className="drag-handle" 
-              title="Drag to reorder"
-            >
-              ⠿
-            </span>
-          )}
           {showLoading && <span className="loading-spinner" title="Syncing...">⟳</span>}
           <div className={`layer1 color-${color} ${showEditButton ? 'split-button' : ''}`}>
             {showEditButton && (

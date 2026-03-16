@@ -85,23 +85,3 @@ body {
   from { opacity: 0.5; }
   to { opacity: 1; }
 }
-
-.drag-handle {
-  opacity: 0.4;
-  font-size: 1rem;
-  cursor: grab;
-  user-select: none;
-  color: var(--text-secondary);
-  padding: 0.5rem;
-  margin: -0.5rem;
-  touch-action: none;
-}
-
-.section-wrapper:hover .drag-handle {
-  opacity: 0.8;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
-  opacity: 1;
-}

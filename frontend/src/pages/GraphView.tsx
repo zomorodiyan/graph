@@ -70,6 +70,26 @@ function GraphView() {
     type: 'success' | 'error' | 'syncing'
   } | null>(null)
 
+  // Track if scrolled to bottom for fading UI elements
+  const [isScrolledToBottom, setIsScrolledToBottom] = useState(false)
+
+  // Scroll listener to detect when at bottom
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY
+      const windowHeight = window.innerHeight
+      const docHeight = document.documentElement.scrollHeight
+      // Consider "at bottom" if within 50px of the bottom
+      const atBottom = scrollTop + windowHeight >= docHeight - 50
+      setIsScrolledToBottom(atBottom)
+    }
+    
+    window.addEventListener('scroll', handleScroll)
+    // Use setTimeout to ensure DOM has updated after navigation
+    setTimeout(handleScroll, 0)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [path])
+
   // Show notification helper
   const showNotification = (message: string, type: 'success' | 'error' | 'syncing' = 'success') => {
     setNotification({ message, type })
@@ -492,9 +512,10 @@ function GraphView() {
         // Refresh the structure
         queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Paste error:', err)
-      showNotification('Failed to paste', 'error')
+      const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to paste'
+      showNotification(msg.substring(0, 60), 'error')
     }
   }
 
@@ -754,10 +775,11 @@ function GraphView() {
     try {
       await reorderItem.mutateAsync({ path: itemToReorder, targetIndex })
       showNotification('Reordered!')
-    } catch (err) {
+    } catch (err: any) {
       // Rollback on error - reset to server order
       setLocalOrder(serverKeys)
-      showNotification('Failed to reorder', 'error')
+      const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to reorder'
+      showNotification(msg.substring(0, 60), 'error')
     }
   }
 
@@ -812,7 +834,7 @@ function GraphView() {
 
   return (
     <>
-      <div className="top-buttons">
+      <div className="top-buttons" style={{ opacity: isScrolledToBottom ? 0.1 : 1, transition: 'opacity 0.3s' }}>
         <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
           {theme === 'light' ? '🌙' : '☀️'}
         </button>
@@ -834,7 +856,7 @@ function GraphView() {
         </nav>
 
         {/* Sections - rendered in local order for instant drag feedback */}
-        {displayOrder.map((key, index) => {
+        {displayOrder.filter(k => k !== 'time' && k !== 'progress').map((key, index) => {
           const item = displayItems[key]
           if (!item) return null
           const itemPath = path ? `${path}.${key}` : key
@@ -886,23 +908,46 @@ function GraphView() {
           )
         })}
 
-        {displayOrder.length === 0 && (
+        {displayOrder.filter(k => k !== 'time' && k !== 'progress').length === 0 && (
           <div className="empty-state">No items at this level</div>
         )}
 
         {/* Add New Item Button - hide in virtual views */}
         {!isVirtualView && (
-          <div className="add-item-container">
-            <button className="add-item-btn" onClick={handleAddClick}>
-              + Add New Item
-            </button>
-            <button 
-              className="paste-item-btn" 
-              onClick={handlePasteItem}
-              title="Paste item from clipboard"
-            />
+          <div className="add-item-split">
+            <span className="split-zone" onClick={handleAddClick} title="Add new item">
+              <span className="split-icon">+</span>
+              <span>New</span>
+            </span>
+            <span className="split-divider" />
+            <span className="split-zone" onClick={handlePasteItem} title="Paste from clipboard">
+              <span>Paste</span>
+              <span className="split-icon paste-icon" />
+            </span>
           </div>
         )}
+
+        {/* Time and Progress cards - always last */}
+        {['time', 'progress'].map((virtualKey) => {
+          const item = displayItems[virtualKey]
+          if (!item) return null
+          const virtualIndex = displayOrder.indexOf(virtualKey)
+          return (
+            <div key={virtualKey} className="section-wrapper">
+              <Section
+                itemKey={virtualKey}
+                item={item as StructureItem}
+                parentPath={path || ''}
+                colorIndex={virtualIndex >= 0 ? virtualIndex % COLORS.length : 0}
+                onItemClick={handleItemClick}
+                onEditClick={handleEditClick}
+                onCopyClick={handleCopyItem}
+                isPending={false}
+                isTimeView={true}
+              />
+            </div>
+          )
+        })}
       </div>
 
       {/* Edit/Create Modal */}

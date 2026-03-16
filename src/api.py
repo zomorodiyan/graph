@@ -20,6 +20,84 @@ from hierarchy_builder import HierarchyBuilder
 from html_generator import HTMLGenerator
 from google_drive import download_structure_yaml, upload_structure_yaml
 from structures_manager import StructuresManager
+from simple_parser import SimpleParser
+
+
+# ============================================================================
+# LIMITS AND CONSTRAINTS
+# ============================================================================
+MAX_ITEMS_PER_GRAPH = 1000       # Maximum total items in a single graph
+MAX_NESTING_DEPTH = 20          # Maximum depth of nested items
+MAX_CHILDREN_PER_ITEM = 200     # Maximum children under one parent
+MAX_PASTE_CONTENT_SIZE = 102400 # Maximum paste content size (100KB)
+MAX_GRAPHS_TOTAL = 50           # Maximum number of graphs
+MAX_ITEM_NAME_LENGTH = 100      # Maximum item name length
+MAX_CONTEXT_LENGTH = 10000      # Maximum context/description length
+
+
+def count_items(data: dict, depth: int = 0) -> tuple[int, int]:
+    """Count total items and max depth in a structure.
+    Returns (total_count, max_depth)."""
+    if not isinstance(data, dict):
+        return 0, depth
+    
+    total = 0
+    max_depth = depth
+    
+    for key, value in data.items():
+        if key in ('id', 'title', 'progress', 'context', 'due', 'icon', 'description'):
+            continue  # Skip metadata fields
+        total += 1
+        if isinstance(value, dict):
+            children = value.get('children', value)
+            if isinstance(children, dict):
+                child_count, child_depth = count_items(children, depth + 1)
+                total += child_count
+                max_depth = max(max_depth, child_depth)
+    
+    return total, max_depth
+
+
+def validate_graph_limits(structure: dict, adding: int = 0, new_depth: int = 0) -> None:
+    """Validate that a graph doesn't exceed limits. Raises HTTPException if it does."""
+    current_count, current_depth = count_items(structure)
+    
+    if current_count + adding > MAX_ITEMS_PER_GRAPH:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Graph would exceed maximum items limit ({MAX_ITEMS_PER_GRAPH}). Current: {current_count}, Adding: {adding}"
+        )
+    
+    if max(current_depth, new_depth) > MAX_NESTING_DEPTH:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Graph would exceed maximum nesting depth ({MAX_NESTING_DEPTH})"
+        )
+
+
+def validate_children_limit(parent_children: dict) -> None:
+    """Validate that a parent doesn't have too many children."""
+    child_count = sum(1 for k in parent_children.keys() 
+                      if k not in ('id', 'title', 'progress', 'context', 'due', 'icon', 'description', 'children'))
+    if child_count >= MAX_CHILDREN_PER_ITEM:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Parent would exceed maximum children limit ({MAX_CHILDREN_PER_ITEM})"
+        )
+
+
+def validate_item_content(name: str = None, context: str = None) -> None:
+    """Validate item name and context lengths."""
+    if name and len(name) > MAX_ITEM_NAME_LENGTH:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Item name exceeds maximum length ({MAX_ITEM_NAME_LENGTH} chars)"
+        )
+    if context and len(context) > MAX_CONTEXT_LENGTH:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Context exceeds maximum length ({MAX_CONTEXT_LENGTH} chars)"
+        )
 
 
 app = FastAPI(title="Hierarchical Graph API", version="1.0")
@@ -85,7 +163,31 @@ async def list_graphs():
 async def create_graph(data: StructureCreate):
     """Create a new graph/structure."""
     try:
+        # Check max graphs limit
+        existing_graphs = structures_manager.list_structures()
+        if len(existing_graphs) >= MAX_GRAPHS_TOTAL:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Maximum number of graphs ({MAX_GRAPHS_TOTAL}) reached"
+            )
+        
+        # Validate name length
+        if len(data.name) > MAX_ITEM_NAME_LENGTH:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Graph name exceeds maximum length ({MAX_ITEM_NAME_LENGTH} chars)"
+            )
+        
+        # Validate initial content size if provided
+        if data.initial_content and len(data.initial_content) > MAX_PASTE_CONTENT_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Initial content exceeds maximum size ({MAX_PASTE_CONTENT_SIZE // 1024}KB)"
+            )
+        
         return structures_manager.create_structure(data.name, data.description, data.initial_content)
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -678,7 +780,13 @@ async def create_item(parent_path: str, item: ItemCreate):
         print(f"DEBUG: Creating item under parent_path: '{parent_path}'")
         print(f"DEBUG: Item data: {item}")
         
+        # Validate item content
+        validate_item_content(name=item.name, context=item.context)
+        
         data = file_utils.load_yaml_structure()
+        
+        # Validate graph limits
+        validate_graph_limits(data.get('structure', {}), adding=1, new_depth=len(path_to_keys(parent_path)) + 1)
         
         # Handle special cases: empty path, "root", or "home" all mean add to top-level structure
         if parent_path in ("", "root", "home"):
@@ -772,6 +880,13 @@ async def paste_item(parent_path: str, data: PasteContent):
     try:
         print(f"DEBUG: Pasting content under parent_path: '{parent_path}'")
         
+        # Validate paste content size
+        if len(data.content) > MAX_PASTE_CONTENT_SIZE:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Paste content exceeds maximum size ({MAX_PASTE_CONTENT_SIZE // 1024}KB)"
+            )
+        
         structure_data = file_utils.load_yaml_structure()
         
         # Handle special cases: empty path, "root", or "home" all mean add to top-level structure
@@ -804,6 +919,11 @@ async def paste_item(parent_path: str, data: PasteContent):
         
         if 'structure' not in parsed or not parsed['structure']:
             raise HTTPException(status_code=400, detail="Could not parse pasted content")
+        
+        # Count items being pasted and validate
+        new_items_count, new_depth = count_items(parsed['structure'])
+        validate_graph_limits(structure_data.get('structure', {}), adding=new_items_count, new_depth=len(keys) + new_depth + 1)
+        validate_children_limit(parent_container)
         
         # Add parsed items to parent container
         added_items = []
@@ -974,75 +1094,19 @@ async def update_graph_item(graph_name: str, path: str, request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/graphs/{graph_name}/items/{parent_path:path}")
-async def create_graph_item(graph_name: str, parent_path: str, item: ItemCreate):
-    """Create a new item under a parent in a specific graph."""
-    try:
-        fu = get_file_utils_for_graph(graph_name)
-        print(f"DEBUG: Creating item under parent_path: '{parent_path}' in graph: {graph_name}")
-        
-        data = fu.load_yaml_structure()
-        
-        if parent_path in ("", "root", "home"):
-            keys = []
-        else:
-            keys = path_to_keys(parent_path)
-
-        if not keys:
-            parent_children = data.get('structure', {})
-        else:
-            parent, parent_key, parent_value = find_item(data['structure'], keys)
-            if parent is None:
-                raise HTTPException(status_code=404, detail=f"Parent not found: {parent_path}")
-            
-            if not isinstance(parent_value, dict):
-                parent_value = {}
-                parent[parent_key] = parent_value
-            
-            parent_children = parent_value
-
-        new_name = item.name.lower().replace(' ', '_')
-        
-        if new_name in parent_children:
-            raise HTTPException(status_code=400, detail=f"Item '{new_name}' already exists under this parent")
-
-        new_item = {}
-        if item.progress is not None:
-            new_item['progress'] = item.progress
-        if item.context:
-            new_item['context'] = item.context
-        if item.due:
-            new_item['due'] = item.due
-        
-        parent_children[new_name] = new_item
-        
-        data_to_save = _clean_structure_for_save(data)
-        fu.save_structure(data_to_save)
-        
-        if not parent_path or parent_path in ("root", "home"):
-            new_path = new_name
-        else:
-            new_path = f"{parent_path}.{new_name}"
-        
-        return {
-            "success": True,
-            "path": new_path,
-            "created": new_item
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @app.post("/api/graphs/{graph_name}/items/{parent_path:path}/paste")
 async def paste_graph_item(graph_name: str, parent_path: str, data: PasteContent):
     """Paste content from clipboard, creating items under the specified parent in a specific graph."""
     try:
         fu = get_file_utils_for_graph(graph_name)
         print(f"DEBUG: Pasting content under parent_path: '{parent_path}' in graph: {graph_name}")
+        
+        # Validate paste content size
+        if len(data.content) > MAX_PASTE_CONTENT_SIZE:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Paste content exceeds maximum size ({MAX_PASTE_CONTENT_SIZE // 1024}KB)"
+            )
         
         structure_data = fu.load_yaml_structure()
         
@@ -1075,6 +1139,11 @@ async def paste_graph_item(graph_name: str, parent_path: str, data: PasteContent
         if 'structure' not in parsed or not parsed['structure']:
             raise HTTPException(status_code=400, detail="Could not parse pasted content")
         
+        # Count items being pasted and validate
+        new_items_count, new_depth = count_items(parsed['structure'])
+        validate_graph_limits(structure_data.get('structure', {}), adding=new_items_count, new_depth=len(keys) + new_depth + 1)
+        validate_children_limit(parent_container)
+        
         added_items = []
         for item_key, item_value in parsed['structure'].items():
             if item_key in ['id', 'title', 'children']:
@@ -1097,38 +1166,6 @@ async def paste_graph_item(graph_name: str, parent_path: str, data: PasteContent
             "success": True,
             "added": added_items,
             "parent_path": parent_path
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.delete("/api/graphs/{graph_name}/items/{path:path}")
-async def delete_graph_item(graph_name: str, path: str):
-    """Delete an item from a specific graph."""
-    try:
-        fu = get_file_utils_for_graph(graph_name)
-        print(f"DEBUG: Deleting item at path: {path} in graph: {graph_name}")
-        
-        data = fu.load_yaml_structure()
-        keys = path_to_keys(path)
-        
-        parent, item_key, item_value = find_item(data['structure'], keys)
-        
-        if parent is None:
-            raise HTTPException(status_code=404, detail=f"Item not found: {path}")
-        
-        del parent[item_key]
-        
-        data_to_save = _clean_structure_for_save(data)
-        fu.save_structure(data_to_save)
-        
-        return {
-            "success": True,
-            "deleted": path
         }
     except HTTPException:
         raise
@@ -1197,6 +1234,107 @@ async def reorder_graph_item(graph_name: str, path: str, body: dict = Body(...))
             "success": True,
             "path": path,
             "new_position": target_index
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/graphs/{graph_name}/items/{parent_path:path}")
+async def create_graph_item(graph_name: str, parent_path: str, item: ItemCreate):
+    """Create a new item under a parent in a specific graph."""
+    try:
+        fu = get_file_utils_for_graph(graph_name)
+        print(f"DEBUG: Creating item under parent_path: '{parent_path}' in graph: {graph_name}")
+        
+        # Validate item content
+        validate_item_content(name=item.name, context=item.context)
+        
+        data = fu.load_yaml_structure()
+        
+        # Validate graph limits
+        if parent_path in ("", "root", "home"):
+            keys = []
+        else:
+            keys = path_to_keys(parent_path)
+        
+        validate_graph_limits(data.get('structure', {}), adding=1, new_depth=len(keys) + 1)
+
+        if not keys:
+            parent_children = data.get('structure', {})
+        else:
+            parent, parent_key, parent_value = find_item(data['structure'], keys)
+            if parent is None:
+                raise HTTPException(status_code=404, detail=f"Parent not found: {parent_path}")
+            
+            if not isinstance(parent_value, dict):
+                parent_value = {}
+                parent[parent_key] = parent_value
+            
+            parent_children = parent_value
+
+        new_name = item.name.lower().replace(' ', '_')
+        
+        if new_name in parent_children:
+            raise HTTPException(status_code=400, detail=f"Item '{new_name}' already exists under this parent")
+
+        new_item = {}
+        if item.progress is not None:
+            new_item['progress'] = item.progress
+        if item.context:
+            new_item['context'] = item.context
+        if item.due:
+            new_item['due'] = item.due
+        
+        parent_children[new_name] = new_item
+        
+        data_to_save = _clean_structure_for_save(data)
+        fu.save_structure(data_to_save)
+        
+        if not parent_path or parent_path in ("root", "home"):
+            new_path = new_name
+        else:
+            new_path = f"{parent_path}.{new_name}"
+        
+        return {
+            "success": True,
+            "path": new_path,
+            "created": new_item
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/graphs/{graph_name}/items/{path:path}")
+async def delete_graph_item(graph_name: str, path: str):
+    """Delete an item from a specific graph."""
+    try:
+        fu = get_file_utils_for_graph(graph_name)
+        print(f"DEBUG: Deleting item at path: {path} in graph: {graph_name}")
+        
+        data = fu.load_yaml_structure()
+        keys = path_to_keys(path)
+        
+        parent, item_key, item_value = find_item(data['structure'], keys)
+        
+        if parent is None:
+            raise HTTPException(status_code=404, detail=f"Item not found: {path}")
+        
+        del parent[item_key]
+        
+        data_to_save = _clean_structure_for_save(data)
+        fu.save_structure(data_to_save)
+        
+        return {
+            "success": True,
+            "deleted": path
         }
     except HTTPException:
         raise

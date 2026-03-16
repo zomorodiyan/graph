@@ -193,19 +193,19 @@ function StructuresView() {
       {/* Graphs grid */}
       <div className="graphs-container">
         {/* Add new graph card */}
-        <div className="graph-card add-card">
+        <div 
+          className="graph-card add-card"
+          onClick={() => setShowCreateModal(true)}
+        >
           <span
             className="paste-handle"
-            onClick={handlePasteNewGraph}
-            title="Create from clipboard"
-          />
-          <button 
-            className="add-card-button"
-            onClick={() => setShowCreateModal(true)}
+            onClick={(e) => { e.stopPropagation(); handlePasteNewGraph(e); }}
+            title="Paste graph from clipboard"
           >
-            <div className="add-icon">+</div>
-            <span className="add-text">New Graph</span>
-          </button>
+            <span className="paste-handle-text">paste</span>
+          </span>
+          <div className="add-icon">+</div>
+          <span className="add-text">New Graph</span>
         </div>
 
         {/* Existing graphs */}

@@ -249,8 +249,9 @@
 /* Notification */
 .notification {
   position: fixed;
-  bottom: 1.25rem;
-  right: 1.25rem;
+  bottom: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
   padding: 0.75rem 1.25rem;
   background: var(--green-medium);
   color: white;
@@ -270,11 +271,11 @@
 
 @keyframes slideIn {
   from {
-    transform: translateY(100px);
+    transform: translateX(-50%) translateY(30px);
     opacity: 0;
   }
   to {
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
     opacity: 1;
   }
 }
@@ -501,27 +502,24 @@
   pointer-events: none;
 }
 
-.section-wrapper.pending .drag-handle {
-  visibility: hidden;
-}
-
-/* Add Item Button */
-.add-item-container {
+/* Add Item Split Button */
+.add-item-split {
   display: flex;
+  align-items: stretch;
   justify-content: center;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 1.25rem auto;
-  max-width: 20rem;
+  margin: 0.75rem auto;
+  background: var(--bg-secondary);
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
-.add-item-btn {
-  display: block;
+.split-zone {
+  display: flex;
   flex: 1;
-  padding: 0.75rem 1.5rem;
-  background: var(--bg-secondary);
-  border: 2px dashed var(--border-color);
-  border-radius: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
   color: var(--text-secondary);
   font-size: 1rem;
   font-weight: 500;
@@ -529,56 +527,39 @@
   transition: all 0.2s;
 }
 
-.add-item-btn:hover {
-  border-color: var(--blue-medium);
+.split-zone:hover {
+  background: rgba(102, 126, 234, 0.1);
   color: var(--blue-medium);
-  background: var(--bg-primary);
 }
 
-/* Paste item button - rectangle with + icon */
-.paste-item-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  background: var(--bg-secondary);
-  border: 2px dashed var(--border-color);
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
+.split-divider {
+  width: 1px;
+  background: var(--border-color);
+  margin: 0.5rem 0;
+}
+
+.split-icon {
+  font-size: 1.25rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.split-icon.paste-icon {
   position: relative;
-}
-
-.paste-item-btn:hover {
-  border-color: var(--blue-medium);
-  background: var(--bg-primary);
-}
-
-.paste-item-btn::before {
-  content: '';
   width: 0.875rem;
   height: 1rem;
-  border: 2px solid var(--text-secondary);
+}
+
+.split-icon.paste-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0.875rem;
+  height: 1rem;
+  border: 2px solid currentColor;
   border-radius: 2px;
   box-sizing: border-box;
-}
-
-.paste-item-btn::after {
-  content: '+';
-  position: absolute;
-  font-size: 0.6rem;
-  font-weight: bold;
-  line-height: 1;
-  color: var(--text-secondary);
-}
-
-.paste-item-btn:hover::before {
-  border-color: var(--blue-medium);
-}
-
-.paste-item-btn:hover::after {
-  color: var(--blue-medium);
 }
 
 /* Empty state */
