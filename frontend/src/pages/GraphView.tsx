@@ -651,6 +651,10 @@ function GraphView() {
           delete target[itemKey]
           target[normalizedNewName!] = { ...updatedItem, title: newName }
         } else {
+          // Update title if name was sent (even if key didn't change)
+          if (newName) {
+            updatedItem.title = newName
+          }
           target[itemKey] = updatedItem
         }
         

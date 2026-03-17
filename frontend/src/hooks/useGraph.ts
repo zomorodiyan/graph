@@ -253,13 +253,13 @@ function applyOptimisticUpdate(structure: any, path: string, data: UpdatePayload
   const finalKey = keys[keys.length - 1]
   if (current[finalKey]) {
     // Handle name change (rename)
-    if (data.name !== undefined && data.name !== '' && data.name !== finalKey) {
-      const newKey = data.name
+    const normalizedName = data.name ? data.name.toLowerCase().replace(/ /g, '_') : null
+    if (normalizedName && normalizedName !== finalKey) {
       // Preserve order by rebuilding the object
       const newCurrent: Record<string, any> = {}
       for (const key of Object.keys(current)) {
         if (key === finalKey) {
-          newCurrent[newKey] = current[finalKey]
+          newCurrent[normalizedName] = { ...current[finalKey], title: data.name }
         } else {
           newCurrent[key] = current[key]
         }
@@ -272,8 +272,12 @@ function applyOptimisticUpdate(structure: any, path: string, data: UpdatePayload
     }
     
     // Get the item (might have been renamed)
-    const itemKey = data.name && data.name !== finalKey ? data.name : finalKey
+    const itemKey = normalizedName && normalizedName !== finalKey ? normalizedName : finalKey
     const item = current[itemKey]
+    
+    if (item && data.name !== undefined) {
+      item.title = data.name
+    }
     
     if (item) {
       if (data.progress !== undefined && data.progress !== '') {
