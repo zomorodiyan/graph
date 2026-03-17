@@ -37,6 +37,8 @@ class SimpleParser:
             indent = len(line) - len(line.lstrip())
             
             # Parse the line
+            # Known metadata properties that can have empty values
+            metadata_props = {'description', 'display_name', 'icon', 'version'}
             if ':' in line and not line.strip().endswith(':'):
                 # Property line (e.g., "progress: 80" or "context: some text")
                 key, value = [part.strip() for part in stripped.split(':', 1)]
@@ -50,6 +52,21 @@ class SimpleParser:
                 # Add to current parent
                 current_parent = SimpleParser._find_parent(stack, indent)
                 current_parent[key] = value
+            elif ':' in line and line.strip().endswith(':'):
+                key = stripped.rstrip(':')
+                if key in metadata_props:
+                    # Empty metadata property - store as empty string
+                    current_parent = SimpleParser._find_parent(stack, indent)
+                    current_parent[key] = ''
+                else:
+                    # Item line (hierarchy node)
+                    item_name = key
+                    new_item = {}
+                    current_parent = SimpleParser._find_parent(stack, indent)
+                    current_parent[item_name] = new_item
+                    stack.append((new_item, indent))
+                    while len(stack) > 1 and stack[-2][1] >= indent:
+                        stack.pop(-2)
             else:
                 # Item line (hierarchy node)
                 # Remove trailing colon if present for YAML compatibility
