@@ -818,7 +818,7 @@ function GraphView() {
 
   return (
     <>
-      <div className="top-buttons" style={{ opacity: 0.5 }}>
+      <div className="top-buttons">
         <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
           {theme === 'light' ? '🌙' : '☀️'}
         </button>

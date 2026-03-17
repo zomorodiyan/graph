@@ -229,7 +229,6 @@ function StructuresView() {
             >
               ☰
             </span>
-            <div className="graph-icon">{graph.icon || getIconForGraph(graph.name)}</div>
             <h3 className="graph-name">{graph.display_name}</h3>
             {graph.description && (
               <p className="graph-description">{graph.description}</p>
@@ -303,17 +302,6 @@ function StructuresView() {
         <div className="modal-overlay" onClick={() => setEditingGraph(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Edit Graph</h2>
-            <div className="form-group">
-              <label htmlFor="edit-icon">Icon</label>
-              <input
-                id="edit-icon"
-                type="text"
-                value={editIcon}
-                onChange={(e) => setEditIcon(e.target.value)}
-                placeholder="📊"
-                className="emoji-input"
-              />
-            </div>
             <div className="form-group">
               <label htmlFor="edit-name">Name</label>
               <input

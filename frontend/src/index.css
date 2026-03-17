@@ -8,21 +8,25 @@
   
   /* Theme colors */
   --green-light: #A5D6A7;
+  --green-lighter: #C8E6C9;
   --green-medium: #388E3C;
   --green-dark: #1B5E20;
   --green-darker: #143D17;
   
   --blue-light: #90CAF9;
+  --blue-lighter: #BBDEFB;
   --blue-medium: #1976D2;
   --blue-dark: #0D47A1;
   --blue-darker: #093578;
   
   --purple-light: #B39DDB;
+  --purple-lighter: #D1C4E9;
   --purple-medium: #7E57C2;
   --purple-dark: #4527A0;
   --purple-darker: #331B78;
   
   --brown-light: #BCAAA4;
+  --brown-lighter: #D7CCC8;
   --brown-medium: #795548;
   --brown-dark: #5D4037;
   --brown-darker: #46302A;
