@@ -392,11 +392,34 @@ function GraphView() {
     setLocalItems(null)
   }, [path])
   
-  // The display order: use local order if available, otherwise server order
-  const displayOrder = localOrder || serverKeys
-  
   // The display items: use local items if available, otherwise raw items from server
-  const displayItems = localItems || rawItems
+  // At root level, always overlay the virtual time/progress sections from rawItems
+  // so they update reactively when items gain/lose due dates or progress values
+  const displayItems = useMemo(() => {
+    const base = localItems || rawItems
+    if (!path && localItems) {
+      const merged = { ...localItems }
+      delete merged.time
+      delete merged.progress
+      if (rawItems.time) merged.time = rawItems.time
+      if (rawItems.progress) merged.progress = rawItems.progress
+      return merged
+    }
+    return base
+  }, [localItems, rawItems, path])
+
+  // The display order: use local order if available, otherwise server order
+  // At root level, ensure virtual time/progress keys are included
+  const displayOrder = useMemo(() => {
+    const order = localOrder || serverKeys
+    if (!path && localItems) {
+      const result = order.filter(k => k !== 'time' && k !== 'progress')
+      if (rawItems.time) result.push('time')
+      if (rawItems.progress) result.push('progress')
+      return result
+    }
+    return order
+  }, [localOrder, serverKeys, path, localItems, rawItems])
 
   // Helper to build URL paths with optional graph prefix
   const buildPath = (itemPath: string) => {
