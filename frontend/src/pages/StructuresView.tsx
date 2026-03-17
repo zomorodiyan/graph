@@ -208,9 +208,7 @@ function StructuresView() {
             className="paste-handle"
             onClick={(e) => { e.stopPropagation(); handlePasteNewGraph(e); }}
             title="Paste graph from clipboard"
-          >
-            <span className="paste-handle-text">paste</span>
-          </span>
+          />
           <div className="add-content">
             <span className="add-icon">+</span>
             <span className="add-text">New Graph</span>
