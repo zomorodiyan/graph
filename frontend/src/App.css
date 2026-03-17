@@ -96,6 +96,12 @@
   gap: 0.25rem;
 }
 
+.layer2-section.layer2-flat {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .layer2-container {
   display: flex;
   flex-direction: row;

@@ -77,6 +77,11 @@ function Section({
   const children = item.children || {}
   const childEntries = Object.entries(children)
 
+  // Check if any level 2 child has its own children (level 3 items)
+  const hasAnyGrandchildren = childEntries.some(
+    ([, child]) => !!(child as StructureItem).children && Object.keys((child as StructureItem).children!).length > 0
+  )
+
   return (
     <div className="section">
       {/* Copy button at top-right */}
@@ -137,7 +142,7 @@ function Section({
       </div>
 
       {/* Layer 2 - Subcategories */}
-      <div className="layer2-section">
+      <div className={`layer2-section${!hasAnyGrandchildren && childEntries.length > 0 ? ' layer2-flat' : ''}`}>
         {childEntries.map(([childKey, childItem]) => {
           const childPath = `${itemPath}.${childKey}`
           const childTitle = (childItem as StructureItem).title || childKey
