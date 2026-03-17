@@ -143,19 +143,20 @@ function Section({
 
       {/* Layer 2 - Subcategories */}
       <div className={`layer2-section${!hasAnyGrandchildren && childEntries.length > 0 ? ' layer2-flat' : ''}`}>
-        {childEntries.map(([childKey, childItem]) => {
+        {childEntries.map(([childKey, childItem], childIndex) => {
           const childPath = `${itemPath}.${childKey}`
           const childTitle = (childItem as StructureItem).title || childKey
           const childHasChildren = !!(childItem as StructureItem).children
           const grandchildren = (childItem as StructureItem).children || {}
           // Check if this child item is editable
           const childEditable = showEditButton && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
+          const childColor = childIndex % 2 === 0 ? `color-${color}` : `color-${color}-alt`
 
           return (
             <div key={childKey} className="layer2-container">
               <div className="layer2-content">
                 <div className="layer2-wrapper">
-                  <div className={`layer2 color-${color} ${childEditable ? 'split-button' : ''}`}>
+                  <div className={`layer2 ${childColor} ${childEditable ? 'split-button' : ''}`}>
                     {childEditable && (
                       <div
                         className="split-left"
@@ -206,7 +207,7 @@ function Section({
                     return (
                       <div key={grandKey}>
                         <div className="layer3-wrapper">
-                          <div className={`layer3-item color-${color} ${grandEditable ? 'split-button' : ''}`}>
+                          <div className={`layer3-item ${childColor} ${grandEditable ? 'split-button' : ''}`}>
                             {grandEditable && (
                               <div
                                 className="split-left"

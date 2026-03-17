@@ -10,18 +10,27 @@
   --green-light: #A5D6A7;
   --green-medium: #388E3C;
   --green-dark: #1B5E20;
+  --green-darker: #143D17;
   
   --blue-light: #90CAF9;
   --blue-medium: #1976D2;
   --blue-dark: #0D47A1;
+  --blue-darker: #093578;
   
   --purple-light: #B39DDB;
   --purple-medium: #7E57C2;
   --purple-dark: #4527A0;
+  --purple-darker: #331B78;
   
   --brown-light: #BCAAA4;
   --brown-medium: #795548;
   --brown-dark: #5D4037;
+  --brown-darker: #46302A;
+  
+  --green-light-alt: #81C784;
+  --blue-light-alt: #64B5F6;
+  --purple-light-alt: #9575CD;
+  --brown-light-alt: #A1887F;
 }
 
 [data-theme='dark'] {

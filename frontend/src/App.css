@@ -227,10 +227,20 @@
 .color-purple { color: var(--purple-dark); }
 .color-brown { color: var(--brown-dark); }
 
+.color-green-alt { color: var(--green-darker); }
+.color-blue-alt { color: var(--blue-darker); }
+.color-purple-alt { color: var(--purple-darker); }
+.color-brown-alt { color: var(--brown-darker); }
+
 [data-theme='dark'] .color-green { color: var(--green-light); }
 [data-theme='dark'] .color-blue { color: var(--blue-light); }
 [data-theme='dark'] .color-purple { color: var(--purple-light); }
 [data-theme='dark'] .color-brown { color: var(--brown-light); }
+
+[data-theme='dark'] .color-green-alt { color: var(--green-light-alt); }
+[data-theme='dark'] .color-blue-alt { color: var(--blue-light-alt); }
+[data-theme='dark'] .color-purple-alt { color: var(--purple-light-alt); }
+[data-theme='dark'] .color-brown-alt { color: var(--brown-light-alt); }
 
 .bg-green { background-color: var(--green-light); }
 .bg-blue { background-color: var(--blue-light); }
