@@ -211,12 +211,18 @@ function StructuresView() {
           >
             <span className="paste-handle-text">paste</span>
           </span>
-          <div className="add-icon">+</div>
-          <span className="add-text">New Graph</span>
+          <div className="add-content">
+            <span className="add-icon">+</span>
+            <span className="add-text">New Graph</span>
+          </div>
         </div>
 
         {/* Existing graphs */}
-        {graphs.map((graph) => (
+        {graphs.map((graph, index) => {
+          const COLORS = ['green', 'blue', 'purple', 'brown']
+          const color = COLORS[index % COLORS.length]
+          const colorClass = index % 2 === 0 ? `color-${color}-alt` : `color-${color}`
+          return (
           <div
             key={graph.name}
             className="graph-card"
@@ -229,7 +235,7 @@ function StructuresView() {
             >
               ☰
             </span>
-            <h3 className="graph-name">{graph.display_name}</h3>
+            <h3 className={`graph-name ${colorClass}`}>{graph.display_name}</h3>
             {graph.description && (
               <p className="graph-description">{graph.description}</p>
             )}
@@ -239,7 +245,8 @@ function StructuresView() {
               title="Copy structure"
             />
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Empty state */}

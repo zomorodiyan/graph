@@ -131,6 +131,8 @@
   border: 2px dashed var(--border-color);
   background: transparent;
   cursor: pointer;
+  min-height: auto;
+  justify-content: center;
 }
 
 .add-card:hover {
@@ -139,12 +141,17 @@
   transform: translateY(-0.25rem);
 }
 
+.add-card .add-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .add-card .add-icon {
-  font-size: 3rem;
+  font-size: 2rem;
   color: #667eea;
   font-weight: 300;
   line-height: 1;
-  margin-bottom: 0.75rem;
 }
 
 .add-card .add-text {
