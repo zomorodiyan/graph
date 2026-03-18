@@ -78,6 +78,10 @@
   color: var(--text-secondary);
   margin: 0 0 auto;
   line-height: 1.4;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .graph-meta {
