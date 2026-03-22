@@ -58,20 +58,29 @@ function GraphView() {
   // Track items that are being synced (pending) - these show loading and can't be dragged
   const [pendingItems, setPendingItems] = useState<Set<string>>(new Set())
   
-  // Modal state - now supports both edit and create modes
+  // Create modal state
   const [modalState, setModalState] = useState<{
-    mode: 'edit' | 'create'
+    mode: 'create'
     path: string
     name: string
     data: StructureItem
   } | null>(null)
+
+  // Inline edit state for item editing
+  const [inlineEdit, setInlineEdit] = useState<{ path: string } | null>(null)
   
   const [notification, setNotification] = useState<{
     message: string
     type: 'success' | 'error' | 'syncing'
   } | null>(null)
 
-  useModalBackButton(Boolean(modalState), () => setModalState(null))
+  useModalBackButton(Boolean(modalState) || Boolean(inlineEdit), () => {
+    if (inlineEdit) {
+      setInlineEdit(null)
+      return
+    }
+    setModalState(null)
+  })
 
   // Show notification helper
   const showNotification = (message: string, type: 'success' | 'error' | 'syncing' = 'success') => {
@@ -487,8 +496,8 @@ function GraphView() {
   }
 
   // Handle edit click
-  const handleEditClick = (itemPath: string, name: string, data: StructureItem) => {
-    setModalState({ mode: 'edit', path: itemPath, name, data })
+  const handleEditClick = (itemPath: string, _name: string, _data: StructureItem) => {
+    setInlineEdit({ path: itemPath })
   }
 
   // Handle add new item click
@@ -526,64 +535,66 @@ function GraphView() {
     }
   }
 
-  // Handle save (edit or create) - uses local state for instant feedback
-  const handleSave = (data: UpdatePayload) => {
+  // Handle create save from modal - uses local state for instant feedback
+  const handleCreateSave = (data: UpdatePayload) => {
     if (!modalState) return
-    
-    const { mode, path: itemPath } = modalState
-    
+
+    const itemPath = modalState.path
+
     // Close modal immediately
     setModalState(null)
-    
-    if (mode === 'create') {
-      // IMMEDIATELY update local state for instant visual feedback (like handleDrop)
-      if (data.name) {
-        // Normalize name the same way the server does
-        const normalizedName = data.name.toLowerCase().replace(/ /g, '_')
-        
-        const newItem: StructureItem = {
-          title: data.name,
-          ...(typeof data.progress === 'number' && { progress: data.progress }),
-          ...(data.context && { context: data.context }),
-          ...(data.due && { due: data.due }),
-        }
-        
-        // Use callback pattern to avoid stale closure
-        setLocalItems(prev => prev ? { ...prev, [normalizedName]: newItem } : { [normalizedName]: newItem })
-        setLocalOrder(prev => prev ? [...prev, normalizedName] : [normalizedName])
-        
-        // Mark as pending with normalized path
-        const newItemPath = itemPath ? `${itemPath}.${normalizedName}` : normalizedName
-        setPendingItems(prev => new Set(prev).add(newItemPath))
-      
-        // Then sync to server in background
-        createItem.mutate(
-          { parentPath: itemPath, data },
-          {
-            onSuccess: () => showNotification('Created!'),
-            onError: () => {
-              showNotification('Failed to create', 'error')
-              // On error, remove from local state since it wasn't created
-              setLocalItems(prev => {
-                if (!prev) return prev
-                const newItems = { ...prev }
-                delete newItems[normalizedName]
-                return newItems
-              })
-              setLocalOrder(prev => prev ? prev.filter(k => k !== normalizedName) : prev)
-            },
-            onSettled: () => {
-              // Clear pending status - item can now be dragged
-              setPendingItems(prev => {
-                const next = new Set(prev)
-                next.delete(newItemPath)
-                return next
-              })
-            }
-          }
-        )
+
+    // IMMEDIATELY update local state for instant visual feedback (like handleDrop)
+    if (data.name) {
+      // Normalize name the same way the server does
+      const normalizedName = data.name.toLowerCase().replace(/ /g, '_')
+
+      const newItem: StructureItem = {
+        title: data.name,
+        ...(typeof data.progress === 'number' && { progress: data.progress }),
+        ...(data.context && { context: data.context }),
+        ...(data.due && { due: data.due }),
       }
-    } else {
+
+      // Use callback pattern to avoid stale closure
+      setLocalItems(prev => prev ? { ...prev, [normalizedName]: newItem } : { [normalizedName]: newItem })
+      setLocalOrder(prev => prev ? [...prev, normalizedName] : [normalizedName])
+
+      // Mark as pending with normalized path
+      const newItemPath = itemPath ? `${itemPath}.${normalizedName}` : normalizedName
+      setPendingItems(prev => new Set(prev).add(newItemPath))
+
+      // Then sync to server in background
+      createItem.mutate(
+        { parentPath: itemPath, data },
+        {
+          onSuccess: () => showNotification('Created!'),
+          onError: () => {
+            showNotification('Failed to create', 'error')
+            // On error, remove from local state since it wasn't created
+            setLocalItems(prev => {
+              if (!prev) return prev
+              const newItems = { ...prev }
+              delete newItems[normalizedName]
+              return newItems
+            })
+            setLocalOrder(prev => prev ? prev.filter(k => k !== normalizedName) : prev)
+          },
+          onSettled: () => {
+            // Clear pending status - item can now be dragged
+            setPendingItems(prev => {
+              const next = new Set(prev)
+              next.delete(newItemPath)
+              return next
+            })
+          }
+        }
+      )
+    }
+  }
+
+  // Apply edit mutation with optimistic local update
+  const applyEdit = (itemPath: string, data: UpdatePayload) => {
       // Get the path parts to determine nesting level
       const pathParts = itemPath.split('.')
       const currentPathParts = path ? path.split('.') : []
@@ -687,23 +698,25 @@ function GraphView() {
           }
         }
       )
-    }
+  }
+
+  // Handle inline save - saves when fields changed, otherwise cancels
+  const handleInlineSave = (itemPath: string, data: UpdatePayload) => {
+    const hasChanges = Object.keys(data).length > 0
+    setInlineEdit(null)
+    if (!hasChanges) return
+    applyEdit(itemPath, data)
   }
 
   // Handle delete - uses local state for instant feedback (like handleDrop)
-  const handleDelete = () => {
-    if (!modalState || modalState.mode !== 'edit') return
-    
-    const pathToDelete = modalState.path
+  const handleDelete = (pathToDelete: string) => {
+    setInlineEdit(null)
     const pathParts = pathToDelete.split('.')
     const currentPathParts = path ? path.split('.') : []
     
     // Calculate relative path from current view
     const relativeParts = pathParts.slice(currentPathParts.length)
     const itemKey = relativeParts[relativeParts.length - 1]
-    
-    // Close modal immediately
-    setModalState(null)
     
     // IMMEDIATELY update local state for instant visual feedback
     setLocalItems(prev => {
@@ -872,7 +885,7 @@ function GraphView() {
           if (!item) return null
           const itemPath = path ? `${path}.${key}` : key
           const isPending = pendingItems.has(itemPath)
-          const canDrag = !isPending && !isVirtualView
+          const canDrag = !isPending && !isVirtualView && !inlineEdit
           
           return (
             <div
@@ -891,7 +904,9 @@ function GraphView() {
                   target.classList.contains('split-left') ||
                   target.classList.contains('split-right') ||
                   target.tagName === 'BUTTON' ||
-                  target.tagName === 'A'
+                  target.tagName === 'A' ||
+                  target.tagName === 'INPUT' ||
+                  target.tagName === 'TEXTAREA'
                 ) {
                   e.preventDefault()
                   return
@@ -911,6 +926,10 @@ function GraphView() {
                 colorIndex={index % COLORS.length}
                 onItemClick={handleItemClick}
                 onEditClick={handleEditClick}
+                editingPath={inlineEdit?.path || null}
+                onInlineSave={handleInlineSave}
+                onInlineCancel={() => setInlineEdit(null)}
+                onInlineDelete={handleDelete}
                 onCopyClick={handleCopyItem}
                 isPending={isPending}
                 isTimeView={isVirtualView}
@@ -952,6 +971,10 @@ function GraphView() {
                 colorIndex={virtualIndex >= 0 ? virtualIndex % COLORS.length : 0}
                 onItemClick={handleItemClick}
                 onEditClick={handleEditClick}
+                editingPath={inlineEdit?.path || null}
+                onInlineSave={handleInlineSave}
+                onInlineCancel={() => setInlineEdit(null)}
+                onInlineDelete={handleDelete}
                 onCopyClick={handleCopyItem}
                 isPending={false}
                 isTimeView={true}
@@ -966,11 +989,11 @@ function GraphView() {
         <EditModal
           name={modalState.name}
           data={modalState.data}
-          onSave={handleSave}
-          onDelete={modalState.mode === 'edit' ? handleDelete : undefined}
+          onSave={handleCreateSave}
+          onDelete={undefined}
           onClose={() => setModalState(null)}
           isSaving={updateItem.isPending || createItem.isPending}
-          mode={modalState.mode}
+          mode="create"
         />
       )}
 

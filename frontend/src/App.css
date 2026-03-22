@@ -519,6 +519,81 @@
   pointer-events: none;
 }
 
+/* Inline item editing */
+.inline-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  min-width: 12rem;
+  padding: 0.35rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--bg-secondary);
+}
+
+.inline-edit-title,
+.inline-edit-small,
+.inline-edit-context {
+  border: 1px solid var(--border-color);
+  border-radius: 0.4rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 0.35rem 0.5rem;
+  box-sizing: border-box;
+}
+
+.inline-edit-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.inline-edit-title:focus,
+.inline-edit-small:focus,
+.inline-edit-context:focus {
+  outline: none;
+  border-color: var(--blue-medium);
+}
+
+.inline-edit-optional {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  opacity: 0.72;
+}
+
+.inline-edit-small {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.inline-edit-context {
+  font-size: 0.8rem;
+  min-height: 3.25rem;
+  color: var(--text-secondary);
+  resize: vertical;
+}
+
+.inline-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.inline-edit-delete {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 0.4rem;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.45rem;
+  cursor: pointer;
+}
+
+.inline-edit-delete:hover {
+  color: #c62828;
+  border-color: #c62828;
+}
+
 /* Add Item Split Button */
 .add-item-split {
   display: flex;
@@ -591,6 +666,14 @@
 @media (max-width: 600px) {
   .section {
     flex-direction: column;
+  }
+
+  .inline-edit {
+    min-width: 0;
+  }
+
+  .inline-edit-optional {
+    grid-template-columns: 1fr;
   }
   
   .layer1-container {

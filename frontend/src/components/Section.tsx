@@ -1,4 +1,5 @@
-import { StructureItem } from '../api/client'
+import { StructureItem, UpdatePayload } from '../api/client'
+import InlineItemEditor from './InlineItemEditor'
 
 const COLORS = ['green', 'blue', 'purple', 'brown']
 
@@ -9,6 +10,10 @@ interface SectionProps {
   colorIndex: number
   onItemClick: (path: string, hasChildren: boolean) => void
   onEditClick: (path: string, name: string, data: StructureItem) => void
+  editingPath?: string | null
+  onInlineSave?: (path: string, data: UpdatePayload) => void
+  onInlineCancel?: () => void
+  onInlineDelete?: (path: string) => void
   onCopyClick?: (itemKey: string, item: StructureItem) => void
   isPending?: boolean  // Item is being synced
   isTimeView?: boolean // Items in time view can't be edited (they're virtual)
@@ -60,6 +65,10 @@ function Section({
   colorIndex,
   onItemClick,
   onEditClick,
+  editingPath = null,
+  onInlineSave,
+  onInlineCancel,
+  onInlineDelete,
   onCopyClick,
   isPending = false,
   isTimeView = false,
@@ -99,26 +108,36 @@ function Section({
       <div className="layer1-container">
         <div className="layer1-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
           {showLoading && <span className="loading-spinner" title="Syncing...">⟳</span>}
-          <div className={`layer1 color-${color} ${showEditButton ? 'split-button' : ''}`}>
-            {showEditButton && (
-              <div
-                className="split-left"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEditClick(itemPath, title, item)
-                }}
-                title="Edit item"
-              />
-            )}
-            <span className="item-title" onClick={() => !showEditButton && onItemClick(itemPath, hasChildren)}>
-              {title}
-            </span>
-            <div
-              className={showEditButton ? "split-right" : "full-click"}
-              onClick={() => onItemClick(itemPath, hasChildren)}
-              title={showEditButton ? "Open item" : undefined}
+          {editingPath === itemPath ? (
+            <InlineItemEditor
+              itemKey={itemKey}
+              item={item}
+              onSave={(data) => onInlineSave?.(itemPath, data)}
+              onCancel={() => onInlineCancel?.()}
+              onDelete={showEditButton ? () => onInlineDelete?.(itemPath) : undefined}
             />
-          </div>
+          ) : (
+            <div className={`layer1 color-${color} ${showEditButton ? 'split-button' : ''}`}>
+              {showEditButton && (
+                <div
+                  className="split-left"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEditClick(itemPath, title, item)
+                  }}
+                  title="Edit item"
+                />
+              )}
+              <span className="item-title" onClick={() => !showEditButton && onItemClick(itemPath, hasChildren)}>
+                {title}
+              </span>
+              <div
+                className={showEditButton ? "split-right" : "full-click"}
+                onClick={() => onItemClick(itemPath, hasChildren)}
+                title={showEditButton ? "Open item" : undefined}
+              />
+            </div>
+          )}
         </div>
         {/* Progress bar */}
         {item.progress !== undefined && (
@@ -156,31 +175,41 @@ function Section({
             <div key={childKey} className="layer2-container">
               <div className="layer2-content">
                 <div className="layer2-wrapper">
-                  <div className={`layer2 ${childColor} ${childEditable ? 'split-button' : ''}`}>
-                    {childEditable && (
-                      <div
-                        className="split-left"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onEditClick(childPath, childTitle, childItem as StructureItem)
-                        }}
-                        title="Edit item"
-                      />
-                    )}
-                    <span className="item-title">
-                      {childTitle}
-                      {(childItem as StructureItem).progress !== undefined && (
-                        <span style={{ marginLeft: '0.5rem', opacity: 0.7, fontSize: '0.75rem' }}>
-                          {(childItem as StructureItem).progress}%
-                        </span>
-                      )}
-                    </span>
-                    <div
-                      className={childEditable ? "split-right" : "full-click"}
-                      onClick={() => onItemClick(childPath, childHasChildren)}
-                      title={childEditable ? "Open item" : undefined}
+                  {editingPath === childPath ? (
+                    <InlineItemEditor
+                      itemKey={childKey}
+                      item={childItem as StructureItem}
+                      onSave={(data) => onInlineSave?.(childPath, data)}
+                      onCancel={() => onInlineCancel?.()}
+                      onDelete={childEditable ? () => onInlineDelete?.(childPath) : undefined}
                     />
-                  </div>
+                  ) : (
+                    <div className={`layer2 ${childColor} ${childEditable ? 'split-button' : ''}`}>
+                      {childEditable && (
+                        <div
+                          className="split-left"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onEditClick(childPath, childTitle, childItem as StructureItem)
+                          }}
+                          title="Edit item"
+                        />
+                      )}
+                      <span className="item-title">
+                        {childTitle}
+                        {(childItem as StructureItem).progress !== undefined && (
+                          <span style={{ marginLeft: '0.5rem', opacity: 0.7, fontSize: '0.75rem' }}>
+                            {(childItem as StructureItem).progress}%
+                          </span>
+                        )}
+                      </span>
+                      <div
+                        className={childEditable ? "split-right" : "full-click"}
+                        onClick={() => onItemClick(childPath, childHasChildren)}
+                        title={childEditable ? "Open item" : undefined}
+                      />
+                    </div>
+                  )}
                 </div>
                 {/* Due date for layer2 */}
                 {(childItem as StructureItem).due && (
@@ -207,31 +236,41 @@ function Section({
                     return (
                       <div key={grandKey}>
                         <div className="layer3-wrapper">
-                          <div className={`layer3-item ${childColor} ${grandEditable ? 'split-button' : ''}`}>
-                            {grandEditable && (
-                              <div
-                                className="split-left"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  onEditClick(grandPath, grandTitle, grandItem as StructureItem)
-                                }}
-                                title="Edit item"
-                              />
-                            )}
-                            <span className="item-title">
-                              {grandTitle}
-                              {(grandItem as StructureItem).progress !== undefined && (
-                                <span style={{ marginLeft: '0.375rem', opacity: 0.6, fontSize: '0.6875rem' }}>
-                                  {(grandItem as StructureItem).progress}%
-                                </span>
-                              )}
-                            </span>
-                            <div
-                              className={grandEditable ? "split-right" : "full-click"}
-                              onClick={() => onItemClick(grandPath, grandHasChildren)}
-                              title={grandEditable ? "Open item" : undefined}
+                          {editingPath === grandPath ? (
+                            <InlineItemEditor
+                              itemKey={grandKey}
+                              item={grandItem as StructureItem}
+                              onSave={(data) => onInlineSave?.(grandPath, data)}
+                              onCancel={() => onInlineCancel?.()}
+                              onDelete={grandEditable ? () => onInlineDelete?.(grandPath) : undefined}
                             />
-                          </div>
+                          ) : (
+                            <div className={`layer3-item ${childColor} ${grandEditable ? 'split-button' : ''}`}>
+                              {grandEditable && (
+                                <div
+                                  className="split-left"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onEditClick(grandPath, grandTitle, grandItem as StructureItem)
+                                  }}
+                                  title="Edit item"
+                                />
+                              )}
+                              <span className="item-title">
+                                {grandTitle}
+                                {(grandItem as StructureItem).progress !== undefined && (
+                                  <span style={{ marginLeft: '0.375rem', opacity: 0.6, fontSize: '0.6875rem' }}>
+                                    {(grandItem as StructureItem).progress}%
+                                  </span>
+                                )}
+                              </span>
+                              <div
+                                className={grandEditable ? "split-right" : "full-click"}
+                                onClick={() => onItemClick(grandPath, grandHasChildren)}
+                                title={grandEditable ? "Open item" : undefined}
+                              />
+                            </div>
+                          )}
                         </div>
                         {/* Due date for layer3 */}
                         {(grandItem as StructureItem).due && (
