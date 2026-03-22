@@ -521,11 +521,11 @@
 
 /* Inline item editing */
 .inline-edit {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   gap: 0.35rem;
-  width: 100%;
-  min-width: 12rem;
+  width: auto;
+  max-width: 19rem;
   padding: 0.35rem;
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
@@ -534,7 +534,7 @@
 
 .inline-edit-title,
 .inline-edit-small,
-.inline-edit-context {
+.inline-edit-context-input {
   border: 1px solid var(--border-color);
   border-radius: 0.4rem;
   background: var(--bg-primary);
@@ -546,20 +546,14 @@
 .inline-edit-title {
   font-size: 1rem;
   font-weight: 600;
+  min-width: 10rem;
 }
 
 .inline-edit-title:focus,
 .inline-edit-small:focus,
-.inline-edit-context:focus {
+.inline-edit-context-input:focus {
   outline: none;
   border-color: var(--blue-medium);
-}
-
-.inline-edit-optional {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.35rem;
-  opacity: 0.72;
 }
 
 .inline-edit-small {
@@ -567,31 +561,60 @@
   color: var(--text-secondary);
 }
 
-.inline-edit-context {
+.inline-edit-context-input {
   font-size: 0.8rem;
-  min-height: 3.25rem;
   color: var(--text-secondary);
-  resize: vertical;
 }
 
-.inline-edit-actions {
+.inline-edit-tools {
   display: flex;
+  gap: 0.3rem;
   justify-content: flex-end;
 }
 
-.inline-edit-delete {
+.inline-tool {
   border: 1px solid var(--border-color);
   background: transparent;
   color: var(--text-secondary);
   border-radius: 0.4rem;
   font-size: 0.75rem;
-  padding: 0.2rem 0.45rem;
+  line-height: 1;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0.1rem;
   cursor: pointer;
 }
 
-.inline-edit-delete:hover {
+.inline-tool:hover,
+.inline-tool.active {
+  color: var(--blue-medium);
+  border-color: var(--blue-medium);
+}
+
+.inline-tool.delete:hover {
   color: #c62828;
   border-color: #c62828;
+}
+
+.inline-context-preview {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  text-align: left;
+  padding: 0;
+  margin: 0;
+  cursor: text;
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.inline-context-preview.empty {
+  opacity: 0.5;
+  font-style: italic;
 }
 
 /* Add Item Split Button */
@@ -669,11 +692,7 @@
   }
 
   .inline-edit {
-    min-width: 0;
-  }
-
-  .inline-edit-optional {
-    grid-template-columns: 1fr;
+    max-width: 100%;
   }
   
   .layer1-container {

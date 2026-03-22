@@ -19,6 +19,9 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
   const [progress, setProgress] = useState(initialProgress)
   const [due, setDue] = useState(initialDue)
   const [context, setContext] = useState(initialContext)
+  const [showProgressEditor, setShowProgressEditor] = useState(initialProgress !== '')
+  const [showDueEditor, setShowDueEditor] = useState(initialDue !== '')
+  const [showContextEditor, setShowContextEditor] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const didCommitRef = useRef(false)
@@ -87,7 +90,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
     commit()
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       commit()
@@ -100,6 +103,35 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
 
   return (
     <div className="inline-edit" onBlur={handleContainerBlur}>
+      <div className="inline-edit-tools">
+        <button
+          type="button"
+          className={`inline-tool ${showProgressEditor || progress ? 'active' : ''}`}
+          onClick={() => setShowProgressEditor((prev) => !prev)}
+          title="Progress"
+        >
+          %
+        </button>
+        <button
+          type="button"
+          className={`inline-tool ${showDueEditor || due ? 'active' : ''}`}
+          onClick={() => setShowDueEditor((prev) => !prev)}
+          title="Due date"
+        >
+          ◷
+        </button>
+        {onDelete && (
+          <button
+            type="button"
+            className="inline-tool delete"
+            onClick={onDelete}
+            title="Delete"
+          >
+            ×
+          </button>
+        )}
+      </div>
+
       <input
         ref={inputRef}
         className="inline-edit-title"
@@ -109,7 +141,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
         placeholder="Item title"
       />
 
-      <div className="inline-edit-optional" aria-label="Optional fields">
+      {showProgressEditor && (
         <input
           className="inline-edit-small"
           type="number"
@@ -120,6 +152,9 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
           onKeyDown={handleKeyDown}
           placeholder="progress %"
         />
+      )}
+
+      {showDueEditor && (
         <input
           className="inline-edit-small"
           type="date"
@@ -128,24 +163,27 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
           onKeyDown={handleKeyDown}
           placeholder="due"
         />
-      </div>
+      )}
 
-      <textarea
-        className="inline-edit-context"
-        value={context}
-        onChange={(e) => setContext(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="context"
-        rows={2}
-      />
-
-      <div className="inline-edit-actions">
-        {onDelete && (
-          <button type="button" className="inline-edit-delete" onMouseDown={(e) => e.preventDefault()} onClick={onDelete}>
-            Delete
-          </button>
-        )}
-      </div>
+      {showContextEditor ? (
+        <input
+          className="inline-edit-context-input"
+          type="text"
+          value={context}
+          onChange={(e) => setContext(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="context"
+        />
+      ) : (
+        <button
+          type="button"
+          className={`inline-context-preview ${context ? '' : 'empty'}`}
+          onClick={() => setShowContextEditor(true)}
+          title="Edit context"
+        >
+          {context || 'add context'}
+        </button>
+      )}
     </div>
   )
 }
