@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/client'
 
 interface InlineItemEditorProps {
@@ -27,6 +27,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
   const progressRef = useRef<HTMLInputElement>(null)
   const dueRef = useRef<HTMLInputElement>(null)
   const contextRef = useRef<HTMLInputElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
   const didCommitRef = useRef(false)
 
   const focusAndScroll = (ref: React.RefObject<HTMLInputElement | null>) => {
@@ -38,6 +39,18 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
         ref.current.select()
       }
     })
+  }
+
+  const openDuePicker = () => {
+    const input = dueRef.current as (HTMLInputElement & { showPicker?: () => void }) | null
+    if (!input) return
+    input.focus()
+    input.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    if (typeof input.showPicker === 'function') {
+      input.showPicker()
+    } else {
+      input.click()
+    }
   }
 
   const payload = useMemo<UpdatePayload>(() => {
@@ -105,8 +118,27 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
     }
   }
 
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      if (!rootRef.current) return
+      const target = event.target as Node | null
+      if (!target) return
+      if (!rootRef.current.contains(target)) {
+        commit()
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown, true)
+    document.addEventListener('touchstart', handlePointerDown, true)
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown, true)
+      document.removeEventListener('touchstart', handlePointerDown, true)
+    }
+  }, [payload, onCancel, onSave])
+
   return (
-    <div className="inline-edit" onBlur={handleContainerBlur}>
+    <div ref={rootRef} className="inline-edit" onBlur={handleContainerBlur}>
       <div className="inline-edit-tools">
         <button
           type="button"
@@ -134,8 +166,12 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
           type="button"
           className={`inline-tool ${showDueEditor || due ? 'active' : ''}`}
           onClick={() => {
-            setShowDueEditor(true)
-            focusAndScroll(dueRef)
+            if (!showDueEditor) {
+              setShowDueEditor(true)
+              requestAnimationFrame(() => openDuePicker())
+            } else {
+              openDuePicker()
+            }
           }}
           title="Due date"
         >
