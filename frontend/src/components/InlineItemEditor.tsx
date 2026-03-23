@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/client'
 
 interface InlineItemEditorProps {
@@ -24,17 +24,21 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
   const [showContextEditor, setShowContextEditor] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
+  const progressRef = useRef<HTMLInputElement>(null)
+  const dueRef = useRef<HTMLInputElement>(null)
+  const contextRef = useRef<HTMLInputElement>(null)
   const didCommitRef = useRef(false)
 
-  useEffect(() => {
+  const focusAndScroll = (ref: React.RefObject<HTMLInputElement | null>) => {
     requestAnimationFrame(() => {
-      if (inputRef.current) {
-        inputRef.current.focus()
-        inputRef.current.select()
-        inputRef.current.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+      if (!ref.current) return
+      ref.current.focus()
+      ref.current.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+      if (ref.current.type !== 'date') {
+        ref.current.select()
       }
     })
-  }, [])
+  }
 
   const payload = useMemo<UpdatePayload>(() => {
     const next: UpdatePayload = {}
@@ -107,7 +111,10 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
         <button
           type="button"
           className={`inline-tool ${showContextEditor || context ? 'active' : ''}`}
-          onClick={() => setShowContextEditor((prev) => !prev)}
+          onClick={() => {
+            setShowContextEditor(true)
+            focusAndScroll(contextRef)
+          }}
           title="Context"
         >
           Context
@@ -115,7 +122,10 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
         <button
           type="button"
           className={`inline-tool ${showProgressEditor || progress ? 'active' : ''}`}
-          onClick={() => setShowProgressEditor((prev) => !prev)}
+          onClick={() => {
+            setShowProgressEditor(true)
+            focusAndScroll(progressRef)
+          }}
           title="Progress"
         >
           Progress
@@ -123,7 +133,10 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
         <button
           type="button"
           className={`inline-tool ${showDueEditor || due ? 'active' : ''}`}
-          onClick={() => setShowDueEditor((prev) => !prev)}
+          onClick={() => {
+            setShowDueEditor(true)
+            focusAndScroll(dueRef)
+          }}
           title="Due date"
         >
           Due
@@ -135,7 +148,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
             onClick={onDelete}
             title="Delete"
           >
-            X
+              Delete
           </button>
         )}
       </div>
@@ -151,6 +164,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
 
       {showProgressEditor && (
         <input
+          ref={progressRef}
           className="inline-edit-small"
           type="number"
           min={0}
@@ -164,6 +178,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
 
       {showDueEditor && (
         <input
+          ref={dueRef}
           className="inline-edit-small"
           type="date"
           value={due}
@@ -175,6 +190,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
 
       {showContextEditor && (
         <input
+          ref={contextRef}
           className="inline-edit-context-input"
           type="text"
           value={context}
