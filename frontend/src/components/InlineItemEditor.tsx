@@ -106,11 +106,19 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
       <div className="inline-edit-tools">
         <button
           type="button"
+          className={`inline-tool ${showContextEditor || context ? 'active' : ''}`}
+          onClick={() => setShowContextEditor((prev) => !prev)}
+          title="Context"
+        >
+          Context
+        </button>
+        <button
+          type="button"
           className={`inline-tool ${showProgressEditor || progress ? 'active' : ''}`}
           onClick={() => setShowProgressEditor((prev) => !prev)}
           title="Progress"
         >
-          %
+          Progress
         </button>
         <button
           type="button"
@@ -118,7 +126,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
           onClick={() => setShowDueEditor((prev) => !prev)}
           title="Due date"
         >
-          ◷
+          Due
         </button>
         {onDelete && (
           <button
@@ -127,7 +135,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
             onClick={onDelete}
             title="Delete"
           >
-            ×
+            X
           </button>
         )}
       </div>
@@ -165,7 +173,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
         />
       )}
 
-      {showContextEditor ? (
+      {showContextEditor && (
         <input
           className="inline-edit-context-input"
           type="text"
@@ -174,15 +182,6 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
           onKeyDown={handleKeyDown}
           placeholder="context"
         />
-      ) : (
-        <button
-          type="button"
-          className={`inline-context-preview ${context ? '' : 'empty'}`}
-          onClick={() => setShowContextEditor(true)}
-          title="Edit context"
-        >
-          {context || 'add context'}
-        </button>
       )}
     </div>
   )
