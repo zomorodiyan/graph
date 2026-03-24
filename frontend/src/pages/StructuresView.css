@@ -62,30 +62,19 @@
 }
 
 .settings-card {
-  grid-column: 1 / -1;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  padding: 0.9rem 1rem;
-}
-
-.settings-card h3 {
-  margin: 0 0 0.65rem;
-  font-size: 1rem;
-  color: var(--text-primary);
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.55rem;
 }
 
 .settings-item {
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.45rem;
-}
-
-.settings-item:last-child {
-  margin-bottom: 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+  width: 100%;
+  justify-content: flex-start;
 }
 
 /* Graph card */

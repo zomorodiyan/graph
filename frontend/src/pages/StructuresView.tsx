@@ -220,15 +220,14 @@ function StructuresView() {
       {/* Graphs grid */}
       <div className="graphs-container">
         {showSettings && (
-          <div className="settings-card">
-            <h3>View Settings</h3>
+          <div className="graph-card settings-card">
             <label className="settings-item">
               <input
                 type="checkbox"
                 checked={viewPreferences.showTime}
                 onChange={() => handlePreferenceToggle('showTime')}
               />
-              <span>Toggle Time (when due items exist)</span>
+              <span>Time</span>
             </label>
             <label className="settings-item">
               <input
@@ -236,7 +235,7 @@ function StructuresView() {
                 checked={viewPreferences.showProgress}
                 onChange={() => handlePreferenceToggle('showProgress')}
               />
-              <span>Toggle Progress (when progress items exist)</span>
+              <span>Progress</span>
             </label>
             <label className="settings-item">
               <input
@@ -244,7 +243,7 @@ function StructuresView() {
                 checked={viewPreferences.showContext}
                 onChange={() => handlePreferenceToggle('showContext')}
               />
-              <span>Toggle Context visibility</span>
+              <span>Context</span>
             </label>
           </div>
         )}
