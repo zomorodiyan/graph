@@ -17,6 +17,7 @@ interface SectionProps {
   onCopyClick?: (itemKey: string, item: StructureItem) => void
   isPending?: boolean  // Item is being synced
   isTimeView?: boolean // Items in time view can't be edited (they're virtual)
+  showContext?: boolean
 }
 
 // Helper to calculate due date category
@@ -72,6 +73,7 @@ function Section({
   onCopyClick,
   isPending = false,
   isTimeView = false,
+  showContext = true,
 }: SectionProps) {
   const color = COLORS[colorIndex]
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
@@ -155,7 +157,7 @@ function Section({
           </div>
         )}
         {/* Context */}
-        {item.context && (
+        {showContext && item.context && (
           <div className="item-context">{item.context}</div>
         )}
       </div>
@@ -218,7 +220,7 @@ function Section({
                   </div>
                 )}
                 {/* Context for layer2 */}
-                {(childItem as StructureItem).context && (
+                {showContext && (childItem as StructureItem).context && (
                   <div className="item-context">{(childItem as StructureItem).context}</div>
                 )}
               </div>
@@ -279,7 +281,7 @@ function Section({
                           </div>
                         )}
                         {/* Context for layer3 */}
-                        {(grandItem as StructureItem).context && (
+                        {showContext && (grandItem as StructureItem).context && (
                           <div className="item-context" style={{ marginLeft: '0.5rem' }}>
                             {(grandItem as StructureItem).context}
                           </div>

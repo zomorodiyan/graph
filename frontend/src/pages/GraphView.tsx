@@ -9,6 +9,7 @@ import { StructureItem, UpdatePayload, pasteItems } from '../api/client'
 import EditModal from '../components/EditModal'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
+import { loadViewPreferences } from '../utils/viewPreferences'
 
 // Color assignment based on index
 const COLORS = ['green', 'blue', 'purple', 'brown']
@@ -39,6 +40,7 @@ function GraphView() {
   useSwipeNavigation()
   const { theme, toggleTheme } = useTheme()
   const { data: structure, isLoading, error } = useStructure(graphName)
+  const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
   
   const updateItem = useUpdateItem(graphName)
   const deleteItemMutation = useDeleteItem(graphName)
@@ -180,7 +182,7 @@ function GraphView() {
       result[key] = {
         ...item,
         title: title,
-        context: parentPath ? `📍 ${parentPath}` : undefined,
+        context: viewPreferences.showContext && parentPath ? `📍 ${parentPath}` : undefined,
         originalPath: itemPath, // Store original path for navigation
         nonEditable: true, // Time items are not editable - they navigate to original
         children: undefined // Don't show nested children in time view
@@ -215,7 +217,7 @@ function GraphView() {
       result[key] = {
         ...item,
         title: title,
-        context: parentPath ? `📍 ${parentPath}` : undefined,
+        context: viewPreferences.showContext && parentPath ? `📍 ${parentPath}` : undefined,
         originalPath: itemPath, // Store original path for navigation
         nonEditable: true, // Progress items are not editable - they navigate to original
         children: undefined // Don't show nested children in progress view
@@ -318,13 +320,13 @@ function GraphView() {
       delete items.progress
       
       // Auto-generate Time section if there are items with due dates
-      const timeSection = buildTimeSection()
+      const timeSection = viewPreferences.showTime ? buildTimeSection() : null
       if (timeSection) {
         items.time = timeSection
       }
       
       // Auto-generate Progress section if there are items with progress values
-      const progressSection = buildProgressSection()
+      const progressSection = viewPreferences.showProgress ? buildProgressSection() : null
       if (progressSection) {
         items.progress = progressSection
       }
@@ -334,6 +336,7 @@ function GraphView() {
     
     // Check if we're viewing "time" - show auto-generated time categories
     if (path === 'time') {
+      if (!viewPreferences.showTime) return {}
       const timeSection = buildTimeSection()
       if (timeSection?.children) {
         return timeSection.children
@@ -344,6 +347,7 @@ function GraphView() {
     // Check if we're in a time category (time.over, time.day, time.week, time.month)
     const pathParts = path.split('.')
     if (pathParts[0] === 'time' && pathParts.length === 2) {
+      if (!viewPreferences.showTime) return {}
       const category = pathParts[1] as 'over' | 'day' | 'week' | 'month'
       if (['over', 'day', 'week', 'month'].includes(category)) {
         // Return the items directly as sections
@@ -353,6 +357,7 @@ function GraphView() {
     
     // Check if we're viewing "progress" - show auto-generated progress categories
     if (path === 'progress') {
+      if (!viewPreferences.showProgress) return {}
       const progressSection = buildProgressSection()
       if (progressSection?.children) {
         return progressSection.children
@@ -362,6 +367,7 @@ function GraphView() {
     
     // Check if we're in a progress category (progress.blocked, progress.low, etc.)
     if (pathParts[0] === 'progress' && pathParts.length === 2) {
+      if (!viewPreferences.showProgress) return {}
       const category = pathParts[1] as 'blocked' | 'low' | 'mid' | 'high' | 'done'
       if (['blocked', 'low', 'mid', 'high', 'done'].includes(category)) {
         // Return the items directly as sections
@@ -933,6 +939,7 @@ function GraphView() {
                 onCopyClick={handleCopyItem}
                 isPending={isPending}
                 isTimeView={isVirtualView}
+                showContext={viewPreferences.showContext}
               />
             </div>
           )
@@ -978,6 +985,7 @@ function GraphView() {
                 onCopyClick={handleCopyItem}
                 isPending={false}
                 isTimeView={true}
+                showContext={viewPreferences.showContext}
               />
             </div>
           )
