@@ -57,13 +57,14 @@ class FileUtils:
             if 'title' not in item:
                 item['title'] = self._key_to_title(key)
             
-            # Separate children from properties
-            children = self._extract_children(item)
-            if children:
+            # Separate children from properties.
+            # If 'children' already exists (Firestore data re-processed through here),
+            # skip extraction and just recurse into the existing children dict.
+            if 'children' not in item:
+                children = self._extract_children(item)
                 item['children'] = children
-                self._inject_ids(children, item['id'])
-            else:
-                item['children'] = {}
+            if item['children']:
+                self._inject_ids(item['children'], item['id'])
     
     def _extract_children(self, item):
         """Extract child items from the item dict (anything that's not a known property)."""

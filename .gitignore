@@ -27,3 +27,6 @@ credentials.zip
 # Frontend dependencies
 frontend/node_modules/
 frontend/dist/
+
+# Claude Code local settings (personal permissions, not shared)
+.claude/settings.local.json

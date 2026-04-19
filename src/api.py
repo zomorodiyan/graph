@@ -27,6 +27,7 @@ from gcs_graph_store import (
 )
 from structures_manager import StructuresManager
 from simple_parser import SimpleParser
+from firestore_graph_store import FirestoreGraphStore
 
 
 # ============================================================================
@@ -148,6 +149,110 @@ file_utils = GCSBackedFileUtils()
 hierarchy_builder = HierarchyBuilder()
 html_generator = HTMLGenerator()
 structures_manager = StructuresManager()
+firestore_store = FirestoreGraphStore()
+
+GRAPH_STATE_BACKEND = os.getenv("GRAPH_STATE_BACKEND", "file").strip().lower()
+if GRAPH_STATE_BACKEND not in {"file", "dual", "firestore"}:
+    print(f"⚠️  Invalid GRAPH_STATE_BACKEND '{GRAPH_STATE_BACKEND}', defaulting to 'file'")
+    GRAPH_STATE_BACKEND = "file"
+print(f"📦 Graph state backend: {GRAPH_STATE_BACKEND}")
+
+
+def _resolve_graph_key(graph_name: Optional[str]) -> str:
+    if not graph_name or graph_name == "default":
+        return "default"
+    return graph_name
+
+
+def _load_graph_data(fu: FileUtils, graph_name: Optional[str] = None) -> dict:
+    """Load graph data from configured backend, with safe fallback in dual mode."""
+    if GRAPH_STATE_BACKEND == "file":
+        return fu.load_yaml_structure()
+
+    fallback_data: Optional[dict] = None
+    try:
+        fallback_data = fu.load_yaml_structure()
+    except Exception:
+        fallback_data = None
+
+    if not firestore_store.is_available():
+        if GRAPH_STATE_BACKEND == "firestore":
+            raise RuntimeError(
+                "Firestore backend is configured but unavailable. "
+                "Install google-cloud-firestore and verify credentials."
+            )
+        if fallback_data is not None:
+            return fallback_data
+        raise RuntimeError("No storage backend available for graph data")
+
+    graph_key = _resolve_graph_key(graph_name)
+    try:
+        result = firestore_store.load_graph(graph_key, fallback_data=fallback_data)
+        if isinstance(result.get('structure'), dict):
+            fu._inject_ids(result['structure'])
+        return result
+    except Exception:
+        if GRAPH_STATE_BACKEND == "firestore":
+            raise
+        if fallback_data is not None:
+            return fallback_data
+        raise
+
+
+def _save_graph_data(
+    fu: FileUtils,
+    data_to_save: dict,
+    graph_name: Optional[str],
+    mutation_type: str,
+    mutation_payload: Optional[dict] = None,
+    request: Optional[Request] = None,
+) -> Dict[str, Any]:
+    """Save graph data to configured backend and append mutation metadata when applicable."""
+    write_file = GRAPH_STATE_BACKEND in {"file", "dual"}
+    write_firestore = GRAPH_STATE_BACKEND in {"firestore", "dual"}
+
+    actor = None
+    base_version = None
+    if request is not None:
+        actor = request.headers.get("x-actor-id")
+        base_version_header = request.headers.get("x-base-version")
+        if base_version_header not in (None, ""):
+            try:
+                base_version = int(base_version_header)
+            except ValueError as error:
+                raise HTTPException(status_code=400, detail="x-base-version must be an integer") from error
+
+    firestore_result: Dict[str, Any] = {}
+    if write_firestore:
+        if not firestore_store.is_available():
+            if GRAPH_STATE_BACKEND == "firestore":
+                raise HTTPException(
+                    status_code=503,
+                    detail="Firestore backend is unavailable. Check dependency and credentials.",
+                )
+        else:
+            try:
+                firestore_result = firestore_store.save_graph(
+                    graph_name=_resolve_graph_key(graph_name),
+                    data=data_to_save,
+                    mutation_type=mutation_type,
+                    mutation_payload=mutation_payload,
+                    actor=actor,
+                    base_version=base_version,
+                )
+            except ValueError as error:
+                raise HTTPException(status_code=409, detail=str(error)) from error
+            except Exception as error:
+                if GRAPH_STATE_BACKEND == "firestore":
+                    raise
+                print(f"⚠️  Firestore save failed in dual mode: {error}")
+
+    if write_file:
+        fu.save_structure(data_to_save)
+
+    if firestore_result:
+        return firestore_result
+    return {"backend": "file"}
 
 # Serve HTML files from /html directory (mount after API routes are defined)
 
@@ -198,7 +303,32 @@ async def create_graph(data: StructureCreate):
                 detail=f"Initial content exceeds maximum size ({MAX_PASTE_CONTENT_SIZE // 1024}KB)"
             )
         
-        return structures_manager.create_structure(data.name, data.description, data.initial_content)
+        created = structures_manager.create_structure(data.name, data.description, data.initial_content)
+
+        # Seed Firestore state immediately when Firestore-backed modes are enabled.
+        if GRAPH_STATE_BACKEND in {"dual", "firestore"}:
+            if not firestore_store.is_available():
+                if GRAPH_STATE_BACKEND == "firestore":
+                    raise HTTPException(
+                        status_code=503,
+                        detail="Firestore backend is unavailable. Check dependency and credentials.",
+                    )
+            else:
+                try:
+                    graph_fu = structures_manager.get_file_utils(created["name"])
+                    seed_data = graph_fu.load_yaml_structure()
+                    firestore_store.save_graph(
+                        graph_name=created["name"],
+                        data=seed_data,
+                        mutation_type="graph_created",
+                        mutation_payload={"graph": created["name"]},
+                        actor="api",
+                    )
+                except Exception:
+                    if GRAPH_STATE_BACKEND == "firestore":
+                        raise
+
+        return created
     except HTTPException:
         raise
     except ValueError as e:
@@ -245,9 +375,14 @@ def get_file_utils_for_graph(graph_name: str = None) -> FileUtils:
     """Get FileUtils instance for a specific graph or default."""
     if graph_name and graph_name != "default":
         if not structures_manager.structure_exists(graph_name):
+            # In Firestore-backed modes we allow graph reads/writes even without a local file.
+            if GRAPH_STATE_BACKEND in {"dual", "firestore"} and firestore_store.is_available():
+                return FileUtils(structures_manager.get_structure_path(graph_name))
             raise HTTPException(status_code=404, detail=f"Graph '{graph_name}' not found")
         return structures_manager.get_file_utils(graph_name)
-    # Fall back to the default structure
+    # For the "default" named graph, prefer structures/default.txt if it exists
+    if structures_manager.structure_exists("default"):
+        return structures_manager.get_file_utils("default")
     return file_utils
 
 
@@ -369,7 +504,7 @@ def find_item(structure: dict, keys: list) -> tuple:
 async def get_structure():
     """Get the full structure with all items (default structure)."""
     try:
-        data = file_utils.load_yaml_structure()
+        data = _load_graph_data(file_utils, "default")
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -380,7 +515,7 @@ async def get_graph_structure(graph_name: str):
     """Get the full structure for a specific graph."""
     try:
         fu = get_file_utils_for_graph(graph_name)
-        data = fu.load_yaml_structure()
+        data = _load_graph_data(fu, graph_name)
         return data
     except HTTPException:
         raise
@@ -423,7 +558,7 @@ async def get_graph_structure_text(graph_name: str):
 async def get_item(path: str):
     """Get an item by its path (default structure)."""
     try:
-        data = file_utils.load_yaml_structure()
+        data = _load_graph_data(file_utils, "default")
         keys = path_to_keys(path)
         
         parent, item_key, item_value = find_item(data['structure'], keys)
@@ -445,7 +580,7 @@ async def get_graph_item(graph_name: str, path: str):
     """Get an item by its path from a specific graph."""
     try:
         fu = get_file_utils_for_graph(graph_name)
-        data = fu.load_yaml_structure()
+        data = _load_graph_data(fu, graph_name)
         keys = path_to_keys(path)
         
         parent, item_key, item_value = find_item(data['structure'], keys)
@@ -487,7 +622,7 @@ async def update_item(path: str, request: Request):
             update_data['due'] = None
         
         try:
-            data = file_utils.load_yaml_structure()
+            data = _load_graph_data(file_utils, "default")
             print(f"DEBUG: Loaded structure successfully")
             print(f"DEBUG: Data keys: {list(data.keys())}")
             if 'structure' not in data:
@@ -586,7 +721,14 @@ async def update_item(path: str, request: Request):
                 print(f"DEBUG: Error checking renamed item: {e}")
         
         # Save the updated structure (without auto-generated fields)
-        file_utils.save_structure(data_to_save)
+        _save_graph_data(
+            fu=file_utils,
+            data_to_save=data_to_save,
+            graph_name="default",
+            mutation_type="update_item",
+            mutation_payload={"path": path, "renamed": renamed},
+            request=request,
+        )
         print(f"DEBUG: Structure saved successfully")
         
         # Update path if renamed
@@ -625,7 +767,7 @@ async def move_item_up(path: str, request: Request):
     
     try:
         # Load the PROCESSED structure (with id, title, children)
-        data = file_utils.load_yaml_structure()
+        data = _load_graph_data(file_utils, "default")
         keys = path_to_keys(path)
         
         if not keys:
@@ -686,7 +828,14 @@ async def move_item_up(path: str, request: Request):
         
         # Clean (remove id/title/children wrappers) and save
         data_to_save = _clean_structure_for_save(data)
-        file_utils.save_structure(data_to_save)
+        _save_graph_data(
+            fu=file_utils,
+            data_to_save=data_to_save,
+            graph_name="default",
+            mutation_type="move_item_up",
+            mutation_payload={"path": path},
+            request=request,
+        )
         
         # Sync to Google Cloud Storage
         upload_default_structure_to_gcs()
@@ -716,7 +865,7 @@ async def reorder_item(path: str, payload: ReorderPayload):
         # Strip trailing dots from path
         path = path.rstrip('.')
         
-        data = file_utils.load_yaml_structure()
+        data = _load_graph_data(file_utils, "default")
         keys = path_to_keys(path)
         
         if len(keys) == 0:
@@ -768,7 +917,13 @@ async def reorder_item(path: str, payload: ReorderPayload):
         
         # Clean and save
         data_to_save = _clean_structure_for_save(data)
-        file_utils.save_structure(data_to_save)
+        _save_graph_data(
+            fu=file_utils,
+            data_to_save=data_to_save,
+            graph_name="default",
+            mutation_type="reorder_item",
+            mutation_payload={"path": path, "target_index": target_index},
+        )
         
         # Sync to Google Cloud Storage
         upload_default_structure_to_gcs()
@@ -796,7 +951,7 @@ async def create_item(parent_path: str, item: ItemCreate):
         # Validate item content
         validate_item_content(name=item.name, context=item.context)
         
-        data = file_utils.load_yaml_structure()
+        data = _load_graph_data(file_utils, "default")
         
         # Validate graph limits
         validate_graph_limits(data.get('structure', {}), adding=1, new_depth=len(path_to_keys(parent_path)) + 1)
@@ -855,7 +1010,13 @@ async def create_item(parent_path: str, item: ItemCreate):
         
         # Clean and save structure
         data_to_save = _clean_structure_for_save(data)
-        file_utils.save_structure(data_to_save)
+        _save_graph_data(
+            fu=file_utils,
+            data_to_save=data_to_save,
+            graph_name="default",
+            mutation_type="create_item",
+            mutation_payload={"parent_path": parent_path, "name": new_name},
+        )
         print(f"DEBUG: Saved structure")
         
         # Trigger regeneration for new path
@@ -900,7 +1061,7 @@ async def paste_item(parent_path: str, data: PasteContent):
                 detail=f"Paste content exceeds maximum size ({MAX_PASTE_CONTENT_SIZE // 1024}KB)"
             )
         
-        structure_data = file_utils.load_yaml_structure()
+        structure_data = _load_graph_data(file_utils, "default")
         
         # Handle special cases: empty path, "root", or "home" all mean add to top-level structure
         if parent_path in ("", "root", "home"):
@@ -959,7 +1120,13 @@ async def paste_item(parent_path: str, data: PasteContent):
         
         # Clean and save structure
         data_to_save = _clean_structure_for_save(structure_data)
-        file_utils.save_structure(data_to_save)
+        _save_graph_data(
+            fu=file_utils,
+            data_to_save=data_to_save,
+            graph_name="default",
+            mutation_type="paste_item",
+            mutation_payload={"parent_path": parent_path, "added_count": len(added_items)},
+        )
         
         return {
             "success": True,
@@ -980,7 +1147,7 @@ async def delete_item(path: str):
     """Delete an item."""
     try:
         print(f"DEBUG: Deleting item at path: {path}")
-        data = file_utils.load_yaml_structure()
+        data = _load_graph_data(file_utils, "default")
         keys = path_to_keys(path)
         print(f"DEBUG: Path keys: {keys}")
         
@@ -995,7 +1162,13 @@ async def delete_item(path: str):
         
         # Clean and save the updated structure
         data_to_save = _clean_structure_for_save(data)
-        file_utils.save_structure(data_to_save)
+        _save_graph_data(
+            fu=file_utils,
+            data_to_save=data_to_save,
+            graph_name="default",
+            mutation_type="delete_item",
+            mutation_payload={"path": path},
+        )
         print(f"DEBUG: Structure saved after deletion")
         
         # Trigger regeneration - regenerate parent and all ancestors
@@ -1040,7 +1213,7 @@ async def update_graph_item(graph_name: str, path: str, request: Request):
         if remove_due:
             update_data['due'] = None
         
-        data = fu.load_yaml_structure()
+        data = _load_graph_data(fu, graph_name)
         keys = path_to_keys(path)
         parent, item_key, item_value = find_item(data['structure'], keys)
         
@@ -1087,7 +1260,14 @@ async def update_graph_item(graph_name: str, path: str, request: Request):
             item_value['due'] = update_data['due']
         
         data_to_save = _clean_structure_for_save(data)
-        fu.save_structure(data_to_save)
+        _save_graph_data(
+            fu=fu,
+            data_to_save=data_to_save,
+            graph_name=graph_name,
+            mutation_type="update_item",
+            mutation_payload={"path": path, "renamed": renamed},
+            request=request,
+        )
         
         final_path = path
         if renamed:
@@ -1121,7 +1301,7 @@ async def paste_graph_item(graph_name: str, parent_path: str, data: PasteContent
                 detail=f"Paste content exceeds maximum size ({MAX_PASTE_CONTENT_SIZE // 1024}KB)"
             )
         
-        structure_data = fu.load_yaml_structure()
+        structure_data = _load_graph_data(fu, graph_name)
         
         if parent_path in ("", "root", "home"):
             keys = []
@@ -1173,7 +1353,13 @@ async def paste_graph_item(graph_name: str, parent_path: str, data: PasteContent
             added_items.append(item_key)
         
         data_to_save = _clean_structure_for_save(structure_data)
-        fu.save_structure(data_to_save)
+        _save_graph_data(
+            fu=fu,
+            data_to_save=data_to_save,
+            graph_name=graph_name,
+            mutation_type="paste_item",
+            mutation_payload={"parent_path": parent_path, "added_count": len(added_items)},
+        )
         
         return {
             "success": True,
@@ -1197,7 +1383,7 @@ async def reorder_graph_item(graph_name: str, path: str, body: dict = Body(...))
         if target_index is None:
             raise HTTPException(status_code=400, detail="target_index is required")
         
-        data = fu.load_yaml_structure()
+        data = _load_graph_data(fu, graph_name)
         keys = path_to_keys(path)
         
         if len(keys) < 1:
@@ -1241,7 +1427,13 @@ async def reorder_graph_item(graph_name: str, path: str, body: dict = Body(...))
         parent_dict.update(new_parent)
         
         data_to_save = _clean_structure_for_save(data)
-        fu.save_structure(data_to_save)
+        _save_graph_data(
+            fu=fu,
+            data_to_save=data_to_save,
+            graph_name=graph_name,
+            mutation_type="reorder_item",
+            mutation_payload={"path": path, "target_index": target_index},
+        )
         
         return {
             "success": True,
@@ -1266,7 +1458,7 @@ async def create_graph_item(graph_name: str, parent_path: str, item: ItemCreate)
         # Validate item content
         validate_item_content(name=item.name, context=item.context)
         
-        data = fu.load_yaml_structure()
+        data = _load_graph_data(fu, graph_name)
         
         # Validate graph limits
         if parent_path in ("", "root", "home"):
@@ -1305,7 +1497,13 @@ async def create_graph_item(graph_name: str, parent_path: str, item: ItemCreate)
         parent_children[new_name] = new_item
         
         data_to_save = _clean_structure_for_save(data)
-        fu.save_structure(data_to_save)
+        _save_graph_data(
+            fu=fu,
+            data_to_save=data_to_save,
+            graph_name=graph_name,
+            mutation_type="create_item",
+            mutation_payload={"parent_path": parent_path, "name": new_name},
+        )
         
         if not parent_path or parent_path in ("root", "home"):
             new_path = new_name
@@ -1332,7 +1530,7 @@ async def delete_graph_item(graph_name: str, path: str):
         fu = get_file_utils_for_graph(graph_name)
         print(f"DEBUG: Deleting item at path: {path} in graph: {graph_name}")
         
-        data = fu.load_yaml_structure()
+        data = _load_graph_data(fu, graph_name)
         keys = path_to_keys(path)
         
         parent, item_key, item_value = find_item(data['structure'], keys)
@@ -1343,7 +1541,13 @@ async def delete_graph_item(graph_name: str, path: str):
         del parent[item_key]
         
         data_to_save = _clean_structure_for_save(data)
-        fu.save_structure(data_to_save)
+        _save_graph_data(
+            fu=fu,
+            data_to_save=data_to_save,
+            graph_name=graph_name,
+            mutation_type="delete_item",
+            mutation_payload={"path": path},
+        )
         
         return {
             "success": True,
@@ -1354,6 +1558,58 @@ async def delete_graph_item(graph_name: str, path: str):
     except Exception as e:
         import traceback
         traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/graphs/{graph_name}/state-version")
+async def get_graph_state_version(graph_name: str):
+    """Return current graph state version for optimistic concurrency control."""
+    try:
+        if GRAPH_STATE_BACKEND in {"dual", "firestore"} and firestore_store.is_available():
+            version = firestore_store.get_graph_version(_resolve_graph_key(graph_name))
+            return {
+                "graph": graph_name,
+                "version": version,
+                "backend": "firestore",
+            }
+
+        return {
+            "graph": graph_name,
+            "version": 0,
+            "backend": GRAPH_STATE_BACKEND,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/graphs/{graph_name}/mutations")
+async def get_graph_mutations(graph_name: str, since_version: int = 0, limit: int = 200):
+    """Return append-only mutation log entries for realtime sync consumers."""
+    try:
+        if since_version < 0:
+            raise HTTPException(status_code=400, detail="since_version must be >= 0")
+        if limit < 1:
+            raise HTTPException(status_code=400, detail="limit must be >= 1")
+
+        if not (GRAPH_STATE_BACKEND in {"dual", "firestore"} and firestore_store.is_available()):
+            raise HTTPException(
+                status_code=503,
+                detail="Mutation log requires Firestore backend in dual or firestore mode.",
+            )
+
+        graph_key = _resolve_graph_key(graph_name)
+        mutations = firestore_store.get_mutations(graph_key, since_version=since_version, limit=limit)
+        latest_version = firestore_store.get_graph_version(graph_key)
+        return {
+            "graph": graph_name,
+            "since_version": since_version,
+            "latest_version": latest_version,
+            "count": len(mutations),
+            "mutations": mutations,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1565,7 +1821,12 @@ async def serve_html(filename: str):
 @app.get("/health")
 async def health_check():
     """Health check for Cloud Run"""
-    return {"status": "healthy", "service": "graph-api"}
+    return {
+        "status": "healthy",
+        "service": "graph-api",
+        "graph_state_backend": GRAPH_STATE_BACKEND,
+        "firestore_available": firestore_store.is_available(),
+    }
 
 
 # Mount static files for production frontend

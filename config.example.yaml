@@ -4,3 +4,13 @@
 google_cloud_storage:
   # Bucket for graph persistence. In Cloud Run, prefer GRAPH_BUCKET_NAME env var.
   bucket_name: YOUR_GRAPH_BUCKET_NAME
+
+graph_state:
+  # Storage mode: file (current), dual (file + Firestore), firestore (Firestore only)
+  backend: file
+
+firestore:
+  # Root collection for graph entities (documents per graph)
+  root_collection: graph_state
+  # Optional snapshots on each mutation (true/false)
+  write_snapshots: false

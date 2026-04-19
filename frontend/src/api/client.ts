@@ -32,6 +32,31 @@ export interface GraphInfo {
   icon: string
 }
 
+export interface GraphStateVersion {
+  graph: string
+  version: number
+  backend: string
+}
+
+export interface GraphMutation {
+  id: string
+  version: number
+  type: string
+  payload: Record<string, unknown>
+  actor: string
+  node_count: number
+  edge_count: number
+  created_at?: string
+}
+
+export interface GraphMutationsResponse {
+  graph: string
+  since_version: number
+  latest_version: number
+  count: number
+  mutations: GraphMutation[]
+}
+
 export interface GraphUpdatePayload {
   display_name?: string
   description?: string
@@ -228,5 +253,25 @@ export async function updateGraph(name: string, data: GraphUpdatePayload): Promi
 export async function fetchGraphStructure(graphName: string): Promise<Structure> {
   const res = await fetch(`${API_BASE}/graphs/${graphName}/structure`)
   if (!res.ok) throw new Error(`Failed to fetch structure for graph: ${graphName}`)
+  return res.json()
+}
+
+export async function fetchGraphStateVersion(graphName: string): Promise<GraphStateVersion> {
+  const res = await fetch(`${API_BASE}/graphs/${graphName}/state-version`)
+  if (!res.ok) throw new Error(`Failed to fetch state version for graph: ${graphName}`)
+  return res.json()
+}
+
+export async function fetchGraphMutations(
+  graphName: string,
+  sinceVersion = 0,
+  limit = 200,
+): Promise<GraphMutationsResponse> {
+  const params = new URLSearchParams({
+    since_version: String(sinceVersion),
+    limit: String(limit),
+  })
+  const res = await fetch(`${API_BASE}/graphs/${graphName}/mutations?${params.toString()}`)
+  if (!res.ok) throw new Error(`Failed to fetch mutations for graph: ${graphName}`)
   return res.json()
 }
