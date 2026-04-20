@@ -5,7 +5,7 @@ import { useStructure, useUpdateItem, useDeleteItem, useReorderItem, useCreateIt
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useTheme } from '../context/ThemeContext'
-import { StructureItem, UpdatePayload, pasteItems } from '../api/client'
+import { StructureItem, UpdatePayload, pasteItems } from '@api'
 import EditModal from '../components/EditModal'
 import Notification from '../components/Notification'
 import Section from '../components/Section'

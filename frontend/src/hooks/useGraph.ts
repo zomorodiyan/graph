@@ -11,7 +11,7 @@ import {
   syncToDrive,
   UpdatePayload,
   StructureItem,
-} from '../api/client'
+} from '@api'
 
 // Hook to fetch and cache the list of graphs
 export function useGraphs() {
