@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
                 background_color: '#1a1a2e',
                 display: 'standalone',
                 orientation: 'portrait',
-                start_url: '/',
+                start_url: '/graph/',
                 icons: [
                   { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
                 ],
