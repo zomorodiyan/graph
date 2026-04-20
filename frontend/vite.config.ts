@@ -6,8 +6,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const isOffline = env.VITE_OFFLINE_MODE === 'true'
+  const base = env.VITE_BASE_URL || '/'
 
   return {
+    base,
     plugins: [
       react(),
       ...(isOffline
