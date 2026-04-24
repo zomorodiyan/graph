@@ -836,7 +836,7 @@ function GraphView() {
       result += `${spaces}  progress: ${item.progress}\n`
     }
     if (item.context) {
-      result += `${spaces}  context: ${item.context}\n`
+      result += `${spaces}  "${item.context}"\n`
     }
     if (item.due) {
       result += `${spaces}  due: ${item.due}\n`

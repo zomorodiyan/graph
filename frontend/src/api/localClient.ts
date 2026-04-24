@@ -97,8 +97,21 @@ function parseIndentedText(text: string): Record<string, StructureItem> {
     const indent  = line.length - line.trimStart().length
     const trimmed = line.trim()
 
+    // Quoted string (context)
+    const quotedMatch = trimmed.match(/^"(.+)"$/)
+    if (quotedMatch) {
+      // Apply to last item in parent frame
+      for (let i = stack.length - 1; i >= 0; i--) {
+        if (stack[i].indent < indent && stack[i].lastItem) {
+          stack[i].lastItem!.context = quotedMatch[1]
+          break
+        }
+      }
+      continue
+    }
+
     // Known property line
-    const propMatch = trimmed.match(/^(progress|context|due):\s*(.+)$/)
+    const propMatch = trimmed.match(/^(progress|due):\s*(.+)$/)
     if (propMatch) {
       // Find deepest frame with indent < this line's indent and a lastItem
       for (let i = stack.length - 1; i >= 0; i--) {
@@ -106,7 +119,6 @@ function parseIndentedText(text: string): Record<string, StructureItem> {
           const [, k, v] = propMatch
           const item = stack[i].lastItem!
           if (k === 'progress') item.progress = Number(v)
-          else if (k === 'context') item.context = v
           else if (k === 'due') item.due = v
           break
         }
