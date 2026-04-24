@@ -836,7 +836,9 @@ function GraphView() {
       result += `${spaces}  progress: ${item.progress}\n`
     }
     if (item.context) {
-      result += `${spaces}  "${item.context}"\n`
+      // Escape backslashes and quotes for safe serialization
+      const escaped = item.context.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
+      result += `${spaces}  "${escaped}"\n`
     }
     if (item.due) {
       result += `${spaces}  due: ${item.due}\n`

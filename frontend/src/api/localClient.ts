@@ -97,13 +97,15 @@ function parseIndentedText(text: string): Record<string, StructureItem> {
     const indent  = line.length - line.trimStart().length
     const trimmed = line.trim()
 
-    // Quoted string (context)
+    // Quoted string (context) — unescape special characters
     const quotedMatch = trimmed.match(/^"(.+)"$/)
     if (quotedMatch) {
-      // Apply to last item in parent frame
+      // Apply to last item in parent frame, unescaping sequences
       for (let i = stack.length - 1; i >= 0; i--) {
         if (stack[i].indent < indent && stack[i].lastItem) {
-          stack[i].lastItem!.context = quotedMatch[1]
+          const escaped = quotedMatch[1]
+          const unescaped = escaped.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\')
+          stack[i].lastItem!.context = unescaped
           break
         }
       }
@@ -157,6 +159,21 @@ function serializeStructure(items: Record<string, StructureItem>, indent = 0): s
   return out
 }
 
+// ── Validation ───────────────────────────────────────────────────────────────
+function validateUpdatePayload(data: UpdatePayload) {
+  if (data.progress !== undefined && data.progress !== '') {
+    const p = Number(data.progress)
+    if (isNaN(p) || p < 0 || p > 100) throw new Error('Progress must be 0–100')
+  }
+  if (data.due !== undefined && data.due !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(data.due)) {
+    throw new Error('Due date must be YYYY-MM-DD format')
+  }
+  if (data.name !== undefined && !data.name.trim()) throw new Error('Name cannot be empty')
+  if (data.context !== undefined && typeof data.context === 'string' && data.context.length > 10000) {
+    throw new Error('Context too long (max 10000 chars)')
+  }
+}
+
 // ── Public API (same signatures as client.ts) ────────────────────────────────
 
 export async function fetchStructure(graphName = 'default'): Promise<Structure> {
@@ -182,6 +199,7 @@ export async function getItem(path: string, graphName = 'default'): Promise<Item
 }
 
 export async function updateItem(path: string, data: UpdatePayload, graphName = 'default'): Promise<ItemResponse> {
+  validateUpdatePayload(data)
   const s = loadStructure(graphName)
   const pk = getParentAndKey(s.structure, path)
   if (!pk) throw new Error(`Item not found: ${path}`)
@@ -223,6 +241,7 @@ export async function updateItem(path: string, data: UpdatePayload, graphName = 
 }
 
 export async function createItem(parentPath: string, data: UpdatePayload, graphName = 'default'): Promise<ItemResponse> {
+  validateUpdatePayload(data)
   if (!data.name) throw new Error('Name is required')
   const s = loadStructure(graphName)
   const container = parentPath ? getContainer(s.structure, parentPath) : s.structure
