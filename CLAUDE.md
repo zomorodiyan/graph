@@ -11,17 +11,32 @@ A personal knowledge graph editor. Users maintain YAML-based hierarchical graphs
 - **Storage**: File system (YAML/text), GCS for sync, Firestore for real-time multi-device
 - **Deploy**: Docker + Google Cloud Run (`graph-api` in project `zomograph-personal`, region `us-central1`)
 
+## Branch Structure
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | Old HTML-based version — largely abandoned |
+| `dev` | Current server-backed TypeScript/React app |
+| `offline` | Attempted offline PWA on top of `dev` — not fully working (see below) |
+
+Active work should happen on `dev` for server-backed features. The `offline` branch diverged from `dev` at commit `06aa2ab`.
+
 ## Key Files
 
 | Path | Role |
 |------|------|
-| `src/api.py` | FastAPI app — all endpoints (1849 lines) |
+| `src/api.py` | FastAPI app — all endpoints |
 | `src/firestore_graph_store.py` | Firestore persistence layer |
 | `src/gcs_graph_store.py` | GCS sync layer |
 | `src/file_utils.py` | YAML parsing, ID injection |
 | `src/structures_manager.py` | Multi-graph management |
-| `frontend/src/api/client.ts` | TypeScript API client |
+| `frontend/src/api/client.ts` | TypeScript API client (server-backed) |
+| `frontend/src/api/localClient.ts` | Offline API client backed by localStorage |
 | `frontend/src/hooks/useGraph.ts` | React Query hooks w/ optimistic updates |
+| `frontend/src/main.tsx` | React entry point — note hardcoded `basename="/graph/"` on `offline` branch |
+| `frontend/vite.config.ts` | Vite config — `@api` alias switches between `client.ts` / `localClient.ts` |
+| `frontend/.env.offline` | Offline build env: `VITE_OFFLINE_MODE=true`, `VITE_BASE_URL=/graph/` |
+| `.github/workflows/deploy-offline.yml` | GitHub Actions: builds offline PWA and deploys to GitHub Pages on push to `offline` |
 | `deploy-cloud-run.sh` | Deploy script (Linux/Mac) |
 | `deploy-cloud-run.ps1` | Deploy script (Windows) |
 | `config.example.yaml` | Config template (copy → `config.yaml`, git-ignored) |
@@ -97,7 +112,27 @@ python run.py
 
 # Frontend (separate terminal)
 cd frontend && npm run dev   # Vite on :3000, proxies /api → :8000
+
+# Offline PWA build (no server)
+cd frontend && npm run build:offline   # outputs to dist/, served at /graph/
 ```
+
+## Offline PWA Attempt (Incomplete)
+
+The `offline` branch contains an attempt to make the app work fully offline, deployed to GitHub Pages. The implementation exists but **did not succeed** — the deployment has issues.
+
+### What was built
+
+- `localClient.ts` — full API surface backed by `localStorage`; no server needed
+- `vite-plugin-pwa` + service worker for installable offline caching
+- `build:offline` npm script compiles with `mode=offline`
+- In offline mode `vite.config.ts` routes the `@api` alias to `localClient.ts` instead of `client.ts`
+- GitHub Actions workflow deploys to GitHub Pages on push to `offline` branch
+
+### Known problems
+
+- `main.tsx` has `BrowserRouter basename="/graph/"` hardcoded for ALL builds, which breaks routing in normal dev and Cloud Run deployments (only valid at the GitHub Pages `/graph/` path)
+- The `basename` should be conditional on `VITE_BASE_URL` or `VITE_OFFLINE_MODE` at build time
 
 ## Firestore Schema (per graph)
 
