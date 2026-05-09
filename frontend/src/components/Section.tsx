@@ -2,8 +2,8 @@ import { StructureItem, UpdatePayload } from '../api/client'
 import InlineItemEditor from './InlineItemEditor'
 
 const COLOR_SCHEMES = [
-  { primary: 'blue', secondary: 'green' },
-  { primary: 'purple', secondary: 'brown' },
+  { primary: 'teal', secondary: 'amber' },
+  { primary: 'crimson', secondary: 'slate' },
 ]
 
 interface SectionProps {

@@ -35,6 +35,26 @@
   --blue-light-alt: #64B5F6;
   --purple-light-alt: #9575CD;
   --brown-light-alt: #A1887F;
+
+  --teal-light: #4DB6AC;
+  --teal-lighter: #80CBC4;
+  --teal-dark: #00695C;
+  --teal-darker: #004D40;
+
+  --amber-light: #FFB74D;
+  --amber-lighter: #FFCC80;
+  --amber-dark: #E65100;
+  --amber-darker: #BF360C;
+
+  --crimson-light: #EF9A9A;
+  --crimson-lighter: #FFCDD2;
+  --crimson-dark: #B71C1C;
+  --crimson-darker: #7F0000;
+
+  --slate-light: #90A4AE;
+  --slate-lighter: #B0BEC5;
+  --slate-dark: #37474F;
+  --slate-darker: #263238;
 }
 
 [data-theme='dark'] {

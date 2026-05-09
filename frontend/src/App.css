@@ -242,10 +242,24 @@
 [data-theme='dark'] .color-purple-alt { color: var(--purple-lighter); }
 [data-theme='dark'] .color-brown-alt { color: var(--brown-lighter); }
 
+.color-teal { color: var(--teal-dark); }
+.color-amber { color: var(--amber-dark); }
+.color-crimson { color: var(--crimson-dark); }
+.color-slate { color: var(--slate-dark); }
+
+[data-theme='dark'] .color-teal { color: var(--teal-light); }
+[data-theme='dark'] .color-amber { color: var(--amber-light); }
+[data-theme='dark'] .color-crimson { color: var(--crimson-light); }
+[data-theme='dark'] .color-slate { color: var(--slate-light); }
+
 .bg-green { background-color: var(--green-light); }
 .bg-blue { background-color: var(--blue-light); }
 .bg-purple { background-color: var(--purple-light); }
 .bg-brown { background-color: var(--brown-light); }
+.bg-teal { background-color: var(--teal-light); }
+.bg-amber { background-color: var(--amber-light); }
+.bg-crimson { background-color: var(--crimson-light); }
+.bg-slate { background-color: var(--slate-light); }
 
 /* Loading and error states */
 .loading {
