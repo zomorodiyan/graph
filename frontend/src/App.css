@@ -674,10 +674,14 @@
     flex-direction: column;
   }
 
+  .layer2-container {
+    flex-direction: column;
+  }
+
   .inline-edit {
     max-width: 100%;
   }
-  
+
   .layer1-container {
     margin-right: 0;
     margin-bottom: 0.75rem;
