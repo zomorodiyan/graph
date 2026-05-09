@@ -1,7 +1,10 @@
 import { StructureItem, UpdatePayload } from '../api/client'
 import InlineItemEditor from './InlineItemEditor'
 
-const COLORS = ['green', 'blue', 'purple', 'brown']
+const COLOR_SCHEMES = [
+  { primary: 'blue', secondary: 'green' },
+  { primary: 'purple', secondary: 'brown' },
+]
 
 interface SectionProps {
   itemKey: string
@@ -75,7 +78,8 @@ function Section({
   isTimeView = false,
   showContext = true,
 }: SectionProps) {
-  const color = COLORS[colorIndex]
+  const scheme = COLOR_SCHEMES[colorIndex % 2]
+  const color = scheme.primary
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
   const hasChildren = !!item.children && Object.keys(item.children).length > 0
   const title = item.title || itemKey
@@ -171,7 +175,7 @@ function Section({
           const grandchildren = (childItem as StructureItem).children || {}
           // Check if this child item is editable
           const childEditable = showEditButton && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
-          const childColor = childIndex % 2 === 0 ? `color-${color}-alt` : `color-${color}`
+          const childColor = childIndex % 2 === 0 ? `color-${scheme.secondary}` : `color-${scheme.primary}`
 
           return (
             <div key={childKey} className="layer2-container">
