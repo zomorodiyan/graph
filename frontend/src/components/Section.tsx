@@ -2,8 +2,10 @@ import { StructureItem, UpdatePayload } from '../api/client'
 import InlineItemEditor from './InlineItemEditor'
 
 const COLOR_SCHEMES = [
-  { primary: 'blue', secondary: 'green' },
-  { primary: 'crimson', secondary: 'purple' },
+  { primary: 'green-dk',  secondary: 'green-lt'  },
+  { primary: 'blue-dk',   secondary: 'blue-lt'   },
+  { primary: 'red-dk',    secondary: 'red-lt'    },
+  { primary: 'purple-dk', secondary: 'purple-lt' },
 ]
 
 interface SectionProps {
@@ -78,7 +80,7 @@ function Section({
   isTimeView = false,
   showContext = true,
 }: SectionProps) {
-  const scheme = COLOR_SCHEMES[colorIndex % 2]
+  const scheme = COLOR_SCHEMES[colorIndex % COLOR_SCHEMES.length]
   const color = scheme.primary
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
   const hasChildren = !!item.children && Object.keys(item.children).length > 0

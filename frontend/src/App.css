@@ -252,6 +252,30 @@
 [data-theme='dark'] .color-crimson { color: var(--crimson-light); }
 [data-theme='dark'] .color-slate { color: var(--slate-light); }
 
+/* Dark/light variants for 4-scheme system */
+.color-green-dk { color: var(--green-dark); }
+.color-green-lt { color: var(--green-medium); }
+.color-blue-dk  { color: var(--blue-dark); }
+.color-blue-lt  { color: var(--blue-medium); }
+.color-red-dk   { color: var(--crimson-dark); }
+.color-red-lt   { color: var(--red-medium); }
+.color-purple-dk { color: var(--purple-dark); }
+.color-purple-lt { color: var(--purple-medium); }
+
+[data-theme='dark'] .color-green-dk { color: var(--green-light); }
+[data-theme='dark'] .color-green-lt { color: var(--green-lighter); }
+[data-theme='dark'] .color-blue-dk  { color: var(--blue-light); }
+[data-theme='dark'] .color-blue-lt  { color: var(--blue-lighter); }
+[data-theme='dark'] .color-red-dk   { color: var(--crimson-light); }
+[data-theme='dark'] .color-red-lt   { color: var(--crimson-lighter); }
+[data-theme='dark'] .color-purple-dk { color: var(--purple-light); }
+[data-theme='dark'] .color-purple-lt { color: var(--purple-lighter); }
+
+.bg-green-dk   { background-color: var(--green-light); }
+.bg-blue-dk    { background-color: var(--blue-light); }
+.bg-red-dk     { background-color: var(--crimson-light); }
+.bg-purple-dk  { background-color: var(--purple-light); }
+
 .bg-green { background-color: var(--green-light); }
 .bg-blue { background-color: var(--blue-light); }
 .bg-purple { background-color: var(--purple-light); }
