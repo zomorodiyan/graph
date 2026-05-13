@@ -276,6 +276,21 @@
 .bg-red-dk     { background-color: var(--crimson-light); }
 .bg-purple-dk  { background-color: var(--purple-light); }
 
+/* Vivid analogous scheme colors */
+.color-sky     { color: var(--sky-dark); }
+.color-indigo  { color: var(--indigo-dark); }
+.color-violet  { color: var(--purple-dark); }
+.color-fuchsia { color: var(--fuchsia-dark); }
+
+[data-theme='dark'] .color-sky     { color: var(--sky-light); }
+[data-theme='dark'] .color-indigo  { color: var(--indigo-light); }
+[data-theme='dark'] .color-violet  { color: var(--purple-light); }
+[data-theme='dark'] .color-fuchsia { color: var(--fuchsia-light); }
+
+.bg-sky     { background-color: var(--sky-light); }
+.bg-indigo  { background-color: var(--indigo-light); }
+.bg-fuchsia { background-color: var(--fuchsia-light); }
+
 .bg-green { background-color: var(--green-light); }
 .bg-blue { background-color: var(--blue-light); }
 .bg-purple { background-color: var(--purple-light); }

@@ -12,7 +12,7 @@ import Section from '../components/Section'
 import { loadViewPreferences } from '../utils/viewPreferences'
 
 // Color assignment based on index
-const COLORS = ['green', 'blue', 'purple', 'brown']
+const COLORS = ['sky', 'indigo', 'fuchsia']
 
 function GraphView() {
   const location = useLocation()
