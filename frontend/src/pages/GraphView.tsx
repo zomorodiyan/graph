@@ -38,7 +38,7 @@ function GraphView() {
   
   // Enable swipe navigation (browser-like back/forward)
   useSwipeNavigation()
-  const { theme, toggleTheme } = useTheme()
+  const { toggleTheme } = useTheme()
   const { data: structure, isLoading, error } = useStructure(graphName)
   const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
   

@@ -21,7 +21,7 @@ function getIconForGraph(name: string): string {
 function StructuresView() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { theme, toggleTheme } = useTheme()
+  const { toggleTheme } = useTheme()
   const { data: graphs = [], isLoading, error } = useGraphs()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newGraphName, setNewGraphName] = useState('')
