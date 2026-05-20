@@ -7,7 +7,6 @@ import { useGraphs } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import Notification from '../components/Notification'
-import { loadViewPreferences, saveViewPreferences, ViewPreferences } from '../utils/viewPreferences'
 import './StructuresView.css'
 
 // Icons for different graph types (randomly assigned based on name hash)
@@ -38,9 +37,6 @@ function StructuresView() {
   const [editDisplayName, setEditDisplayName] = useState('')
   const [editDescription, setEditDescription] = useState('')
   const [isSaving, setIsSaving] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
-  const [viewPreferences, setViewPreferences] = useState<ViewPreferences>(() => loadViewPreferences())
-
   useModalBackButton(showCreateModal, () => setShowCreateModal(false))
   useModalBackButton(Boolean(editingGraph), () => setEditingGraph(null))
 
@@ -54,14 +50,6 @@ function StructuresView() {
 
   const handleGraphClick = (graphName: string) => {
     navigate(`/g/${graphName}`)
-  }
-
-  const handlePreferenceToggle = (key: keyof ViewPreferences) => {
-    setViewPreferences((prev) => {
-      const next = { ...prev, [key]: !prev[key] }
-      saveViewPreferences(next)
-      return next
-    })
   }
 
   // Generate unique graph name
@@ -204,48 +192,12 @@ function StructuresView() {
       {/* Header */}
       <header className="structures-header">
         <div className="title-row">
-          <button
-            className="settings-toggle"
-            title="View settings"
-            onClick={() => setShowSettings((prev) => !prev)}
-          >
-            ⚙
-          </button>
           <h1>Knowledge Graphs</h1>
         </div>
       </header>
 
       {/* Graphs grid */}
       <div className="graphs-container">
-        {showSettings && (
-          <div className="graph-card settings-card">
-            <label className="settings-item">
-              <input
-                type="checkbox"
-                checked={viewPreferences.showTime}
-                onChange={() => handlePreferenceToggle('showTime')}
-              />
-              <span>Time</span>
-            </label>
-            <label className="settings-item">
-              <input
-                type="checkbox"
-                checked={viewPreferences.showProgress}
-                onChange={() => handlePreferenceToggle('showProgress')}
-              />
-              <span>Progress</span>
-            </label>
-            <label className="settings-item">
-              <input
-                type="checkbox"
-                checked={viewPreferences.showContext}
-                onChange={() => handlePreferenceToggle('showContext')}
-              />
-              <span>Context</span>
-            </label>
-          </div>
-        )}
-
         {/* Add new graph card */}
         <div 
           className="graph-card add-card"
