@@ -373,28 +373,8 @@
   z-index: 1000;
 }
 
-/* Theme toggle */
-.theme-toggle {
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 50%;
-  background: #2d2d2d;
-  color: #f5f5f5;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  transition: all 0.3s;
-  opacity: 0.5;
-}
-
-[data-theme="dark"] .theme-toggle {
-  background: #f5f5f5;
-  color: #2d2d2d;
-}
-
+/* Theme / Depth / Context toggles */
+.theme-toggle,
 .depth-toggle,
 .ctx-toggle {
   width: 44px;
@@ -402,21 +382,30 @@
   border: none;
   border-radius: 50%;
   background: rgba(45, 45, 45, 0.45);
-  color: #f5f5f5;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  font-weight: 900;
   transition: all 0.3s;
   opacity: 0.5;
+}
+
+[data-theme="dark"] .theme-toggle,
+[data-theme="dark"] .depth-toggle,
+[data-theme="dark"] .ctx-toggle {
+  background: rgba(245, 245, 245, 0.45);
+}
+
+.depth-toggle,
+.ctx-toggle {
+  color: #f5f5f5;
+  font-size: 26px;
+  font-weight: 900;
   line-height: 1;
 }
 
 [data-theme="dark"] .depth-toggle,
 [data-theme="dark"] .ctx-toggle {
-  background: rgba(245, 245, 245, 0.45);
   color: #2d2d2d;
 }
 
