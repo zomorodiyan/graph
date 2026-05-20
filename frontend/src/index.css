@@ -55,8 +55,8 @@
   --sky-dark: #1976D2;
   --sky-light: #90CAF9;
 
-  --indigo-dark: #5045B0;
-  --indigo-light: #A898DF;
+  --indigo-dark: #3730A3;
+  --indigo-light: #818CF8;
 
   --fuchsia-dark: #880E4F;
   --fuchsia-light: #F48FB1;
@@ -88,6 +88,11 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+*:focus {
+  outline: none;
 }
 
 body {
