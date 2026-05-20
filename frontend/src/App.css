@@ -756,12 +756,16 @@
 }
 
 /* Responsive */
-@media (max-width: 600px) {
-  .section {
+/* L3 drops below L2 on tablets and narrower */
+@media (max-width: 768px) {
+  .layer2-container {
     flex-direction: column;
   }
+}
 
-  .layer2-container {
+/* L2 drops below L1 on phones */
+@media (max-width: 600px) {
+  .section {
     flex-direction: column;
   }
 
