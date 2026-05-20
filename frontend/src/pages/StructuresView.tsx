@@ -198,9 +198,7 @@ function StructuresView() {
     <div className="structures-view">
       {/* Top buttons */}
       <div className="top-buttons">
-        <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
-          {theme === 'light' ? '🌙' : '☀️'}
-        </button>
+        <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
       </div>
 
       {/* Header */}
