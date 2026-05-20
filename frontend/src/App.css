@@ -290,8 +290,12 @@
 .bg-sky        { background-color: var(--sky-light); }
 .bg-indigo     { background-color: var(--indigo-light); }
 .bg-fuchsia    { background-color: var(--fuchsia-light); }
-.bg-pine       { background-color: var(--green-light); }
-.bg-pistachio  { background-color: var(--pistachio-light); }
+.bg-pine         { background-color: var(--green-light); }
+.bg-pistachio    { background-color: var(--pistachio-light); }
+.bg-royal-blue   { background-color: var(--royal-blue-light); }
+
+.color-royal-blue                    { color: var(--royal-blue-dark); }
+[data-theme='dark'] .color-royal-blue { color: var(--royal-blue-light); }
 
 .color-pine       { color: var(--green-dark); }
 .color-pistachio  { color: var(--pistachio-dark); }
