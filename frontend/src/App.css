@@ -290,18 +290,18 @@
 .bg-sky        { background-color: var(--sky-light); }
 .bg-indigo     { background-color: var(--indigo-light); }
 .bg-fuchsia    { background-color: var(--fuchsia-light); }
-.bg-pine         { background-color: var(--green-light); }
+.bg-pine         { background-color: var(--pine-light); }
 .bg-pistachio    { background-color: var(--pistachio-light); }
 .bg-royal-blue   { background-color: var(--royal-blue-light); }
 
 .color-royal-blue                    { color: var(--royal-blue-dark); }
 [data-theme='dark'] .color-royal-blue { color: var(--royal-blue-light); }
 
-.color-pine       { color: var(--green-dark); }
+.color-pine       { color: var(--pine-dark); }
 .color-pistachio  { color: var(--pistachio-dark); }
 .color-magenta    { color: var(--fuchsia-dark); }
 
-[data-theme='dark'] .color-pine      { color: var(--green-light); }
+[data-theme='dark'] .color-pine      { color: var(--pine-light); }
 [data-theme='dark'] .color-pistachio { color: var(--pistachio-light); }
 [data-theme='dark'] .color-magenta   { color: var(--fuchsia-light); }
 
