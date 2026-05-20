@@ -287,9 +287,19 @@
 [data-theme='dark'] .color-violet  { color: var(--purple-light); }
 [data-theme='dark'] .color-fuchsia { color: var(--fuchsia-light); }
 
-.bg-sky     { background-color: var(--sky-light); }
-.bg-indigo  { background-color: var(--indigo-light); }
-.bg-fuchsia { background-color: var(--fuchsia-light); }
+.bg-sky        { background-color: var(--sky-light); }
+.bg-indigo     { background-color: var(--indigo-light); }
+.bg-fuchsia    { background-color: var(--fuchsia-light); }
+.bg-pine       { background-color: var(--green-light); }
+.bg-pistachio  { background-color: var(--pistachio-light); }
+
+.color-pine       { color: var(--green-dark); }
+.color-pistachio  { color: var(--pistachio-dark); }
+.color-magenta    { color: var(--fuchsia-dark); }
+
+[data-theme='dark'] .color-pine      { color: var(--green-light); }
+[data-theme='dark'] .color-pistachio { color: var(--pistachio-light); }
+[data-theme='dark'] .color-magenta   { color: var(--fuchsia-light); }
 
 .bg-green { background-color: var(--green-light); }
 .bg-blue { background-color: var(--blue-light); }
