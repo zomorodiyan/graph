@@ -765,6 +765,7 @@
 }
 
 .section--wide-l1 .layer1-container {
+  align-self: flex-start;
   margin-right: 0;
   margin-bottom: 0.75rem;
 }

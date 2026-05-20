@@ -93,12 +93,14 @@ function Section({
   const [l1Wide, setL1Wide] = useState(false)
 
   useEffect(() => {
-    const observer = new ResizeObserver(() => {
+    const measure = () => {
       if (sectionRef.current && layer1Ref.current) {
         setL1Wide(layer1Ref.current.offsetWidth > sectionRef.current.offsetWidth / 3)
       }
-    })
+    }
+    const observer = new ResizeObserver(measure)
     if (sectionRef.current) observer.observe(sectionRef.current)
+    if (layer1Ref.current) observer.observe(layer1Ref.current)
     return () => observer.disconnect()
   }, [])
   
