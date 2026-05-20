@@ -395,6 +395,35 @@
   color: #2d2d2d;
 }
 
+.depth-toggle,
+.ctx-toggle {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(45, 45, 45, 0.45);
+  color: #f5f5f5;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 900;
+  transition: all 0.3s;
+  opacity: 0.5;
+  line-height: 1;
+}
+
+[data-theme="dark"] .depth-toggle,
+[data-theme="dark"] .ctx-toggle {
+  background: rgba(245, 245, 245, 0.45);
+  color: #2d2d2d;
+}
+
+.ctx-toggle.inactive {
+  opacity: 0.2;
+}
+
 .copy-btn {
   width: 44px;
   height: 44px;
@@ -410,6 +439,8 @@
 }
 
 .theme-toggle:hover,
+.depth-toggle:hover,
+.ctx-toggle:hover,
 .copy-btn:hover {
   transform: scale(1.1);
 }

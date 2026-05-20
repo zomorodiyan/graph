@@ -22,6 +22,7 @@ interface SectionProps {
   isPending?: boolean  // Item is being synced
   isTimeView?: boolean // Items in time view can't be edited (they're virtual)
   showContext?: boolean
+  depth?: number
 }
 
 // Helper to calculate due date category
@@ -78,6 +79,7 @@ function Section({
   isPending = false,
   isTimeView = false,
   showContext = true,
+  depth = 3,
 }: SectionProps) {
   const scheme = COLOR_SCHEMES[colorIndex % COLOR_SCHEMES.length]
   const color = scheme.primary
@@ -168,7 +170,7 @@ function Section({
       </div>
 
       {/* Layer 2 - Subcategories */}
-      <div className={`layer2-section${!hasAnyGrandchildren && childEntries.length > 0 ? ' layer2-flat' : ''}`}>
+      {depth >= 2 && <div className={`layer2-section${!hasAnyGrandchildren && childEntries.length > 0 ? ' layer2-flat' : ''}`}>
         {childEntries.map(([childKey, childItem], childIndex) => {
           const childPath = `${itemPath}.${childKey}`
           const childTitle = (childItem as StructureItem).title || childKey
@@ -231,7 +233,7 @@ function Section({
               </div>
 
               {/* Layer 3 - Items */}
-              {Object.keys(grandchildren).length > 0 && (
+              {depth >= 3 && Object.keys(grandchildren).length > 0 && (
                 <div className="layer3-container">
                   {Object.entries(grandchildren).map(([grandKey, grandItem]) => {
                     const grandPath = `${childPath}.${grandKey}`
@@ -299,7 +301,7 @@ function Section({
             </div>
           )
         })}
-      </div>
+      </div>}
     </div>
   )
 }

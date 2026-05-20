@@ -39,6 +39,8 @@ function GraphView() {
   // Enable swipe navigation (browser-like back/forward)
   useSwipeNavigation()
   const { toggleTheme } = useTheme()
+  const [depth, setDepth] = useState<1 | 2 | 3>(3)
+  const [showContext, setShowContext] = useState(true)
   const { data: structure, isLoading, error } = useStructure(graphName)
   const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
   
@@ -182,7 +184,7 @@ function GraphView() {
       result[key] = {
         ...item,
         title: title,
-        context: viewPreferences.showContext && parentPath ? `📍 ${parentPath}` : undefined,
+        context: showContext && parentPath ? `📍 ${parentPath}` : undefined,
         originalPath: itemPath, // Store original path for navigation
         nonEditable: true, // Time items are not editable - they navigate to original
         children: undefined // Don't show nested children in time view
@@ -217,7 +219,7 @@ function GraphView() {
       result[key] = {
         ...item,
         title: title,
-        context: viewPreferences.showContext && parentPath ? `📍 ${parentPath}` : undefined,
+        context: showContext && parentPath ? `📍 ${parentPath}` : undefined,
         originalPath: itemPath, // Store original path for navigation
         nonEditable: true, // Progress items are not editable - they navigate to original
         children: undefined // Don't show nested children in progress view
@@ -867,6 +869,16 @@ function GraphView() {
   return (
     <>
       <div className="top-buttons">
+        <button
+          className={`ctx-toggle${showContext ? '' : ' inactive'}`}
+          onClick={() => setShowContext(v => !v)}
+          title="Toggle context"
+        >C</button>
+        <button
+          className="depth-toggle"
+          onClick={() => setDepth(d => d === 3 ? 2 : d === 2 ? 1 : 3)}
+          title="Toggle depth"
+        >{depth}</button>
         <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
       </div>
 
@@ -939,7 +951,8 @@ function GraphView() {
                 onCopyClick={handleCopyItem}
                 isPending={isPending}
                 isTimeView={isVirtualView}
-                showContext={viewPreferences.showContext}
+                showContext={showContext}
+                depth={depth}
               />
             </div>
           )
@@ -985,7 +998,8 @@ function GraphView() {
                 onCopyClick={handleCopyItem}
                 isPending={false}
                 isTimeView={true}
-                showContext={viewPreferences.showContext}
+                showContext={showContext}
+                depth={depth}
               />
             </div>
           )
