@@ -756,25 +756,25 @@
 }
 
 /* Responsive */
-/* L3 drops below L2 on tablets and narrower */
-@media (max-width: 768px) {
-  .layer2-container {
-    flex-direction: column;
-  }
-}
-
-/* L2 drops below L1 on phones */
-@media (max-width: 600px) {
+/* Intermediate: L2+L3 unit drops below L1, L3 still right of L2 */
+@media (max-width: 1024px) {
   .section {
     flex-direction: column;
-  }
-
-  .inline-edit {
-    max-width: 100%;
   }
 
   .layer1-container {
     margin-right: 0;
     margin-bottom: 0.75rem;
+  }
+}
+
+/* Full stack: L3 also drops below L2 */
+@media (max-width: 768px) {
+  .layer2-container {
+    flex-direction: column;
+  }
+
+  .inline-edit {
+    max-width: 100%;
   }
 }
