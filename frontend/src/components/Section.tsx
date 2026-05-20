@@ -1,3 +1,4 @@
+import { useRef, useEffect, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/client'
 import InlineItemEditor from './InlineItemEditor'
 
@@ -86,6 +87,20 @@ function Section({
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
   const hasChildren = !!item.children && Object.keys(item.children).length > 0
   const title = item.title || itemKey
+
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const layer1Ref = useRef<HTMLDivElement>(null)
+  const [l1Wide, setL1Wide] = useState(false)
+
+  useEffect(() => {
+    const observer = new ResizeObserver(() => {
+      if (sectionRef.current && layer1Ref.current) {
+        setL1Wide(layer1Ref.current.offsetWidth > sectionRef.current.offsetWidth / 3)
+      }
+    })
+    if (sectionRef.current) observer.observe(sectionRef.current)
+    return () => observer.disconnect()
+  }, [])
   
   // Don't show edit buttons in time view, when pending, or for non-editable items
   const showEditButton = !isTimeView && !item.nonEditable
@@ -101,7 +116,7 @@ function Section({
   )
 
   return (
-    <div className="section">
+    <div className={`section${l1Wide ? ' section--wide-l1' : ''}`} ref={sectionRef}>
       {/* Copy button at top-right */}
       {!isTimeView && onCopyClick && (
         <span 
@@ -114,7 +129,7 @@ function Section({
         />
       )}
       {/* Layer 1 - Main category */}
-      <div className="layer1-container">
+      <div className="layer1-container" ref={layer1Ref}>
         <div className="layer1-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
           {showLoading && <span className="loading-spinner" title="Syncing...">⟳</span>}
           {editingPath === itemPath ? (

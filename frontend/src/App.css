@@ -756,6 +756,16 @@
 }
 
 /* Responsive */
+/* L1 text too long (> 1/3 section width): force L2+L3 below L1 */
+.section--wide-l1 {
+  flex-direction: column;
+}
+
+.section--wide-l1 .layer1-container {
+  margin-right: 0;
+  margin-bottom: 0.75rem;
+}
+
 /* Intermediate: L2+L3 unit drops below L1, L3 still right of L2 */
 @media (max-width: 1024px) {
   .section {
