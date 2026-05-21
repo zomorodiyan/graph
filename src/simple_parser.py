@@ -39,7 +39,13 @@ class SimpleParser:
             # Parse the line
             # Known metadata properties that can have empty values
             metadata_props = {'description', 'display_name', 'icon', 'version'}
-            if ':' in line and not line.strip().endswith(':'):
+            if stripped.startswith('"') and stripped.endswith('"') and len(stripped) >= 2:
+                # Quoted string = context value (e.g. from serializeItem clipboard format)
+                raw = stripped[1:-1]
+                context_value = raw.replace('\\"', '"').replace('\\\\', '\\').replace('\\n', '\n')
+                current_parent = SimpleParser._find_parent(stack, indent)
+                current_parent['context'] = context_value
+            elif ':' in line and not line.strip().endswith(':'):
                 # Property line (e.g., "progress: 80" or "context: some text")
                 key, value = [part.strip() for part in stripped.split(':', 1)]
                 

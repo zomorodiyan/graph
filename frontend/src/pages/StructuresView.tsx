@@ -94,7 +94,15 @@ function StructuresView() {
       const structureIdx = lines.findIndex(l => l === 'structure')
       const bodyLines = structureIdx >= 0 ? lines.slice(structureIdx + 1) : lines
       const text = bodyLines
-        .map(l => (l.startsWith('  ') ? l.slice(2) : l))
+        .map(l => {
+          const deindented = l.startsWith('  ') ? l.slice(2) : l
+          const ctxMatch = deindented.match(/^(\s*)context: (.+)$/)
+          if (ctxMatch) {
+            const escaped = ctxMatch[2].replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+            return `${ctxMatch[1]}"${escaped}"`
+          }
+          return deindented
+        })
         .join('\n')
         .trimEnd()
       await navigator.clipboard.writeText(text)
