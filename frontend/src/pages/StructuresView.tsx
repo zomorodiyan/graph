@@ -89,7 +89,14 @@ function StructuresView() {
     e.stopPropagation()
 
     try {
-      const text = await fetchStructureText(name)
+      const raw = await fetchStructureText(name)
+      const lines = raw.split('\n')
+      const structureIdx = lines.findIndex(l => l === 'structure')
+      const bodyLines = structureIdx >= 0 ? lines.slice(structureIdx + 1) : lines
+      const text = bodyLines
+        .map(l => (l.startsWith('  ') ? l.slice(2) : l))
+        .join('\n')
+        .trimEnd()
       await navigator.clipboard.writeText(text)
       showNotification('Copied structure!')
     } catch (err) {
