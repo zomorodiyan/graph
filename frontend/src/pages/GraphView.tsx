@@ -6,7 +6,7 @@ import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useTheme } from '../context/ThemeContext'
 import { StructureItem, UpdatePayload, pasteItems } from '@api'
-import EditModal from '../components/EditModal'
+import InlineItemEditor from '../components/InlineItemEditor'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
 import { loadViewPreferences } from '../utils/viewPreferences'
@@ -62,13 +62,8 @@ function GraphView() {
   // Track items that are being synced (pending) - these show loading and can't be dragged
   const [pendingItems, setPendingItems] = useState<Set<string>>(new Set())
   
-  // Create modal state
-  const [modalState, setModalState] = useState<{
-    mode: 'create'
-    path: string
-    name: string
-    data: StructureItem
-  } | null>(null)
+  // Inline create state - shows editor at bottom of list for new item
+  const [inlineCreate, setInlineCreate] = useState(false)
 
   // Inline edit state for item editing
   const [inlineEdit, setInlineEdit] = useState<{ path: string } | null>(null)
@@ -78,12 +73,9 @@ function GraphView() {
     type: 'success' | 'error' | 'syncing'
   } | null>(null)
 
-  useModalBackButton(Boolean(modalState) || Boolean(inlineEdit), () => {
-    if (inlineEdit) {
-      setInlineEdit(null)
-      return
-    }
-    setModalState(null)
+  useModalBackButton(inlineCreate || Boolean(inlineEdit), () => {
+    if (inlineEdit) { setInlineEdit(null); return }
+    setInlineCreate(false)
   })
 
   // Show notification helper
@@ -510,12 +502,7 @@ function GraphView() {
 
   // Handle add new item click
   const handleAddClick = () => {
-    setModalState({
-      mode: 'create',
-      path: path || '', // Current path is the parent for new item
-      name: '',
-      data: {} as StructureItem
-    })
+    setInlineCreate(true)
   }
 
   // Handle paste item from clipboard
@@ -543,16 +530,12 @@ function GraphView() {
     }
   }
 
-  // Handle create save from modal - uses local state for instant feedback
+  // Handle create save from inline editor - uses local state for instant feedback
   const handleCreateSave = (data: UpdatePayload) => {
-    if (!modalState) return
+    setInlineCreate(false)
 
-    const itemPath = modalState.path
+    const itemPath = path || ''
 
-    // Close modal immediately
-    setModalState(null)
-
-    // IMMEDIATELY update local state for instant visual feedback (like handleDrop)
     if (data.name) {
       // Normalize name the same way the server does
       const normalizedName = data.name.toLowerCase().replace(/ /g, '_')
@@ -962,8 +945,22 @@ function GraphView() {
           <div className="empty-state">No items at this level</div>
         )}
 
-        {/* Add New Item Button - hide in virtual views */}
-        {!isVirtualView && (
+        {/* Inline create editor - appears as last item in list */}
+        {!isVirtualView && inlineCreate && (
+          <div className="section">
+            <div className="layer1-container">
+              <InlineItemEditor
+                itemKey=""
+                item={{} as StructureItem}
+                onSave={handleCreateSave}
+                onCancel={() => setInlineCreate(false)}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Add New Item Button - hide in virtual views or while inline create is open */}
+        {!isVirtualView && !inlineCreate && (
           <div className="add-item-split">
             <span className="split-zone" onClick={handleAddClick} title="Add new item">
               <span className="split-icon">+</span>
@@ -1005,19 +1002,6 @@ function GraphView() {
           )
         })}
       </div>
-
-      {/* Edit/Create Modal */}
-      {modalState && (
-        <EditModal
-          name={modalState.name}
-          data={modalState.data}
-          onSave={handleCreateSave}
-          onDelete={undefined}
-          onClose={() => setModalState(null)}
-          isSaving={updateItem.isPending || createItem.isPending}
-          mode="create"
-        />
-      )}
 
       {/* Notification */}
       {notification && (

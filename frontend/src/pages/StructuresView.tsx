@@ -7,6 +7,7 @@ import { useGraphs } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import Notification from '../components/Notification'
+import InlineGraphEditor from '../components/InlineGraphEditor'
 import './StructuresView.css'
 
 // Icons for different graph types (randomly assigned based on name hash)
@@ -22,23 +23,16 @@ function StructuresView() {
   const queryClient = useQueryClient()
   const { toggleTheme } = useTheme()
   const { data: graphs = [], isLoading, error } = useGraphs()
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [newGraphName, setNewGraphName] = useState('')
-  const [newGraphDescription, setNewGraphDescription] = useState('')
-  const [isCreating, setIsCreating] = useState(false)
+
+  const [inlineCreate, setInlineCreate] = useState(false)
+  const [inlineEditGraph, setInlineEditGraph] = useState<GraphInfo | null>(null)
   const [notification, setNotification] = useState<{
     message: string
     type: 'success' | 'error'
   } | null>(null)
-  
-  // Edit modal state
-  const [editingGraph, setEditingGraph] = useState<GraphInfo | null>(null)
-  const [editIcon, setEditIcon] = useState('')
-  const [editDisplayName, setEditDisplayName] = useState('')
-  const [editDescription, setEditDescription] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
-  useModalBackButton(showCreateModal, () => setShowCreateModal(false))
-  useModalBackButton(Boolean(editingGraph), () => setEditingGraph(null))
+
+  useModalBackButton(inlineCreate, () => setInlineCreate(false))
+  useModalBackButton(Boolean(inlineEditGraph), () => setInlineEditGraph(null))
 
   // Enable swipe navigation (back/forward)
   useSwipeNavigation()
@@ -58,36 +52,26 @@ function StructuresView() {
     let baseName = 'new_graph'
     if (!existingNames.has(baseName)) return baseName
     let counter = 2
-    while (existingNames.has(`${baseName}_${counter}`)) {
-      counter++
-    }
+    while (existingNames.has(`${baseName}_${counter}`)) counter++
     return `${baseName}_${counter}`
   }
 
-  const handleCreateGraph = async () => {
-    const trimmedName = newGraphName.trim()
-    const trimmedDescription = newGraphDescription.trim()
-    const createGuide = !trimmedName && !trimmedDescription
-    const graphName = createGuide ? 'guide' : (trimmedName || generateUniqueName())
-
+  const handleCreateGraph = async (displayName: string, description: string) => {
+    const graphName = displayName
+      ? displayName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '') || generateUniqueName()
+      : generateUniqueName()
     try {
-      setIsCreating(true)
-      await createGraph(graphName, trimmedDescription)
+      await createGraph(graphName, description)
       showNotification(`Created "${graphName}"!`)
-      setShowCreateModal(false)
-      setNewGraphName('')
-      setNewGraphDescription('')
+      setInlineCreate(false)
       queryClient.invalidateQueries({ queryKey: ['graphs'] })
     } catch (err) {
       showNotification((err as Error).message, 'error')
-    } finally {
-      setIsCreating(false)
     }
   }
 
   const handleCopyGraph = async (e: React.MouseEvent, name: string) => {
     e.stopPropagation()
-
     try {
       const raw = await fetchStructureText(name)
       const lines = raw.split('\n')
@@ -112,51 +96,30 @@ function StructuresView() {
     }
   }
 
-  const handleEditClick = (e: React.MouseEvent, graph: GraphInfo) => {
-    e.stopPropagation()
-    setEditingGraph(graph)
-    setEditIcon(graph.icon || getIconForGraph(graph.name))
-    setEditDisplayName(graph.display_name)
-    setEditDescription(graph.description || '')
-  }
-
-  const handleSaveEdit = async () => {
-    if (!editingGraph) return
-
+  const handleSaveEdit = async (graph: GraphInfo, displayName: string, description: string) => {
     try {
-      setIsSaving(true)
-      await updateGraph(editingGraph.name, {
-        display_name: editDisplayName,
-        description: editDescription,
-        icon: editIcon,
+      await updateGraph(graph.name, {
+        display_name: displayName,
+        description,
+        icon: graph.icon || getIconForGraph(graph.name),
       })
       showNotification('Graph updated!')
-      setEditingGraph(null)
+      setInlineEditGraph(null)
       queryClient.invalidateQueries({ queryKey: ['graphs'] })
     } catch (err) {
       showNotification((err as Error).message, 'error')
-    } finally {
-      setIsSaving(false)
     }
   }
 
-  const handleDeleteGraph = async () => {
-    if (!editingGraph) return
-    
-    if (!confirm(`Delete "${editingGraph.display_name}"? This cannot be undone.`)) {
-      return
-    }
-
+  const handleDeleteGraph = async (graph: GraphInfo) => {
+    if (!confirm(`Delete "${graph.display_name}"? This cannot be undone.`)) return
     try {
-      setIsSaving(true)
-      await deleteGraph(editingGraph.name)
+      await deleteGraph(graph.name)
       showNotification('Graph deleted!')
-      setEditingGraph(null)
+      setInlineEditGraph(null)
       queryClient.invalidateQueries({ queryKey: ['graphs'] })
     } catch (err) {
       showNotification((err as Error).message, 'error')
-    } finally {
-      setIsSaving(false)
     }
   }
 
@@ -169,15 +132,12 @@ function StructuresView() {
         showNotification('Clipboard is empty', 'error')
         return
       }
-      setIsCreating(true)
       const graphName = generateUniqueName()
       await createGraph(graphName, '', text)
       showNotification(`Created "${graphName}" from clipboard!`)
       queryClient.invalidateQueries({ queryKey: ['graphs'] })
     } catch (err) {
       showNotification((err as Error).message, 'error')
-    } finally {
-      setIsCreating(false)
     }
   }
 
@@ -213,50 +173,76 @@ function StructuresView() {
 
       {/* Graphs grid */}
       <div className="graphs-container">
-        {/* Add new graph card */}
-        <div 
-          className="graph-card add-card"
-          onClick={() => setShowCreateModal(true)}
-        >
-          <span
-            className="paste-handle"
-            onClick={(e) => { e.stopPropagation(); handlePasteNewGraph(e); }}
-            title="Paste graph from clipboard"
-          />
-          <div className="add-content">
-            <span className="add-icon">+</span>
-            <span className="add-text">New Graph</span>
+        {/* Add new graph card — or inline create editor */}
+        {inlineCreate ? (
+          <div className="graph-card graph-card--editing">
+            <InlineGraphEditor
+              displayName=""
+              description=""
+              onSave={handleCreateGraph}
+              onCancel={() => setInlineCreate(false)}
+            />
           </div>
-        </div>
+        ) : (
+          <div
+            className="graph-card add-card"
+            onClick={() => setInlineCreate(true)}
+          >
+            <span
+              className="paste-handle"
+              onClick={(e) => { e.stopPropagation(); handlePasteNewGraph(e) }}
+              title="Paste graph from clipboard"
+            />
+            <div className="add-content">
+              <span className="add-icon">+</span>
+              <span className="add-text">New Graph</span>
+            </div>
+          </div>
+        )}
 
         {/* Existing graphs */}
         {graphs.map((graph, index) => {
           const COLORS = ['green', 'blue', 'purple', 'brown']
           const color = COLORS[index % COLORS.length]
           const colorClass = index % 2 === 0 ? `color-${color}-alt` : `color-${color}`
+
+          if (inlineEditGraph?.name === graph.name) {
+            return (
+              <div key={graph.name} className="graph-card graph-card--editing">
+                <InlineGraphEditor
+                  displayName={graph.display_name}
+                  description={graph.description || ''}
+                  onSave={(displayName, description) => handleSaveEdit(graph, displayName, description)}
+                  onCancel={() => setInlineEditGraph(null)}
+                  onDelete={() => handleDeleteGraph(graph)}
+                />
+              </div>
+            )
+          }
+
           return (
-          <div
-            key={graph.name}
-            className="graph-card"
-            onClick={() => handleGraphClick(graph.name)}
-          >
-            <span 
-              className="edit-handle"
-              onClick={(e) => handleEditClick(e, graph)}
-              title="Edit graph"
+            <div
+              key={graph.name}
+              className="graph-card"
+              onClick={() => handleGraphClick(graph.name)}
             >
-              ☰
-            </span>
-            <h3 className={`graph-name ${colorClass}`}>{graph.display_name}</h3>
-            {graph.description && (
-              <p className="graph-description">{graph.description}</p>
-            )}
-            <span
-              className="copy-handle"
-              onClick={(e) => handleCopyGraph(e, graph.name)}
-              title="Copy structure"
-            />
-          </div>
+              <span
+                className="edit-handle"
+                onClick={(e) => { e.stopPropagation(); setInlineEditGraph(graph) }}
+                title="Edit graph"
+              >
+                ☰
+              </span>
+              <h3 className={`graph-name ${colorClass}`}>{graph.display_name}</h3>
+              {graph.description && (
+                <p className="graph-description">{graph.description}</p>
+              )}
+              <span
+                className="copy-handle"
+                onClick={(e) => handleCopyGraph(e, graph.name)}
+                title="Copy structure"
+              />
+            </div>
           )
         })}
       </div>
@@ -265,106 +251,6 @@ function StructuresView() {
       {graphs.length === 0 && (
         <div className="empty-state">
           <p>No graphs yet. Create your first knowledge graph!</p>
-        </div>
-      )}
-
-      {/* Create modal */}
-      {showCreateModal && (
-        <div className="modal-overlay" onClick={() => {
-          setShowCreateModal(false)
-        }}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Create New Graph</h2>
-            <div className="form-group">
-              <label htmlFor="graph-name">Name</label>
-              <input
-                id="graph-name"
-                type="text"
-                value={newGraphName}
-                onChange={(e) => setNewGraphName(e.target.value)}
-                placeholder="Leave empty to create guide"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="graph-description">Description (optional)</label>
-              <input
-                id="graph-description"
-                type="text"
-                value={newGraphDescription}
-                onChange={(e) => setNewGraphDescription(e.target.value)}
-                placeholder="What is this graph about?"
-              />
-            </div>
-            <div className="modal-actions">
-              <button 
-                className="btn-secondary"
-                onClick={() => {
-                  setShowCreateModal(false)
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-primary"
-                onClick={handleCreateGraph}
-                disabled={isCreating}
-              >
-                {isCreating ? 'Creating...' : (!newGraphName.trim() && !newGraphDescription.trim() ? 'Guide' : 'Create')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit modal */}
-      {editingGraph && (
-        <div className="modal-overlay" onClick={() => setEditingGraph(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Edit Graph</h2>
-            <div className="form-group">
-              <label htmlFor="edit-name">Name</label>
-              <input
-                id="edit-name"
-                type="text"
-                value={editDisplayName}
-                onChange={(e) => setEditDisplayName(e.target.value)}
-                placeholder="Graph name"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="edit-description">Description</label>
-              <input
-                id="edit-description"
-                type="text"
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                placeholder="What is this graph about?"
-              />
-            </div>
-            <div className="modal-actions">
-              <button 
-                className="btn-danger"
-                onClick={handleDeleteGraph}
-                disabled={isSaving}
-              >
-                Delete
-              </button>
-              <div style={{ flex: 1 }} />
-              <button 
-                className="btn-secondary"
-                onClick={() => setEditingGraph(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-primary"
-                onClick={handleSaveEdit}
-                disabled={isSaving || !editDisplayName.trim()}
-              >
-                {isSaving ? 'Saving...' : 'Save'}
-              </button>
-            </div>
-          </div>
         </div>
       )}
 

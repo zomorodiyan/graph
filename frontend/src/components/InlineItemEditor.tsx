@@ -196,6 +196,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
         onChange={(e) => setName(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Item title"
+        autoFocus
       />
 
       {showProgressEditor && (

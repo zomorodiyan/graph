@@ -136,6 +136,26 @@
   opacity: 0.8;
 }
 
+/* Graph card in inline-edit mode */
+.graph-card--editing {
+  align-items: flex-start;
+  text-align: left;
+  cursor: default;
+  padding: 1rem 1.25rem;
+}
+
+.graph-card--editing:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--border-color);
+}
+
+.graph-inline-edit {
+  display: flex;
+  max-width: 100%;
+  width: 100%;
+}
+
 /* Add card */
 .add-card {
   position: relative;
