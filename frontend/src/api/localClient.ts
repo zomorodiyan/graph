@@ -145,7 +145,7 @@ function parseIndentedText(text: string): Record<string, StructureItem> {
 }
 
 // ── Structure serializer (mirrors serializeItem in GraphView) ─────────────────
-function serializeStructure(items: Record<string, StructureItem>, indent = 0): string {
+export function serializeStructure(items: Record<string, StructureItem>, indent = 0): string {
   let out = ''
   const pad = '  '.repeat(indent)
   for (const [key, item] of Object.entries(items)) {
@@ -393,4 +393,30 @@ export async function fetchGraphStateVersion(graphName: string): Promise<GraphSt
 
 export async function fetchGraphMutations(graphName: string, sinceVersion = 0): Promise<GraphMutationsResponse> {
   return { graph: graphName, since_version: sinceVersion, latest_version: 0, count: 0, mutations: [] }
+}
+
+// ── Parse structure body text (used by Gist sync pull) ───────────────────────
+export function parseStructureText(text: string): Record<string, StructureItem> {
+  return parseIndentedText(text)
+}
+
+// ── Bulk import: replace a graph's full structure (used by sync pull) ─────────
+export async function importStructure(
+  graphName: string,
+  structure: Structure,
+  meta: Partial<GraphInfo> = {},
+): Promise<void> {
+  const names = getGraphNames()
+  if (!names.includes(graphName)) {
+    names.push(graphName)
+    saveGraphNames(names)
+  }
+  saveStructure(graphName, structure)
+  const existing = loadMeta(graphName)
+  saveMeta(graphName, {
+    ...existing,
+    ...meta,
+    name: graphName,
+    modified_at: meta.modified_at ?? new Date().toISOString(),
+  })
 }

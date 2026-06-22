@@ -1,51 +1,44 @@
-# Graph App — Project Context
+# Graph App
 
-## What This Is
+Personal knowledge graph editor. Hierarchical graphs (body/finance/mind/time) rendered as interactive web UIs. Syncs to GCS and optionally Firestore.
 
-A personal knowledge graph editor. Users maintain YAML-based hierarchical graphs (body/finance/mind/time etc.) that render as interactive web UIs. Data can sync to Google Cloud Storage and Firestore.
+## Stack
 
-## Tech Stack
+- **Backend**: Python 3.11, FastAPI, Uvicorn — port 8000 dev / 8080 prod
+- **Frontend**: React 18 + TypeScript + Vite — port 3000 dev, proxies `/api` → backend
+- **Deploy**: Docker → Google Cloud Run (`graph-api`, project `zomograph-personal`, `us-central1`)
 
-- **Backend**: Python 3.11, FastAPI, Uvicorn (port 8080 in prod, 8000 in dev)
-- **Frontend**: React 18 + TypeScript + Vite (proxied to backend in dev, built into container in prod)
-- **Storage**: File system (YAML/text), GCS for sync, Firestore for real-time multi-device
-- **Deploy**: Docker + Google Cloud Run (`graph-api` in project `zomograph-personal`, region `us-central1`)
-
-## Branch Structure
+## Branches
 
 | Branch | Purpose |
 |--------|---------|
-| `main` | Old HTML-based version — largely abandoned |
-| `dev` | Current server-backed TypeScript/React app |
-| `offline` | Attempted offline PWA on top of `dev` — not fully working (see below) |
+| `main` | Old HTML version — abandoned |
+| `dev` | Active — server-backed React/TS app |
+| `offline` | Incomplete PWA attempt on top of `dev` (see below) |
 
-Active work should happen on `dev` for server-backed features. The `offline` branch diverged from `dev` at commit `06aa2ab`.
+Work on `dev`. The `offline` branch diverged at `06aa2ab`.
 
 ## Key Files
 
 | Path | Role |
 |------|------|
-| `src/api.py` | FastAPI app — all endpoints |
-| `src/firestore_graph_store.py` | Firestore persistence layer |
-| `src/gcs_graph_store.py` | GCS sync layer |
-| `src/file_utils.py` | YAML parsing, ID injection |
-| `src/structures_manager.py` | Multi-graph management |
-| `frontend/src/api/client.ts` | TypeScript API client (server-backed) |
-| `frontend/src/api/localClient.ts` | Offline API client backed by localStorage |
-| `frontend/src/hooks/useGraph.ts` | React Query hooks w/ optimistic updates |
-| `frontend/src/main.tsx` | React entry point — note hardcoded `basename="/graph/"` on `offline` branch |
-| `frontend/vite.config.ts` | Vite config — `@api` alias switches between `client.ts` / `localClient.ts` |
-| `frontend/.env.offline` | Offline build env: `VITE_OFFLINE_MODE=true`, `VITE_BASE_URL=/graph/` |
-| `.github/workflows/deploy-offline.yml` | GitHub Actions: builds offline PWA and deploys to GitHub Pages on push to `offline` |
-| `deploy-cloud-run.sh` | Deploy script (Linux/Mac) |
-| `deploy-cloud-run.ps1` | Deploy script (Windows) |
+| `src/api.py` | All FastAPI endpoints + limits |
+| `src/file_utils.py` | Indented-text parser, ID injection |
+| `src/structures_manager.py` | Multi-graph CRUD |
+| `src/firestore_graph_store.py` | Firestore backend |
+| `src/gcs_graph_store.py` | GCS sync |
+| `frontend/src/pages/GraphView.tsx` | Main editor — CRUD, drag-drop, virtual sections |
+| `frontend/src/pages/StructuresView.tsx` | Graph list/management |
+| `frontend/src/components/Section.tsx` | 3-level hierarchical renderer |
+| `frontend/src/api/client.ts` | Server-backed API client |
+| `frontend/src/api/localClient.ts` | Offline localStorage client |
+| `frontend/src/hooks/useGraph.ts` | React Query + optimistic updates |
+| `frontend/vite.config.ts` | `@api` alias switches client at build time |
 | `config.example.yaml` | Config template (copy → `config.yaml`, git-ignored) |
-| `doc/FIRESTORE_BACKEND.md` | Firestore modes, env vars, API endpoints |
-| `CLOUD_DEPLOY.md` | Full Cloud Run setup guide |
 
-## Structure File Format
+## Data Format
 
-Graphs are stored as indentation-based text (`structure.txt`, `structures/*.txt`):
+Graphs stored as indented plain text (`structures/*.txt`):
 
 ```
 metadata
@@ -57,102 +50,76 @@ structure
     context: Physical health
     habit
       evening
+        due: 2026-01-15
 ```
 
-Items auto-get `id` (from path), `title` (from key), children dict.
+Items auto-get `id` (dot-path), `title` (from key), and `children` dict at parse time — stripped before save.
 
 ## Backend Modes (`GRAPH_STATE_BACKEND`)
 
 | Value | Behavior |
 |-------|----------|
-| `file` | Default. YAML files + GCS sync only |
-| `dual` | Write to file AND Firestore; read from Firestore with file fallback |
-| `firestore` | Firestore as sole backend |
+| `file` | Default. Local files + optional GCS sync |
+| `dual` | Write both file + Firestore; read from Firestore with file fallback |
+| `firestore` | Firestore only |
 
 Set via env var or `config.yaml → graph_state.backend`.
 
-## Cloud Run Deployment
+## Limits (`src/api.py`)
 
-**Service**: `graph-api` | **Project**: `zomograph-personal` | **Region**: `us-central1`
-
-**Image**: `gcr.io/zomograph-personal/graph-api`
-
-**Secrets mounted**:
-- `config.yaml` ← Secret Manager `graph-config:latest`
-- `token.pickle` ← Secret Manager `graph-token:latest`
-
-**Key env vars**:
-- `PRODUCTION=true` — serves React frontend
-- `GRAPH_STATE_BACKEND` — `file|dual|firestore`
-- `FIRESTORE_GRAPH_COLLECTION` — root Firestore collection (default: `graph_state`)
-- `GRAPH_BUCKET_NAME` — GCS bucket override
-
-**Full deploy command** (builds image via Cloud Build then deploys):
-```bash
-gcloud builds submit --tag gcr.io/zomograph-personal/graph-api && \
-gcloud run deploy graph-api \
-  --image gcr.io/zomograph-personal/graph-api \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --port 8080 \
-  --memory 512Mi \
-  --cpu 1 \
-  --set-env-vars "PRODUCTION=true,GRAPH_STATE_BACKEND=dual,FIRESTORE_GRAPH_COLLECTION=graph_state" \
-  --set-secrets "config.yaml=graph-config:latest,token.pickle=graph-token:latest"
-```
-
-**Health check**: `GET /health` → returns `graph_state_backend` and `firestore_available`.
+1000 items/graph · depth 20 · 200 children · 50 graphs · 100-char names · 10K-char context
 
 ## Development
 
 ```bash
-# Backend only
+# Backend
 python run.py
 
 # Frontend (separate terminal)
-cd frontend && npm run dev   # Vite on :3000, proxies /api → :8000
-
-# Offline PWA build (no server)
-cd frontend && npm run build:offline   # outputs to dist/, served at /graph/
+cd frontend && npm run dev
 ```
 
-## Offline PWA Attempt (Incomplete)
+## Deploy (Cloud Run)
 
-The `offline` branch contains an attempt to make the app work fully offline, deployed to GitHub Pages. The implementation exists but **did not succeed** — the deployment has issues.
+```bash
+gcloud builds submit --tag gcr.io/zomograph-personal/graph-api && \
+gcloud run deploy graph-api \
+  --image gcr.io/zomograph-personal/graph-api \
+  --platform managed --region us-central1 \
+  --allow-unauthenticated --port 8080 \
+  --memory 512Mi --cpu 1 \
+  --set-env-vars "PRODUCTION=true,GRAPH_STATE_BACKEND=dual,FIRESTORE_GRAPH_COLLECTION=graph_state" \
+  --set-secrets "config.yaml=graph-config:latest,token.pickle=graph-token:latest"
+```
 
-### What was built
+Secrets: `config.yaml` ← `graph-config:latest`, `token.pickle` ← `graph-token:latest`  
+Health check: `GET /health`
 
-- `localClient.ts` — full API surface backed by `localStorage`; no server needed
-- `vite-plugin-pwa` + service worker for installable offline caching
-- `build:offline` npm script compiles with `mode=offline`
-- In offline mode `vite.config.ts` routes the `@api` alias to `localClient.ts` instead of `client.ts`
-- GitHub Actions workflow deploys to GitHub Pages on push to `offline` branch
+## Firestore Schema
 
-### Known problems
+Collection: `{FIRESTORE_GRAPH_COLLECTION}/{graph_name}`  
+Sub-collections: `nodes`, `edges`, `mutations` (append-only), `snapshots` (optional)  
+Concurrency: `x-base-version` header (optimistic lock), `x-actor-id` (mutation stamp)
 
-- `main.tsx` has `BrowserRouter basename="/graph/"` hardcoded for ALL builds, which breaks routing in normal dev and Cloud Run deployments (only valid at the GitHub Pages `/graph/` path)
-- The `basename` should be conditional on `VITE_BASE_URL` or `VITE_OFFLINE_MODE` at build time
+## Offline Sync (GitHub Gist)
 
-## Firestore Schema (per graph)
+In `VITE_OFFLINE_MODE=true` builds a **Sync** button (↕) appears at the bottom-left of the graphs page. Each user brings their own GitHub personal access token (`gist` scope only — no repo access).
 
-Collection: `{FIRESTORE_GRAPH_COLLECTION}/{graph_name}`
+**Storage layout:** one private Gist per user. Each graph = `{name}.txt` (serialised structure body). Metadata (display_name, description, icon, modified_at) stored in `_graph_meta.json`.
 
-Sub-collections: `nodes`, `edges`, `mutations` (append-only log), `snapshots` (optional).
+**Sync logic:** compares local `modified_at` vs `_graph_meta.json` timestamp per graph → pushes if local is newer, pulls if remote is newer. All pushes batched in a single `PATCH /gists/{id}` call.
 
-New API endpoints for real-time sync:
-- `GET /api/graphs/{name}/state-version`
-- `GET /api/graphs/{name}/mutations?since_version=0&limit=200`
+**First-time setup:** click ↕ → enter GitHub token → Gist ID is auto-created and saved to localStorage.
 
-Concurrency headers: `x-base-version` (optimistic lock), `x-actor-id` (stamp mutations).
+Key files:
+| Path | Role |
+|------|------|
+| `frontend/src/api/gistClient.ts` | GitHub Gist API (create, fetch, patch) |
+| `frontend/src/hooks/useSyncManager.ts` | Sync state, PAT/Gist config, `syncAll()` |
+| `localClient.ts` → `serializeStructure`, `parseStructureText`, `importStructure` | Serialise for push / parse + overwrite for pull |
 
-## Multi-Graph System
+## Offline PWA (Incomplete — `offline` branch)
 
-- Default graph: `structure.txt`
-- Extra graphs: `structures/{name}.txt`
-- Default API: `/api/items/{path}`
-- Graph-specific: `/api/graphs/{name}/items/{path}`
+What exists: `localClient.ts` mirrors full API surface via localStorage, `vite-plugin-pwa` service worker, `build:offline` npm script, GitHub Actions deploy to GitHub Pages.
 
-## Limits (api.py:34-42)
-
-Max 1000 items, 20 nesting depth, 200 children per item, 50 graphs, 100 char names, 10K char context.
+**Known bug**: `main.tsx` hardcodes `BrowserRouter basename="/graph/"` for all builds — breaks routing outside GitHub Pages. Fix: make `basename` conditional on `VITE_BASE_URL`/`VITE_OFFLINE_MODE`.

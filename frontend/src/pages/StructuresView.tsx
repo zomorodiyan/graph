@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTheme } from '../context/ThemeContext'
@@ -6,9 +6,12 @@ import { createGraph, fetchStructureText, updateGraph, deleteGraph, GraphInfo } 
 import { useGraphs } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
+import { useSyncManager, loadSyncStatus, GraphSyncStatus } from '../hooks/useSyncManager'
 import Notification from '../components/Notification'
 import InlineGraphEditor from '../components/InlineGraphEditor'
 import './StructuresView.css'
+
+const OFFLINE_MODE = import.meta.env.VITE_OFFLINE_MODE === 'true'
 
 // Icons for different graph types (randomly assigned based on name hash)
 const GRAPH_ICONS = ['📊', '🎯', '📚', '💼', '🏠', '🌟', '🚀', '💡', '🎨', '🔬']
@@ -30,6 +33,13 @@ function StructuresView() {
     message: string
     type: 'success' | 'error'
   } | null>(null)
+  const [showGistConfig, setShowGistConfig] = useState(false)
+  const [patInput,    setPatInput]    = useState('')
+  const [gistIdInput, setGistIdInput] = useState('')
+  const patInputRef = useRef<HTMLInputElement>(null)
+
+  const { isSyncing, syncError, pat, gistId, syncStatuses, configure, syncAll } =
+    useSyncManager(queryClient)
 
   useModalBackButton(inlineCreate, () => setInlineCreate(false))
   useModalBackButton(Boolean(inlineEditGraph), () => setInlineEditGraph(null))
@@ -40,6 +50,23 @@ function StructuresView() {
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type })
     setTimeout(() => setNotification(null), 3000)
+  }
+
+  const handleSyncClick = async () => {
+    if (!pat) {
+      setPatInput('')
+      setGistIdInput('')
+      setShowGistConfig(true)
+      setTimeout(() => patInputRef.current?.focus(), 50)
+      return
+    }
+    const { error } = await syncAll()
+    showNotification(error ? `Sync error: ${error}` : 'Synced!', error ? 'error' : 'success')
+  }
+
+  const handleSaveGistConfig = () => {
+    configure(patInput, gistIdInput)
+    setShowGistConfig(false)
   }
 
   const handleGraphClick = (graphName: string) => {
@@ -162,6 +189,63 @@ function StructuresView() {
       {/* Top buttons */}
       <div className="top-buttons">
         <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
+        {OFFLINE_MODE && (
+          <div className="sync-area">
+            {showGistConfig ? (
+              <div className="gist-config-panel">
+                <div className="gist-config-guide">
+                  <p className="gist-guide-title">Connect GitHub Gist for sync</p>
+                  <ol className="gist-guide-steps">
+                    <li>Go to <a href="https://github.com/settings/tokens/new?scopes=gist&description=Knowledge+Graph+Sync" target="_blank" rel="noreferrer">github.com → Settings → Tokens</a></li>
+                    <li>Check only <strong>gist</strong> scope, generate &amp; copy the token</li>
+                    <li>Paste it below — your graphs sync to a private Gist only you can see</li>
+                  </ol>
+                </div>
+                <div className="gist-config-inputs">
+                  <input
+                    ref={patInputRef}
+                    type="password"
+                    placeholder="Paste GitHub token here"
+                    value={patInput}
+                    onChange={e => setPatInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSaveGistConfig(); if (e.key === 'Escape') setShowGistConfig(false) }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Gist ID (leave blank — auto-created)"
+                    value={gistIdInput}
+                    onChange={e => setGistIdInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSaveGistConfig(); if (e.key === 'Escape') setShowGistConfig(false) }}
+                  />
+                  <div className="gist-config-actions">
+                    <button className="btn-save-url" onClick={handleSaveGistConfig} disabled={!patInput.trim()}>Connect</button>
+                    <button className="btn-cancel-url" onClick={() => setShowGistConfig(false)}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <button
+                  className={`sync-btn${isSyncing ? ' sync-btn--spinning' : ''}`}
+                  onClick={handleSyncClick}
+                  title={pat ? `Sync with GitHub Gist${gistId ? ` (${gistId.slice(0, 8)}…)` : ''}` : 'Connect GitHub to enable sync'}
+                  disabled={isSyncing}
+                >
+                  ↕
+                </button>
+                {pat && (
+                  <button
+                    className="server-url-tag"
+                    onClick={() => { setPatInput(pat); setGistIdInput(gistId); setShowGistConfig(true) }}
+                    title="Edit GitHub token / Gist ID"
+                  >
+                    {gistId ? `gist:${gistId.slice(0, 8)}…` : 'GitHub ✓'}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Header */}
@@ -220,6 +304,9 @@ function StructuresView() {
             )
           }
 
+          const syncStatus: GraphSyncStatus | null =
+            OFFLINE_MODE ? (syncStatuses[graph.name] ?? loadSyncStatus(graph.name)) : null
+
           return (
             <div
               key={graph.name}
@@ -236,6 +323,14 @@ function StructuresView() {
               <h3 className={`graph-name ${colorClass}`}>{graph.display_name}</h3>
               {graph.description && (
                 <p className="graph-description">{graph.description}</p>
+              )}
+              {syncStatus && (
+                <span
+                  className={`sync-badge sync-badge--${syncStatus.error ? 'error' : syncStatus.direction}`}
+                  title={syncStatus.error ?? `Last sync: ${new Date(syncStatus.lastSync).toLocaleString()}`}
+                >
+                  {syncStatus.error ? '✕' : syncStatus.direction === 'push' ? '↑' : syncStatus.direction === 'pull' ? '↓' : '✓'}
+                </span>
               )}
               <span
                 className="copy-handle"

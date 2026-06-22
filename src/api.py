@@ -371,6 +371,98 @@ async def update_graph(name: str, data: GraphUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class GraphImport(BaseModel):
+    """Payload for bulk-importing a graph's structure (used by offline sync)."""
+    content: str = Field(..., description="Structure body in indented-text format (no metadata/structure header)")
+    display_name: Optional[str] = Field(None)
+    description: Optional[str] = Field(None)
+    icon: Optional[str] = Field(None)
+
+
+@app.post("/api/graphs/{graph_name}/import")
+async def import_graph(graph_name: str, data: GraphImport):
+    """
+    Replace a graph's full structure with new content.
+    Creates the graph if it doesn't exist. Used by the offline PWA sync.
+    """
+    import re as _re
+    from datetime import datetime as _dt
+
+    safe_name = _re.sub(r'[^a-zA-Z0-9_-]', '', graph_name)
+    if not safe_name:
+        raise HTTPException(status_code=400, detail="Invalid graph name")
+
+    if len(data.content) > MAX_PASTE_CONTENT_SIZE:
+        raise HTTPException(status_code=400, detail=f"Content too large (max {MAX_PASTE_CONTENT_SIZE // 1024}KB)")
+
+    try:
+        if structures_manager.structure_exists(safe_name):
+            file_path = structures_manager.get_structure_path(safe_name)
+            # Rebuild file: preserve old metadata header lines, replace structure body
+            with open(file_path, 'r', encoding='utf-8') as f:
+                old_lines = f.read().split('\n')
+
+            # Find the 'structure' section boundary
+            struct_idx = next(
+                (i for i, l in enumerate(old_lines) if l.strip() == 'structure'), None
+            )
+            header_lines = old_lines[:struct_idx] if struct_idx is not None else old_lines
+
+            # Update metadata fields in-place if provided
+            def _set_meta(lines, key, value):
+                for i, l in enumerate(lines):
+                    if l.strip().startswith(f'{key}:'):
+                        indent = len(l) - len(l.lstrip())
+                        lines[i] = ' ' * indent + f'{key}: {value}'
+                        return
+                # Not found — insert before 'structure' line
+                lines.append(f'  {key}: {value}')
+
+            if data.display_name:
+                _set_meta(header_lines, 'display_name', data.display_name)
+            if data.description is not None:
+                _set_meta(header_lines, 'description', data.description)
+            if data.icon:
+                _set_meta(header_lines, 'icon', data.icon)
+            _set_meta(header_lines, 'updated_at', f"'{_dt.now().isoformat()}'")
+
+            new_file = '\n'.join(header_lines) + '\nstructure\n'
+            for line in data.content.strip().split('\n'):
+                new_file += f'  {line}\n' if line.strip() else '\n'
+
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(new_file)
+
+            from gcs_graph_store import upload_graph_to_gcs
+            try:
+                upload_graph_to_gcs(safe_name, file_path)
+            except Exception:
+                pass  # GCS unavailable — local write succeeded
+        else:
+            structures_manager.create_structure(
+                safe_name,
+                description=data.description or '',
+                initial_content=data.content,
+            )
+            if data.display_name or data.icon:
+                structures_manager.update_structure(
+                    safe_name,
+                    display_name=data.display_name,
+                    description=data.description,
+                    icon=data.icon,
+                )
+
+        infos = structures_manager.list_structures()
+        info = next((i for i in infos if i['name'] == safe_name), None)
+        if not info:
+            raise HTTPException(status_code=500, detail="Graph written but metadata lookup failed")
+        return info
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 def get_file_utils_for_graph(graph_name: str = None) -> FileUtils:
     """Get FileUtils instance for a specific graph or default."""
     if graph_name and graph_name != "default":
