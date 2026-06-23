@@ -2,7 +2,7 @@ name: Deploy Offline PWA to GitHub Pages
 
 on:
   push:
-    branches: [offline]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
