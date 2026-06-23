@@ -14,8 +14,8 @@ const iconFor = (name: string) =>
 
 // ── Persistence helpers ──────────────────────────────────────────────────────
 function getGraphNames(): string[] {
-  try { return JSON.parse(localStorage.getItem(GRAPHS_LIST_KEY) ?? '["default"]') }
-  catch { return ['default'] }
+  try { return JSON.parse(localStorage.getItem(GRAPHS_LIST_KEY) ?? '[]') }
+  catch { return [] }
 }
 function saveGraphNames(names: string[]) {
   localStorage.setItem(GRAPHS_LIST_KEY, JSON.stringify(names))

@@ -45,7 +45,7 @@ export function useSyncManager(queryClient: QueryClient) {
   const [gistId,       setGistIdState]  = useState(getGistId)
   const [syncStatuses, setSyncStatuses] = useState<Record<string, GraphSyncStatus>>(() => {
     try {
-      const names: string[] = JSON.parse(localStorage.getItem('offline_graphs') ?? '["default"]')
+      const names: string[] = JSON.parse(localStorage.getItem('offline_graphs') ?? '[]')
       const result: Record<string, GraphSyncStatus> = {}
       for (const n of names) {
         const s = loadSyncStatus(n)
