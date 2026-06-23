@@ -6,6 +6,7 @@ import type {
 
 // ── Storage keys ────────────────────────────────────────────────────────────
 const GRAPHS_LIST_KEY = 'offline_graphs'
+const DELETED_KEY    = 'offline_deleted_graphs'
 const dataKey  = (n: string) => `offline_graph_${n}`
 const metaKey  = (n: string) => `offline_meta_${n}`
 const GRAPH_ICONS = ['📊','🎯','📚','💼','🏠','🌟','🚀','💡','🎨','🔬']
@@ -19,6 +20,22 @@ function getGraphNames(): string[] {
 }
 function saveGraphNames(names: string[]) {
   localStorage.setItem(GRAPHS_LIST_KEY, JSON.stringify(names))
+}
+
+// Tombstones: track locally-deleted graphs so sync removes them from the Gist
+export function getDeletedGraphs(): Record<string, string> {
+  try { return JSON.parse(localStorage.getItem(DELETED_KEY) ?? '{}') }
+  catch { return {} }
+}
+function recordDeletion(name: string) {
+  const d = getDeletedGraphs()
+  d[name] = new Date().toISOString()
+  localStorage.setItem(DELETED_KEY, JSON.stringify(d))
+}
+export function clearDeletion(name: string) {
+  const d = getDeletedGraphs()
+  delete d[name]
+  localStorage.setItem(DELETED_KEY, JSON.stringify(d))
 }
 
 function loadStructure(graphName = 'default'): Structure {
@@ -378,6 +395,7 @@ export async function deleteGraph(name: string): Promise<void> {
   saveGraphNames(names)
   localStorage.removeItem(dataKey(name))
   localStorage.removeItem(metaKey(name))
+  recordDeletion(name)
 }
 
 export async function updateGraph(name: string, data: GraphUpdatePayload): Promise<GraphInfo> {

@@ -7,6 +7,8 @@ import {
   importStructure,
   serializeStructure,
   parseStructureText,
+  getDeletedGraphs,
+  clearDeletion,
 } from '../api/localClient'
 import {
   getPAT, getGistId, savePAT, saveGistId,
@@ -102,6 +104,9 @@ export function useSyncManager(queryClient: QueryClient) {
       // Collect files to push in one PATCH call
       const filesToPatch: Record<string, { content: string } | null> = {}
       const updatedMeta: Record<string, GistGraphMeta> = { ...remoteMeta }
+      const tombstonesToClear: string[] = []
+
+      const deletedGraphs = getDeletedGraphs()
 
       for (const name of allNames) {
         const local      = localMap.get(name)
@@ -122,10 +127,22 @@ export function useSyncManager(queryClient: QueryClient) {
               direction = 'push'
             }
           } else if (!local && hasRemote) {
-            // Only remote → pull
-            const content = gistData.files[`${name}.txt`]?.content ?? ''
-            await pullGraph(name, content, remoteMeta_, queryClient)
-            direction = 'pull'
+            const deletedAt = deletedGraphs[name]
+            const remoteTime = remoteMeta_?.modified_at
+            const deletionWins = deletedAt && (!remoteTime || new Date(deletedAt) >= new Date(remoteTime))
+            if (deletionWins) {
+              // Deleted locally and deletion is newer → remove from Gist
+              filesToPatch[`${name}.txt`] = null
+              delete updatedMeta[name]
+              tombstonesToClear.push(name)
+              direction = 'push'
+            } else {
+              // Not deleted, or remote was updated after deletion → pull
+              const content = gistData.files[`${name}.txt`]?.content ?? ''
+              await pullGraph(name, content, remoteMeta_, queryClient)
+              if (deletedAt) tombstonesToClear.push(name) // remote won, clear stale tombstone
+              direction = 'pull'
+            }
           } else if (local && hasRemote) {
             const lt = new Date(local.modified_at).getTime()
             const rt = remoteMeta_ ? new Date(remoteMeta_.modified_at).getTime() : 0
@@ -159,6 +176,9 @@ export function useSyncManager(queryClient: QueryClient) {
       if (Object.keys(filesToPatch).length > 0) {
         filesToPatch[META_FILE] = { content: JSON.stringify(updatedMeta, null, 2) }
         await patchGist(token, gid, filesToPatch)
+        for (const name of tombstonesToClear) clearDeletion(name)
+      } else {
+        for (const name of tombstonesToClear) clearDeletion(name)
       }
 
       setSyncStatuses(newStatuses)
