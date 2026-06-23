@@ -10,7 +10,7 @@ import {
 } from '../api/localClient'
 import {
   getPAT, getGistId, savePAT, saveGistId,
-  createGist, fetchGist, patchGist,
+  findOrCreateGist, fetchGist, patchGist,
   META_FILE,
 } from '../api/gistClient'
 import type { GistGraphMeta } from '../api/gistClient'
@@ -75,13 +75,9 @@ export function useSyncManager(queryClient: QueryClient) {
     setSyncError(null)
 
     try {
-      // Auto-create Gist on first sync
-      let gid = getGistId()
-      if (!gid) {
-        gid = await createGist(token)
-        saveGistId(gid)
-        setGistIdState(gid)
-      }
+      // Find existing Gist or create one (works across devices with same token)
+      const gid = await findOrCreateGist(token)
+      setGistIdState(gid)
 
       // Fetch Gist and local graphs in parallel
       const [gistData, localGraphs] = await Promise.all([

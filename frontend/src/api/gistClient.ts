@@ -56,18 +56,36 @@ async function ghError(res: Response, fallback: string): Promise<never> {
   }
 }
 
-// Create a new private Gist and return its ID
-export async function createGist(pat: string): Promise<string> {
-  const res = await ghFetch(pat, '/gists', {
+export const GIST_DESCRIPTION = 'Knowledge Graph Data'
+
+// Find the existing knowledge-graph Gist or create a new one.
+// Searches all user Gists so a second device auto-reconnects.
+export async function findOrCreateGist(pat: string): Promise<string> {
+  const stored = getGistId()
+  if (stored) return stored
+
+  // Search existing gists for one we already created
+  const res = await ghFetch(pat, '/gists?per_page=100')
+  if (!res.ok) await ghError(res, 'Failed to list gists')
+  const list: Array<{ id: string; description: string }> = await res.json()
+  const found = list.find(g => g.description === GIST_DESCRIPTION)
+  if (found) {
+    saveGistId(found.id)
+    return found.id
+  }
+
+  // Nothing found — create a fresh one
+  const createRes = await ghFetch(pat, '/gists', {
     method: 'POST',
     body: JSON.stringify({
-      description: 'Knowledge Graph Data',
+      description: GIST_DESCRIPTION,
       public: false,
       files: { [META_FILE]: { content: '{}' } },
     }),
   })
-  if (!res.ok) await ghError(res, 'Failed to create gist')
-  const data = await res.json()
+  if (!createRes.ok) await ghError(createRes, 'Failed to create gist')
+  const data = await createRes.json()
+  saveGistId(data.id as string)
   return data.id as string
 }
 
