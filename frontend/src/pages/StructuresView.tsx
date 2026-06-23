@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTheme } from '../context/ThemeContext'
@@ -39,6 +39,14 @@ function StructuresView() {
 
   const { isSyncing, pat, gistId, syncStatuses, configure, syncAll } =
     useSyncManager(queryClient)
+
+  useEffect(() => {
+    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+    if (!link) return
+    const statuses = Object.values(syncStatuses)
+    const synced = !!pat && statuses.length > 0 && statuses.every(s => !s.error)
+    link.href = synced ? '/icon-colored.svg' : '/icon.svg'
+  }, [pat, syncStatuses])
 
   useModalBackButton(inlineCreate, () => setInlineCreate(false))
   useModalBackButton(Boolean(inlineEditGraph), () => setInlineEditGraph(null))
@@ -328,9 +336,7 @@ function StructuresView() {
                 className="card-edit-zone"
                 onClick={(e) => { e.stopPropagation(); setInlineEditGraph(graph) }}
                 title="Edit graph"
-              >
-                ☰
-              </div>
+              />
               <div className="card-content">
                 <h3 className={`graph-name ${colorClass}`}>{graph.display_name}</h3>
                 {graph.description && (

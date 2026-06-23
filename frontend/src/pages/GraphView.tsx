@@ -905,8 +905,7 @@ function GraphView() {
                   target.classList.contains('layer2-title') ||
                   target.classList.contains('layer3-title') ||
                   target.classList.contains('copy-handle') ||
-                  target.classList.contains('split-left') ||
-                  target.classList.contains('split-right') ||
+                  target.classList.contains('item-edit-zone') ||
                   target.tagName === 'BUTTON' ||
                   target.tagName === 'A' ||
                   target.tagName === 'INPUT' ||

@@ -143,10 +143,10 @@ function Section({
               onDelete={showEditButton ? () => onInlineDelete?.(itemPath) : undefined}
             />
           ) : (
-            <div className={`layer1 color-${color} ${showEditButton ? 'split-button' : ''}`}>
+            <div className={`layer1 color-${color}`}>
               {showEditButton && (
                 <div
-                  className="split-left"
+                  className="item-edit-zone"
                   onClick={(e) => {
                     e.stopPropagation()
                     onEditClick(itemPath, title, item)
@@ -154,14 +154,9 @@ function Section({
                   title="Edit item"
                 />
               )}
-              <span className="item-title" onClick={() => !showEditButton && onItemClick(itemPath, hasChildren)}>
+              <span className="item-title" onClick={() => onItemClick(itemPath, hasChildren)}>
                 {title}
               </span>
-              <div
-                className={showEditButton ? "split-right" : "full-click"}
-                onClick={() => onItemClick(itemPath, hasChildren)}
-                title={showEditButton ? "Open item" : undefined}
-              />
             </div>
           )}
         </div>
@@ -210,10 +205,10 @@ function Section({
                       onDelete={childEditable ? () => onInlineDelete?.(childPath) : undefined}
                     />
                   ) : (
-                    <div className={`layer2 ${childColor} ${childEditable ? 'split-button' : ''}`}>
+                    <div className={`layer2 ${childColor}`}>
                       {childEditable && (
                         <div
-                          className="split-left"
+                          className="item-edit-zone"
                           onClick={(e) => {
                             e.stopPropagation()
                             onEditClick(childPath, childTitle, childItem as StructureItem)
@@ -221,7 +216,7 @@ function Section({
                           title="Edit item"
                         />
                       )}
-                      <span className="item-title">
+                      <span className="item-title" onClick={() => onItemClick(childPath, childHasChildren)}>
                         {childTitle}
                         {(childItem as StructureItem).progress !== undefined && (
                           <span style={{ marginLeft: '0.5rem', opacity: 0.7, fontSize: '0.75rem' }}>
@@ -229,11 +224,6 @@ function Section({
                           </span>
                         )}
                       </span>
-                      <div
-                        className={childEditable ? "split-right" : "full-click"}
-                        onClick={() => onItemClick(childPath, childHasChildren)}
-                        title={childEditable ? "Open item" : undefined}
-                      />
                     </div>
                   )}
                 </div>
@@ -271,10 +261,10 @@ function Section({
                               onDelete={grandEditable ? () => onInlineDelete?.(grandPath) : undefined}
                             />
                           ) : (
-                            <div className={`layer3-item ${childColor} ${grandEditable ? 'split-button' : ''}`}>
+                            <div className={`layer3-item ${childColor}`}>
                               {grandEditable && (
                                 <div
-                                  className="split-left"
+                                  className="item-edit-zone"
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     onEditClick(grandPath, grandTitle, grandItem as StructureItem)
@@ -282,7 +272,7 @@ function Section({
                                   title="Edit item"
                                 />
                               )}
-                              <span className="item-title">
+                              <span className="item-title" onClick={() => onItemClick(grandPath, grandHasChildren)}>
                                 {grandTitle}
                                 {(grandItem as StructureItem).progress !== undefined && (
                                   <span style={{ marginLeft: '0.375rem', opacity: 0.6, fontSize: '0.6875rem' }}>
@@ -290,11 +280,6 @@ function Section({
                                   </span>
                                 )}
                               </span>
-                              <div
-                                className={grandEditable ? "split-right" : "full-click"}
-                                onClick={() => onItemClick(grandPath, grandHasChildren)}
-                                title={grandEditable ? "Open item" : undefined}
-                              />
                             </div>
                           )}
                         </div>
