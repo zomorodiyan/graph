@@ -68,7 +68,7 @@ export function useSyncManager(queryClient: QueryClient) {
     if (!token) {
       const msg = 'No GitHub token configured.'
       setSyncError(msg)
-      return { error: msg }
+      return { error: msg, pushed: 0, pulled: 0 }
     }
 
     setIsSyncing(true)
@@ -168,17 +168,20 @@ export function useSyncManager(queryClient: QueryClient) {
       setSyncStatuses(newStatuses)
       queryClient.invalidateQueries({ queryKey: ['graphs'] })
 
+      const pushed = Object.values(newStatuses).filter(s => s.direction === 'push' && !s.error).length
+      const pulled = Object.values(newStatuses).filter(s => s.direction === 'pull' && !s.error).length
+
       if (errors.length) {
         const msg = errors.join('; ')
         setSyncError(msg)
-        return { error: msg }
+        return { error: msg, pushed, pulled }
       }
-      return { error: null }
+      return { error: null, pushed, pulled }
     } catch (err) {
       const msg = (err as Error).message || String(err)
       console.error('[sync] fatal:', err)
       setSyncError(msg)
-      return { error: msg }
+      return { error: msg, pushed: 0, pulled: 0 }
     } finally {
       setIsSyncing(false)
     }

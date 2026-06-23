@@ -58,13 +58,33 @@ function StructuresView() {
       setTimeout(() => patInputRef.current?.focus(), 50)
       return
     }
-    const { error } = await syncAll()
-    showNotification(error ? `Sync error: ${error}` : 'Synced!', error ? 'error' : 'success')
+    const { error, pushed, pulled } = await syncAll()
+    if (error) {
+      showNotification(error, 'error')
+    } else if (pushed === 0 && pulled === 0) {
+      showNotification('Everything up to date')
+    } else {
+      const parts = []
+      if (pushed) parts.push(`${pushed} pushed`)
+      if (pulled) parts.push(`${pulled} pulled`)
+      showNotification(`Synced — ${parts.join(', ')}`)
+    }
   }
 
-  const handleSaveGistConfig = () => {
+  const handleSaveGistConfig = async () => {
     configure(patInput, '')
     setShowGistConfig(false)
+    const { error, pushed, pulled } = await syncAll()
+    if (error) {
+      showNotification(error, 'error')
+    } else if (pushed === 0 && pulled === 0) {
+      showNotification('Connected — nothing to sync yet')
+    } else {
+      const parts = []
+      if (pushed) parts.push(`${pushed} pushed`)
+      if (pulled) parts.push(`${pulled} pulled`)
+      showNotification(`Connected — ${parts.join(', ')}`)
+    }
   }
 
   const handleGraphClick = (graphName: string) => {
