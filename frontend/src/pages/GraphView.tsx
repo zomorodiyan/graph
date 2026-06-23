@@ -961,8 +961,8 @@ function GraphView() {
           </div>
         )}
 
-        {/* Add New Item Button - hide in virtual views or while inline create is open */}
-        {!isVirtualView && !inlineCreate && (
+        {/* Add New Item Button - hide in virtual views, while inline create is open, or while editing an item */}
+        {!isVirtualView && !inlineCreate && !inlineEdit && (
           <div className="add-item-split">
             <span className="split-zone" onClick={handleAddClick} title="Add new item">
               <span className="split-icon">+</span>
