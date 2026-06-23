@@ -409,27 +409,34 @@
 }
 
 .sync-btn {
-  width: 2rem;
-  height: 2rem;
+  width: 44px;
+  height: 44px;
+  border: none;
   border-radius: 50%;
-  border: 1.5px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: 1rem;
+  background: rgba(45, 45, 45, 0.45);
+  color: #f5f5f5;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.2s, transform 0.2s;
+  transition: all 0.3s;
+  opacity: 0.5;
+}
+
+[data-theme="dark"] .sync-btn {
+  background: rgba(245, 245, 245, 0.45);
+  color: #2d2d2d;
 }
 
 .sync-btn:hover:not(:disabled) {
-  border-color: #667eea;
-  color: #667eea;
+  transform: scale(1.1);
+  opacity: 0.8;
 }
 
 .sync-btn:disabled {
-  opacity: 0.5;
   cursor: not-allowed;
 }
 

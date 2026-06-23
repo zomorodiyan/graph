@@ -242,7 +242,7 @@ function StructuresView() {
                   title={pat ? `Sync with GitHub Gist${gistId ? ` (${gistId.slice(0, 8)}…)` : ''}` : 'Connect GitHub to enable sync'}
                   disabled={isSyncing}
                 >
-                  ↕
+                  ↻
                 </button>
                 {pat && (
                   <button
