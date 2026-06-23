@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- gem base: full outline filled light blue -->
-  <polygon points="22,28 78,28 92,54 50,88 8,54" fill="#4EC4EA"/>
-  <!-- left dark wing -->
-  <polygon points="8,54 22,28 50,54" fill="#3A5899"/>
-  <!-- right dark wing -->
-  <polygon points="78,28 92,54 50,54" fill="#3A5899"/>
+  <!-- outer gem outline -->
+  <polygon points="22,28 78,28 92,54 50,88 8,54" fill="none" stroke="#d0d0d0" stroke-width="6.5" stroke-linejoin="round"/>
+  <!-- inner dividing lines -->
+  <line x1="22" y1="28" x2="50" y2="54" stroke="#d0d0d0" stroke-width="6.5" stroke-linecap="round"/>
+  <line x1="78" y1="28" x2="50" y2="54" stroke="#d0d0d0" stroke-width="6.5" stroke-linecap="round"/>
+  <line x1="8"  y1="54" x2="92" y2="54" stroke="#d0d0d0" stroke-width="6.5" stroke-linecap="round"/>
 </svg>
