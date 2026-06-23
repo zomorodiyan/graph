@@ -324,29 +324,31 @@ function StructuresView() {
               className="graph-card"
               onClick={() => handleGraphClick(graph.name)}
             >
-              <span
-                className="edit-handle"
+              <div
+                className="card-edit-zone"
                 onClick={(e) => { e.stopPropagation(); setInlineEditGraph(graph) }}
                 title="Edit graph"
               >
                 ☰
-              </span>
-              <h3 className={`graph-name ${colorClass}`}>{graph.display_name}</h3>
-              {graph.description && (
-                <p className="graph-description">{graph.description}</p>
-              )}
-              {syncStatus && (
-                <span
-                  className={`sync-badge sync-badge--${syncStatus.error ? 'error' : syncStatus.direction}`}
-                  title={syncStatus.error ?? `Last sync: ${new Date(syncStatus.lastSync).toLocaleString()}`}
-                >
-                  {syncStatus.error ? '✕' : syncStatus.direction === 'push' ? '↑' : syncStatus.direction === 'pull' ? '↓' : '✓'}
-                </span>
-              )}
+              </div>
+              <div className="card-content">
+                <h3 className={`graph-name ${colorClass}`}>{graph.display_name}</h3>
+                {graph.description && (
+                  <p className="graph-description">{graph.description}</p>
+                )}
+                {syncStatus && (
+                  <span
+                    className={`sync-badge sync-badge--${syncStatus.error ? 'error' : syncStatus.direction}`}
+                    title={syncStatus.error ?? `Last sync: ${new Date(syncStatus.lastSync).toLocaleString()}`}
+                  >
+                    {syncStatus.error ? '✕' : syncStatus.direction === 'push' ? '↑' : syncStatus.direction === 'pull' ? '↓' : '✓'}
+                  </span>
+                )}
+              </div>
               <span
                 className="copy-handle"
                 onClick={(e) => handleCopyGraph(e, graph.name)}
-                title="Copy structure"
+                title="Copy graph"
               />
             </div>
           )
