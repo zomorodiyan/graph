@@ -63,7 +63,7 @@ export function useSyncManager(queryClient: QueryClient) {
     setSyncError(null)
   }, [])
 
-  const syncAll = useCallback(async (): Promise<{ error: string | null }> => {
+  const syncAll = useCallback(async (): Promise<{ error: string | null; pushed: number; pulled: number }> => {
     const token = getPAT()
     if (!token) {
       const msg = 'No GitHub token configured.'
