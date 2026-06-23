@@ -51,8 +51,8 @@
 .graph-card {
   position: relative;
   background: var(--bg-secondary);
-  border: 2px solid var(--border-color);
-  border-left-color: rgba(102, 126, 234, 0.4);
+  border: none;
+  box-shadow: 0 0 0 1.5px var(--border-color);
   border-radius: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -64,8 +64,7 @@
 
 .graph-card:hover {
   transform: translateY(-0.25rem);
-  box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.15);
-  border-color: #667eea;
+  box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.15), 0 0 0 1.5px #667eea;
 }
 
 .graph-icon {
