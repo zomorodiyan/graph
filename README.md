@@ -18,7 +18,7 @@ Your data lives in your browser. To back it up or use it across devices, connect
 2. Click the **↻** button in the app and paste the token
 3. That's it — your graphs sync to a private Gist only you can see
 
-Same token on any device → same data. No account creation, no third-party service.
+Same token on any device → same data. Save your token somewhere safe — you'll need to paste it on each new browser or device to connect them to the same graphs. No account creation, no third-party service.
 
 ## Free
 
