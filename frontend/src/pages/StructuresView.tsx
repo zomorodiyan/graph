@@ -34,8 +34,7 @@ function StructuresView() {
     type: 'success' | 'error'
   } | null>(null)
   const [showGistConfig, setShowGistConfig] = useState(false)
-  const [patInput,    setPatInput]    = useState('')
-  const [gistIdInput, setGistIdInput] = useState('')
+  const [patInput, setPatInput] = useState('')
   const patInputRef = useRef<HTMLInputElement>(null)
 
   const { isSyncing, pat, gistId, syncStatuses, configure, syncAll } =
@@ -65,7 +64,7 @@ function StructuresView() {
   }
 
   const handleSaveGistConfig = () => {
-    configure(patInput, gistIdInput)
+    configure(patInput, '')
     setShowGistConfig(false)
   }
 
@@ -210,13 +209,6 @@ function StructuresView() {
                     onChange={e => setPatInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') handleSaveGistConfig(); if (e.key === 'Escape') setShowGistConfig(false) }}
                   />
-                  <input
-                    type="text"
-                    placeholder="Gist ID (leave blank — auto-created)"
-                    value={gistIdInput}
-                    onChange={e => setGistIdInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleSaveGistConfig(); if (e.key === 'Escape') setShowGistConfig(false) }}
-                  />
                   <div className="gist-config-actions">
                     <button className="btn-save-url" onClick={handleSaveGistConfig} disabled={!patInput.trim()}>Connect</button>
                     <button className="btn-cancel-url" onClick={() => setShowGistConfig(false)}>Cancel</button>
@@ -236,8 +228,8 @@ function StructuresView() {
                 {pat && (
                   <button
                     className="server-url-tag"
-                    onClick={() => { setPatInput(pat); setGistIdInput(gistId); setShowGistConfig(true) }}
-                    title="Edit GitHub token / Gist ID"
+                    onClick={() => { setPatInput(pat); setShowGistConfig(true) }}
+                    title="Edit GitHub token"
                   >
                     {gistId ? `gist:${gistId.slice(0, 8)}…` : 'GitHub ✓'}
                   </button>

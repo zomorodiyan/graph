@@ -117,11 +117,14 @@ export function useSyncManager(queryClient: QueryClient) {
 
         try {
           if (local && !hasRemote) {
-            // Only local → push
+            // Only local → push (skip if structure is empty)
             const s = await fetchLocalStructure(name)
-            filesToPatch[`${name}.txt`] = { content: serializeStructure(s.structure) }
-            updatedMeta[name] = metaFrom(local)
-            direction = 'push'
+            const content = serializeStructure(s.structure).trim()
+            if (content) {
+              filesToPatch[`${name}.txt`] = { content }
+              updatedMeta[name] = metaFrom(local)
+              direction = 'push'
+            }
           } else if (!local && hasRemote) {
             // Only remote → pull
             const content = gistData.files[`${name}.txt`]?.content ?? ''
@@ -133,9 +136,12 @@ export function useSyncManager(queryClient: QueryClient) {
 
             if (lt > rt) {
               const s = await fetchLocalStructure(name)
-              filesToPatch[`${name}.txt`] = { content: serializeStructure(s.structure) }
-              updatedMeta[name] = metaFrom(local)
-              direction = 'push'
+              const content = serializeStructure(s.structure).trim()
+              if (content) {
+                filesToPatch[`${name}.txt`] = { content }
+                updatedMeta[name] = metaFrom(local)
+                direction = 'push'
+              }
             } else if (rt > lt) {
               const content = gistData.files[`${name}.txt`]?.content ?? ''
               await pullGraph(name, content, remoteMeta_, queryClient)
