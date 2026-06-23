@@ -38,7 +38,7 @@ function StructuresView() {
   const [gistIdInput, setGistIdInput] = useState('')
   const patInputRef = useRef<HTMLInputElement>(null)
 
-  const { isSyncing, syncError, pat, gistId, syncStatuses, configure, syncAll } =
+  const { isSyncing, pat, gistId, syncStatuses, configure, syncAll } =
     useSyncManager(queryClient)
 
   useModalBackButton(inlineCreate, () => setInlineCreate(false))
