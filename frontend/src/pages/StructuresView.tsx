@@ -48,7 +48,7 @@ function StructuresView() {
 
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type })
-    setTimeout(() => setNotification(null), 3000)
+    setTimeout(() => setNotification(null), type === 'error' ? 8000 : 3000)
   }
 
   const handleSyncClick = async () => {

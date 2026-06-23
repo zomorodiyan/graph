@@ -149,7 +149,8 @@ export function useSyncManager(queryClient: QueryClient) {
             }
           }
         } catch (err) {
-          error = (err as Error).message
+          error = (err as Error).message || String(err)
+          console.error(`[sync] ${name}:`, err)
           errors.push(`${name}: ${error}`)
         }
 
@@ -174,7 +175,8 @@ export function useSyncManager(queryClient: QueryClient) {
       }
       return { error: null }
     } catch (err) {
-      const msg = (err as Error).message
+      const msg = (err as Error).message || String(err)
+      console.error('[sync] fatal:', err)
       setSyncError(msg)
       return { error: msg }
     } finally {

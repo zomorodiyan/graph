@@ -46,6 +46,16 @@ async function ghFetch(pat: string, path: string, init?: RequestInit): Promise<R
   })
 }
 
+async function ghError(res: Response, fallback: string): Promise<never> {
+  try {
+    const json = await res.json()
+    throw new Error(json.message ?? fallback)
+  } catch (e) {
+    if (e instanceof Error && e.message !== fallback) throw e
+    throw new Error(`${fallback} (HTTP ${res.status})`)
+  }
+}
+
 // Create a new private Gist and return its ID
 export async function createGist(pat: string): Promise<string> {
   const res = await ghFetch(pat, '/gists', {
@@ -56,10 +66,7 @@ export async function createGist(pat: string): Promise<string> {
       files: { [META_FILE]: { content: '{}' } },
     }),
   })
-  if (!res.ok) {
-    const body = await res.text().catch(() => '')
-    throw new Error(`GitHub ${res.status}: ${body || 'failed to create gist'}`)
-  }
+  if (!res.ok) await ghError(res, 'Failed to create gist')
   const data = await res.json()
   return data.id as string
 }
@@ -79,10 +86,7 @@ export interface GistData {
 // Fetch all files from a Gist. For truncated files, fetches raw content.
 export async function fetchGist(pat: string, gistId: string): Promise<GistData> {
   const res = await ghFetch(pat, `/gists/${gistId}`)
-  if (!res.ok) {
-    const body = await res.text().catch(() => '')
-    throw new Error(`GitHub ${res.status}: ${body || 'failed to fetch gist'}`)
-  }
+  if (!res.ok) await ghError(res, 'Failed to fetch gist')
   const data: GistData = await res.json()
 
   // Fetch truncated files individually via raw_url
@@ -108,8 +112,5 @@ export async function patchGist(
     method: 'PATCH',
     body: JSON.stringify({ files }),
   })
-  if (!res.ok) {
-    const body = await res.text().catch(() => '')
-    throw new Error(`GitHub ${res.status}: ${body || 'failed to update gist'}`)
-  }
+  if (!res.ok) await ghError(res, 'Failed to update gist')
 }
