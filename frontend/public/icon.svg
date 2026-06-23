@@ -1,9 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="32" fill="#1a1a2e"/>
-  <circle cx="96" cy="60" r="18" fill="#4f8ef7"/>
-  <circle cx="44" cy="140" r="14" fill="#4f8ef7"/>
-  <circle cx="148" cy="140" r="14" fill="#4f8ef7"/>
-  <line x1="96" y1="78" x2="44" y2="126" stroke="#4f8ef7" stroke-width="4"/>
-  <line x1="96" y1="78" x2="148" y2="126" stroke="#4f8ef7" stroke-width="4"/>
-  <line x1="58" y1="140" x2="134" y2="140" stroke="#4f8ef7" stroke-width="4"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- gem base: full outline filled light blue -->
+  <polygon points="22,28 78,28 92,54 50,88 8,54" fill="#4EC4EA"/>
+  <!-- left dark wing -->
+  <polygon points="8,54 22,28 50,54" fill="#3A5899"/>
+  <!-- right dark wing -->
+  <polygon points="78,28 92,54 50,54" fill="#3A5899"/>
 </svg>
