@@ -84,6 +84,7 @@
   overflow: hidden;
   display: flex;
   align-items: stretch;
+  background: var(--bg-primary);
   transition: background-color 0.2s;
 }
 
@@ -94,7 +95,7 @@
 }
 
 .layer1:hover {
-  background-color: var(--bg-primary);
+  background-color: var(--border-color);
 }
 
 .layer2-section {
@@ -129,6 +130,7 @@
   overflow: hidden;
   display: flex;
   align-items: stretch;
+  background: var(--bg-primary);
   transition: background-color 0.2s;
 }
 
@@ -139,7 +141,7 @@
 }
 
 .layer2:hover {
-  background-color: var(--bg-primary);
+  background-color: var(--border-color);
 }
 
 .layer3-container {
@@ -158,6 +160,7 @@
   overflow: hidden;
   display: flex;
   align-items: stretch;
+  background: var(--bg-primary);
   transition: background-color 0.2s;
 }
 
@@ -168,7 +171,7 @@
 }
 
 .layer3-item:hover {
-  background-color: var(--bg-primary);
+  background-color: var(--border-color);
   color: var(--text-primary);
 }
 
@@ -574,7 +577,7 @@
 }
 
 .item-edit-zone::before {
-  content: 'name';
+  content: 'n';
   visibility: hidden;
   padding: 0 0.4rem;
 }
