@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { useStructure, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
+import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useTheme } from '../context/ThemeContext'
@@ -42,6 +42,7 @@ function GraphView() {
   const [depth, setDepth] = useState<1 | 2 | 3>(3)
   const [showContext, setShowContext] = useState(true)
   const { data: structure, isLoading, error } = useStructure(graphName)
+  const { data: graphs = [] } = useGraphs()
   const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
   
   const updateItem = useUpdateItem(graphName)
@@ -443,7 +444,9 @@ function GraphView() {
     // Add "Graphs" link if we're in a specific graph
     if (graphName) {
       crumbs.push({ label: '⛩', path: '/', isRoot: true })
-      crumbs.push({ label: graphName.replace(/_/g, ' ').replace(/-/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '), path: `/g/${graphName}` })
+      const graphDisplay = graphs.find(g => g.name === graphName)?.display_name
+        ?? graphName.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      crumbs.push({ label: graphDisplay, path: `/g/${graphName}` })
     } else {
       crumbs.push({ label: 'Home', path: '/' })
     }
