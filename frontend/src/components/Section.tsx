@@ -190,7 +190,7 @@ function Section({
           const grandchildren = (childItem as StructureItem).children || {}
           // Check if this child item is editable
           const childEditable = showEditButton && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
-          const childColor = childIndex % 2 === 0 ? `color-${scheme.secondary}` : `color-${scheme.primary}`
+          const childColor = `color-${scheme.secondary}`
 
           return (
             <div key={childKey} className="layer2-container">
