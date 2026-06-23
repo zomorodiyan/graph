@@ -54,7 +54,6 @@ function StructuresView() {
   const handleSyncClick = async () => {
     if (!pat) {
       setPatInput('')
-      setGistIdInput('')
       setShowGistConfig(true)
       setTimeout(() => patInputRef.current?.focus(), 50)
       return
