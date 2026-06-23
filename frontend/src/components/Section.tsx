@@ -183,7 +183,7 @@ function Section({
 
       {/* Layer 2 - Subcategories */}
       {depth >= 2 && <div className={`layer2-section${!hasAnyGrandchildren && childEntries.length > 0 ? ' layer2-flat' : ''}`}>
-        {childEntries.map(([childKey, childItem], childIndex) => {
+        {childEntries.map(([childKey, childItem]) => {
           const childPath = `${itemPath}.${childKey}`
           const childTitle = (childItem as StructureItem).title || childKey
           const childHasChildren = !!(childItem as StructureItem).children
