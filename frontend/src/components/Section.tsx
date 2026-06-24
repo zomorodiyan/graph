@@ -119,17 +119,7 @@ function Section({
 
   return (
     <div className={`section${l1Wide ? ' section--wide-l1' : ''}`} ref={sectionRef}>
-      {/* Copy button at top-right */}
-      {!isTimeView && onCopyClick && (
-        <span 
-          className="copy-handle" 
-          title="Copy to clipboard"
-          onClick={(e) => {
-            e.stopPropagation()
-            onCopyClick(itemKey, item)
-          }}
-        />
-      )}
+      <div className="section-body">
       {/* Layer 1 - Main category */}
       <div className="layer1-container" ref={layer1Ref}>
         <div className="layer1-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -304,6 +294,20 @@ function Section({
           )
         })}
       </div>}
+      </div>
+      {/* Copy zone — full-height strip on the right */}
+      {!isTimeView && onCopyClick && (
+        <div
+          className="section-copy-zone"
+          title="Copy to clipboard"
+          onClick={(e) => {
+            e.stopPropagation()
+            onCopyClick(itemKey, item)
+          }}
+        >
+          <span className="copy-handle" />
+        </div>
+      )}
     </div>
   )
 }

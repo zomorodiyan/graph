@@ -30,26 +30,51 @@
 .section {
   position: relative;
   display: flex;
+  flex-direction: row;
   margin-bottom: 0.75rem;
-  padding: 0.75rem 2.25rem 0.75rem 0.75rem;
   background: var(--bg-secondary);
   border-radius: 0.5rem;
   width: fit-content;
   max-width: 100%;
+  overflow: hidden;
 }
 
-/* Copy handle - positioned at top-right, aligned with layer1 text */
+.section-body {
+  display: flex;
+  flex: 1;
+  padding: 0.75rem;
+}
+
+/* Copy zone — full-height clickable strip on the right of a section bubble */
+.section-copy-zone {
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(102, 126, 234, 0.08);
+  border-left: 1.5px solid rgba(102, 126, 234, 0.2);
+  opacity: 0.4;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.section-copy-zone::before {
+  content: 'na';
+  visibility: hidden;
+  padding: 0 0.5rem;
+}
+
+.section-copy-zone:hover {
+  opacity: 0.8;
+}
+
+/* Copy handle icon — two overlapping rectangles */
 .copy-handle {
   position: absolute;
-  top: 0.6rem;
-  right: 0.75rem;
   width: 0.75rem;
   height: 0.875rem;
-  cursor: pointer;
-  opacity: 0.4;
-  transition: opacity 0.2s;
-  z-index: 10;
-  padding: 0.5rem;
+  padding: 0;
 }
 
 .copy-handle::before,
@@ -74,8 +99,12 @@
   background: var(--bg-secondary);
 }
 
-.copy-handle:hover {
-  opacity: 0.8;
+/* Center the copy handle icon within any zone */
+.section-copy-zone .copy-handle,
+.card-action-zone .copy-handle {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .layer1-container {
@@ -643,7 +672,7 @@
 }
 
 /* Compactness classes applied by ResizeObserver in GraphView */
-.section-wrapper--compact .section {
+.section-wrapper--compact .section-body {
   flex-direction: column;
 }
 
@@ -819,7 +848,7 @@
 
 /* Responsive */
 /* L1 text too long (> 1/3 section width): force L2+L3 below L1 */
-.section--wide-l1 {
+.section--wide-l1 .section-body {
   flex-direction: column;
 }
 
