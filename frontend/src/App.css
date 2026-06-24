@@ -69,11 +69,11 @@
   opacity: 0.8;
 }
 
-/* Copy handle icon — two overlapping rectangles */
+/* Copy handle icon — two overlapping rectangles sized to their own bounding box */
 .copy-handle {
   position: absolute;
-  width: 0.75rem;
-  height: 0.875rem;
+  width: 1rem;
+  height: 1.125rem;
   padding: 0;
 }
 
@@ -88,14 +88,14 @@
 }
 
 .copy-handle::before {
-  top: 0.125rem;
-  left: 0.125rem;
+  top: 0;
+  left: 0;
   background: var(--bg-secondary);
 }
 
 .copy-handle::after {
-  top: 0.5rem;
-  left: 0.5rem;
+  top: 0.375rem;
+  left: 0.375rem;
   background: var(--bg-secondary);
 }
 

@@ -165,17 +165,9 @@
   background: rgba(102, 126, 234, 0.13);
 }
 
-/* Center the copy icon inside the zone */
+/* Card copy zone: opacity and z-index overrides (centering handled in App.css) */
 .card-action-zone .copy-handle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  transform: translate(-50%, -50%);
-  width: 1rem;
-  height: 1.125rem;
   opacity: 1;
-  padding: 0;
   z-index: 1;
 }
 
