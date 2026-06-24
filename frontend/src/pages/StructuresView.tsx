@@ -291,14 +291,16 @@ function StructuresView() {
             className="graph-card add-card"
             onClick={() => setInlineCreate(true)}
           >
-            <span
-              className="paste-handle"
-              onClick={(e) => { e.stopPropagation(); handlePasteNewGraph(e) }}
-              title="Paste graph from clipboard"
-            />
             <div className="add-content">
               <span className="add-icon">+</span>
               <span className="add-text">New Graph</span>
+            </div>
+            <div
+              className="card-action-zone"
+              onClick={(e) => { e.stopPropagation(); handlePasteNewGraph(e) }}
+              title="Paste graph from clipboard"
+            >
+              <span className="paste-handle" />
             </div>
           </div>
         ))}
@@ -351,11 +353,13 @@ function StructuresView() {
                   </span>
                 )}
               </div>
-              <span
-                className="copy-handle"
+              <div
+                className="card-action-zone"
                 onClick={(e) => handleCopyGraph(e, graph.name)}
                 title="Copy graph"
-              />
+              >
+                <span className="copy-handle" />
+              </div>
             </div>
           )
         })}
