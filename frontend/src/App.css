@@ -631,10 +631,33 @@
   to { transform: rotate(360deg); }
 }
 
+/* Section wrapper sizing — min-width is the wrapping floor */
+.section-wrapper {
+  min-width: 14rem;
+}
+
 /* Pending item styles */
 .section-wrapper.pending {
   opacity: 0.7;
   pointer-events: none;
+}
+
+/* Compactness classes applied by ResizeObserver in GraphView */
+.section-wrapper--compact .section {
+  flex-direction: column;
+}
+
+.section-wrapper--compact .layer1-container {
+  margin-right: 0;
+  margin-bottom: 0.75rem;
+}
+
+.section-wrapper--stack .layer2-container {
+  flex-direction: column;
+}
+
+.section-wrapper--stack .inline-edit {
+  max-width: 100%;
 }
 
 /* Inline item editing */
@@ -806,25 +829,4 @@
   margin-bottom: 0.75rem;
 }
 
-/* Intermediate: L2+L3 unit drops below L1, L3 still right of L2 */
-@media (max-width: 1024px) {
-  .section {
-    flex-direction: column;
-  }
-
-  .layer1-container {
-    margin-right: 0;
-    margin-bottom: 0.75rem;
-  }
-}
-
-/* Full stack: L3 also drops below L2 */
-@media (max-width: 768px) {
-  .layer2-container {
-    flex-direction: column;
-  }
-
-  .inline-edit {
-    max-width: 100%;
-  }
-}
+/* Responsive layout handled per-bubble via ResizeObserver classes (see GraphView.tsx) */

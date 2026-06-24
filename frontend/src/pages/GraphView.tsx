@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
@@ -50,6 +50,8 @@ function GraphView() {
   const reorderItem = useReorderItem(graphName)
   const createItem = useCreateItem(graphName)
   
+  const containerRef = useRef<HTMLDivElement>(null)
+
   // Drag state
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
@@ -401,6 +403,27 @@ function GraphView() {
     setLocalOrder(null)
     setLocalItems(null)
   }, [path])
+
+  // Per-bubble compactness: apply CSS classes based on each section-wrapper's rendered width
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const REM = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const COMPACT_PX = 28 * REM  // < 28rem → L2 below L1
+    const STACK_PX = 20 * REM    // < 20rem → L3 below L2
+
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width
+        const el = entry.target as HTMLElement
+        el.classList.toggle('section-wrapper--compact', w < COMPACT_PX)
+        el.classList.toggle('section-wrapper--stack', w < STACK_PX)
+      }
+    })
+
+    container.querySelectorAll('.section-wrapper').forEach(el => ro.observe(el))
+    return () => ro.disconnect()
+  }, [structure])
   
   // The display items: use local items if available, otherwise raw items from server
   // At root level, always overlay the virtual time/progress sections from rawItems
@@ -868,7 +891,7 @@ function GraphView() {
         <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
       </div>
 
-      <div className="graph-container">
+      <div className="graph-container" ref={containerRef}>
         {/* Breadcrumb */}
         <nav className="breadcrumb">
           {breadcrumb.map((crumb, i) => (
