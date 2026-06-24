@@ -631,6 +631,12 @@
   to { transform: rotate(360deg); }
 }
 
+/* Section wrapper: flex item in graph-container; container for inline-size queries */
+.section-wrapper {
+  container-type: inline-size;
+  min-width: 14rem;
+}
+
 /* Pending item styles */
 .section-wrapper.pending {
   opacity: 0.7;
@@ -804,6 +810,18 @@
   align-self: flex-start;
   margin-right: 0;
   margin-bottom: 0.75rem;
+}
+
+/* Compact layout when section is squeezed narrow (container query) */
+@container (max-width: 22rem) {
+  .section {
+    flex-direction: column;
+  }
+
+  .layer1-container {
+    margin-right: 0;
+    margin-bottom: 0.75rem;
+  }
 }
 
 /* Intermediate: L2+L3 unit drops below L1, L3 still right of L2 */
