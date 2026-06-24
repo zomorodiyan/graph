@@ -45,7 +45,7 @@
 /* Graphs container */
 .graphs-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 18rem));
   gap: 1.5rem;
   max-width: 75rem;
   margin: 0 auto;
@@ -674,14 +674,5 @@
 @media (max-width: 600px) {
   .structures-header h1 {
     font-size: 32px;
-  }
-  
-  .graphs-container {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .graph-card {
-    min-height: 9.375rem;
   }
 }
