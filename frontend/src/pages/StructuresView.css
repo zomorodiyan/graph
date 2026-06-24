@@ -106,6 +106,7 @@
 /* Left edit zone */
 .card-edit-zone {
   flex-shrink: 0;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -178,19 +179,79 @@
   z-index: 1;
 }
 
-/* Center the paste icon inside the zone */
-.card-action-zone .paste-handle {
+/* Zone icons: absolutely centered in either side zone */
+.card-edit-zone .zone-icon,
+.card-action-zone .zone-icon {
   position: absolute;
   top: 50%;
   left: 50%;
-  right: auto;
+  pointer-events: none;
+}
+
+/* Pencil — narrow rectangle with pointed tip, rotated 45° */
+.zone-icon--edit {
+  width: 0.875rem;
+  height: 0.875rem;
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* Pencil shaft */
+.zone-icon--edit::before {
+  content: '';
+  position: absolute;
+  width: 0.25rem;
+  height: 0.6rem;
+  background: var(--text-secondary);
+  border-radius: 1px 1px 0 0;
+  top: 0.06rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Pencil tip (downward triangle, points bottom-left after parent rotation) */
+.zone-icon--edit::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 0.125rem solid transparent;
+  border-right: 0.125rem solid transparent;
+  border-top: 0.2rem solid var(--text-secondary);
+  top: 0.66rem;
+  left: calc(50% - 0.125rem);
+}
+
+/* Clipboard — body rectangle + clip tab on top */
+.zone-icon--paste {
+  width: 0.72rem;
+  height: 0.88rem;
   transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 1;
-  padding: 0;
-  z-index: 1;
+}
+
+/* Clipboard body */
+.zone-icon--paste::before {
+  content: '';
+  position: absolute;
+  inset: 0.14rem 0 0 0;
+  border: 1.5px solid var(--text-secondary);
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+/* Clipboard clip tab */
+.zone-icon--paste::after {
+  content: '';
+  position: absolute;
+  width: 0.3rem;
+  height: 0.22rem;
+  border: 1.5px solid var(--text-secondary);
+  border-bottom: none;
+  border-radius: 2px 2px 0 0;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-secondary);
+  box-sizing: border-box;
 }
 
 /* Graph card in inline-edit mode */
@@ -246,17 +307,6 @@
   font-size: 1.25rem;
   font-weight: 600;
   color: #667eea;
-}
-
-/* Paste icon drawn via ::after - used inside .card-action-zone */
-.paste-handle::after {
-  content: '';
-  display: block;
-  width: 0.975rem;
-  height: 1.14rem;
-  border: 1.5px solid var(--text-secondary);
-  border-radius: 2px;
-  box-sizing: border-box;
 }
 
 /* Empty state */

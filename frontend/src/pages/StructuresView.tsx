@@ -300,7 +300,7 @@ function StructuresView() {
               onClick={(e) => { e.stopPropagation(); handlePasteNewGraph(e) }}
               title="Paste graph from clipboard"
             >
-              <span className="paste-handle" />
+              <span className="zone-icon zone-icon--paste" />
             </div>
           </div>
         ))}
@@ -338,7 +338,9 @@ function StructuresView() {
                 className="card-edit-zone"
                 onClick={(e) => { e.stopPropagation(); setInlineEditGraph(graph) }}
                 title="Edit graph"
-              />
+              >
+                <span className="zone-icon zone-icon--edit" />
+              </div>
               <div className="card-content">
                 <h3 className={`graph-name ${colorClass}`}>{graph.display_name}</h3>
                 {graph.description && (
