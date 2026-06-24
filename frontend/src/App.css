@@ -26,9 +26,11 @@
   position: relative;
   display: flex;
   margin-bottom: 0.75rem;
-  padding: 0.75rem;
+  padding: 0.75rem 2.25rem 0.75rem 0.75rem;
   background: var(--bg-secondary);
   border-radius: 0.5rem;
+  width: fit-content;
+  max-width: 100%;
 }
 
 /* Copy handle - positioned at top-right, aligned with layer1 text */

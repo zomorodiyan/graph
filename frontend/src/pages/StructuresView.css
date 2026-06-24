@@ -165,34 +165,18 @@
   background: rgba(102, 126, 234, 0.13);
 }
 
-/* Center and scale the copy icon inside the zone */
+/* Center the copy icon inside the zone */
 .card-action-zone .copy-handle {
   position: absolute;
   top: 50%;
   left: 50%;
   right: auto;
   transform: translate(-50%, -50%);
-  width: 1.5rem;
-  height: 1.69rem;
+  width: 1rem;
+  height: 1.125rem;
   opacity: 1;
   padding: 0;
   z-index: 1;
-}
-
-.card-action-zone .copy-handle::before,
-.card-action-zone .copy-handle::after {
-  width: 0.94rem;
-  height: 1.125rem;
-}
-
-.card-action-zone .copy-handle::before {
-  top: 0.19rem;
-  left: 0.19rem;
-}
-
-.card-action-zone .copy-handle::after {
-  top: 0.75rem;
-  left: 0.75rem;
 }
 
 /* Zone icons: absolutely centered in either side zone */
