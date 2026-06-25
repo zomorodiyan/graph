@@ -135,7 +135,7 @@
 }
 
 .layer2-section {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -602,8 +602,8 @@
 
 /* Left edit zone for all item levels */
 /* Alpha tokens: dark theme keeps 0.08/0.18, light theme uses 0.04/0.10 */
-:root                        { --ez-alpha: 0.08; --ez-hover: 0.18; }
-:root:not([data-theme='dark']) { --ez-alpha: 0.02; --ez-hover: 0.06; }
+:root                        { --ez-alpha: 0.18; --ez-hover: 0.35; }
+:root:not([data-theme='dark']) { --ez-alpha: 0.12; --ez-hover: 0.25; }
 
 .item-edit-zone {
   flex-shrink: 0;
