@@ -31,7 +31,7 @@
   position: relative;
   display: flex;
   flex-direction: row;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
   background: var(--bg-secondary);
   border-radius: 0.5rem;
   width: fit-content;
@@ -42,7 +42,7 @@
 .section-body {
   display: flex;
   flex: 1;
-  padding: 0.75rem;
+  padding: 0 0.75rem;
 }
 
 /* Copy zone — full-height clickable strip on the right of a section bubble */
@@ -138,13 +138,13 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0;
 }
 
 .layer2-section.layer2-flat {
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0;
 }
 
 .layer2-container {
@@ -678,7 +678,7 @@
 
 .section-wrapper--compact .layer1-container {
   margin-right: 0;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
 }
 
 .section-wrapper--stack .layer2-container {

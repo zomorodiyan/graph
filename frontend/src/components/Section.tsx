@@ -2,8 +2,8 @@ import { useRef, useEffect, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/client'
 import InlineItemEditor from './InlineItemEditor'
 
-const L2_COLORS = ['purple', 'pine'] as const
-const L3_COLORS = { purple: 'fuchsia', pine: 'pistachio' } as const
+const L2_COLORS = ['royal-blue', 'purple'] as const
+const L3_COLORS = { 'royal-blue': 'sky', purple: 'indigo' } as const
 
 interface SectionProps {
   itemKey: string
@@ -79,7 +79,7 @@ function Section({
   showContext = true,
   depth = 3,
 }: SectionProps) {
-  const color = 'royal-blue'
+  const color = 'pine'
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
   const hasChildren = !!item.children && Object.keys(item.children).length > 0
   const title = item.title || itemKey
