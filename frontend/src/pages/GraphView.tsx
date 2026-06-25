@@ -906,6 +906,21 @@ function GraphView() {
           ))}
         </nav>
 
+        {/* Add New Item Button - at the top, hide in virtual views, while inline create is open, or while editing an item */}
+        {!isVirtualView && !inlineCreate && !inlineEdit && (
+          <div className="add-item-split">
+            <span className="split-zone" onClick={handleAddClick} title="Add new item">
+              <span className="split-icon">+</span>
+              <span>New</span>
+            </span>
+            <span className="split-divider" />
+            <span className="split-zone" onClick={handlePasteItem} title="Paste from clipboard">
+              <span>Paste</span>
+              <span className="split-icon paste-icon" />
+            </span>
+          </div>
+        )}
+
         {/* Sections - rendered in local order for instant drag feedback */}
         {displayOrder.filter(k => k !== 'time' && k !== 'progress').map((key, index) => {
           const item = displayItems[key]
@@ -981,21 +996,6 @@ function GraphView() {
                 onCancel={() => setInlineCreate(false)}
               />
             </div>
-          </div>
-        )}
-
-        {/* Add New Item Button - hide in virtual views, while inline create is open, or while editing an item */}
-        {!isVirtualView && !inlineCreate && !inlineEdit && (
-          <div className="add-item-split">
-            <span className="split-zone" onClick={handleAddClick} title="Add new item">
-              <span className="split-icon">+</span>
-              <span>New</span>
-            </span>
-            <span className="split-divider" />
-            <span className="split-zone" onClick={handlePasteItem} title="Paste from clipboard">
-              <span>Paste</span>
-              <span className="split-icon paste-icon" />
-            </span>
           </div>
         )}
 
