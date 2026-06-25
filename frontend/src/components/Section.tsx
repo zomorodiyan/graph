@@ -118,7 +118,7 @@ function Section({
       <div className="section-body">
       {/* Layer 1 - Main category */}
       <div className="layer1-container" ref={layer1Ref}>
-        <div className="layer1-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+        <div className={`layer1-wrapper color-${color}`} style={{ display: 'flex', alignItems: 'stretch', gap: '0.125rem' }}>
           {showLoading && <span className="loading-spinner" title="Syncing...">⟳</span>}
           {editingPath === itemPath ? (
             <InlineItemEditor
@@ -129,7 +129,7 @@ function Section({
               onDelete={showEditButton ? () => onInlineDelete?.(itemPath) : undefined}
             />
           ) : (
-            <div className={`layer1 color-${color}`}>
+            <>
               {showEditButton && (
                 <div
                   className="item-edit-zone"
@@ -140,10 +140,12 @@ function Section({
                   title="Edit item"
                 />
               )}
-              <span className="item-title" onClick={() => onItemClick(itemPath, hasChildren)}>
-                {title}
-              </span>
-            </div>
+              <div className={`layer1 color-${color}`}>
+                <span className="item-title" onClick={() => onItemClick(itemPath, hasChildren)}>
+                  {title}
+                </span>
+              </div>
+            </>
           )}
         </div>
         {/* Progress bar */}
@@ -184,7 +186,7 @@ function Section({
           return (
             <div key={childKey} className="layer2-container">
               <div className="layer2-content">
-                <div className="layer2-wrapper">
+                <div className={`layer2-wrapper ${childColorClass}`}>
                   {editingPath === childPath ? (
                     <InlineItemEditor
                       itemKey={childKey}
@@ -194,7 +196,7 @@ function Section({
                       onDelete={childEditable ? () => onInlineDelete?.(childPath) : undefined}
                     />
                   ) : (
-                    <div className={`layer2 ${childColorClass}`}>
+                    <>
                       {childEditable && (
                         <div
                           className="item-edit-zone"
@@ -205,15 +207,17 @@ function Section({
                           title="Edit item"
                         />
                       )}
-                      <span className="item-title" onClick={() => onItemClick(childPath, childHasChildren)}>
-                        {childTitle}
-                        {(childItem as StructureItem).progress !== undefined && (
-                          <span style={{ marginLeft: '0.5rem', opacity: 0.7, fontSize: '0.75rem' }}>
-                            {(childItem as StructureItem).progress}%
-                          </span>
-                        )}
-                      </span>
-                    </div>
+                      <div className={`layer2 ${childColorClass}`}>
+                        <span className="item-title" onClick={() => onItemClick(childPath, childHasChildren)}>
+                          {childTitle}
+                          {(childItem as StructureItem).progress !== undefined && (
+                            <span style={{ marginLeft: '0.5rem', opacity: 0.7, fontSize: '0.75rem' }}>
+                              {(childItem as StructureItem).progress}%
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </>
                   )}
                 </div>
                 {/* Due date for layer2 */}
@@ -240,7 +244,7 @@ function Section({
 
                     return (
                       <div key={grandKey}>
-                        <div className="layer3-wrapper">
+                        <div className={`layer3-wrapper ${grandColorClass}`}>
                           {editingPath === grandPath ? (
                             <InlineItemEditor
                               itemKey={grandKey}
@@ -250,7 +254,7 @@ function Section({
                               onDelete={grandEditable ? () => onInlineDelete?.(grandPath) : undefined}
                             />
                           ) : (
-                            <div className={`layer3-item ${grandColorClass}`}>
+                            <>
                               {grandEditable && (
                                 <div
                                   className="item-edit-zone"
@@ -261,15 +265,17 @@ function Section({
                                   title="Edit item"
                                 />
                               )}
-                              <span className="item-title" onClick={() => onItemClick(grandPath, grandHasChildren)}>
-                                {grandTitle}
-                                {(grandItem as StructureItem).progress !== undefined && (
-                                  <span style={{ marginLeft: '0.375rem', opacity: 0.6, fontSize: '0.6875rem' }}>
-                                    {(grandItem as StructureItem).progress}%
-                                  </span>
-                                )}
-                              </span>
-                            </div>
+                              <div className={`layer3-item ${grandColorClass}`}>
+                                <span className="item-title" onClick={() => onItemClick(grandPath, grandHasChildren)}>
+                                  {grandTitle}
+                                  {(grandItem as StructureItem).progress !== undefined && (
+                                    <span style={{ marginLeft: '0.375rem', opacity: 0.6, fontSize: '0.6875rem' }}>
+                                      {(grandItem as StructureItem).progress}%
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+                            </>
                           )}
                         </div>
                         {/* Due date for layer3 */}

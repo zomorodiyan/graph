@@ -609,15 +609,12 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   background: rgba(102, 126, 234, var(--ez-alpha));
   cursor: pointer;
   transition: background 0.2s;
-}
-
-.item-edit-zone::before {
-  content: 'na';
-  visibility: hidden;
-  padding: 0 0.4rem;
+  border-radius: 0.25rem;
+  aspect-ratio: 1;
 }
 
 .item-edit-zone:hover {
@@ -642,7 +639,7 @@
 .layer2-wrapper,
 .layer3-wrapper {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 0.125rem;
 }
 
