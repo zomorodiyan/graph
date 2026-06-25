@@ -607,6 +607,7 @@
 
 .item-edit-zone {
   flex-shrink: 0;
+  align-self: stretch;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -614,8 +615,12 @@
   cursor: pointer;
   transition: background 0.2s;
   border-radius: 0.25rem;
-  aspect-ratio: 1;
 }
+
+/* Width per level so the square matches item height */
+.layer1-wrapper .item-edit-zone { width: 2.125rem; }
+.layer2-wrapper .item-edit-zone { width: 1.6875rem; }
+.layer3-wrapper .item-edit-zone { width: 1.3125rem; }
 
 .item-edit-zone:hover {
   background: rgba(102, 126, 234, var(--ez-hover));

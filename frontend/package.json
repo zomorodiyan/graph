@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:local": "VITE_OFFLINE_MODE=true vite",
     "build": "tsc && vite build",
     "build:offline": "tsc && vite build --mode offline",
     "preview": "vite preview",
