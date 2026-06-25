@@ -212,8 +212,8 @@ function StructuresView() {
 
   return (
     <div className="structures-view">
-      {/* Top buttons */}
-      <div className="top-buttons">
+      {/* Top buttons — hidden while editing a graph or creating a new one */}
+      {!inlineEditGraph && !inlineCreate && <div className="top-buttons">
         <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
         {OFFLINE_MODE && (
           <div className="sync-area">
@@ -265,7 +265,7 @@ function StructuresView() {
             )}
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Header */}
       <header className="structures-header">

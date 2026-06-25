@@ -877,19 +877,21 @@ function GraphView() {
 
   return (
     <>
-      <div className="top-buttons">
-        <button
-          className={`ctx-toggle${showContext ? '' : ' inactive'}`}
-          onClick={() => setShowContext(v => !v)}
-          title="Toggle context"
-        >C</button>
-        <button
-          className="depth-toggle"
-          onClick={() => setDepth(d => d === 3 ? 2 : d === 2 ? 1 : 3)}
-          title="Toggle depth"
-        >{depth}</button>
-        <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
-      </div>
+      {!inlineEdit && !inlineCreate && (
+        <div className="top-buttons">
+          <button
+            className={`ctx-toggle${showContext ? '' : ' inactive'}`}
+            onClick={() => setShowContext(v => !v)}
+            title="Toggle context"
+          >C</button>
+          <button
+            className="depth-toggle"
+            onClick={() => setDepth(d => d === 3 ? 2 : d === 2 ? 1 : 3)}
+            title="Toggle depth"
+          >{depth}</button>
+          <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
+        </div>
+      )}
 
       <div className="graph-container" ref={containerRef}>
         {/* Breadcrumb */}
