@@ -42,7 +42,7 @@
 .section-body {
   display: flex;
   flex: 1;
-  padding: 0 0.75rem;
+  padding: 0;
 }
 
 /* Copy zone — full-height clickable strip on the right of a section bubble */
@@ -109,7 +109,7 @@
 
 .layer1-container {
   min-width: 7.5rem;
-  margin-right: 1.25rem;
+  margin-right: 0;
 }
 
 .layer1 {
@@ -185,7 +185,7 @@
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0;
 }
 
 .layer3-item {
