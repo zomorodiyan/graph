@@ -2,11 +2,8 @@ import { useRef, useEffect, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/client'
 import InlineItemEditor from './InlineItemEditor'
 
-const COLOR_SCHEMES = [
-  { primary: 'royal-blue', secondary: 'sky'       },
-  { primary: 'pine',       secondary: 'pistachio' },
-  { primary: 'purple',     secondary: 'indigo'    },
-]
+const L2_COLORS = ['purple', 'pine'] as const
+const L3_COLORS = { purple: 'fuchsia', pine: 'pistachio' } as const
 
 interface SectionProps {
   itemKey: string
@@ -69,7 +66,7 @@ function Section({
   itemKey,
   item,
   parentPath,
-  colorIndex,
+  colorIndex: _colorIndex,
   onItemClick,
   onEditClick,
   editingPath = null,
@@ -82,8 +79,7 @@ function Section({
   showContext = true,
   depth = 3,
 }: SectionProps) {
-  const scheme = COLOR_SCHEMES[colorIndex % COLOR_SCHEMES.length]
-  const color = scheme.primary
+  const color = 'royal-blue'
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
   const hasChildren = !!item.children && Object.keys(item.children).length > 0
   const title = item.title || itemKey
@@ -173,14 +169,17 @@ function Section({
 
       {/* Layer 2 - Subcategories */}
       {depth >= 2 && <div className={`layer2-section${!hasAnyGrandchildren && childEntries.length > 0 ? ' layer2-flat' : ''}`}>
-        {childEntries.map(([childKey, childItem]) => {
+        {childEntries.map(([childKey, childItem], childIndex) => {
           const childPath = `${itemPath}.${childKey}`
           const childTitle = (childItem as StructureItem).title || childKey
           const childHasChildren = !!(childItem as StructureItem).children
           const grandchildren = (childItem as StructureItem).children || {}
           // Check if this child item is editable
           const childEditable = showEditButton && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
-          const childColor = `color-${scheme.secondary}`
+          const l2Color = L2_COLORS[childIndex % 2]
+          const l3Color = L3_COLORS[l2Color]
+          const childColorClass = `color-${l2Color}`
+          const grandColorClass = `color-${l3Color}`
 
           return (
             <div key={childKey} className="layer2-container">
@@ -195,7 +194,7 @@ function Section({
                       onDelete={childEditable ? () => onInlineDelete?.(childPath) : undefined}
                     />
                   ) : (
-                    <div className={`layer2 ${childColor}`}>
+                    <div className={`layer2 ${childColorClass}`}>
                       {childEditable && (
                         <div
                           className="item-edit-zone"
@@ -251,7 +250,7 @@ function Section({
                               onDelete={grandEditable ? () => onInlineDelete?.(grandPath) : undefined}
                             />
                           ) : (
-                            <div className={`layer3-item ${childColor}`}>
+                            <div className={`layer3-item ${grandColorClass}`}>
                               {grandEditable && (
                                 <div
                                   className="item-edit-zone"
