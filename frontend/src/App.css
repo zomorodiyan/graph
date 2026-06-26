@@ -516,9 +516,7 @@
 .ctx-toggle {
   width: 44px;
   height: 44px;
-  border: none;
   border-radius: 50%;
-  background: rgba(45, 45, 45, 0.45);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -527,27 +525,46 @@
   opacity: 0.5;
 }
 
+/* Filled buttons */
+.theme-toggle,
+.depth-toggle {
+  border: none;
+  background: rgba(45, 45, 45, 0.45);
+}
+
 [data-theme="dark"] .theme-toggle,
-[data-theme="dark"] .depth-toggle,
-[data-theme="dark"] .ctx-toggle {
+[data-theme="dark"] .depth-toggle {
   background: rgba(245, 245, 245, 0.45);
 }
 
-.depth-toggle,
+/* Hollow context button */
 .ctx-toggle {
-  color: #f5f5f5;
-  font-size: 26px;
+  background: transparent;
+  border: 2px solid rgba(45, 45, 45, 0.5);
+  color: rgba(45, 45, 45, 0.8);
+  font-size: 22px;
   font-weight: 400;
   line-height: 1;
 }
 
-[data-theme="dark"] .depth-toggle,
 [data-theme="dark"] .ctx-toggle {
+  border-color: rgba(245, 245, 245, 0.5);
+  color: rgba(245, 245, 245, 0.8);
+}
+
+.depth-toggle {
+  color: #f5f5f5;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+[data-theme="dark"] .depth-toggle {
   color: #2d2d2d;
 }
 
-.ctx-toggle.inactive {
-  opacity: 0.5;
+.ctx-toggle.active {
+  opacity: 0.25;
 }
 
 .copy-btn {
