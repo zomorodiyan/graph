@@ -11,8 +11,6 @@ import Notification from '../components/Notification'
 import InlineGraphEditor from '../components/InlineGraphEditor'
 import './StructuresView.css'
 
-const OFFLINE_MODE = import.meta.env.VITE_OFFLINE_MODE === 'true'
-
 // Icons for different graph types (randomly assigned based on name hash)
 const GRAPH_ICONS = ['📊', '🎯', '📚', '💼', '🏠', '🌟', '🚀', '💡', '🎨', '🔬']
 
@@ -215,56 +213,54 @@ function StructuresView() {
       {/* Top buttons — hidden while editing a graph or creating a new one */}
       {!inlineEditGraph && !inlineCreate && <div className="top-buttons">
         <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
-        {OFFLINE_MODE && (
-          <div className="sync-area">
-            {showGistConfig ? (
-              <div className="gist-config-panel">
-                <div className="gist-config-guide">
-                  <p className="gist-guide-title">Connect GitHub Gist for sync</p>
-                  <ol className="gist-guide-steps">
-                    <li>Go to <a href="https://github.com/settings/tokens/new?scopes=gist&description=Knowledge+Graph+Sync" target="_blank" rel="noreferrer">github.com → Settings → Tokens</a></li>
-                    <li>Check only <strong>gist</strong> scope, generate &amp; copy the token</li>
-                    <li>Paste it below — your graphs sync to a private Gist only you can see</li>
-                  </ol>
-                </div>
-                <div className="gist-config-inputs">
-                  <input
-                    ref={patInputRef}
-                    type="password"
-                    placeholder="Paste GitHub token here"
-                    value={patInput}
-                    onChange={e => setPatInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleSaveGistConfig(); if (e.key === 'Escape') setShowGistConfig(false) }}
-                  />
-                  <div className="gist-config-actions">
-                    <button className="btn-save-url" onClick={handleSaveGistConfig} disabled={!patInput.trim()}>Connect</button>
-                    <button className="btn-cancel-url" onClick={() => setShowGistConfig(false)}>Cancel</button>
-                  </div>
+        <div className="sync-area">
+          {showGistConfig ? (
+            <div className="gist-config-panel">
+              <div className="gist-config-guide">
+                <p className="gist-guide-title">Connect GitHub Gist for sync</p>
+                <ol className="gist-guide-steps">
+                  <li>Go to <a href="https://github.com/settings/tokens/new?scopes=gist&description=Knowledge+Graph+Sync" target="_blank" rel="noreferrer">github.com → Settings → Tokens</a></li>
+                  <li>Check only <strong>gist</strong> scope, generate &amp; copy the token</li>
+                  <li>Paste it below — your graphs sync to a private Gist only you can see</li>
+                </ol>
+              </div>
+              <div className="gist-config-inputs">
+                <input
+                  ref={patInputRef}
+                  type="password"
+                  placeholder="Paste GitHub token here"
+                  value={patInput}
+                  onChange={e => setPatInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSaveGistConfig(); if (e.key === 'Escape') setShowGistConfig(false) }}
+                />
+                <div className="gist-config-actions">
+                  <button className="btn-save-url" onClick={handleSaveGistConfig} disabled={!patInput.trim()}>Connect</button>
+                  <button className="btn-cancel-url" onClick={() => setShowGistConfig(false)}>Cancel</button>
                 </div>
               </div>
-            ) : (
-              <>
+            </div>
+          ) : (
+            <>
+              <button
+                className={`sync-btn${isSyncing ? ' sync-btn--spinning' : ''}`}
+                onClick={handleSyncClick}
+                title={pat ? `Sync with GitHub Gist${gistId ? ` (${gistId.slice(0, 8)}…)` : ''}` : 'Connect GitHub to enable sync'}
+                disabled={isSyncing}
+              >
+                ↻
+              </button>
+              {pat && (
                 <button
-                  className={`sync-btn${isSyncing ? ' sync-btn--spinning' : ''}`}
-                  onClick={handleSyncClick}
-                  title={pat ? `Sync with GitHub Gist${gistId ? ` (${gistId.slice(0, 8)}…)` : ''}` : 'Connect GitHub to enable sync'}
-                  disabled={isSyncing}
+                  className="server-url-tag"
+                  onClick={() => { setPatInput(pat); setShowGistConfig(true) }}
+                  title="Edit GitHub token"
                 >
-                  ↻
+                  {gistId ? `gist:${gistId.slice(0, 8)}…` : 'GitHub ✓'}
                 </button>
-                {pat && (
-                  <button
-                    className="server-url-tag"
-                    onClick={() => { setPatInput(pat); setShowGistConfig(true) }}
-                    title="Edit GitHub token"
-                  >
-                    {gistId ? `gist:${gistId.slice(0, 8)}…` : 'GitHub ✓'}
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        )}
+              )}
+            </>
+          )}
+        </div>
       </div>}
 
       {/* Header */}
@@ -326,7 +322,7 @@ function StructuresView() {
           }
 
           const syncStatus: GraphSyncStatus | null =
-            OFFLINE_MODE ? (syncStatuses[graph.name] ?? loadSyncStatus(graph.name)) : null
+            syncStatuses[graph.name] ?? loadSyncStatus(graph.name)
 
           return (
             <div
