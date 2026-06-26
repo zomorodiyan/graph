@@ -882,12 +882,12 @@ function GraphView() {
           <button
             className={`ctx-toggle${viewMode === 'default' ? ' inactive' : ''}`}
             onClick={() => setViewMode(m => m === 'context' ? 'raw' : m === 'raw' ? 'default' : 'context')}
-            title="Toggle view"
+            title={viewMode === 'context' ? 'Context on — tap for raw view' : viewMode === 'raw' ? 'Raw view — tap to hide context' : 'No context — tap to show context'}
           >{viewMode === 'context' ? 'R' : viewMode === 'raw' ? 'C' : ''}</button>
           <button
             className="depth-toggle"
             onClick={() => setDepth(d => d === 3 ? 2 : d === 2 ? 1 : 3)}
-            title="Toggle depth"
+            title={depth === 3 ? 'Showing all levels — tap to reduce' : depth === 2 ? 'Showing 2 levels — tap to collapse' : 'Titles only — tap to expand'}
           >{depth === 1 ? '+' : '−'}</button>
           <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
         </div>
