@@ -2,8 +2,8 @@ import { useRef, useEffect, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/client'
 import InlineItemEditor from './InlineItemEditor'
 
-const L2_COLORS = ['royal-blue', 'purple'] as const
-const L3_COLORS = { 'royal-blue': 'sky', purple: 'indigo' } as const
+const L2_COLORS = ['sky', 'sky-purple'] as const
+const L3_COLORS = { 'sky': 'royal-blue', 'sky-purple': 'royal-purple' } as const
 
 interface SectionProps {
   itemKey: string

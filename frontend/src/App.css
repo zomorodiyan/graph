@@ -383,14 +383,20 @@
 .bg-pistachio    { background-color: var(--pistachio-light); }
 .bg-royal-blue   { background-color: var(--royal-blue-light); }
 
-.color-royal-blue                    { color: var(--royal-blue-dark); }
-[data-theme='dark'] .color-royal-blue { color: var(--royal-blue-light); }
+.color-royal-blue                      { color: var(--royal-blue-dark); }
+[data-theme='dark'] .color-royal-blue  { color: var(--royal-blue-light); }
+
+.color-sky-purple                      { color: var(--sky-purple-dark); }
+[data-theme='dark'] .color-sky-purple  { color: var(--sky-purple-light); }
+
+.color-royal-purple                    { color: var(--royal-purple-dark); }
+[data-theme='dark'] .color-royal-purple { color: var(--royal-purple-light); }
 
 .color-pine       { color: var(--pine-dark); }
 .color-pistachio  { color: var(--pistachio-dark); }
 .color-magenta    { color: var(--fuchsia-dark); }
 
-[data-theme='dark'] .color-pine      { color: var(--pine-light); }
+[data-theme='dark'] .color-pine      { color: var(--pistachio-light); }
 [data-theme='dark'] .color-pistachio { color: var(--pistachio-light); }
 [data-theme='dark'] .color-magenta   { color: var(--fuchsia-light); }
 
@@ -663,8 +669,12 @@
 .color-pistachio  .item-edit-zone:hover { background: rgba(46,  125, 50,  var(--ez-hover)); }
 .color-purple     .item-edit-zone       { background: rgba(58,  16,  128, var(--ez-alpha)); }
 .color-purple     .item-edit-zone:hover { background: rgba(58,  16,  128, var(--ez-hover)); }
-.color-indigo     .item-edit-zone       { background: rgba(55,  48,  163, var(--ez-alpha)); }
-.color-indigo     .item-edit-zone:hover { background: rgba(55,  48,  163, var(--ez-hover)); }
+.color-indigo       .item-edit-zone       { background: rgba(55,  48,  163, var(--ez-alpha)); }
+.color-indigo       .item-edit-zone:hover { background: rgba(55,  48,  163, var(--ez-hover)); }
+.color-sky-purple   .item-edit-zone       { background: rgba(126, 87,  194, var(--ez-alpha)); }
+.color-sky-purple   .item-edit-zone:hover { background: rgba(126, 87,  194, var(--ez-hover)); }
+.color-royal-purple .item-edit-zone       { background: rgba(58,  16,  128, var(--ez-alpha)); }
+.color-royal-purple .item-edit-zone:hover { background: rgba(58,  16,  128, var(--ez-hover)); }
 
 /* Layer wrappers */
 .layer2-wrapper,

@@ -53,7 +53,7 @@
   --red-medium: #D32F2F;
 
   --sky-dark: #1976D2;
-  --sky-light: #90CAF9;
+  --sky-light: #5B9FE8;
 
   --indigo-dark: #3730A3;
   --indigo-light: #818CF8;
@@ -68,7 +68,12 @@
   --pine-light: #4E9E82;
 
   --royal-blue-dark: #0D47A1;
-  --royal-blue-light: #5B9FE8;
+  --royal-blue-light: #90CAF9;
+
+  --sky-purple-dark: #7E57C2;
+  --sky-purple-light: #9575CD;
+  --royal-purple-dark: #3A1080;
+  --royal-purple-light: #BA90E8;
 
   --slate-light: #90A4AE;
   --slate-lighter: #B0BEC5;
