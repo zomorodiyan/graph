@@ -57,6 +57,7 @@
 
 .breadcrumb-root {
   font-size: 1.5em;
+  vertical-align: middle;
 }
 
 .breadcrumb a:hover {
