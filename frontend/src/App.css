@@ -29,6 +29,7 @@
 .new-paste-wrapper .layer1 {
   flex: 1;
   cursor: pointer;
+  justify-content: center;
 }
 .new-paste-wrapper .layer1:hover,
 [data-theme='dark'] .new-paste-wrapper .layer1:hover {
