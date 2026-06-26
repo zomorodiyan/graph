@@ -633,9 +633,8 @@
 }
 
 /* Left edit zone for all item levels */
-/* Alpha tokens: dark theme keeps 0.08/0.18, light theme uses 0.04/0.10 */
-:root                        { --ez-alpha: 0.18; --ez-hover: 0.35; }
-:root:not([data-theme='dark']) { --ez-alpha: 0.12; --ez-hover: 0.25; }
+:root                          { --ez-mix: 18%; --ez-mix-hover: 35%; }
+:root:not([data-theme='dark']) { --ez-mix: 12%; --ez-mix-hover: 25%; }
 
 .item-edit-zone {
   flex-shrink: 0;
@@ -643,7 +642,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(102, 126, 234, var(--ez-alpha));
+  background: color-mix(in srgb, currentColor var(--ez-mix), transparent);
   cursor: pointer;
   transition: background 0.2s;
   border-radius: 0.25rem;
@@ -655,20 +654,8 @@
 .layer3-wrapper .item-edit-zone { width: 1.3125rem; }
 
 .item-edit-zone:hover {
-  background: rgba(102, 126, 234, var(--ez-hover));
+  background: color-mix(in srgb, currentColor var(--ez-mix-hover), transparent);
 }
-
-/* Color-matched edit zone tints */
-.color-pine         .item-edit-zone       { background: rgba(18,  61,  48,  var(--ez-alpha)); }
-.color-pine         .item-edit-zone:hover { background: rgba(18,  61,  48,  var(--ez-hover)); }
-.color-sky          .item-edit-zone       { background: rgba(25,  118, 210, var(--ez-alpha)); }
-.color-sky          .item-edit-zone:hover { background: rgba(25,  118, 210, var(--ez-hover)); }
-.color-royal-blue   .item-edit-zone       { background: rgba(13,  71,  161, var(--ez-alpha)); }
-.color-royal-blue   .item-edit-zone:hover { background: rgba(13,  71,  161, var(--ez-hover)); }
-.color-sky-purple   .item-edit-zone       { background: rgba(126, 87,  194, var(--ez-alpha)); }
-.color-sky-purple   .item-edit-zone:hover { background: rgba(126, 87,  194, var(--ez-hover)); }
-.color-royal-purple .item-edit-zone       { background: rgba(58,  16,  128, var(--ez-alpha)); }
-.color-royal-purple .item-edit-zone:hover { background: rgba(58,  16,  128, var(--ez-hover)); }
 
 
 /* Layer wrappers */
