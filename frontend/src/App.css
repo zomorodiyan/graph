@@ -37,12 +37,12 @@
 
 .breadcrumb {
   position: fixed;
-  bottom: 4.5rem;
-  left: 1.25rem;
+  bottom: 72px;
+  left: 20px;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 1.125rem;
+  gap: 8px;
+  font-size: 18px;
   color: var(--text-secondary);
   opacity: 0.5;
   z-index: 999;
@@ -159,6 +159,9 @@
   flex: 1;
   cursor: pointer;
   padding: 0.5rem 0.75rem;
+}
+.item-edit-zone + .layer1 .item-title {
+  padding-left: 0;
 }
 
 .layer1:hover {

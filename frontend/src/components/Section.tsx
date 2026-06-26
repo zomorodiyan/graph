@@ -118,7 +118,7 @@ function Section({
       <div className="section-body">
       {/* Layer 1 - Main category */}
       <div className="layer1-container" ref={layer1Ref}>
-        <div className={`layer1-wrapper color-${color}`} style={{ display: 'flex', alignItems: 'stretch', gap: '0.125rem' }}>
+        <div className={`layer1-wrapper color-${color}`} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
           {showLoading && <span className="loading-spinner" title="Syncing...">⟳</span>}
           {editingPath === itemPath ? (
             <InlineItemEditor
