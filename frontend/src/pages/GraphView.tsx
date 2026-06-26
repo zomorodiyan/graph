@@ -466,7 +466,7 @@ function GraphView() {
     
     // Add "Graphs" link if we're in a specific graph
     if (graphName) {
-      crumbs.push({ label: 'M', path: '/', isRoot: true })
+      crumbs.push({ label: '⛩', path: '/', isRoot: true })
       const graphDisplay = graphs.find(g => g.name === graphName)?.display_name
         ?? graphName.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
       crumbs.push({ label: graphDisplay, path: `/g/${graphName}` })
@@ -902,7 +902,7 @@ function GraphView() {
               {i === breadcrumb.length - 1 ? (
                 <span>{crumb.label}</span>
               ) : (
-                <Link to={crumb.path} replace={!crumb.isRoot} className={crumb.isRoot ? 'breadcrumb-root' : undefined}>{crumb.label}</Link>
+                <Link to={crumb.path} replace={!crumb.isRoot}>{crumb.label}</Link>
               )}
             </span>
           ))}
