@@ -160,7 +160,9 @@
   cursor: pointer;
   padding: 0.5rem 0.75rem;
 }
-.item-edit-zone + .layer1 .item-title {
+.item-edit-zone + .layer1 .item-title,
+.item-edit-zone + .layer2 .item-title,
+.item-edit-zone + .layer3-item .item-title {
   padding-left: 0;
 }
 
@@ -680,7 +682,7 @@
 .layer3-wrapper {
   display: flex;
   align-items: stretch;
-  gap: 0.125rem;
+  gap: 0;
 }
 
 /* Loading spinner for pending items */
