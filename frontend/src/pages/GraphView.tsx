@@ -881,14 +881,14 @@ function GraphView() {
         <div className="top-buttons">
           <button
             className={`ctx-toggle${viewMode === 'default' ? ' inactive' : ''}`}
-            onClick={() => setViewMode(m => m === 'default' ? 'context' : m === 'context' ? 'raw' : 'default')}
+            onClick={() => setViewMode(m => m === 'context' ? 'raw' : m === 'raw' ? 'default' : 'context')}
             title="Toggle view"
-          >{viewMode === 'context' ? 'C' : viewMode === 'raw' ? 'R' : ''}</button>
+          >{viewMode === 'context' ? 'R' : viewMode === 'raw' ? 'C' : ''}</button>
           <button
             className="depth-toggle"
             onClick={() => setDepth(d => d === 3 ? 2 : d === 2 ? 1 : 3)}
             title="Toggle depth"
-          >{depth === 1 ? '+' : '-'}</button>
+          >{depth === 1 ? '+' : '−'}</button>
           <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
         </div>
       )}
@@ -902,7 +902,7 @@ function GraphView() {
               {i === breadcrumb.length - 1 ? (
                 <span>{crumb.label}</span>
               ) : (
-                <Link to={crumb.path} replace={!crumb.isRoot}>{crumb.label}</Link>
+                <Link to={crumb.path} replace={!crumb.isRoot} className={crumb.isRoot ? 'breadcrumb-root' : undefined}>{crumb.label}</Link>
               )}
             </span>
           ))}

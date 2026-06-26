@@ -55,6 +55,10 @@
   text-decoration: none;
 }
 
+.breadcrumb-root {
+  font-size: 1.5em;
+}
+
 .breadcrumb a:hover {
   text-decoration: underline;
 }
