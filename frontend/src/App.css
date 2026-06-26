@@ -633,8 +633,8 @@
 }
 
 /* Left edit zone for all item levels */
-:root                          { --ez-mix: 18%; --ez-mix-hover: 35%; }
-:root:not([data-theme='dark']) { --ez-mix: 12%; --ez-mix-hover: 25%; }
+:root                          { --ez-mix: 9%; --ez-mix-hover: 18%; }
+:root:not([data-theme='dark']) { --ez-mix: 6%; --ez-mix-hover: 13%; }
 
 .item-edit-zone {
   flex-shrink: 0;
