@@ -1015,21 +1015,15 @@ function GraphView() {
             </div>
           )
         })}
-        {/* New + Paste — two side-by-side section bubbles at the bottom */}
+        {/* New + Paste — single section bubble, two transparent layer1 items side by side */}
         {!isVirtualView && (
           <div className="section-wrapper new-paste-wrapper">
-            <div className="section new-paste-section" onClick={handleAddClick} title="Add new item">
-              <div className="layer1-container">
-                <div className="layer1 color-pine">
-                  <span className="item-title">+ New</span>
-                </div>
+            <div className="section">
+              <div className="layer1 color-pine" onClick={handleAddClick} title="Add new item">
+                <span className="item-title">+ New</span>
               </div>
-            </div>
-            <div className="section new-paste-section" onClick={handlePasteItem} title="Paste from clipboard">
-              <div className="layer1-container">
-                <div className="layer1 color-pine">
-                  <span className="item-title">Paste</span>
-                </div>
+              <div className="layer1 color-pine" onClick={handlePasteItem} title="Paste from clipboard">
+                <span className="item-title">Paste</span>
               </div>
             </div>
           </div>
