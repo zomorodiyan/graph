@@ -645,7 +645,7 @@
   background: color-mix(in srgb, currentColor var(--ez-mix), transparent);
   cursor: pointer;
   transition: background 0.2s;
-  border-radius: 0.25rem;
+  border-radius: 0.75rem;
 }
 
 /* Width per level so the square matches item height */
