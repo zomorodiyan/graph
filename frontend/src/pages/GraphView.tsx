@@ -880,10 +880,10 @@ function GraphView() {
       {!inlineEdit && !inlineCreate && (
         <div className="top-buttons">
           <button
-            className={`ctx-toggle${viewMode === 'default' ? ' inactive' : ''}`}
-            onClick={() => setViewMode(m => m === 'context' ? 'raw' : m === 'raw' ? 'default' : 'context')}
-            title={viewMode === 'context' ? 'Context on — tap for raw view' : viewMode === 'raw' ? 'Raw view — tap to hide context' : 'No context — tap to show context'}
-          >{viewMode === 'context' ? 'R' : viewMode === 'raw' ? 'C' : ''}</button>
+            className={`ctx-toggle${viewMode === 'raw' ? ' inactive' : ''}`}
+            onClick={() => setViewMode(m => m === 'context' ? 'default' : m === 'default' ? 'raw' : 'context')}
+            title={viewMode === 'context' ? 'Context on — tap to hide context' : viewMode === 'default' ? 'No context — tap for raw view' : 'Raw view — tap to show context'}
+          >{viewMode === 'context' ? 'C' : viewMode === 'default' ? 'R' : ''}</button>
           <button
             className="depth-toggle"
             onClick={() => setDepth(d => d === 3 ? 2 : d === 2 ? 1 : 3)}
