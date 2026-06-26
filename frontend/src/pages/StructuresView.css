@@ -8,7 +8,7 @@
 
 .structures-view {
   min-height: 100vh;
-  padding: 2.5rem 1.25rem;
+  padding: 2.5rem 0 0;
   background: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -45,11 +45,11 @@
 /* Graphs container */
 .graphs-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 18rem));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0;
   max-width: 75rem;
   margin: 0 auto;
-  padding: 0 1.25rem;
+  padding: 0;
 }
 
 
