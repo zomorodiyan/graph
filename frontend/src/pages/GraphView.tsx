@@ -908,21 +908,6 @@ function GraphView() {
           ))}
         </nav>
 
-        {/* Add New Item Button - at the top, hide only in virtual views */}
-        {!isVirtualView && (
-          <div className="add-item-split">
-            <span className="split-zone" onClick={handleAddClick} title="Add new item">
-              <span className="split-icon">+</span>
-              <span>New</span>
-            </span>
-            <span className="split-divider" />
-            <span className="split-zone" onClick={handlePasteItem} title="Paste from clipboard">
-              <span>Paste</span>
-              <span className="split-icon paste-icon" />
-            </span>
-          </div>
-        )}
-
         {/* Items grid — CSS columns for tight packing with no gaps */}
         <div className="items-grid">
         {/* Sections - rendered in local order for instant drag feedback */}
@@ -1030,6 +1015,24 @@ function GraphView() {
             </div>
           )
         })}
+        {/* New + Paste bubble — always at the bottom, hidden in virtual views */}
+        {!isVirtualView && (
+          <div className="section-wrapper">
+            <div className="section">
+              <div className="section-body add-item-split color-pine">
+                <span className="split-zone" onClick={handleAddClick} title="Add new item">
+                  <span className="split-icon">+</span>
+                  <span>New</span>
+                </span>
+                <span className="split-divider" />
+                <span className="split-zone" onClick={handlePasteItem} title="Paste from clipboard">
+                  <span>Paste</span>
+                  <span className="split-icon paste-icon" />
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
         </div>{/* end items-grid */}
       </div>
 
