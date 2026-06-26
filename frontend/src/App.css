@@ -69,6 +69,7 @@
   margin-bottom: 0;
   background: var(--bg-primary);
   border-radius: 0.75rem;
+  box-shadow: 0 0 0 1.5px var(--border-color);
   width: fit-content;
   max-width: 100%;
   overflow: hidden;
