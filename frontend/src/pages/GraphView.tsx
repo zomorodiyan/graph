@@ -893,8 +893,8 @@ function GraphView() {
         </div>
       )}
 
-      <div className="graph-container" ref={containerRef}>
-        {/* Breadcrumb */}
+      {/* Breadcrumb — fixed above bottom buttons */}
+      {!inlineEdit && !inlineCreate && (
         <nav className="breadcrumb">
           {breadcrumb.map((crumb, i) => (
             <span key={crumb.path}>
@@ -907,9 +907,24 @@ function GraphView() {
             </span>
           ))}
         </nav>
+      )}
 
+      <div className="graph-container" ref={containerRef}>
         {/* Items grid — CSS columns for tight packing with no gaps */}
         <div className="items-grid">
+        {/* New + Paste — first card */}
+        {!isVirtualView && (
+          <div className="section-wrapper new-paste-wrapper">
+            <div className="section">
+              <div className="layer1 color-pine" onClick={handleAddClick} title="Add new item">
+                <span className="item-title">+ New</span>
+              </div>
+              <div className="layer1 color-pine" onClick={handlePasteItem} title="Paste from clipboard">
+                <span className="item-title">Paste</span>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Sections - rendered in local order for instant drag feedback */}
         {displayOrder.filter(k => k !== 'time' && k !== 'progress').map((key, index) => {
           const item = displayItems[key]
@@ -1015,19 +1030,6 @@ function GraphView() {
             </div>
           )
         })}
-        {/* New + Paste — single section bubble, two transparent layer1 items side by side */}
-        {!isVirtualView && (
-          <div className="section-wrapper new-paste-wrapper">
-            <div className="section">
-              <div className="layer1 color-pine" onClick={handleAddClick} title="Add new item">
-                <span className="item-title">+ New</span>
-              </div>
-              <div className="layer1 color-pine" onClick={handlePasteItem} title="Paste from clipboard">
-                <span className="item-title">Paste</span>
-              </div>
-            </div>
-          </div>
-        )}
         </div>{/* end items-grid */}
       </div>
 

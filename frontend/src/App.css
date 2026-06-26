@@ -30,16 +30,22 @@
   flex: 1;
   cursor: pointer;
 }
+.new-paste-wrapper .layer1:hover,
+[data-theme='dark'] .new-paste-wrapper .layer1:hover {
+  background: transparent;
+}
 
 .breadcrumb {
-  flex: 0 0 100%;
+  position: fixed;
+  bottom: 4.5rem;
+  left: 1.25rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  padding: 0.25rem 0;
-  margin-bottom: 0;
   font-size: 1.125rem;
   color: var(--text-secondary);
+  opacity: 0.5;
+  z-index: 999;
 }
 
 .breadcrumb a {
