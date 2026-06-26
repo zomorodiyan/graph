@@ -1,37 +1,10 @@
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useCallback } from 'react'
+import { useZoom, MIN_ZOOM, MAX_ZOOM, PINCH_ZOOM_STEP } from '../context/ZoomContext'
 
-const MIN_ZOOM = 0.5
-const MAX_ZOOM = 1.5
-const ZOOM_STEP = 0.05
-const STORAGE_KEY = 'graph-font-zoom'
-
-/**
- * Hook that handles pinch gestures to control font size zoom
- * Returns current zoom level
- */
 export function usePinchZoom() {
-  // Load initial zoom from localStorage
-  const [zoom, setZoom] = useState<number>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        const parsed = parseFloat(saved)
-        if (!isNaN(parsed) && parsed >= MIN_ZOOM && parsed <= MAX_ZOOM) {
-          return parsed
-        }
-      }
-    }
-    return 1.0
-  })
-  
+  const { zoom, setZoom } = useZoom()
   const initialDistance = useRef<number | null>(null)
   const initialZoom = useRef<number>(zoom)
-
-  // Apply zoom to document
-  useEffect(() => {
-    document.documentElement.style.fontSize = `${zoom * 100}%`
-    localStorage.setItem(STORAGE_KEY, zoom.toString())
-  }, [zoom])
 
   const getDistance = useCallback((touches: TouchList): number => {
     if (touches.length < 2) return 0
@@ -54,17 +27,12 @@ export function usePinchZoom() {
         e.preventDefault()
         const currentDistance = getDistance(e.touches)
         const scale = currentDistance / initialDistance.current
-        
-        // Reduce sensitivity by half: scale change is halved
+
         let newZoom = initialZoom.current * (1 + (scale - 1) * 0.5)
-        
-        // Round to nearest step for smoother changes
-        newZoom = Math.round(newZoom / ZOOM_STEP) * ZOOM_STEP
+        newZoom = Math.round(newZoom / PINCH_ZOOM_STEP) * PINCH_ZOOM_STEP
         newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom))
-        
-        if (newZoom !== zoom) {
-          setZoom(newZoom)
-        }
+
+        setZoom(newZoom)
       }
     }
 
@@ -74,7 +42,6 @@ export function usePinchZoom() {
       }
     }
 
-    // Use passive: false to allow preventDefault
     document.addEventListener('touchstart', handleTouchStart, { passive: false })
     document.addEventListener('touchmove', handleTouchMove, { passive: false })
     document.addEventListener('touchend', handleTouchEnd)
@@ -84,7 +51,7 @@ export function usePinchZoom() {
       document.removeEventListener('touchmove', handleTouchMove)
       document.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [zoom, getDistance])
+  }, [zoom, getDistance, setZoom])
 
   return { zoom }
 }

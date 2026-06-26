@@ -515,9 +515,9 @@ function GraphView() {
       const originalParts = originalPath.split('.')
       // Go to the parent path (remove the item name itself)
       const parentPath = originalParts.slice(0, -1).join('.')
-      navigate(buildPath(parentPath || ''))
+      navigate(buildPath(parentPath || ''), { replace: true })
     } else {
-      navigate(buildPath(itemPath))
+      navigate(buildPath(itemPath), { replace: true })
     }
   }
 
@@ -902,7 +902,7 @@ function GraphView() {
               {i === breadcrumb.length - 1 ? (
                 <span>{crumb.label}</span>
               ) : (
-                <Link to={crumb.path}>{crumb.label}</Link>
+                <Link to={crumb.path} replace={!crumb.isRoot}>{crumb.label}</Link>
               )}
             </span>
           ))}
