@@ -78,6 +78,20 @@
   padding: 0;
 }
 
+/* Raw text view inside section bubble */
+.section-raw {
+  flex: 1;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--text-secondary);
+  background: transparent;
+}
+
 /* Copy zone — full-height clickable strip on the right of a section bubble */
 .section-copy-zone {
   flex-shrink: 0;

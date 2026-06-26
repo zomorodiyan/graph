@@ -40,7 +40,7 @@ function GraphView() {
   useSwipeNavigation()
   const { toggleTheme } = useTheme()
   const [depth, setDepth] = useState<1 | 2 | 3>(3)
-  const [showContext, setShowContext] = useState(true)
+  const [viewMode, setViewMode] = useState<'default' | 'context' | 'raw'>('context')
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
   const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
@@ -179,7 +179,7 @@ function GraphView() {
       result[key] = {
         ...item,
         title: title,
-        context: showContext && parentPath ? `📍 ${parentPath}` : undefined,
+        context: viewMode === 'context' && parentPath ? `📍 ${parentPath}` : undefined,
         originalPath: itemPath, // Store original path for navigation
         nonEditable: true, // Time items are not editable - they navigate to original
         children: undefined // Don't show nested children in time view
@@ -214,7 +214,7 @@ function GraphView() {
       result[key] = {
         ...item,
         title: title,
-        context: showContext && parentPath ? `📍 ${parentPath}` : undefined,
+        context: viewMode === 'context' && parentPath ? `📍 ${parentPath}` : undefined,
         originalPath: itemPath, // Store original path for navigation
         nonEditable: true, // Progress items are not editable - they navigate to original
         children: undefined // Don't show nested children in progress view
@@ -880,15 +880,15 @@ function GraphView() {
       {!inlineEdit && !inlineCreate && (
         <div className="top-buttons">
           <button
-            className={`ctx-toggle${showContext ? '' : ' inactive'}`}
-            onClick={() => setShowContext(v => !v)}
-            title="Toggle context"
-          >C</button>
+            className={`ctx-toggle${viewMode === 'default' ? ' inactive' : ''}`}
+            onClick={() => setViewMode(m => m === 'default' ? 'context' : m === 'context' ? 'raw' : 'default')}
+            title="Toggle view"
+          >{viewMode === 'context' ? 'C' : viewMode === 'raw' ? 'R' : ''}</button>
           <button
             className="depth-toggle"
             onClick={() => setDepth(d => d === 3 ? 2 : d === 2 ? 1 : 3)}
             title="Toggle depth"
-          >{depth}</button>
+          >{depth === 1 ? '+' : '-'}</button>
           <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
         </div>
       )}
@@ -978,8 +978,10 @@ function GraphView() {
                 onCopyClick={handleCopyItem}
                 isPending={isPending}
                 isTimeView={isVirtualView}
-                showContext={showContext}
+                showContext={viewMode === 'context'}
                 depth={depth}
+                showRaw={viewMode === 'raw'}
+                rawText={viewMode === 'raw' ? serializeItem(key, item as StructureItem, 0).trimEnd() : undefined}
               />
             </div>
           )
@@ -1024,8 +1026,10 @@ function GraphView() {
                 onCopyClick={handleCopyItem}
                 isPending={false}
                 isTimeView={true}
-                showContext={showContext}
+                showContext={viewMode === 'context'}
                 depth={depth}
+                showRaw={viewMode === 'raw'}
+                rawText={viewMode === 'raw' ? serializeItem(virtualKey, item as StructureItem, 0).trimEnd() : undefined}
               />
             </div>
           )

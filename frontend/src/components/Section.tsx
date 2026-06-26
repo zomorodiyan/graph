@@ -17,10 +17,12 @@ interface SectionProps {
   onInlineCancel?: () => void
   onInlineDelete?: (path: string) => void
   onCopyClick?: (itemKey: string, item: StructureItem) => void
-  isPending?: boolean  // Item is being synced
-  isTimeView?: boolean // Items in time view can't be edited (they're virtual)
+  isPending?: boolean
+  isTimeView?: boolean
   showContext?: boolean
   depth?: number
+  showRaw?: boolean
+  rawText?: string
 }
 
 // Helper to calculate due date category
@@ -78,6 +80,8 @@ function Section({
   isTimeView = false,
   showContext = true,
   depth = 3,
+  showRaw = false,
+  rawText,
 }: SectionProps) {
   const color = 'pine'
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
@@ -115,6 +119,23 @@ function Section({
   const hasAnyGrandchildren = childEntries.some(
     ([, child]) => !!(child as StructureItem).children && Object.keys((child as StructureItem).children!).length > 0
   )
+
+  if (showRaw && rawText !== undefined) {
+    return (
+      <div className="section" ref={sectionRef}>
+        <pre className="section-raw">{rawText}</pre>
+        {!isTimeView && onCopyClick && (
+          <div
+            className="section-copy-zone"
+            title="Copy to clipboard"
+            onClick={(e) => { e.stopPropagation(); onCopyClick(itemKey, item) }}
+          >
+            <span className="copy-handle" />
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className={`section${l1Wide ? ' section--wide-l1' : ''}`} ref={sectionRef}>
