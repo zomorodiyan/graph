@@ -415,10 +415,13 @@
 .color-pine       { color: var(--pine-dark); }
 .color-pistachio  { color: var(--pistachio-dark); }
 .color-magenta    { color: var(--fuchsia-dark); }
+.color-utility    { color: #667eea; }
 
 [data-theme='dark'] .color-pine      { color: var(--pistachio-light); }
 [data-theme='dark'] .color-pistachio { color: var(--pistachio-light); }
 [data-theme='dark'] .color-magenta   { color: var(--fuchsia-light); }
+
+.virtual-section .color-pine { color: #667eea; }
 
 .bg-green { background-color: var(--green-light); }
 .bg-blue { background-color: var(--blue-light); }

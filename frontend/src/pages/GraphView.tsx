@@ -916,10 +916,10 @@ function GraphView() {
         {!isVirtualView && (
           <div className="section-wrapper new-paste-wrapper">
             <div className="section">
-              <div className="layer1 color-pine" onClick={handleAddClick} title="Add new item">
+              <div className="layer1 color-utility" onClick={handleAddClick} title="Add new item">
                 <span className="item-title">+ New</span>
               </div>
-              <div className="layer1 color-pine" onClick={handlePasteItem} title="Paste from clipboard">
+              <div className="layer1 color-utility" onClick={handlePasteItem} title="Paste from clipboard">
                 <span className="item-title">Paste</span>
               </div>
             </div>
@@ -1009,7 +1009,7 @@ function GraphView() {
           if (!item) return null
           const virtualIndex = displayOrder.indexOf(virtualKey)
           return (
-            <div key={virtualKey} className="section-wrapper">
+            <div key={virtualKey} className="section-wrapper virtual-section">
               <Section
                 itemKey={virtualKey}
                 item={item as StructureItem}
