@@ -276,8 +276,8 @@ function StructuresView() {
 
       {/* Graphs grid */}
       <div className="graphs-container">
-        {/* Add new graph card — or inline create editor — hidden while editing a graph */}
-        {!inlineEditGraph && (inlineCreate ? (
+        {/* Add new graph card — or inline create editor */}
+        {inlineCreate ? (
           <div className="graph-card graph-card--editing">
             <InlineGraphEditor
               displayName=""
@@ -303,7 +303,7 @@ function StructuresView() {
               <span className="zone-icon zone-icon--paste" />
             </div>
           </div>
-        ))}
+        )}
 
         {/* Existing graphs */}
         {graphs.map((graph, index) => {
