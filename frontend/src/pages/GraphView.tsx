@@ -923,6 +923,8 @@ function GraphView() {
           </div>
         )}
 
+        {/* Items grid — CSS columns for tight packing with no gaps */}
+        <div className="items-grid">
         {/* Sections - rendered in local order for instant drag feedback */}
         {displayOrder.filter(k => k !== 'time' && k !== 'progress').map((key, index) => {
           const item = displayItems[key]
@@ -1028,6 +1030,7 @@ function GraphView() {
             </div>
           )
         })}
+        </div>{/* end items-grid */}
       </div>
 
       {/* Notification */}
