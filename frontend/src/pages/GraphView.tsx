@@ -1015,20 +1015,21 @@ function GraphView() {
             </div>
           )
         })}
-        {/* New + Paste bubble — always at the bottom, hidden in virtual views */}
+        {/* New + Paste — two side-by-side section bubbles at the bottom */}
         {!isVirtualView && (
-          <div className="section-wrapper">
-            <div className="section">
-              <div className="section-body add-item-split color-pine">
-                <span className="split-zone" onClick={handleAddClick} title="Add new item">
-                  <span className="split-icon">+</span>
-                  <span>New</span>
-                </span>
-                <span className="split-divider" />
-                <span className="split-zone" onClick={handlePasteItem} title="Paste from clipboard">
-                  <span>Paste</span>
-                  <span className="split-icon paste-icon" />
-                </span>
+          <div className="section-wrapper new-paste-wrapper">
+            <div className="section new-paste-section" onClick={handleAddClick} title="Add new item">
+              <div className="layer1-container">
+                <div className="layer1 color-pine">
+                  <span className="item-title">+ New</span>
+                </div>
+              </div>
+            </div>
+            <div className="section new-paste-section" onClick={handlePasteItem} title="Paste from clipboard">
+              <div className="layer1-container">
+                <div className="layer1 color-pine">
+                  <span className="item-title">Paste</span>
+                </div>
               </div>
             </div>
           </div>

@@ -25,6 +25,23 @@
   width: 100%;
 }
 
+/* New + Paste row — two transparent side-by-side bubbles */
+.new-paste-wrapper {
+  display: flex;
+  flex-direction: row;
+}
+
+.items-grid .new-paste-wrapper .section {
+  flex: 1;
+  width: auto;
+  background: transparent;
+  cursor: pointer;
+}
+
+.new-paste-wrapper .layer1-container {
+  min-width: 0;
+}
+
 .breadcrumb {
   flex: 0 0 100%;
   display: flex;
