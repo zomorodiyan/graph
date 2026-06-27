@@ -212,7 +212,6 @@ function StructuresView() {
     <div className="structures-view">
       {/* Top buttons — hidden while editing a graph or creating a new one */}
       {!inlineEditGraph && !inlineCreate && <div className="top-buttons">
-        <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
         <div className="sync-area">
           {showGistConfig ? (
             <div className="gist-config-panel">
@@ -261,6 +260,7 @@ function StructuresView() {
             </>
           )}
         </div>
+        <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
       </div>}
 
       {/* Header */}
