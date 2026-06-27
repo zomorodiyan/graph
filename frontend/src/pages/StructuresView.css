@@ -83,7 +83,7 @@
 
 /* Graph card */
 .graph-card {
-  margin: 2px;
+  margin: 0 2px;
   position: relative;
   background: var(--bg-secondary);
   border: none;
