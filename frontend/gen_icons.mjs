@@ -6,7 +6,7 @@ const innerContent = svgRaw.replace(/<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '')
 
 // Transparent background, 12.5-unit padding each side for maskable safe zone
 function buildSvg(size) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12.5 -12.5 125 125" width="${size}" height="${size}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-22 -22 144 144" width="${size}" height="${size}">
   ${innerContent}
 </svg>`
 }
