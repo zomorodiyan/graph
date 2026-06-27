@@ -65,12 +65,12 @@ export function useSyncManager(queryClient: QueryClient) {
     setSyncError(null)
   }, [])
 
-  const syncAll = useCallback(async (): Promise<{ error: string | null; pushed: number; pulled: number }> => {
+  const syncAll = useCallback(async (): Promise<{ error: string | null; pushed: number; pulled: number; statuses: Record<string, GraphSyncStatus> }> => {
     const token = getPAT()
     if (!token) {
       const msg = 'No GitHub token configured.'
       setSyncError(msg)
-      return { error: msg, pushed: 0, pulled: 0 }
+      return { error: msg, pushed: 0, pulled: 0, statuses: {} }
     }
 
     setIsSyncing(true)
@@ -190,14 +190,14 @@ export function useSyncManager(queryClient: QueryClient) {
       if (errors.length) {
         const msg = errors.join('; ')
         setSyncError(msg)
-        return { error: msg, pushed, pulled }
+        return { error: msg, pushed, pulled, statuses: newStatuses }
       }
-      return { error: null, pushed, pulled }
+      return { error: null, pushed, pulled, statuses: newStatuses }
     } catch (err) {
       const msg = (err as Error).message || String(err)
       console.error('[sync] fatal:', err)
       setSyncError(msg)
-      return { error: msg, pushed: 0, pulled: 0 }
+      return { error: msg, pushed: 0, pulled: 0, statuses: {} }
     } finally {
       setIsSyncing(false)
     }

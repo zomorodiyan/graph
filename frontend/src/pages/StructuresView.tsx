@@ -34,6 +34,7 @@ function StructuresView() {
   const [showGistConfig, setShowGistConfig] = useState(false)
   const [patInput, setPatInput] = useState('')
   const [copiedGraph, setCopiedGraph] = useState<string | null>(null)
+  const [flashDirections, setFlashDirections] = useState<Record<string, string>>({})
   const patInputRef = useRef<HTMLInputElement>(null)
 
   const { isSyncing, pat, gistId, syncStatuses, configure, syncAll } =
@@ -65,7 +66,7 @@ function StructuresView() {
       setTimeout(() => patInputRef.current?.focus(), 50)
       return
     }
-    const { error, pushed, pulled } = await syncAll()
+    const { error, pushed, pulled, statuses } = await syncAll()
     if (error) {
       showNotification(error, 'error')
     } else if (pushed === 0 && pulled === 0) {
@@ -75,6 +76,14 @@ function StructuresView() {
       if (pushed) parts.push(`${pushed} pushed`)
       if (pulled) parts.push(`${pulled} pulled`)
       showNotification(`Synced — ${parts.join(', ')}`)
+      const flash: Record<string, string> = {}
+      for (const [name, s] of Object.entries(statuses) as [string, GraphSyncStatus][]) {
+        if (s.direction === 'push' || s.direction === 'pull') flash[name] = s.direction
+      }
+      if (Object.keys(flash).length > 0) {
+        setFlashDirections(flash)
+        setTimeout(() => setFlashDirections({}), 5000)
+      }
     }
   }
 
@@ -317,6 +326,19 @@ function StructuresView() {
           const syncStatus: GraphSyncStatus | null =
             syncStatuses[graph.name] ?? loadSyncStatus(graph.name)
 
+          const flashDir = flashDirections[graph.name]
+          const hasLocalChanges = syncStatus && new Date(graph.modified_at) > new Date(syncStatus.lastSync)
+          const badgeSymbol = syncStatus?.error ? '✕'
+            : flashDir === 'push' ? '↑'
+            : flashDir === 'pull' ? '↓'
+            : hasLocalChanges ? '•'
+            : syncStatus ? '✓'
+            : null
+          const badgeClass = syncStatus?.error ? 'error'
+            : flashDir ? flashDir
+            : hasLocalChanges ? 'pending'
+            : 'none'
+
           return (
             <div
               key={graph.name}
@@ -331,17 +353,17 @@ function StructuresView() {
                 <span className="zone-icon zone-icon--edit" />
               </div>
               <div className="card-content">
-                <h3 className={`graph-name ${colorClass}`}>{graph.display_name}</h3>
+                <h3 className={`graph-name ${colorClass}`}>
+                  {badgeSymbol && pat && (
+                    <span
+                      className={`sync-badge sync-badge--${badgeClass}`}
+                      title={syncStatus?.error ?? (syncStatus ? `Last sync: ${new Date(syncStatus.lastSync).toLocaleString()}` : '')}
+                    >{badgeSymbol}</span>
+                  )}
+                  {graph.display_name}
+                </h3>
                 {graph.description && (
                   <p className="graph-description">{graph.description}</p>
-                )}
-                {syncStatus && (
-                  <span
-                    className={`sync-badge sync-badge--${syncStatus.error ? 'error' : syncStatus.direction}`}
-                    title={syncStatus.error ?? `Last sync: ${new Date(syncStatus.lastSync).toLocaleString()}`}
-                  >
-                    {syncStatus.error ? '✕' : syncStatus.direction === 'push' ? '↑' : syncStatus.direction === 'pull' ? '↓' : '✓'}
-                  </span>
                 )}
               </div>
               <div

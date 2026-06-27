@@ -640,20 +640,20 @@
   cursor: pointer;
 }
 
-/* Per-graph sync status badge */
+/* Per-graph sync status badge — inline before graph name */
 .sync-badge {
-  display: inline-block;
-  margin-top: 0.35rem;
-  font-size: 1rem;
+  display: inline;
+  margin-right: 0.35rem;
+  font-size: 0.85rem;
   font-weight: 700;
   pointer-events: none;
-  align-self: flex-start;
 }
 
-.sync-badge--push  { color: #667eea; }
-.sync-badge--pull  { color: #9b6dce; }
-.sync-badge--none  { color: #28a745; }
-.sync-badge--error { color: #dc3545; }
+.sync-badge--push    { color: #667eea; }
+.sync-badge--pull    { color: #9b6dce; }
+.sync-badge--none    { color: #28a745; }
+.sync-badge--pending { color: #e65100; }
+.sync-badge--error   { color: #dc3545; }
 
 /* Loading and error states */
 .structures-view .loading,
