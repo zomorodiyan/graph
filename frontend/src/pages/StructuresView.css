@@ -45,6 +45,9 @@
 /* Add card */
 .add-card {
   min-height: 5rem;
+}
+
+.graph-card.add-card {
   background: var(--bg-primary);
 }
 
@@ -83,7 +86,6 @@
 
 /* Graph card */
 .graph-card {
-  margin: 0 2px;
   position: relative;
   background: var(--bg-secondary);
   border: none;
