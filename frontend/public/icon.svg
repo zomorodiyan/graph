@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- black outline behind the gem -->
+  <polygon points="22,28 78,28 92,54 50,88 8,54" fill="none" stroke="#000" stroke-width="9.5" stroke-linejoin="round"/>
   <!-- outer gem outline -->
   <polygon points="22,28 78,28 92,54 50,88 8,54" fill="none" stroke="#d0d0d0" stroke-width="6.5" stroke-linejoin="round"/>
   <!-- inner dividing lines -->
