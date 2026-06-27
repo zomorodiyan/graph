@@ -4,6 +4,7 @@ import { ZoomProvider } from './context/ZoomContext'
 import { usePinchZoom } from './hooks/usePinchZoom'
 import GraphView from './pages/GraphView'
 import StructuresView from './pages/StructuresView'
+import IosInstallBanner from './components/IosInstallBanner'
 import './App.css'
 
 function AppContent() {
@@ -11,6 +12,7 @@ function AppContent() {
 
   return (
     <div className="app">
+      <IosInstallBanner />
       <Routes>
         {/* Root: list of all graphs */}
         <Route path="/" element={<StructuresView />} />
