@@ -1,13 +1,12 @@
 import { Resvg } from '@resvg/resvg-js'
 import { readFileSync, writeFileSync } from 'fs'
 
-const svgRaw = readFileSync('./public/icon-colored.svg', 'utf-8')
+const svgRaw = readFileSync('./public/icon.svg', 'utf-8')
 const innerContent = svgRaw.replace(/<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '')
 
-// Dark background + 12.5-unit padding each side so gem sits in the 80% maskable safe zone
+// Transparent background, 12.5-unit padding each side for maskable safe zone
 function buildSvg(size) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12.5 -12.5 125 125" width="${size}" height="${size}">
-  <rect x="-12.5" y="-12.5" width="125" height="125" fill="#1a1a2e"/>
   ${innerContent}
 </svg>`
 }
