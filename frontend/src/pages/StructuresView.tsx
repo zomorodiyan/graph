@@ -243,22 +243,13 @@ function StructuresView() {
           ) : (
             <>
               <button
-                className={`sync-btn${isSyncing ? ' sync-btn--spinning' : ''}`}
+                className={`sync-btn${isSyncing ? ' sync-btn--spinning' : ''}${pat ? ' sync-btn--connected' : ''}`}
                 onClick={handleSyncClick}
                 title={pat ? `Sync with GitHub Gist${gistId ? ` (${gistId.slice(0, 8)}…)` : ''}` : 'Connect GitHub to enable sync'}
                 disabled={isSyncing}
               >
                 ↻
               </button>
-              {pat && (
-                <button
-                  className="server-url-tag"
-                  onClick={() => { setPatInput(pat); setShowGistConfig(true) }}
-                  title="Edit GitHub token"
-                >
-                  {gistId ? `gist:${gistId.slice(0, 8)}…` : 'GitHub ✓'}
-                </button>
-              )}
             </>
           )}
         </div>

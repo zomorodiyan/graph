@@ -521,6 +521,14 @@
   animation: spin 1s linear infinite;
 }
 
+.sync-btn--connected {
+  color: #2e7d32;
+}
+
+[data-theme="dark"] .sync-btn--connected {
+  color: #66bb6a;
+}
+
 .server-url-tag {
   background: none;
   border: none;

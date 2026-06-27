@@ -54,6 +54,10 @@
   font-size: 18px;
   color: var(--text-secondary);
   z-index: 999;
+  background: var(--bg-secondary);
+  opacity: 0.85;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.5rem;
 }
 
 .breadcrumb a {
@@ -561,6 +565,7 @@
   font-size: 22px;
   font-weight: 400;
   line-height: 1;
+  opacity: 1;
 }
 
 [data-theme="dark"] .ctx-toggle {
@@ -580,7 +585,7 @@
 }
 
 .ctx-toggle.active {
-  opacity: 0.25;
+  opacity: 0.3;
 }
 
 .copy-btn {
