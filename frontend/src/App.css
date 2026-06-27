@@ -161,8 +161,12 @@
   transform: translate(-50%, -50%);
 }
 
-/* Copied checkmark feedback */
+/* Copied checkmark feedback — absolutely centered like copy-handle */
 .copy-check {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   font-size: 1rem;
   color: var(--text-secondary);
 }
