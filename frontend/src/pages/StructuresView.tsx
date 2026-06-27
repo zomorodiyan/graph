@@ -33,6 +33,7 @@ function StructuresView() {
   } | null>(null)
   const [showGistConfig, setShowGistConfig] = useState(false)
   const [patInput, setPatInput] = useState('')
+  const [copiedGraph, setCopiedGraph] = useState<string | null>(null)
   const patInputRef = useRef<HTMLInputElement>(null)
 
   const { isSyncing, pat, gistId, syncStatuses, configure, syncAll } =
@@ -141,7 +142,8 @@ function StructuresView() {
         .join('\n')
         .trimEnd()
       await navigator.clipboard.writeText(text)
-      showNotification('Copied structure!')
+      setCopiedGraph(name)
+      setTimeout(() => setCopiedGraph(null), 2000)
     } catch (err) {
       showNotification((err as Error).message, 'error')
     }
@@ -356,7 +358,7 @@ function StructuresView() {
                 onClick={(e) => handleCopyGraph(e, graph.name)}
                 title="Copy graph"
               >
-                <span className="copy-handle" />
+                {copiedGraph === graph.name ? <span className="copy-check">✔</span> : <span className="copy-handle" />}
               </div>
             </div>
           )

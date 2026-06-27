@@ -869,7 +869,6 @@ function GraphView() {
     try {
       const text = serializeItem(itemKey, item, 0)
       await navigator.clipboard.writeText(text.trimEnd())
-      showNotification('Copied!')
     } catch (err) {
       showNotification('Failed to copy', 'error')
     }

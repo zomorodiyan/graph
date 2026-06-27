@@ -120,17 +120,22 @@ function Section({
     ([, child]) => !!(child as StructureItem).children && Object.keys((child as StructureItem).children!).length > 0
   )
 
+  const [copied, setCopied] = useState(false)
+  function handleCopy(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!onCopyClick) return
+    onCopyClick(itemKey, item)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   if (showRaw && rawText !== undefined) {
     return (
       <div className="section" ref={sectionRef}>
         <pre className="section-raw">{rawText}</pre>
         {!isTimeView && onCopyClick && (
-          <div
-            className="section-copy-zone"
-            title="Copy to clipboard"
-            onClick={(e) => { e.stopPropagation(); onCopyClick(itemKey, item) }}
-          >
-            <span className="copy-handle" />
+          <div className="section-copy-zone" title="Copy to clipboard" onClick={handleCopy}>
+            {copied ? <span className="copy-check">✔</span> : <span className="copy-handle" />}
           </div>
         )}
       </div>
@@ -326,15 +331,8 @@ function Section({
       </div>
       {/* Copy zone — full-height strip on the right */}
       {!isTimeView && onCopyClick && (
-        <div
-          className="section-copy-zone"
-          title="Copy to clipboard"
-          onClick={(e) => {
-            e.stopPropagation()
-            onCopyClick(itemKey, item)
-          }}
-        >
-          <span className="copy-handle" />
+        <div className="section-copy-zone" title="Copy to clipboard" onClick={handleCopy}>
+          {copied ? <span className="copy-check">✔</span> : <span className="copy-handle" />}
         </div>
       )}
     </div>
