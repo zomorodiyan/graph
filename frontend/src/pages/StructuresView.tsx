@@ -6,7 +6,7 @@ import { createGraph, fetchStructureText, updateGraph, deleteGraph, GraphInfo } 
 import { useGraphs } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
-import { useSyncManager, loadSyncStatus, GraphSyncStatus } from '../hooks/useSyncManager'
+import { useSyncManager, loadSyncStatus, GraphSyncStatus, SyncAllResult } from '../hooks/useSyncManager'
 import Notification from '../components/Notification'
 import InlineGraphEditor from '../components/InlineGraphEditor'
 import './StructuresView.css'
@@ -66,7 +66,7 @@ function StructuresView() {
       setTimeout(() => patInputRef.current?.focus(), 50)
       return
     }
-    const { error, pushed, pulled, statuses } = await syncAll()
+    const { error, pushed, pulled, statuses }: SyncAllResult = await syncAll()
     if (error) {
       showNotification(error, 'error')
     } else if (pushed === 0 && pulled === 0) {

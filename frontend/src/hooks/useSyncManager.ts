@@ -25,6 +25,13 @@ export interface GraphSyncStatus {
   error?:    string
 }
 
+export interface SyncAllResult {
+  error: string | null
+  pushed: number
+  pulled: number
+  statuses: Record<string, GraphSyncStatus>
+}
+
 const STATUS_KEY = (name: string) => `sync_status_${name}`
 
 export function loadSyncStatus(name: string): GraphSyncStatus | null {
@@ -65,7 +72,7 @@ export function useSyncManager(queryClient: QueryClient) {
     setSyncError(null)
   }, [])
 
-  const syncAll = useCallback(async (): Promise<{ error: string | null; pushed: number; pulled: number; statuses: Record<string, GraphSyncStatus> }> => {
+  const syncAll = useCallback(async (): Promise<SyncAllResult> => {
     const token = getPAT()
     if (!token) {
       const msg = 'No GitHub token configured.'
