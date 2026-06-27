@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { QueryClient } from '@tanstack/react-query'
-import type { Structure } from '../api/client'
+import type { Structure } from '../api/localClient'
 import {
   fetchGraphs as fetchLocalGraphs,
   fetchStructure as fetchLocalStructure,

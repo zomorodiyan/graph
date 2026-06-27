@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
-import { StructureItem, UpdatePayload } from '../api/client'
+import { StructureItem, UpdatePayload } from '../api/localClient'
 import InlineItemEditor from './InlineItemEditor'
 
 const L2_COLORS = ['sky', 'sky-purple'] as const

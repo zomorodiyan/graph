@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { StructureItem, UpdatePayload } from '../api/client'
+import { StructureItem, UpdatePayload } from '../api/localClient'
 
 interface InlineItemEditorProps {
   itemKey: string

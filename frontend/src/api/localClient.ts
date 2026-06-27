@@ -1,8 +1,44 @@
 // Offline client — all data lives in localStorage, no server required.
-import type {
-  Structure, StructureItem, GraphInfo, UpdatePayload, ItemResponse,
-  GraphStateVersion, GraphMutationsResponse, GraphUpdatePayload,
-} from './client'
+
+export interface StructureItem {
+  id?: string
+  title?: string
+  context?: string
+  progress?: number
+  due?: string
+  children?: Record<string, StructureItem>
+  [key: string]: unknown
+}
+
+export interface Structure {
+  metadata: { title: string; description: string; version: string }
+  structure: Record<string, StructureItem>
+}
+
+export interface GraphInfo {
+  name: string; display_name: string; path: string
+  modified_at: string; size: number; description: string; version: string; icon: string
+}
+
+export interface GraphUpdatePayload { display_name?: string; description?: string; icon?: string }
+
+export interface ItemResponse { path: string; name: string; data: StructureItem }
+
+export interface UpdatePayload {
+  name?: string; progress?: number | ''; context?: string | ''; due?: string | ''
+}
+
+export interface GraphStateVersion { graph: string; version: number; backend: string }
+
+export interface GraphMutation {
+  id: string; version: number; type: string; payload: Record<string, unknown>
+  actor: string; node_count: number; edge_count: number; created_at?: string
+}
+
+export interface GraphMutationsResponse {
+  graph: string; since_version: number; latest_version: number; count: number
+  mutations: GraphMutation[]
+}
 
 // ── Storage keys ────────────────────────────────────────────────────────────
 const GRAPHS_LIST_KEY = 'offline_graphs'

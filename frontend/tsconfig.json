@@ -16,7 +16,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@api": ["./src/api/client.ts"]
+      "@api": ["./src/api/localClient.ts"]
     }
   },
   "include": ["src"],

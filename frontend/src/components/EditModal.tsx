@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { StructureItem, UpdatePayload } from '../api/client'
+import { StructureItem, UpdatePayload } from '../api/localClient'
 
 interface EditModalProps {
   name: string
