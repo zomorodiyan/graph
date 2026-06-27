@@ -239,16 +239,20 @@ function Section({
                       <div className={`layer2 ${childColorClass}`}>
                         <span className="item-title" onClick={() => onItemClick(childPath, childHasChildren)}>
                           {childTitle}
-                          {(childItem as StructureItem).progress !== undefined && (
-                            <span style={{ marginLeft: '0.5rem', opacity: 0.7, fontSize: '0.75rem' }}>
-                              {(childItem as StructureItem).progress}%
-                            </span>
-                          )}
                         </span>
                       </div>
                     </>
                   )}
                 </div>
+                {/* Progress bar for layer2 */}
+                {(childItem as StructureItem).progress !== undefined && (
+                  <div className="progress-bar">
+                    <div
+                      className={`progress-fill bg-${l2Color}`}
+                      style={{ width: `${(childItem as StructureItem).progress}%` }}
+                    />
+                  </div>
+                )}
                 {/* Due date for layer2 */}
                 {(childItem as StructureItem).due && (
                   <div className={`item-due due-${getDueCategory((childItem as StructureItem).due)}`}>
