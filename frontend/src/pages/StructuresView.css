@@ -63,23 +63,15 @@
 
 .add-card .add-icon {
   font-size: 2rem;
-  color: var(--sky-dark);
+  color: var(--text-secondary);
   font-weight: 300;
   line-height: 1;
-}
-
-[data-theme='dark'] .add-card .add-icon {
-  color: var(--royal-blue-light);
 }
 
 .add-card .add-text {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--sky-dark);
-}
-
-[data-theme='dark'] .add-card .add-text {
-  color: var(--royal-blue-light);
+  color: var(--text-secondary);
 }
 
 /* Graphs container */
@@ -336,7 +328,7 @@
   background: var(--bg-secondary);
   box-shadow: 0 0 0 1.5px var(--border-color);
   border-radius: 1rem;
-  padding: 2px;
+  padding: 1px;
 }
 
 .template-browser-header {
@@ -373,7 +365,7 @@
 .template-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-  gap: 2px;
+  gap: 1px;
 }
 
 .template-card {
@@ -383,7 +375,6 @@
   gap: 0.25rem;
   padding: 0.85rem;
   background: var(--bg-primary);
-  box-shadow: 0 0 0 1.5px var(--border-color);
   border-radius: 0.75rem;
   cursor: pointer;
   text-align: left;

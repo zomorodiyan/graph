@@ -170,6 +170,11 @@ function Section({
               <div className="layer1">
                 <span className="item-title" onClick={() => onItemClick(itemPath, hasChildren)}>
                   {title}
+                  {item.due && (
+                    <span className={`item-due due-${getDueCategory(item.due)}`}>
+                      {formatDueDate(item.due)}
+                    </span>
+                  )}
                 </span>
               </div>
             </>
@@ -182,12 +187,6 @@ function Section({
               className="progress-fill bg-sky"
               style={{ width: `${item.progress}%` }}
             />
-          </div>
-        )}
-        {/* Due date */}
-        {item.due && (
-          <div className={`item-due due-${getDueCategory(item.due)}`}>
-            {formatDueDate(item.due)}
           </div>
         )}
         {/* Context */}
@@ -237,6 +236,11 @@ function Section({
                       <div className={`layer2${childColorClass ? ' ' + childColorClass : ''}`}>
                         <span className="item-title" onClick={() => onItemClick(childPath, childHasChildren)}>
                           {childTitle}
+                          {(childItem as StructureItem).due && (
+                            <span className={`item-due due-${getDueCategory((childItem as StructureItem).due)}`}>
+                              {formatDueDate((childItem as StructureItem).due!)}
+                            </span>
+                          )}
                         </span>
                       </div>
                     </>
@@ -249,12 +253,6 @@ function Section({
                       className={`progress-fill${l2Color ? ' bg-' + l2Color : ' bg-sky'}`}
                       style={{ width: `${(childItem as StructureItem).progress}%` }}
                     />
-                  </div>
-                )}
-                {/* Due date for layer2 */}
-                {(childItem as StructureItem).due && (
-                  <div className={`item-due due-${getDueCategory((childItem as StructureItem).due)}`}>
-                    {formatDueDate((childItem as StructureItem).due!)}
                   </div>
                 )}
                 {/* Context for layer2 */}
@@ -304,17 +302,16 @@ function Section({
                                       {(grandItem as StructureItem).progress}%
                                     </span>
                                   )}
+                                  {(grandItem as StructureItem).due && (
+                                    <span className={`item-due due-${getDueCategory((grandItem as StructureItem).due)}`}>
+                                      {formatDueDate((grandItem as StructureItem).due!)}
+                                    </span>
+                                  )}
                                 </span>
                               </div>
                             </>
                           )}
                         </div>
-                        {/* Due date for layer3 */}
-                        {(grandItem as StructureItem).due && (
-                          <div className={`item-due due-${getDueCategory((grandItem as StructureItem).due)}`} style={{ marginLeft: '0.5rem' }}>
-                            {formatDueDate((grandItem as StructureItem).due!)}
-                          </div>
-                        )}
                         {/* Context for layer3 */}
                         {showContext && (grandItem as StructureItem).context && (
                           <div className="item-context" style={{ marginLeft: '0.5rem' }}>

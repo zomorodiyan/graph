@@ -307,8 +307,9 @@
   font-size: 0.625rem;
   padding: 0.125rem 0.375rem;
   border-radius: 0.1875rem;
-  margin-top: 0.25rem;
+  margin-left: 0.375rem;
   font-weight: 500;
+  vertical-align: middle;
 }
 
 .due-overdue {
@@ -452,14 +453,13 @@
 .color-pine       { color: var(--text-primary); }
 .color-pistachio  { color: var(--pistachio-dark); }
 .color-magenta    { color: var(--fuchsia-dark); }
-.color-utility    { color: var(--sky-dark); }
+.color-utility    { color: var(--text-secondary); }
 
 [data-theme='dark'] .color-pistachio { color: var(--pistachio-light); }
 [data-theme='dark'] .color-magenta   { color: var(--fuchsia-light); }
-[data-theme='dark'] .color-utility   { color: var(--royal-blue-light); }
 
-.virtual-section .color-pine { color: var(--sky-dark); }
-[data-theme='dark'] .virtual-section .color-pine { color: var(--royal-blue-light); }
+.virtual-section .color-pine { color: var(--text-secondary); }
+.virtual-section { opacity: 0.7; }
 
 .bg-green { background-color: var(--green-light); }
 .bg-blue { background-color: var(--blue-light); }
