@@ -227,101 +227,6 @@ function validateUpdatePayload(data: UpdatePayload) {
   }
 }
 
-// ── Demo seed data (shown to new users with no graphs) ───────────────────────
-const DEMO_KEY = 'offline_demo_seeded_v1'
-
-function seedDemoData() {
-  if (localStorage.getItem(DEMO_KEY)) return
-  if (getGraphNames().length > 0) return
-  localStorage.setItem(DEMO_KEY, '1')
-
-  saveGraphNames(['work', 'personal'])
-
-  saveStructure('work', {
-    metadata: { title: 'Work', description: 'Work projects and tasks', version: '1.0' },
-    structure: {
-      projects: {
-        title: 'Projects', progress: 50,
-        children: {
-          website: {
-            title: 'Website Redesign', progress: 65,
-            children: {
-              design: { title: 'Design', children: {
-                mockups: { title: 'Mockups' }, icons: { title: 'Icons' },
-              }},
-              frontend: { title: 'Frontend', children: {
-                components: { title: 'Components' }, routing: { title: 'Routing' },
-              }},
-            },
-          },
-          api: {
-            title: 'API v2', progress: 30,
-            children: {
-              auth: { title: 'Auth' }, endpoints: { title: 'Endpoints' },
-            },
-          },
-        },
-      },
-      team: {
-        title: 'Team',
-        children: {
-          alice: { title: 'Alice' }, bob: { title: 'Bob' }, carol: { title: 'Carol' },
-        },
-      },
-      meetings: {
-        title: 'Meetings',
-        children: {
-          standup: { title: 'Standup', context: 'Daily 9am' },
-          sprint: { title: 'Sprint Review', due: '2026-06-30' },
-        },
-      },
-    },
-  })
-  saveMeta('work', {
-    name: 'work', display_name: 'Work',
-    path: 'structures/work.txt', modified_at: new Date().toISOString(),
-    size: 0, description: 'Work projects and tasks', version: '1.0', icon: '💼',
-  })
-
-  saveStructure('personal', {
-    metadata: { title: 'Personal', description: 'Personal goals', version: '1.0' },
-    structure: {
-      health: {
-        title: 'Health',
-        children: {
-          fitness: { title: 'Fitness', progress: 70, children: {
-            gym: { title: 'Gym' }, running: { title: 'Running' },
-          }},
-          nutrition: { title: 'Nutrition', children: {
-            meal_prep: { title: 'Meal Prep' },
-          }},
-        },
-      },
-      learning: {
-        title: 'Learning',
-        children: {
-          books: { title: 'Books', children: {
-            current: { title: 'Currently Reading' }, next: { title: 'Up Next' },
-          }},
-          courses: { title: 'Courses' },
-        },
-      },
-      finance: {
-        title: 'Finance',
-        children: {
-          savings: { title: 'Savings', progress: 45 },
-          investments: { title: 'Investments' },
-        },
-      },
-    },
-  })
-  saveMeta('personal', {
-    name: 'personal', display_name: 'Personal',
-    path: 'structures/personal.txt', modified_at: new Date().toISOString(),
-    size: 0, description: 'Personal goals', version: '1.0', icon: '🏠',
-  })
-}
-
 // ── Public API (same signatures as client.ts) ────────────────────────────────
 
 export async function fetchStructure(graphName = 'default'): Promise<Structure> {
@@ -335,7 +240,6 @@ export async function fetchGraphStructure(graphName: string): Promise<Structure>
 }
 
 export async function fetchGraphs(): Promise<GraphInfo[]> {
-  seedDemoData()
   return getGraphNames().map(loadMeta)
 }
 
