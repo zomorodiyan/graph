@@ -15,6 +15,117 @@ export interface GraphTemplate {
 
 export const GRAPH_TEMPLATES: GraphTemplate[] = [
   {
+    name: 'earth',
+    displayName: '🌍 Earth',
+    description: 'Our planet from general to specific — surface, atmosphere, interior.',
+    structure: `Surface
+  Oceans & Waterways
+    Oceans
+      Pacific
+        "Largest and deepest ocean basin"
+        Mariana Trench
+          "Deepest point on Earth, ~10,935 m down"
+      Atlantic
+      Indian
+      Southern
+      Arctic
+    Freshwater
+      Rivers
+        Nile
+        Amazon
+          "Largest river by water discharge"
+      Lakes
+  Continents
+    Asia
+      "Largest continent, ~44.6M km²"
+    Africa
+    North America
+    South America
+    Antarctica
+    Europe
+    Australia
+  Mountain Ranges
+    Himalayas
+      "Highest range on Earth"
+      Everest
+        "Tallest peak, ~8,849 m"
+    Andes
+      "Longest range, ~7,000 km"
+    Alps
+    Rockies
+  Life
+    Kingdoms
+      Animalia
+        "Multicellular and mobile; ~1.5M described species"
+        Vertebrates
+        Invertebrates
+      Plantae
+      Fungi
+      Protista
+      Bacteria
+      Archaea
+Atmosphere
+  Layers
+    Troposphere
+      "0-12 km; holds ~75% of air mass and all weather"
+    Stratosphere
+      "12-50 km; contains the ozone layer"
+    Mesosphere
+      "50-85 km; meteors burn up here"
+    Thermosphere
+      "85-600 km; auroras and the ISS"
+    Exosphere
+      "600-10,000 km; fades into space"
+  Weather & Phenomena
+    Clouds
+    Precipitation
+      Rain
+      Snow
+    Storms
+      Hurricanes
+        "Sustained winds over 119 km/h, fueled by warm ocean water"
+      Tornadoes
+    Lightning
+      "Channel reaches ~30,000 °C, hotter than the Sun's surface"
+    Aurora
+  Observable Universe
+    "What reaches us through the sky"
+    Sun
+      "~150M km away (8 light-minutes); surface ~5,500 °C"
+      Solar Radiation
+        "Solar constant ~1,361 W/m² at the top of the atmosphere"
+    Moon
+      "~384,400 km away; its gravity drives the tides"
+    Stars & Deep Sky
+      "Nearest star ~4.2 light-years away"
+      Milky Way
+Interior
+  Crust
+    "Thin, rigid outer shell"
+    Oceanic Crust
+      "~7 km thick, basaltic"
+    Continental Crust
+      "~35 km thick, granitic"
+  Mantle
+    "~2,900 km thick; ~84% of Earth's volume"
+    Upper Mantle
+      Asthenosphere
+        "Soft, slowly flowing rock the plates ride on"
+    Lower Mantle
+  Outer Core
+    "Liquid iron-nickel; its motion generates the magnetic field"
+  Inner Core
+    "Solid iron, ~5,400 °C; nearly as hot as the Sun's surface"
+  Dynamics
+    "Interior heat drives surface change"
+    Plate Tectonics
+      "Plates drift ~2-10 cm per year"
+      Earthquakes
+      Volcanoes
+    Magnetic Field
+      "Shields Earth from solar wind; reverses over geologic time"`,
+  },
+  {
     name: 'work',
     displayName: '💼 Work',
     description: 'Projects broken down deep, plus team and admin.',
