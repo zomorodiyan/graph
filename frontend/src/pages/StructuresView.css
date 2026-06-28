@@ -374,7 +374,7 @@
   padding: 0.85rem;
   background: var(--bg-secondary);
   border-radius: 1rem;
-  box-shadow: 0 0 0 1.5px var(--border-color);
+  box-shadow: 0 0 0 1px var(--border-color);
   cursor: pointer;
   text-align: left;
   transition: all 0.2s;
@@ -382,7 +382,7 @@
 
 .template-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0.4rem 1.2rem rgba(102, 126, 234, 0.18), 0 0 0 1.5px #667eea;
+  box-shadow: 0 0.4rem 1.2rem rgba(102, 126, 234, 0.18), 0 0 0 1px #667eea;
   z-index: 1;
 }
 
