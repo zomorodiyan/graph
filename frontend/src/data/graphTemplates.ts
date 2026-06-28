@@ -4,7 +4,6 @@
 //   - `progress: N` / `due: YYYY-MM-DD` are properties of the item above
 //   - a "quoted" line sets that item's context note
 // Each template flexes the features differently to suit its domain.
-// The emoji is part of `displayName`, so a created sample carries it in its name.
 
 export interface GraphTemplate {
   name: string          // url-safe base name (deduped at create time)
@@ -16,8 +15,8 @@ export interface GraphTemplate {
 export const GRAPH_TEMPLATES: GraphTemplate[] = [
   {
     name: 'earth',
-    displayName: '🌍 Earth',
-    description: 'Our planet from general to specific — surface, atmosphere, interior.',
+    displayName: 'Earth',
+    description: 'Land, sky, core',
     structure: `Surface
   Oceans & Waterways
     Oceans
@@ -127,8 +126,8 @@ Interior
   },
   {
     name: 'work',
-    displayName: '💼 Work',
-    description: 'Projects broken down deep, plus team and admin.',
+    displayName: 'Work',
+    description: 'Projects and team',
     structure: `Projects
   Q3 Launch
     progress: 40
@@ -159,8 +158,8 @@ Admin
   },
   {
     name: 'health',
-    displayName: '🏃 Health',
-    description: 'Training drilled into sets, plus nutrition and metrics.',
+    displayName: 'Health',
+    description: 'Train and recover',
     structure: `Fitness
   progress: 60
   Strength
@@ -193,8 +192,8 @@ Metrics
   },
   {
     name: 'finance',
-    displayName: '💰 Finance',
-    description: 'Accounts drilled down, costs flat, goals tracked.',
+    displayName: 'Finance',
+    description: 'Income and savings',
     structure: `Investments
   Retirement
     401k
@@ -222,8 +221,8 @@ Goals
   },
   {
     name: 'learning',
-    displayName: '📚 Learning',
-    description: 'One subject as a curriculum, others queued.',
+    displayName: 'Learning',
+    description: 'Study and practice',
     structure: `Now
   Spanish
     progress: 45
@@ -248,8 +247,8 @@ Output
   },
   {
     name: 'travel',
-    displayName: '✈️ Travel',
-    description: 'Itinerary by city and day; logistics with deadlines.',
+    displayName: 'Travel',
+    description: 'Plan a trip',
     structure: `Japan Trip
   progress: 30
   Logistics
@@ -279,8 +278,8 @@ Someday
   },
   {
     name: 'home',
-    displayName: '🏠 Home',
-    description: 'Maintenance by season and cadence — driven by dates.',
+    displayName: 'Home',
+    description: 'House upkeep',
     structure: `Maintenance
   Urgent
     Leaky Faucet
@@ -304,8 +303,8 @@ Purchases
   },
   {
     name: 'relationships',
-    displayName: '🤝 Relationships',
-    description: 'Your people, mostly carried by little reminders.',
+    displayName: 'Relationships',
+    description: 'People to nurture',
     structure: `Family
   Parents
     "Call every Sunday"
@@ -330,8 +329,8 @@ Professional
   },
   {
     name: 'goals',
-    displayName: '🎯 Goals',
-    description: 'Horizons from vision to quarter, heavy on progress.',
+    displayName: 'Goals',
+    description: 'Vision to quarter',
     structure: `Vision
   Five Year
     "Lead a team, run a half marathon, own a home"
@@ -356,8 +355,8 @@ Review
   },
   {
     name: 'routine',
-    displayName: '🌅 Daily Routine',
-    description: 'The day in blocks, annotated with little rules.',
+    displayName: 'Daily Routine',
+    description: 'Day in blocks',
     structure: `Morning
   Wake 6am
   Workout
@@ -383,8 +382,8 @@ Weekend
   },
   {
     name: 'meals',
-    displayName: '🍳 Meals',
-    description: 'Recipes down to ingredients, plus groceries and prep.',
+    displayName: 'Meals',
+    description: 'Recipes and groceries',
     structure: `Recipes
   Weeknight
     Stir Fry
@@ -411,8 +410,8 @@ Breakfast
   },
   {
     name: 'hobbies',
-    displayName: '🎨 Hobbies',
-    description: 'One craft tracked in depth, others kept light.',
+    displayName: 'Hobbies',
+    description: 'Crafts and pastimes',
     structure: `Guitar
   progress: 50
   Technique
@@ -437,8 +436,8 @@ Reading
   },
   {
     name: 'watchlist',
-    displayName: '🍿 Watchlist',
-    description: 'By medium and status; progress = how far through.',
+    displayName: 'Watchlist',
+    description: 'What to watch',
     structure: `Movies
   To Watch
     Dune Part Two
