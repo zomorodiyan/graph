@@ -65,8 +65,8 @@ function GraphView() {
   // Track items that are being synced (pending) - these show loading and can't be dragged
   const [pendingItems, setPendingItems] = useState<Set<string>>(new Set())
   
-  // Inline create state - shows editor at bottom of list for new item
-  const [inlineCreate, setInlineCreate] = useState(false)
+  // Inline create state - 'top' or 'bottom' determines where the editor appears and where the item lands
+  const [inlineCreate, setInlineCreate] = useState<'top' | 'bottom' | false>(false)
 
   // Inline edit state for item editing
   const [inlineEdit, setInlineEdit] = useState<{ path: string } | null>(null)
@@ -527,26 +527,41 @@ function GraphView() {
   }
 
   // Handle add new item click
-  const handleAddClick = () => {
-    setInlineCreate(true)
+  const handleAddClick = (position: 'top' | 'bottom') => {
+    setInlineCreate(position)
   }
 
   // Handle paste item from clipboard
-  const handlePasteItem = async () => {
+  const handlePasteItem = async (position: 'top' | 'bottom') => {
     try {
       const text = await navigator.clipboard.readText()
       if (!text.trim()) {
         showNotification('Clipboard is empty', 'error')
         return
       }
-      
+
       const parentPath = path || ''
-      
+
       const result = await pasteItems(parentPath, text, graphName)
       if (result.success) {
         await queryClient.refetchQueries({ queryKey: ['structure', graphName], exact: true })
-        setLocalOrder(null)
-        setLocalItems(null)
+        if (position === 'top' && result.added.length > 0) {
+          // Read fresh items from cache and put newly pasted ones at the front
+          const fresh = queryClient.getQueryData<{ structure: Record<string, StructureItem> }>(['structure', graphName])
+          let freshItems: Record<string, StructureItem> = fresh?.structure || {}
+          if (path) {
+            for (const part of path.split('.')) {
+              freshItems = ((freshItems[part] as StructureItem)?.children || {}) as Record<string, StructureItem>
+            }
+          }
+          const addedKeys = result.added.filter((k: string) => k in freshItems)
+          const restKeys = Object.keys(freshItems).filter(k => !result.added.includes(k))
+          setLocalItems(freshItems)
+          setLocalOrder([...addedKeys, ...restKeys])
+        } else {
+          setLocalOrder(null)
+          setLocalItems(null)
+        }
         showNotification(`Pasted ${result.added.length} item(s)!`)
       }
     } catch (err: any) {
@@ -575,7 +590,10 @@ function GraphView() {
 
       // Use callback pattern to avoid stale closure
       setLocalItems(prev => prev ? { ...prev, [normalizedName]: newItem } : { [normalizedName]: newItem })
-      setLocalOrder(prev => prev ? [...prev, normalizedName] : [normalizedName])
+      setLocalOrder(prev => prev
+        ? (inlineCreate === 'top' ? [normalizedName, ...prev] : [...prev, normalizedName])
+        : [normalizedName]
+      )
 
       // Mark as pending with normalized path
       const newItemPath = itemPath ? `${itemPath}.${normalizedName}` : normalizedName
@@ -911,16 +929,29 @@ function GraphView() {
       <div className="graph-container" ref={containerRef}>
         {/* Items grid — CSS columns for tight packing with no gaps */}
         <div className="items-grid">
-        {/* New + Paste — first card */}
+        {/* New + Paste — top card (creates/pastes at the top of the list) */}
         {!isVirtualView && (
           <div className="section-wrapper new-paste-wrapper">
             <div className="section">
-              <div className="layer1 color-utility" onClick={handleAddClick} title="Add new item">
+              <div className="layer1 color-utility" onClick={() => handleAddClick('top')} title="Add new item at top">
                 <span className="item-title">+ New</span>
               </div>
-              <div className="layer1 color-utility" onClick={handlePasteItem} title="Paste from clipboard">
+              <div className="layer1 color-utility" onClick={() => handlePasteItem('top')} title="Paste from clipboard at top">
                 <span className="item-title">Paste</span>
               </div>
+            </div>
+          </div>
+        )}
+        {/* Inline create editor — top position */}
+        {!isVirtualView && inlineCreate === 'top' && (
+          <div className="section">
+            <div className="layer1-container">
+              <InlineItemEditor
+                itemKey=""
+                item={{} as StructureItem}
+                onSave={handleCreateSave}
+                onCancel={() => setInlineCreate(false)}
+              />
             </div>
           </div>
         )}
@@ -990,8 +1021,8 @@ function GraphView() {
           <div className="empty-state">No items at this level</div>
         )}
 
-        {/* Inline create editor - appears as last item in list */}
-        {!isVirtualView && inlineCreate && (
+        {/* Inline create editor — bottom position */}
+        {!isVirtualView && inlineCreate === 'bottom' && (
           <div className="section">
             <div className="layer1-container">
               <InlineItemEditor
@@ -1004,14 +1035,14 @@ function GraphView() {
           </div>
         )}
 
-        {/* New + Paste — repeated at the bottom, before virtual sections */}
+        {/* New + Paste — bottom card (creates/pastes at the bottom of the list) */}
         {!isVirtualView && (
           <div className="section-wrapper new-paste-wrapper">
             <div className="section">
-              <div className="layer1 color-utility" onClick={handleAddClick} title="Add new item">
+              <div className="layer1 color-utility" onClick={() => handleAddClick('bottom')} title="Add new item at bottom">
                 <span className="item-title">+ New</span>
               </div>
-              <div className="layer1 color-utility" onClick={handlePasteItem} title="Paste from clipboard">
+              <div className="layer1 color-utility" onClick={() => handlePasteItem('bottom')} title="Paste from clipboard at bottom">
                 <span className="item-title">Paste</span>
               </div>
             </div>
