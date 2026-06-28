@@ -236,7 +236,7 @@ function StructuresView() {
   }
 
   return (
-    <div className="structures-view">
+    <div className="structures-view" onClick={showTemplates ? () => setShowTemplates(false) : undefined}>
       {/* Top buttons — hidden while editing a graph or creating a new one */}
       {!inlineEditGraph && !inlineCreate && <div className="top-buttons">
         <div className="sync-area">
@@ -290,30 +290,32 @@ function StructuresView() {
 
       {/* Graphs grid */}
       <div className="graphs-container">
-        {/* Add new graph card — inline create editor, sample browser, or the card */}
+        {/* Add new graph card — inline create editor, sample cards, or the add card */}
         {showTemplates ? (
-          <div className="template-browser">
-            <div className="template-browser-header">
-              <span className="template-browser-title">Start from a sample</span>
-              <button
-                className="template-browser-close"
-                onClick={() => setShowTemplates(false)}
-                title="Close"
-              >✕</button>
+          <>
+            <div className="graph-card sample-header" onClick={e => e.stopPropagation()}>
+              <div className="card-content">
+                <h3 className="graph-name">Start from a sample</h3>
+              </div>
             </div>
-            <div className="template-grid">
-              {GRAPH_TEMPLATES.map(tpl => (
-                <button
+            {GRAPH_TEMPLATES.map((tpl, index) => {
+              const COLORS = ['green', 'blue', 'purple', 'brown']
+              const color = COLORS[index % COLORS.length]
+              const colorClass = index % 2 === 0 ? `color-${color}-alt` : `color-${color}`
+              return (
+                <div
                   key={tpl.name}
-                  className="template-card"
-                  onClick={() => handleCreateFromTemplate(tpl)}
+                  className="graph-card"
+                  onClick={(e) => { e.stopPropagation(); handleCreateFromTemplate(tpl) }}
                 >
-                  <span className="template-name">{tpl.displayName}</span>
-                  <span className="template-desc">{tpl.description}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+                  <div className="card-content">
+                    <h3 className={`graph-name ${colorClass}`}>{tpl.displayName}</h3>
+                    {tpl.description && <p className="graph-description">{tpl.description}</p>}
+                  </div>
+                </div>
+              )
+            })}
+          </>
         ) : inlineCreate ? (
           <div className="graph-card graph-card--editing">
             <InlineGraphEditor

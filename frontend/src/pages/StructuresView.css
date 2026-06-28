@@ -85,12 +85,20 @@
 }
 
 
+/* "Start from a sample" header card — transparent, no border */
+.graph-card.sample-header {
+  background: transparent;
+  box-shadow: none;
+  cursor: default;
+  pointer-events: none;
+}
+
 /* Graph card */
 .graph-card {
   position: relative;
   background: var(--bg-secondary);
   border: none;
-  box-shadow: 0 0 0 1.5px var(--border-color);
+  box-shadow: 0 0 0 1px var(--border-color);
   border-radius: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -322,81 +330,6 @@
 }
 
 
-/* ── Sample-template browser (inline, replaces the add-card) ─────────────────── */
-.template-browser {
-  grid-column: 1 / -1;
-  border-radius: 1rem;
-  padding: 0;
-}
-
-.template-browser-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.6rem 0.65rem 0;
-  margin-bottom: 0.5rem;
-}
-
-.template-browser-title {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.template-browser-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.1rem;
-  line-height: 1;
-  color: var(--text-secondary);
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.4rem;
-  transition: all 0.2s;
-}
-
-.template-browser-close:hover {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-.template-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-  gap: 0;
-}
-
-.template-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.25rem;
-  padding: 0.85rem;
-  background: var(--bg-secondary);
-  border-radius: 1rem;
-  box-shadow: 0 0 0 1px var(--border-color);
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.2s;
-}
-
-.template-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0.4rem 1.2rem rgba(102, 126, 234, 0.18), 0 0 0 1px #667eea;
-  z-index: 1;
-}
-
-.template-name {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--text-primary);
-}
-
-.template-desc {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  line-height: 1.35;
-}
 
 /* Empty state */
 .empty-state {

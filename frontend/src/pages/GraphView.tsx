@@ -909,9 +909,7 @@ function GraphView() {
       )}
 
       <div className="graph-container" ref={containerRef}>
-        {/* Items grid — CSS columns for tight packing with no gaps */}
-        <div className="items-grid">
-        {/* New + Paste — first card */}
+        {/* New + Paste — sticky strip above the items grid */}
         {!isVirtualView && (
           <div className="section-wrapper new-paste-wrapper">
             <div className="section">
@@ -924,6 +922,8 @@ function GraphView() {
             </div>
           </div>
         )}
+        {/* Items grid — CSS columns for tight packing with no gaps */}
+        <div className="items-grid">
         {/* Sections - rendered in local order for instant drag feedback */}
         {displayOrder.filter(k => k !== 'time' && k !== 'progress').map((key, index) => {
           const item = displayItems[key]
