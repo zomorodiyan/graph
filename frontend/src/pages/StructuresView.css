@@ -325,8 +325,6 @@
 /* ── Sample-template browser (inline, replaces the add-card) ─────────────────── */
 .template-browser {
   grid-column: 1 / -1;
-  background: var(--bg-secondary);
-  box-shadow: 0 0 0 1.5px var(--border-color);
   border-radius: 1rem;
   padding: 0;
 }
@@ -374,8 +372,9 @@
   align-items: flex-start;
   gap: 0.25rem;
   padding: 0.85rem;
-  background: var(--bg-primary);
-  border-radius: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 1rem;
+  box-shadow: 0 0 0 1.5px var(--border-color);
   cursor: pointer;
   text-align: left;
   transition: all 0.2s;

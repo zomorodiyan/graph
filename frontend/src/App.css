@@ -28,7 +28,7 @@
 /* New + Paste and virtual (time/progress) bubbles blend with page background */
 .new-paste-wrapper .section,
 .virtual-section .section {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
 }
 
 /* New + Paste — two layer1 items inside one section bubble */
