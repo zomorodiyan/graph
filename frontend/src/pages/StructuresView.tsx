@@ -9,6 +9,7 @@ import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useSyncManager, loadSyncStatus, GraphSyncStatus, SyncAllResult } from '../hooks/useSyncManager'
 import Notification from '../components/Notification'
 import InlineGraphEditor from '../components/InlineGraphEditor'
+import { GRAPH_TEMPLATES, GraphTemplate } from '../data/graphTemplates'
 import './StructuresView.css'
 
 // Icons for different graph types (randomly assigned based on name hash)
@@ -26,6 +27,7 @@ function StructuresView() {
   const { data: graphs = [], isLoading, error } = useGraphs()
 
   const [inlineCreate, setInlineCreate] = useState(false)
+  const [showTemplates, setShowTemplates] = useState(false)
   const [inlineEditGraph, setInlineEditGraph] = useState<GraphInfo | null>(null)
   const [notification, setNotification] = useState<{
     message: string
@@ -49,6 +51,7 @@ function StructuresView() {
   }, [pat, syncStatuses])
 
   useModalBackButton(inlineCreate, () => setInlineCreate(false))
+  useModalBackButton(showTemplates, () => setShowTemplates(false))
   useModalBackButton(Boolean(inlineEditGraph), () => setInlineEditGraph(null))
 
   // Enable swipe navigation (back/forward)
@@ -107,14 +110,27 @@ function StructuresView() {
     navigate(`/g/${graphName}`)
   }
 
-  // Generate unique graph name
-  const generateUniqueName = () => {
+  // Generate unique graph name from a base (defaults to "new_graph")
+  const generateUniqueName = (baseName = 'new_graph') => {
     const existingNames = new Set(graphs.map(g => g.name))
-    let baseName = 'new_graph'
     if (!existingNames.has(baseName)) return baseName
     let counter = 2
     while (existingNames.has(`${baseName}_${counter}`)) counter++
     return `${baseName}_${counter}`
+  }
+
+  // Create a graph from one of the built-in sample templates
+  const handleCreateFromTemplate = async (tpl: GraphTemplate) => {
+    const graphName = generateUniqueName(tpl.name)
+    try {
+      await createGraph(graphName, tpl.description, tpl.structure)
+      await updateGraph(graphName, { display_name: tpl.displayName })
+      showNotification(`Created "${tpl.displayName}"!`)
+      setShowTemplates(false)
+      queryClient.invalidateQueries({ queryKey: ['graphs'] })
+    } catch (err) {
+      showNotification((err as Error).message, 'error')
+    }
   }
 
   const handleCreateGraph = async (displayName: string, description: string) => {
@@ -274,8 +290,32 @@ function StructuresView() {
 
       {/* Graphs grid */}
       <div className="graphs-container">
-        {/* Add new graph card — or inline create editor */}
-        {inlineCreate ? (
+        {/* Add new graph card — inline create editor, sample browser, or the card */}
+        {showTemplates ? (
+          <div className="template-browser">
+            <div className="template-browser-header">
+              <span className="template-browser-title">Start from a sample</span>
+              <button
+                className="template-browser-close"
+                onClick={() => setShowTemplates(false)}
+                title="Close"
+              >✕</button>
+            </div>
+            <div className="template-grid">
+              {GRAPH_TEMPLATES.map(tpl => (
+                <button
+                  key={tpl.name}
+                  className="template-card"
+                  onClick={() => handleCreateFromTemplate(tpl)}
+                >
+                  <span className="template-icon">{tpl.icon}</span>
+                  <span className="template-name">{tpl.displayName}</span>
+                  <span className="template-desc">{tpl.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : inlineCreate ? (
           <div className="graph-card graph-card--editing">
             <InlineGraphEditor
               displayName=""
@@ -289,6 +329,13 @@ function StructuresView() {
             className="graph-card add-card"
             onClick={() => setInlineCreate(true)}
           >
+            <div
+              className="card-edit-zone"
+              onClick={(e) => { e.stopPropagation(); setShowTemplates(true) }}
+              title="Browse sample graphs"
+            >
+              <span className="zone-icon zone-icon--templates" />
+            </div>
             <div className="add-content">
               <span className="add-icon">+</span>
               <span className="add-text">New Graph</span>
