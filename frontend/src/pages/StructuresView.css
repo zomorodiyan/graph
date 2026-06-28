@@ -8,7 +8,7 @@
 
 .structures-view {
   min-height: 100vh;
-  padding: 2.5rem 0 0;
+  padding: 2.5rem 0 6rem;
   background: var(--bg-primary);
   color: var(--text-primary);
 }
