@@ -76,7 +76,7 @@ function GraphView() {
     type: 'success' | 'error' | 'syncing'
   } | null>(null)
 
-  useModalBackButton(inlineCreate || Boolean(inlineEdit), () => {
+  useModalBackButton(!!inlineCreate || Boolean(inlineEdit), () => {
     if (inlineEdit) { setInlineEdit(null); return }
     setInlineCreate(false)
   })
