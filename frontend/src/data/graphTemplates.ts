@@ -1,43 +1,45 @@
 // Sample graphs offered to new users via the "New Graph" card's left zone.
 // `structure` is 2-space-indented text in the same format as clipboard paste:
-//   - a line is an item; nesting is by indentation
+//   - a line is an item; nesting is by indentation (depth is free-form)
 //   - `progress: N` / `due: YYYY-MM-DD` are properties of the item above
 //   - a "quoted" line sets that item's context note
+// Each template flexes the features differently to suit its domain.
+// The emoji is part of `displayName`, so a created sample carries it in its name.
 
 export interface GraphTemplate {
   name: string          // url-safe base name (deduped at create time)
   displayName: string
   description: string
-  icon: string
   structure: string
 }
 
 export const GRAPH_TEMPLATES: GraphTemplate[] = [
   {
     name: 'work',
-    displayName: 'Work',
-    description: 'Projects, skills, network and admin in one view.',
-    icon: '💼',
+    displayName: '💼 Work',
+    description: 'Projects broken down deep, plus team and admin.',
     structure: `Projects
   Q3 Launch
     progress: 40
-    Spec
-    Build
+    due: 2026-09-15
+    Backend
+      API
+        Auth
+          OAuth Flow
+          Token Refresh
+        Endpoints
+      Database
+        Migrations
+    Frontend
+      Components
+      State
     QA
-    Ship
-      due: 2026-09-15
+      "Block release on any critical bug"
   Maintenance
     Bugs
     Tech Debt
-Skills
-  Deepen
-    System Design
-    Leadership
-  Explore
-    New Tooling
-Network
+Team
   Mentors
-  Peers
   Reports
 Admin
   Expenses
@@ -46,60 +48,61 @@ Admin
   },
   {
     name: 'health',
-    displayName: 'Health',
-    description: 'Training, nutrition, recovery and the metrics you track.',
-    icon: '🏃',
+    displayName: '🏃 Health',
+    description: 'Training drilled into sets, plus nutrition and metrics.',
     structure: `Fitness
   progress: 60
   Strength
-    Upper
-    Lower
-    Core
+    Push
+      Bench Press
+        "3x5 @ 80kg, then deload"
+      Overhead Press
+    Pull
+      Deadlift
+        "1x5 @ 120kg"
+      Rows
+    Legs
+      Squat
+        progress: 70
   Cardio
-    Runs
-    Cycling
-  Mobility
-    Stretching
-    Yoga
+    Zone 2
+      "45 min, keep HR under 140"
+    Intervals
 Nutrition
-  Protein
-  Vegetables
   Hydration
     "Target 2.5L per day"
+  Protein
 Recovery
   Sleep
     "7-8 hours, consistent schedule"
-  Rest Days
 Metrics
   Weight
-  Resting HR
   Bloodwork
     due: 2026-12-01`,
   },
   {
     name: 'finance',
-    displayName: 'Finance',
-    description: 'Income, fixed costs, spending, investments and money goals.',
-    icon: '💰',
-    structure: `Income
-  Salary
-  Side
+    displayName: '💰 Finance',
+    description: 'Accounts drilled down, costs flat, goals tracked.',
+    structure: `Investments
+  Retirement
+    401k
+      "Contribute up to the employer match first"
+    Roth IRA
+      progress: 35
+  Brokerage
+    Index Funds
+      VTI
+      VXUS
+    Individual
+  Emergency Fund
+    progress: 80
+    "Six months of expenses"
 Fixed Costs
   Rent
   Utilities
   Insurance
   Subscriptions
-Spending
-  Groceries
-  Dining
-  Shopping
-Investments
-  Emergency Fund
-    progress: 80
-    "Six months of expenses"
-  Retirement
-    progress: 35
-  Index Funds
 Goals
   Pay Off Loan
     due: 2027-01-01
@@ -108,248 +111,244 @@ Goals
   },
   {
     name: 'learning',
-    displayName: 'Learning',
-    description: 'What you study now, your queue, practice and output.',
-    icon: '📚',
+    displayName: '📚 Learning',
+    description: 'One subject as a curriculum, others queued.',
     structure: `Now
   Spanish
     progress: 45
+    Grammar
+      Subjunctive
+        "Trickiest part — drill a little daily"
+      Past Tenses
     Vocab
+      Flashcards
     Speaking
+      Weekly Tutor
+        due: 2026-07-05
   Machine Learning
     Fundamentals
     Projects
 Queue
   Systems Design
   Photography
-Practice
-  Daily Drills
-  Side Projects
 Output
   Notes
-  Blog Posts
-  Teach Others
-    "Best way to solidify understanding"
-Resources
-  Courses
-  Books
-  Mentors`,
+  Blog Posts`,
   },
   {
     name: 'travel',
-    displayName: 'Travel',
-    description: 'A trip in phases — research, logistics, itinerary, budget.',
-    icon: '✈️',
+    displayName: '✈️ Travel',
+    description: 'Itinerary by city and day; logistics with deadlines.',
     structure: `Japan Trip
   progress: 30
-  Research
-    Destinations
-    Best Season
   Logistics
     Flights
+      due: 2026-08-01
     Visa
     Insurance
   Itinerary
     Tokyo
+      Day 1
+        Shibuya
+        Shinjuku
+      Day 2
+        Asakusa
+        TeamLab
+          "Tickets sell out — book weeks ahead"
     Kyoto
+      Fushimi Inari
+      Kinkaku-ji
     Osaka
+      Dotonbori
   Budget
-    "Target 3000 USD total"
-  Booked
-    due: 2026-08-01
+    "Target 3000 USD all-in"
 Someday
   Patagonia
-  Iceland
-  Morocco`,
+  Iceland`,
   },
   {
     name: 'home',
-    displayName: 'Home',
-    description: 'Maintenance, rooms, purchases and household routines.',
-    icon: '🏠',
+    displayName: '🏠 Home',
+    description: 'Maintenance by season and cadence — driven by dates.',
     structure: `Maintenance
   Urgent
     Leaky Faucet
-  Scheduled
-    HVAC Filter
-    Smoke Detectors
+      "Call the plumber"
   Seasonal
-    Gutters
-    Winterize
+    Spring
+      Gutters
+      Garden Beds
+    Fall
+      Winterize Pipes
+      Furnace Service
+        due: 2026-10-15
 Rooms
-  Kitchen
-  Bedroom
   Garage
     Declutter
+    Shelving
+  Kitchen
 Purchases
-  Furniture
-  Appliances
-Routines
-  Cleaning
-  Laundry
-  Groceries`,
+  Vacuum
+  Couch`,
   },
   {
     name: 'relationships',
-    displayName: 'Relationships',
-    description: 'Map your social world and who you want to stay close to.',
-    icon: '🤝',
+    displayName: '🤝 Relationships',
+    description: 'Your people, mostly carried by little reminders.',
     structure: `Family
   Parents
     "Call every Sunday"
   Siblings
-  Extended
+    Sister
+      "Birthday — Mar 12"
+    Brother
 Friends
   Close
+    Alex
+    Sam
   College
   Work
-Professional
-  Mentors
-  Peers
-Community
-  Neighbors
-  Volunteer
 Nurture
   Reach Out
-    "Reconnect with old friends"
+    "Reconnect — it's been almost a year"
   Birthdays
-  Thank Yous`,
+  Thank Yous
+Professional
+  Mentors
+  Peers`,
   },
   {
     name: 'goals',
-    displayName: 'Goals',
-    description: 'Vision down to the quarter — the graph that ties the rest together.',
-    icon: '🎯',
+    displayName: '🎯 Goals',
+    description: 'Horizons from vision to quarter, heavy on progress.',
     structure: `Vision
   Five Year
-    "Where do I want to be"
-  Ten Year
+    "Lead a team, run a half marathon, own a home"
 This Year
   Career
     progress: 25
+    Get Promoted
+      due: 2026-12-31
+    Give a Talk
   Health
     progress: 40
-  Relationships
+    Half Marathon
+      "Race day: Oct 18"
   Financial
+    progress: 60
 Quarter
   Q3 Focus
     due: 2026-09-30
-Month
-  Top Three
 Review
   Weekly
-  Monthly
-    "Reflect and adjust"`,
+  Monthly`,
   },
   {
     name: 'routine',
-    displayName: 'Daily Routine',
-    description: 'Your day in blocks — morning, midday, evening, night.',
-    icon: '🌅',
+    displayName: '🌅 Daily Routine',
+    description: 'The day in blocks, annotated with little rules.',
     structure: `Morning
-  Wake Early
-  Hydrate
+  Wake 6am
   Workout
-  Shower
+    "Alternate run and lift days"
   Plan Day
+    Top 3 Tasks
 Midday
   Lunch
-  Short Walk
   Deep Work
+    "Phone in another room"
 Evening
-  Commute
   Cook
   Family Time
 Night
-  Review Day
-  Read
-    "30 minutes, no screens"
-  Prepare Tomorrow
-  Sleep
+  Wind Down
+    Read
+      "30 min, no screens"
+    Journal
+  Sleep by 11pm
 Weekend
   Meal Prep
-  Errands
-  Rest`,
+  Long Walk`,
   },
   {
     name: 'meals',
-    displayName: 'Meals',
-    description: 'Go-to meals, recipes to try, groceries and prep.',
-    icon: '🍳',
-    structure: `Breakfast
-  Oatmeal
-  Eggs
-  Smoothie
-Lunch
-  Salads
-  Grain Bowls
-  Leftovers
-Dinner
-  Protein
-  Vegetables
-  Starch
-Recipes
+    displayName: '🍳 Meals',
+    description: 'Recipes down to ingredients, plus groceries and prep.',
+    structure: `Recipes
+  Weeknight
+    Stir Fry
+      Ingredients
+        Tofu
+        Bok Choy
+        Garlic Ginger Sauce
+      "20 minutes, one pan"
+    Pasta Primavera
   To Try
-    "Thai green curry"
-  Favorites
+    Thai Green Curry
+    Shakshuka
 Groceries
   Produce
   Pantry
   Proteins
 Prep
   Batch Cook
-    "Sundays"
-  Freezer Meals`,
+    "Sundays — grains and roast veg"
+  Freezer Meals
+Breakfast
+  Oatmeal
+  Eggs`,
   },
   {
     name: 'hobbies',
-    displayName: 'Hobbies',
-    description: 'Creative and outdoor pursuits, games and collections.',
-    icon: '🎨',
-    structure: `Music
-  Guitar
-    progress: 50
-    Chords
-    Songs
-  Listening
-Making
-  Woodworking
-  Drawing
-    "Daily sketch practice"
-Outdoors
-  Hiking
-  Photography
-    Gear
-    Editing
-Games
-  Board Games
-  Video Games
-Collecting
-  Vinyl
-  Books`,
+    displayName: '🎨 Hobbies',
+    description: 'One craft tracked in depth, others kept light.',
+    structure: `Guitar
+  progress: 50
+  Technique
+    Barre Chords
+      "Still buzzing on the B string"
+    Fingerpicking
+  Songs
+    Learning
+      Blackbird
+      Wish You Were Here
+    Mastered
+Photography
+  Gear
+    Camera
+    Lenses
+  Editing
+Woodworking
+  Bookshelf
+    progress: 30
+Reading
+  Sci-Fi`,
   },
   {
     name: 'watchlist',
-    displayName: 'Watchlist',
-    description: 'Movies, shows, games and docs — from queue to finished.',
-    icon: '🍿',
+    displayName: '🍿 Watchlist',
+    description: 'By medium and status; progress = how far through.',
     structure: `Movies
   To Watch
-    Dune
+    Dune Part Two
     Oppenheimer
+      "Recommended by Sam"
   Watched
     Favorites
+      Arrival
 Shows
   Watching
-    progress: 40
+    Severance
+      progress: 40
   Queue
+    The Bear
   Finished
 Games
   Playing
+    Elden Ring
+      progress: 65
   Backlog
-  Wishlist
 Documentaries
-  Nature
-  History`,
+  Planet Earth`,
   },
 ]

@@ -308,7 +308,6 @@ function StructuresView() {
                   className="template-card"
                   onClick={() => handleCreateFromTemplate(tpl)}
                 >
-                  <span className="template-icon">{tpl.icon}</span>
                   <span className="template-name">{tpl.displayName}</span>
                   <span className="template-desc">{tpl.description}</span>
                 </button>
