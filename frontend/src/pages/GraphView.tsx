@@ -573,6 +573,7 @@ function GraphView() {
 
   // Handle create save from inline editor - uses local state for instant feedback
   const handleCreateSave = (data: UpdatePayload) => {
+    const createPosition = inlineCreate  // capture before clearing
     setInlineCreate(false)
 
     const itemPath = path || ''
@@ -591,7 +592,7 @@ function GraphView() {
       // Use callback pattern to avoid stale closure
       setLocalItems(prev => prev ? { ...prev, [normalizedName]: newItem } : { [normalizedName]: newItem })
       setLocalOrder(prev => prev
-        ? (inlineCreate === 'top' ? [normalizedName, ...prev] : [...prev, normalizedName])
+        ? (createPosition === 'top' ? [normalizedName, ...prev] : [...prev, normalizedName])
         : [normalizedName]
       )
 
@@ -603,7 +604,13 @@ function GraphView() {
       createItem.mutate(
         { parentPath: itemPath, data },
         {
-          onSuccess: () => showNotification('Created!'),
+          onSuccess: async () => {
+            if (createPosition === 'top') {
+              // Server appends by default; reorder it to the front to persist the position
+              try { await reorderItem.mutateAsync({ path: newItemPath, targetIndex: 0 }) } catch { /* silent */ }
+            }
+            showNotification('Created!')
+          },
           onError: () => {
             showNotification('Failed to create', 'error')
             // On error, remove from local state since it wasn't created
