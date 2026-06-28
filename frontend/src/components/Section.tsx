@@ -2,8 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
 import InlineItemEditor from './InlineItemEditor'
 
-const L2_COLORS = ['sky', 'sky-purple'] as const
-const L3_COLORS = { 'sky': 'royal-blue', 'sky-purple': 'royal-purple' } as const
+const L2_COLORS = ['sky', null] as const
 
 interface SectionProps {
   itemKey: string
@@ -83,7 +82,6 @@ function Section({
   showRaw = false,
   rawText,
 }: SectionProps) {
-  const color = 'pine'
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
   const hasChildren = !!item.children && Object.keys(item.children).length > 0
   const title = item.title || itemKey
@@ -147,7 +145,7 @@ function Section({
       <div className="section-body">
       {/* Layer 1 - Main category */}
       <div className="layer1-container" ref={layer1Ref}>
-        <div className={`layer1-wrapper color-${color}`} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
+        <div className="layer1-wrapper" style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
           {showLoading && <span className="loading-spinner" title="Syncing...">⟳</span>}
           {editingPath === itemPath ? (
             <InlineItemEditor
@@ -169,7 +167,7 @@ function Section({
                   title="Edit item"
                 />
               )}
-              <div className={`layer1 color-${color}`}>
+              <div className="layer1">
                 <span className="item-title" onClick={() => onItemClick(itemPath, hasChildren)}>
                   {title}
                 </span>
@@ -181,7 +179,7 @@ function Section({
         {item.progress !== undefined && (
           <div className="progress-bar">
             <div
-              className={`progress-fill bg-${color}`}
+              className="progress-fill bg-sky"
               style={{ width: `${item.progress}%` }}
             />
           </div>
@@ -208,14 +206,14 @@ function Section({
           // Check if this child item is editable
           const childEditable = showEditButton && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
           const l2Color = L2_COLORS[childIndex % 2]
-          const l3Color = L3_COLORS[l2Color]
-          const childColorClass = `color-${l2Color}`
-          const grandColorClass = `color-${l3Color}`
+          const l3Color = l2Color === 'sky' ? 'royal-blue' : null
+          const childColorClass = l2Color ? `color-${l2Color}` : ''
+          const grandColorClass = l3Color ? `color-${l3Color}` : ''
 
           return (
             <div key={childKey} className="layer2-container">
               <div className="layer2-content">
-                <div className={`layer2-wrapper ${childColorClass}`}>
+                <div className={`layer2-wrapper${childColorClass ? ' ' + childColorClass : ''}`}>
                   {editingPath === childPath ? (
                     <InlineItemEditor
                       itemKey={childKey}
@@ -236,7 +234,7 @@ function Section({
                           title="Edit item"
                         />
                       )}
-                      <div className={`layer2 ${childColorClass}`}>
+                      <div className={`layer2${childColorClass ? ' ' + childColorClass : ''}`}>
                         <span className="item-title" onClick={() => onItemClick(childPath, childHasChildren)}>
                           {childTitle}
                         </span>
@@ -248,7 +246,7 @@ function Section({
                 {(childItem as StructureItem).progress !== undefined && (
                   <div className="progress-bar">
                     <div
-                      className={`progress-fill bg-${l2Color}`}
+                      className={`progress-fill${l2Color ? ' bg-' + l2Color : ' bg-sky'}`}
                       style={{ width: `${(childItem as StructureItem).progress}%` }}
                     />
                   </div>
@@ -277,7 +275,7 @@ function Section({
 
                     return (
                       <div key={grandKey}>
-                        <div className={`layer3-wrapper ${grandColorClass}`}>
+                        <div className={`layer3-wrapper${grandColorClass ? ' ' + grandColorClass : ''}`}>
                           {editingPath === grandPath ? (
                             <InlineItemEditor
                               itemKey={grandKey}
@@ -298,7 +296,7 @@ function Section({
                                   title="Edit item"
                                 />
                               )}
-                              <div className={`layer3-item ${grandColorClass}`}>
+                              <div className={`layer3-item${grandColorClass ? ' ' + grandColorClass : ''}`}>
                                 <span className="item-title" onClick={() => onItemClick(grandPath, grandHasChildren)}>
                                   {grandTitle}
                                   {(grandItem as StructureItem).progress !== undefined && (

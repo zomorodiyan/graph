@@ -449,16 +449,17 @@
 .color-royal-purple                    { color: var(--royal-purple-dark); }
 [data-theme='dark'] .color-royal-purple { color: var(--royal-purple-light); }
 
-.color-pine       { color: var(--pine-dark); }
+.color-pine       { color: var(--text-primary); }
 .color-pistachio  { color: var(--pistachio-dark); }
 .color-magenta    { color: var(--fuchsia-dark); }
-.color-utility    { color: #667eea; }
+.color-utility    { color: var(--sky-dark); }
 
-[data-theme='dark'] .color-pine      { color: var(--pistachio-light); }
 [data-theme='dark'] .color-pistachio { color: var(--pistachio-light); }
 [data-theme='dark'] .color-magenta   { color: var(--fuchsia-light); }
+[data-theme='dark'] .color-utility   { color: var(--royal-blue-light); }
 
-.virtual-section .color-pine { color: #667eea; }
+.virtual-section .color-pine { color: var(--sky-dark); }
+[data-theme='dark'] .virtual-section .color-pine { color: var(--royal-blue-light); }
 
 .bg-green { background-color: var(--green-light); }
 .bg-blue { background-color: var(--blue-light); }

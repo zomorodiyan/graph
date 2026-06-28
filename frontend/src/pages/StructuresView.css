@@ -30,10 +30,11 @@
   font-size: 40px;
   font-weight: 700;
   margin: 0 0 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--royal-blue-dark);
+}
+
+[data-theme='dark'] .structures-header h1 {
+  color: var(--sky-light);
 }
 
 .structures-header .subtitle {
@@ -62,15 +63,23 @@
 
 .add-card .add-icon {
   font-size: 2rem;
-  color: #667eea;
+  color: var(--sky-dark);
   font-weight: 300;
   line-height: 1;
+}
+
+[data-theme='dark'] .add-card .add-icon {
+  color: var(--royal-blue-light);
 }
 
 .add-card .add-text {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #667eea;
+  color: var(--sky-dark);
+}
+
+[data-theme='dark'] .add-card .add-text {
+  color: var(--royal-blue-light);
 }
 
 /* Graphs container */
