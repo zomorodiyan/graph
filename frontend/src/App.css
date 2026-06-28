@@ -302,6 +302,16 @@
   line-height: 1.4;
 }
 
+/* Context under colored (sky/royal-blue) items inherits the blue tone */
+.layer2-wrapper.color-sky ~ .item-context,
+.layer3-wrapper.color-royal-blue ~ .item-context {
+  color: var(--royal-blue-dark);
+}
+[data-theme='dark'] .layer2-wrapper.color-sky ~ .item-context,
+[data-theme='dark'] .layer3-wrapper.color-royal-blue ~ .item-context {
+  color: var(--blue-lighter);
+}
+
 .item-due {
   display: inline-block;
   font-size: 0.625rem;

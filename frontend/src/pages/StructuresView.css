@@ -328,7 +328,7 @@
   background: var(--bg-secondary);
   box-shadow: 0 0 0 1.5px var(--border-color);
   border-radius: 1rem;
-  padding: 1px;
+  padding: 0;
 }
 
 .template-browser-header {
@@ -365,7 +365,7 @@
 .template-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-  gap: 1px;
+  gap: 0;
 }
 
 .template-card {
@@ -375,7 +375,6 @@
   gap: 0.25rem;
   padding: 0.85rem;
   background: var(--bg-primary);
-  box-shadow: 0 0 0 1px var(--border-color);
   border-radius: 0.75rem;
   cursor: pointer;
   text-align: left;
