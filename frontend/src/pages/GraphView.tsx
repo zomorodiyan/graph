@@ -51,6 +51,8 @@ function GraphView() {
   const createItem = useCreateItem(graphName)
   
   const containerRef = useRef<HTMLDivElement>(null)
+  const topNewPasteRef = useRef<HTMLDivElement>(null)
+  const [topNewPasteFullyVisible, setTopNewPasteFullyVisible] = useState(true)
 
   // Drag state
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
@@ -425,6 +427,18 @@ function GraphView() {
     return () => ro.disconnect()
   }, [structure])
   
+  // Hide bottom New+Paste when the top one is fully in view
+  useEffect(() => {
+    const el = topNewPasteRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setTopNewPasteFullyVisible(entry.isIntersecting),
+      { threshold: 1.0 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   // The display items: use local items if available, otherwise raw items from server
   // At root level, always overlay the virtual time/progress sections from rawItems
   // so they update reactively when items gain/lose due dates or progress values
@@ -913,7 +927,7 @@ function GraphView() {
         <div className="items-grid">
         {/* New + Paste — first card */}
         {!isVirtualView && (
-          <div className="section-wrapper new-paste-wrapper">
+          <div className="section-wrapper new-paste-wrapper" ref={topNewPasteRef}>
             <div className="section">
               <div className="layer1 color-utility" onClick={handleAddClick} title="Add new item">
                 <span className="item-title">+ New</span>
@@ -1004,8 +1018,8 @@ function GraphView() {
           </div>
         )}
 
-        {/* New + Paste — repeated at the bottom, before virtual sections */}
-        {!isVirtualView && (
+        {/* New + Paste — repeated at the bottom, hidden while the top one is fully visible */}
+        {!isVirtualView && !topNewPasteFullyVisible && (
           <div className="section-wrapper new-paste-wrapper">
             <div className="section">
               <div className="layer1 color-utility" onClick={handleAddClick} title="Add new item">
