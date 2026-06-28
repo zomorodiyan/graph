@@ -1,7 +1,7 @@
 .graph-container {
   max-width: 75rem;
   margin: 0 auto;
-  padding: 0 0 6rem;
+  padding: 0 0 12rem;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
