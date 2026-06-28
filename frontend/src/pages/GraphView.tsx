@@ -909,7 +909,9 @@ function GraphView() {
       )}
 
       <div className="graph-container" ref={containerRef}>
-        {/* New + Paste — sticky strip above the items grid */}
+        {/* Items grid — CSS columns for tight packing with no gaps */}
+        <div className="items-grid">
+        {/* New + Paste — first card */}
         {!isVirtualView && (
           <div className="section-wrapper new-paste-wrapper">
             <div className="section">
@@ -922,8 +924,6 @@ function GraphView() {
             </div>
           </div>
         )}
-        {/* Items grid — CSS columns for tight packing with no gaps */}
-        <div className="items-grid">
         {/* Sections - rendered in local order for instant drag feedback */}
         {displayOrder.filter(k => k !== 'time' && k !== 'progress').map((key, index) => {
           const item = displayItems[key]
@@ -1000,6 +1000,20 @@ function GraphView() {
                 onSave={handleCreateSave}
                 onCancel={() => setInlineCreate(false)}
               />
+            </div>
+          </div>
+        )}
+
+        {/* New + Paste — repeated at the bottom, before virtual sections */}
+        {!isVirtualView && (
+          <div className="section-wrapper new-paste-wrapper">
+            <div className="section">
+              <div className="layer1 color-utility" onClick={handleAddClick} title="Add new item">
+                <span className="item-title">+ New</span>
+              </div>
+              <div className="layer1 color-utility" onClick={handlePasteItem} title="Paste from clipboard">
+                <span className="item-title">Paste</span>
+              </div>
             </div>
           </div>
         )}

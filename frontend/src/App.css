@@ -25,15 +25,6 @@
   width: 100%;
 }
 
-/* New + Paste — sticky strip sitting above the scrollable items grid */
-.new-paste-wrapper {
-  flex: 0 0 100%;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  margin: 2px;
-}
-
 /* New + Paste and virtual (time/progress) bubbles blend with page background */
 .new-paste-wrapper .section,
 .virtual-section .section {
