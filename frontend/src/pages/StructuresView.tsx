@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTheme } from '../context/ThemeContext'
+import { useColorScheme } from '../context/ColorSchemeContext'
 import { createGraph, fetchStructureText, updateGraph, deleteGraph, GraphInfo } from '@api'
 import { useGraphs } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
@@ -24,6 +25,7 @@ function StructuresView() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { toggleTheme } = useTheme()
+  const { toggleColorScheme } = useColorScheme()
   const { data: graphs = [], isLoading, error } = useGraphs()
 
   const [inlineCreate, setInlineCreate] = useState(false)
@@ -284,7 +286,7 @@ function StructuresView() {
       {/* Header */}
       <header className="structures-header">
         <div className="title-row">
-          <h1>Knowledge Graphs</h1>
+          <h1 onClick={toggleColorScheme} style={{ cursor: 'pointer', userSelect: 'none' }}>Knowledge Graphs</h1>
         </div>
       </header>
 

@@ -89,6 +89,16 @@
   --border-color: #2a2a2a;
 }
 
+/* Red color scheme — replaces all blue accent variables at matching brightness */
+[data-color-scheme='red'] {
+  --sky-dark:         #C62828;
+  --sky-light:        #E57373;
+  --royal-blue-dark:  #B71C1C;
+  --royal-blue-light: #EF9A9A;
+  --blue-medium:      #C62828;
+  --blue-lighter:     #FFCDD2;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

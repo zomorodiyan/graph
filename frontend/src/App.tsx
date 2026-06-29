@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
+import { ColorSchemeProvider } from './context/ColorSchemeContext'
 import { ZoomProvider } from './context/ZoomContext'
 import { usePinchZoom } from './hooks/usePinchZoom'
 import GraphView from './pages/GraphView'
@@ -30,9 +31,11 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <ZoomProvider>
-        <AppContent />
-      </ZoomProvider>
+      <ColorSchemeProvider>
+        <ZoomProvider>
+          <AppContent />
+        </ZoomProvider>
+      </ColorSchemeProvider>
     </ThemeProvider>
   )
 }
