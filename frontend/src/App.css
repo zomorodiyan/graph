@@ -394,6 +394,10 @@
   align-items: center;
   gap: 0.25rem;
 }
+.inline-edit-progress .inline-edit-small {
+  width: 4.5rem;
+  min-width: 0;
+}
 .progress-sep {
   opacity: 0.5;
   font-size: 0.875rem;
