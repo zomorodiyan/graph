@@ -364,17 +364,39 @@
 
 /* Progress bar */
 .progress-bar {
+  position: relative;
   height: 0.1875rem;
   background: var(--border-color);
   border-radius: 0.125rem;
   margin-top: 0.25rem;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .progress-fill {
   height: 100%;
   border-radius: 2px;
   transition: width 0.3s;
+}
+
+.progress-label {
+  position: absolute;
+  right: 0;
+  top: -1rem;
+  font-size: 0.625rem;
+  opacity: 0.55;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Progress editor (done / total) */
+.inline-edit-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.progress-sep {
+  opacity: 0.5;
+  font-size: 0.875rem;
 }
 
 /* Color groups */

@@ -87,17 +87,21 @@ function GraphView() {
     setTimeout(() => setNotification(null), 3000)
   }
 
-  // Helper to get due category
+  // Parse "X/Y" or legacy number into {done, total, pct} — pct capped at 100 for bar width
+  const parseProgressValue = (p: number | string | undefined): { done: number; total: number; pct: number } | null => {
+    if (p === undefined || p === null) return null
+    if (typeof p === 'number') return { done: p, total: 100, pct: Math.min(p, 100) }
+    const m = String(p).match(/^(\d+)\/(\d+)$/)
+    if (!m) return null
+    const done = Number(m[1]), total = Number(m[2])
+    return { done, total, pct: total > 0 ? Math.min((done / total) * 100, 100) : 0 }
+  }
+
+  // Due-date bucket
   const getDueCategory = (dueDate: string): 'over' | 'day' | 'week' | 'month' | null => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    
-    const due = new Date(dueDate)
-    due.setHours(0, 0, 0, 0)
-    
-    const diffTime = due.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const due = new Date(dueDate); due.setHours(0, 0, 0, 0)
+    const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
     if (diffDays < 0) return 'over'
     if (diffDays === 0) return 'day'
     if (diffDays <= 7) return 'week'
@@ -105,278 +109,167 @@ function GraphView() {
     return null
   }
 
-  // Helper to get progress category
-  const getProgressCategory = (progress: number): 'blocked' | 'low' | 'mid' | 'high' | 'done' | null => {
-    if (progress < 0 || progress > 100) return null
-    if (progress === 0) return 'blocked'
-    if (progress < 25) return 'low'
-    if (progress < 75) return 'mid'
-    if (progress < 100) return 'high'
-    if (progress === 100) return 'done'
-    return null
+  // Progress bucket — 3 states
+  const getProgressCategory = (progress: number | string): 'not_started' | 'in_progress' | 'done' | null => {
+    const info = parseProgressValue(progress)
+    if (!info) return null
+    if (info.done <= 0) return 'not_started'
+    if (info.done >= info.total) return 'done'
+    return 'in_progress'
   }
 
-  // Collect all items with due dates from the structure
-  const collectDueItems = (items: Record<string, StructureItem>, parentPath: string = ''): Array<{path: string, item: StructureItem, title: string}> => {
+  // Recursively collect items with due dates
+  const collectDueItems = (items: Record<string, StructureItem>, parentPath = ''): Array<{path: string, item: StructureItem, title: string}> => {
     const result: Array<{path: string, item: StructureItem, title: string}> = []
-    
     for (const [key, item] of Object.entries(items)) {
       const itemPath = parentPath ? `${parentPath}.${key}` : key
-      
-      if (item.due) {
-        result.push({ path: itemPath, item, title: item.title || key })
-      }
-      
-      if (item.children) {
-        result.push(...collectDueItems(item.children, itemPath))
-      }
+      if (item.due) result.push({ path: itemPath, item, title: item.title || key })
+      if (item.children) result.push(...collectDueItems(item.children, itemPath))
     }
-    
     return result
   }
 
-  // Collect all items with progress values from the structure
-  const collectProgressItems = (items: Record<string, StructureItem>, parentPath: string = ''): Array<{path: string, item: StructureItem, title: string}> => {
+  // Recursively collect items with progress values
+  const collectProgressItems = (items: Record<string, StructureItem>, parentPath = ''): Array<{path: string, item: StructureItem, title: string}> => {
     const result: Array<{path: string, item: StructureItem, title: string}> = []
-    
     for (const [key, item] of Object.entries(items)) {
       const itemPath = parentPath ? `${parentPath}.${key}` : key
-      
-      if (item.progress !== undefined && item.progress !== null) {
-        result.push({ path: itemPath, item, title: item.title || key })
-      }
-      
-      if (item.children) {
-        result.push(...collectProgressItems(item.children, itemPath))
-      }
+      if (item.progress !== undefined && item.progress !== null) result.push({ path: itemPath, item, title: item.title || key })
+      if (item.children) result.push(...collectProgressItems(item.children, itemPath))
     }
-    
     return result
   }
 
-  // Build virtual children for time categories
-  const getTimeChildren = (category: 'over' | 'day' | 'week' | 'month'): Record<string, StructureItem> => {
+  // Subtree to scan — scoped to the current page path
+  const getScanRoot = (scopePath: string): Record<string, StructureItem> => {
     if (!structure?.structure) return {}
-    
-    // Collect from structure, excluding the 'time' and 'progress' sections
-    const structureWithoutVirtual = { ...structure.structure }
-    delete structureWithoutVirtual.time
-    delete structureWithoutVirtual.progress
-    
-    const allItems = collectDueItems(structureWithoutVirtual)
-    const filtered = allItems.filter(({ item }) => {
-      if (!item.due) return false
-      return getDueCategory(item.due) === category
-    })
-    
+    if (!scopePath) {
+      const r = { ...structure.structure }
+      delete r.overview
+      return r
+    }
+    const item = getItemByPath(structure, scopePath)
+    return item?.children ? { ...item.children } : {}
+  }
+
+  // Virtual items for a time category with absolute paths
+  const getTimeChildrenFromRoot = (
+    category: 'over' | 'day' | 'week' | 'month',
+    rootItems: Record<string, StructureItem>,
+    contextPrefix: string
+  ): Record<string, StructureItem> => {
+    const filtered = collectDueItems(rootItems).filter(({ item }) => item.due && getDueCategory(item.due) === category)
     const result: Record<string, StructureItem> = {}
-    for (const { path: itemPath, item, title } of filtered) {
-      // Use a unique key based on the path
-      const key = itemPath.replace(/\./g, '_')
-      // Show parent path only (remove the item name itself)
-      const pathParts = itemPath.split('.')
-      const parentPath = pathParts.slice(0, -1).map(p => p.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(' › ')
+    for (const { path: relPath, item, title } of filtered) {
+      const key = relPath.replace(/\./g, '_')
+      const fullPath = contextPrefix ? `${contextPrefix}.${relPath}` : relPath
+      const parentLabel = fullPath.split('.').slice(0, -1)
+        .map(p => p.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(' › ')
       result[key] = {
-        ...item,
-        title: title,
-        context: viewMode === 'context' && parentPath ? `📍 ${parentPath}` : undefined,
-        originalPath: itemPath, // Store original path for navigation
-        nonEditable: true, // Time items are not editable - they navigate to original
-        children: undefined // Don't show nested children in time view
+        ...item, title,
+        context: viewMode === 'context' && parentLabel ? `📍 ${parentLabel}` : undefined,
+        originalPath: fullPath, nonEditable: true, children: undefined,
       }
     }
-    
     return result
   }
 
-  // Build virtual children for progress categories
-  const getProgressChildren = (category: 'blocked' | 'low' | 'mid' | 'high' | 'done'): Record<string, StructureItem> => {
-    if (!structure?.structure) return {}
-    
-    // Collect from structure, excluding the 'time' and 'progress' sections
-    const structureWithoutVirtual = { ...structure.structure }
-    delete structureWithoutVirtual.time
-    delete structureWithoutVirtual.progress
-    
-    const allItems = collectProgressItems(structureWithoutVirtual)
-    const filtered = allItems.filter(({ item }) => {
-      if (item.progress === undefined || item.progress === null) return false
-      return getProgressCategory(item.progress) === category
-    })
-    
+  // Virtual items for a progress category with absolute paths
+  const getProgressChildrenFromRoot = (
+    category: 'not_started' | 'in_progress' | 'done',
+    rootItems: Record<string, StructureItem>,
+    contextPrefix: string
+  ): Record<string, StructureItem> => {
+    const filtered = collectProgressItems(rootItems).filter(({ item }) =>
+      item.progress !== undefined && item.progress !== null &&
+      getProgressCategory(item.progress as number | string) === category
+    )
     const result: Record<string, StructureItem> = {}
-    for (const { path: itemPath, item, title } of filtered) {
-      // Use a unique key based on the path
-      const key = itemPath.replace(/\./g, '_')
-      // Show parent path only (remove the item name itself)
-      const pathParts = itemPath.split('.')
-      const parentPath = pathParts.slice(0, -1).map(p => p.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(' › ')
+    for (const { path: relPath, item, title } of filtered) {
+      const key = relPath.replace(/\./g, '_')
+      const fullPath = contextPrefix ? `${contextPrefix}.${relPath}` : relPath
+      const parentLabel = fullPath.split('.').slice(0, -1)
+        .map(p => p.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(' › ')
       result[key] = {
-        ...item,
-        title: title,
-        context: viewMode === 'context' && parentPath ? `📍 ${parentPath}` : undefined,
-        originalPath: itemPath, // Store original path for navigation
-        nonEditable: true, // Progress items are not editable - they navigate to original
-        children: undefined // Don't show nested children in progress view
+        ...item, title,
+        context: viewMode === 'context' && parentLabel ? `📍 ${parentLabel}` : undefined,
+        originalPath: fullPath, nonEditable: true, children: undefined,
       }
     }
-    
     return result
   }
 
-  // Build auto-generated Time section if any items have due dates
-  const buildTimeSection = (): StructureItem | null => {
+  // Merged Overview section scoped to a path
+  const buildOverviewSection = (scopePath: string): StructureItem | null => {
     if (!structure?.structure) return null
-    
-    // Check if any items have due dates (excluding virtual sections)
-    const structureWithoutVirtual = { ...structure.structure }
-    delete structureWithoutVirtual.time
-    delete structureWithoutVirtual.progress
-    
-    const allDueItems = collectDueItems(structureWithoutVirtual)
-    if (allDueItems.length === 0) return null
-    
-    // Build the time section with categories - only include non-empty ones
-    const categories = ['over', 'day', 'week', 'month'] as const
-    const timeChildren: Record<string, StructureItem> = {}
-    
-    for (const category of categories) {
-      const dueItems = getTimeChildren(category)
-      const count = Object.keys(dueItems).length
-      // Only include category if it has items
-      if (count > 0) {
-        const titles = { over: 'Over', day: 'Day', week: 'Week', month: 'Month' }
-        timeChildren[category] = {
-          title: `${titles[category]} (${count})`,
-          nonEditable: true,
-          children: dueItems
-        }
-      }
-    }
-    
-    // Only return Time section if at least one category has items
-    if (Object.keys(timeChildren).length === 0) return null
-    
-    return {
-      title: 'Time',
-      nonEditable: true,
-      children: timeChildren
-    }
-  }
+    const rootItems = getScanRoot(scopePath)
+    const children: Record<string, StructureItem> = {}
 
-  // Build auto-generated Progress section if any items have progress values
-  const buildProgressSection = (): StructureItem | null => {
-    if (!structure?.structure) return null
-    
-    // Check if any items have progress (excluding virtual sections)
-    const structureWithoutVirtual = { ...structure.structure }
-    delete structureWithoutVirtual.time
-    delete structureWithoutVirtual.progress
-    
-    const allProgressItems = collectProgressItems(structureWithoutVirtual)
-    if (allProgressItems.length === 0) return null
-    
-    // Build the progress section with categories - only include non-empty ones
-    const categories = ['blocked', 'low', 'mid', 'high', 'done'] as const
-    const progressChildren: Record<string, StructureItem> = {}
-    
-    for (const category of categories) {
-      const progressItems = getProgressChildren(category)
-      const count = Object.keys(progressItems).length
-      // Only include category if it has items
-      if (count > 0) {
-        const titles = { blocked: 'Blocked (0%)', low: 'Low (1-24%)', mid: 'Mid (25-74%)', high: 'High (75-99%)', done: 'Done (100%)' }
-        progressChildren[category] = {
-          title: `${titles[category]} (${count})`,
-          nonEditable: true,
-          children: progressItems
-        }
+    if (viewPreferences.showTime) {
+      const timeCategories: Array<['over' | 'day' | 'week' | 'month', string]> = [
+        ['over', 'Overdue'], ['day', 'Today'], ['week', 'This Week'], ['month', 'This Month'],
+      ]
+      for (const [cat, label] of timeCategories) {
+        const items = getTimeChildrenFromRoot(cat, rootItems, scopePath)
+        const count = Object.keys(items).length
+        if (count > 0) children[cat] = { title: `${label} (${count})`, nonEditable: true, children: items }
       }
     }
-    
-    // Only return Progress section if at least one category has items
-    if (Object.keys(progressChildren).length === 0) return null
-    
-    return {
-      title: 'Progress',
-      nonEditable: true,
-      children: progressChildren
+
+    if (viewPreferences.showProgress) {
+      const progressCategories: Array<['not_started' | 'in_progress' | 'done', string]> = [
+        ['not_started', 'Not Started'], ['in_progress', 'In Progress'], ['done', 'Done'],
+      ]
+      for (const [cat, label] of progressCategories) {
+        const items = getProgressChildrenFromRoot(cat, rootItems, scopePath)
+        const count = Object.keys(items).length
+        if (count > 0) children[cat] = { title: `${label} (${count})`, nonEditable: true, children: items }
+      }
     }
+
+    if (Object.keys(children).length === 0) return null
+    return { title: 'Overview', nonEditable: true, children }
   }
 
   // Get current level items
   const getCurrentItems = () => {
     if (!structure?.structure) return {}
-    
+
+    const pathParts = path ? path.split('.') : []
+    const overviewIdx = pathParts.indexOf('overview')
+
+    // Virtual overview path at any depth: "overview", "career.overview", "overview.day", etc.
+    if (overviewIdx >= 0) {
+      const scopePath = pathParts.slice(0, overviewIdx).join('.')
+      const categoryParts = pathParts.slice(overviewIdx + 1)
+      const rootItems = getScanRoot(scopePath)
+
+      if (categoryParts.length === 0) {
+        return buildOverviewSection(scopePath)?.children ?? {}
+      }
+      if (categoryParts.length === 1) {
+        const cat = categoryParts[0]
+        if (['over', 'day', 'week', 'month'].includes(cat))
+          return getTimeChildrenFromRoot(cat as 'over' | 'day' | 'week' | 'month', rootItems, scopePath)
+        if (['not_started', 'in_progress', 'done'].includes(cat))
+          return getProgressChildrenFromRoot(cat as 'not_started' | 'in_progress' | 'done', rootItems, scopePath)
+      }
+      return {}
+    }
+
+    // Regular path — build base items then append overview
+    let baseItems: Record<string, StructureItem>
     if (!path) {
-      // Root level - auto-generate time and progress sections
-      const items = { ...structure.structure }
-      
-      // Remove any existing virtual sections (they're auto-generated)
-      delete items.time
-      delete items.progress
-      
-      // Auto-generate Time section if there are items with due dates
-      const timeSection = viewPreferences.showTime ? buildTimeSection() : null
-      if (timeSection) {
-        items.time = timeSection
-      }
-      
-      // Auto-generate Progress section if there are items with progress values
-      const progressSection = viewPreferences.showProgress ? buildProgressSection() : null
-      if (progressSection) {
-        items.progress = progressSection
-      }
-      
-      return items
+      baseItems = { ...structure.structure }
+      delete baseItems.overview
+    } else {
+      const item = getItemByPath(structure, path)
+      baseItems = { ...(item?.children || {}) }
     }
-    
-    // Check if we're viewing "time" - show auto-generated time categories
-    if (path === 'time') {
-      if (!viewPreferences.showTime) return {}
-      const timeSection = buildTimeSection()
-      if (timeSection?.children) {
-        return timeSection.children
-      }
-      return {}
-    }
-    
-    // Check if we're in a time category (time.over, time.day, time.week, time.month)
-    const pathParts = path.split('.')
-    if (pathParts[0] === 'time' && pathParts.length === 2) {
-      if (!viewPreferences.showTime) return {}
-      const category = pathParts[1] as 'over' | 'day' | 'week' | 'month'
-      if (['over', 'day', 'week', 'month'].includes(category)) {
-        // Return the items directly as sections
-        return getTimeChildren(category)
-      }
-    }
-    
-    // Check if we're viewing "progress" - show auto-generated progress categories
-    if (path === 'progress') {
-      if (!viewPreferences.showProgress) return {}
-      const progressSection = buildProgressSection()
-      if (progressSection?.children) {
-        return progressSection.children
-      }
-      return {}
-    }
-    
-    // Check if we're in a progress category (progress.blocked, progress.low, etc.)
-    if (pathParts[0] === 'progress' && pathParts.length === 2) {
-      if (!viewPreferences.showProgress) return {}
-      const category = pathParts[1] as 'blocked' | 'low' | 'mid' | 'high' | 'done'
-      if (['blocked', 'low', 'mid', 'high', 'done'].includes(category)) {
-        // Return the items directly as sections
-        return getProgressChildren(category)
-      }
-    }
-    
-    const item = getItemByPath(structure, path)
-    if (item?.children) {
-      return item.children
-    }
-    return {}
+
+    const overviewSection = buildOverviewSection(path || '')
+    if (overviewSection) baseItems.overview = overviewSection
+    return baseItems
   }
 
   // Get the raw items from structure
@@ -425,34 +318,27 @@ function GraphView() {
     return () => ro.disconnect()
   }, [structure])
   
-  // The display items: use local items if available, otherwise raw items from server
-  // At root level, always overlay the virtual time/progress sections from rawItems
-  // so they update reactively when items gain/lose due dates or progress values
+  // The display items: always overlay the virtual overview from rawItems so it stays reactive
   const displayItems = useMemo(() => {
-    const base = localItems || rawItems
-    if (!path && localItems) {
+    if (localItems) {
       const merged = { ...localItems }
-      delete merged.time
-      delete merged.progress
-      if (rawItems.time) merged.time = rawItems.time
-      if (rawItems.progress) merged.progress = rawItems.progress
+      delete merged.overview
+      if (rawItems.overview) merged.overview = rawItems.overview
       return merged
     }
-    return base
-  }, [localItems, rawItems, path])
+    return rawItems
+  }, [localItems, rawItems])
 
-  // The display order: use local order if available, otherwise server order
-  // At root level, ensure virtual time/progress keys are included
+  // The display order: real items first (stable), overview always last
   const displayOrder = useMemo(() => {
     const order = localOrder || serverKeys
-    if (!path && localItems) {
-      const result = order.filter(k => k !== 'time' && k !== 'progress')
-      if (rawItems.time) result.push('time')
-      if (rawItems.progress) result.push('progress')
+    if (localItems) {
+      const result = order.filter(k => k !== 'overview')
+      if (rawItems.overview) result.push('overview')
       return result
     }
     return order
-  }, [localOrder, serverKeys, path, localItems, rawItems])
+  }, [localOrder, serverKeys, localItems, rawItems])
 
   // Helper to build URL paths with optional graph prefix
   const buildPath = (itemPath: string) => {
@@ -860,7 +746,7 @@ function GraphView() {
   const breadcrumb = getBreadcrumb()
   
   // Check if we're in a virtual view (time or progress - items can't be edited/reordered)
-  const isVirtualView = path === 'time' || path?.startsWith('time.') || path === 'progress' || path?.startsWith('progress.')
+  const isVirtualView = !!(path && path.split('.').includes('overview'))
 
   // Serialize an item and its children to structure.txt format
   const serializeItem = (key: string, item: StructureItem, indent: number = 0): string => {
@@ -963,7 +849,7 @@ function GraphView() {
           </div>
         )}
         {/* Sections - rendered in local order for instant drag feedback */}
-        {displayOrder.filter(k => k !== 'time' && k !== 'progress').map((key, index) => {
+        {displayOrder.filter(k => k !== 'overview').map((key, index) => {
           const item = displayItems[key]
           if (!item) return null
           const itemPath = path ? `${path}.${key}` : key
@@ -1024,7 +910,7 @@ function GraphView() {
           )
         })}
 
-        {displayOrder.filter(k => k !== 'time' && k !== 'progress').length === 0 && (
+        {displayOrder.filter(k => k !== 'overview').length === 0 && (
           <div className="empty-state">No items at this level</div>
         )}
 
@@ -1056,35 +942,30 @@ function GraphView() {
           </div>
         )}
 
-        {/* Time and Progress cards - always last */}
-        {['time', 'progress'].map((virtualKey) => {
-          const item = displayItems[virtualKey]
-          if (!item) return null
-          const virtualIndex = displayOrder.indexOf(virtualKey)
-          return (
-            <div key={virtualKey} className="section-wrapper virtual-section">
-              <Section
-                itemKey={virtualKey}
-                item={item as StructureItem}
-                parentPath={path || ''}
-                colorIndex={virtualIndex >= 0 ? virtualIndex % COLORS.length : 0}
-                onItemClick={handleItemClick}
-                onEditClick={handleEditClick}
-                editingPath={inlineEdit?.path || null}
-                onInlineSave={handleInlineSave}
-                onInlineCancel={() => setInlineEdit(null)}
-                onInlineDelete={handleDelete}
-                onCopyClick={handleCopyItem}
-                isPending={false}
-                isTimeView={true}
-                showContext={viewMode === 'context'}
-                depth={depth}
-                showRaw={depth === 0}
-                rawText={depth === 0 ? serializeItem(virtualKey, item as StructureItem, 0).trimEnd() : undefined}
-              />
-            </div>
-          )
-        })}
+        {/* Overview card — always last */}
+        {displayItems['overview'] && (
+          <div key="overview" className="section-wrapper virtual-section">
+            <Section
+              itemKey="overview"
+              item={displayItems['overview'] as StructureItem}
+              parentPath={path || ''}
+              colorIndex={displayOrder.indexOf('overview') % COLORS.length}
+              onItemClick={handleItemClick}
+              onEditClick={handleEditClick}
+              editingPath={inlineEdit?.path || null}
+              onInlineSave={handleInlineSave}
+              onInlineCancel={() => setInlineEdit(null)}
+              onInlineDelete={handleDelete}
+              onCopyClick={handleCopyItem}
+              isPending={false}
+              isTimeView={true}
+              showContext={viewMode === 'context'}
+              depth={depth}
+              showRaw={depth === 0}
+              rawText={depth === 0 ? serializeItem('overview', displayItems['overview'] as StructureItem, 0).trimEnd() : undefined}
+            />
+          </div>
+        )}
         </div>{/* end items-grid */}
       </div>
 

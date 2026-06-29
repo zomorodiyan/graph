@@ -11,20 +11,33 @@ interface InlineItemEditorProps {
 
 function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineItemEditorProps) {
   const initialName = item.title || itemKey
-  const initialProgress = item.progress !== undefined ? String(item.progress) : ''
   const initialDue = item.due || ''
   const initialContext = item.context || ''
 
+  // Parse initial progress into done/total strings
+  const { initDone, initTotal, initialProgressStr } = (() => {
+    const p = item.progress
+    if (p === undefined || p === null || p === '') return { initDone: '', initTotal: '', initialProgressStr: '' }
+    const s = String(p)
+    const m = s.match(/^(\d+)\/(\d+)$/)
+    if (m) return { initDone: m[1], initTotal: m[2], initialProgressStr: s }
+    const n = Number(s)
+    if (!isNaN(n)) return { initDone: String(n), initTotal: '100', initialProgressStr: `${n}/100` }
+    return { initDone: '', initTotal: '', initialProgressStr: '' }
+  })()
+
   const [name, setName] = useState(initialName)
-  const [progress, setProgress] = useState(initialProgress)
+  const [progressDone, setProgressDone] = useState(initDone)
+  const [progressTotal, setProgressTotal] = useState(initTotal)
   const [due, setDue] = useState(initialDue)
   const [context, setContext] = useState(initialContext)
-  const [showProgressEditor, setShowProgressEditor] = useState(initialProgress !== '')
+  const [showProgressEditor, setShowProgressEditor] = useState(initialProgressStr !== '')
   const [showDueEditor, setShowDueEditor] = useState(initialDue !== '')
   const [showContextEditor, setShowContextEditor] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
-  const progressRef = useRef<HTMLInputElement>(null)
+  const progressDoneRef = useRef<HTMLInputElement>(null)
+  const progressTotalRef = useRef<HTMLInputElement>(null)
   const dueRef = useRef<HTMLInputElement>(null)
   const contextRef = useRef<HTMLInputElement>(null)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -61,15 +74,10 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
       next.name = trimmed
     }
 
-    if (progress !== initialProgress) {
-      if (progress === '') {
-        next.progress = ''
-      } else {
-        const parsed = Number(progress)
-        if (!Number.isNaN(parsed)) {
-          next.progress = Math.max(0, Math.min(100, parsed))
-        }
-      }
+    const currentProgressStr = progressDone !== '' && progressTotal !== ''
+      ? `${progressDone}/${progressTotal}` : ''
+    if (currentProgressStr !== initialProgressStr) {
+      next.progress = currentProgressStr || ''
     }
 
     if (due !== initialDue) {
@@ -81,7 +89,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
     }
 
     return next
-  }, [name, progress, due, context, initialName, initialProgress, initialDue, initialContext])
+  }, [name, progressDone, progressTotal, due, context, initialName, initialProgressStr, initialDue, initialContext])
 
   const commit = () => {
     if (didCommitRef.current) return
@@ -153,10 +161,14 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
         </button>
         <button
           type="button"
-          className={`inline-tool ${showProgressEditor || progress ? 'active' : ''}`}
+          className={`inline-tool ${showProgressEditor || progressDone || progressTotal ? 'active' : ''}`}
           onClick={() => {
+            if (!showProgressEditor) {
+              setProgressDone(d => d || '0')
+              setProgressTotal(t => t || '100')
+            }
             setShowProgressEditor(true)
-            focusAndScroll(progressRef)
+            focusAndScroll(progressDoneRef)
           }}
           title="Progress"
         >
@@ -200,17 +212,29 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
       />
 
       {showProgressEditor && (
-        <input
-          ref={progressRef}
-          className="inline-edit-small"
-          type="number"
-          min={0}
-          max={100}
-          value={progress}
-          onChange={(e) => setProgress(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="progress %"
-        />
+        <div className="inline-edit-progress">
+          <input
+            ref={progressDoneRef}
+            className="inline-edit-small"
+            type="number"
+            min={0}
+            value={progressDone}
+            onChange={(e) => setProgressDone(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="done"
+          />
+          <span className="progress-sep">/</span>
+          <input
+            ref={progressTotalRef}
+            className="inline-edit-small"
+            type="number"
+            min={1}
+            value={progressTotal}
+            onChange={(e) => setProgressTotal(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="total"
+          />
+        </div>
       )}
 
       {showDueEditor && (

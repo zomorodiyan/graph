@@ -24,43 +24,44 @@ interface SectionProps {
   rawText?: string
 }
 
-// Helper to calculate due date category
+// Helper to calculate due date category for CSS class
 function getDueCategory(dueDate: string | undefined): string | null {
   if (!dueDate) return null
-  
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  
-  const due = new Date(dueDate)
-  due.setHours(0, 0, 0, 0)
-  
-  const diffTime = due.getTime() - today.getTime()
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const due = new Date(dueDate); due.setHours(0, 0, 0, 0)
+  const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
   if (diffDays < 0) return 'overdue'
   if (diffDays === 0) return 'today'
   if (diffDays <= 7) return 'soon'
   return 'later'
 }
 
-// Helper to format due date display
+// Helper to format due date display — today shows "1d", tomorrow "2d", etc.
 function formatDueDate(dueDate: string): string {
-  const date = new Date(dueDate)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  
-  const due = new Date(dueDate)
-  due.setHours(0, 0, 0, 0)
-  
-  const diffTime = due.getTime() - today.getTime()
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const due = new Date(dueDate); due.setHours(0, 0, 0, 0)
+  const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
   if (diffDays < 0) return `${Math.abs(diffDays)}d overdue`
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Tomorrow'
-  if (diffDays <= 7) return `${diffDays}d`
-  
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  if (diffDays <= 7) return `${diffDays + 1}d`
+  return new Date(dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+// Helper to parse X/Y or legacy number progress — pct capped at 100 for bar width
+function parseProgress(p: number | string | undefined): { done: number; total: number; pct: number } | null {
+  if (p === undefined || p === null) return null
+  if (typeof p === 'number') return { done: p, total: 100, pct: Math.min(p, 100) }
+  const m = String(p).match(/^(\d+)\/(\d+)$/)
+  if (!m) return null
+  const done = Number(m[1]), total = Number(m[2])
+  return { done, total, pct: total > 0 ? Math.min((done / total) * 100, 100) : 0 }
+}
+
+// Format progress for display: raw "7/5" or "42%" — no capping on the label
+function formatProgressText(p: number | string | undefined): string | null {
+  if (p === undefined || p === null) return null
+  if (typeof p === 'string' && /^\d+\/\d+$/.test(p)) return p
+  const n = Number(p)
+  return isNaN(n) ? null : `${n}%`
 }
 
 function Section({
@@ -180,15 +181,16 @@ function Section({
             </>
           )}
         </div>
-        {/* Progress bar */}
-        {item.progress !== undefined && (
-          <div className="progress-bar">
-            <div
-              className="progress-fill bg-sky"
-              style={{ width: `${item.progress}%` }}
-            />
-          </div>
-        )}
+        {/* Progress bar + label */}
+        {item.progress !== undefined && (() => {
+          const pi = parseProgress(item.progress)
+          return pi ? (
+            <div className="progress-bar">
+              <div className="progress-fill bg-sky" style={{ width: `${pi.pct}%` }} />
+              <span className="progress-label">{formatProgressText(item.progress)}</span>
+            </div>
+          ) : null
+        })()}
         {/* Context */}
         {showContext && item.context && (
           <div className="item-context">{item.context}</div>
@@ -247,14 +249,15 @@ function Section({
                   )}
                 </div>
                 {/* Progress bar for layer2 */}
-                {(childItem as StructureItem).progress !== undefined && (
-                  <div className="progress-bar">
-                    <div
-                      className={`progress-fill${l2Color ? ' bg-' + l2Color : ' bg-sky'}`}
-                      style={{ width: `${(childItem as StructureItem).progress}%` }}
-                    />
-                  </div>
-                )}
+                {(childItem as StructureItem).progress !== undefined && (() => {
+                  const pi = parseProgress((childItem as StructureItem).progress)
+                  return pi ? (
+                    <div className="progress-bar">
+                      <div className={`progress-fill${l2Color ? ' bg-' + l2Color : ' bg-sky'}`} style={{ width: `${pi.pct}%` }} />
+                      <span className="progress-label">{formatProgressText((childItem as StructureItem).progress)}</span>
+                    </div>
+                  ) : null
+                })()}
                 {/* Context for layer2 */}
                 {showContext && (childItem as StructureItem).context && (
                   <div className="item-context">{(childItem as StructureItem).context}</div>
@@ -297,9 +300,9 @@ function Section({
                               <div className={`layer3-item${grandColorClass ? ' ' + grandColorClass : ''}`}>
                                 <span className="item-title" onClick={() => onItemClick(grandPath, grandHasChildren)}>
                                   {grandTitle}
-                                  {(grandItem as StructureItem).progress !== undefined && (
+                                  {formatProgressText((grandItem as StructureItem).progress) && (
                                     <span style={{ marginLeft: '0.375rem', opacity: 0.6, fontSize: '0.6875rem' }}>
-                                      {(grandItem as StructureItem).progress}%
+                                      {formatProgressText((grandItem as StructureItem).progress)}
                                     </span>
                                   )}
                                   {(grandItem as StructureItem).due && (

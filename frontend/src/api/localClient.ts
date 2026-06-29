@@ -4,7 +4,7 @@ export interface StructureItem {
   id?: string
   title?: string
   context?: string
-  progress?: number
+  progress?: number | string  // number: legacy 0-100%; string: "X/Y" fraction e.g. "3/10"
   due?: string
   children?: Record<string, StructureItem>
   [key: string]: unknown
@@ -25,7 +25,7 @@ export interface GraphUpdatePayload { display_name?: string; description?: strin
 export interface ItemResponse { path: string; name: string; data: StructureItem }
 
 export interface UpdatePayload {
-  name?: string; progress?: number | ''; context?: string | ''; due?: string | ''
+  name?: string; progress?: number | string | ''; context?: string | ''; due?: string | ''
 }
 
 export interface GraphStateVersion { graph: string; version: number; backend: string }
@@ -173,8 +173,10 @@ function parseIndentedText(text: string): Record<string, StructureItem> {
         if (stack[i].indent < indent && stack[i].lastItem) {
           const [, k, v] = propMatch
           const item = stack[i].lastItem!
-          if (k === 'progress') item.progress = Number(v)
-          else if (k === 'due') item.due = v
+          if (k === 'progress') {
+            const val = v.trim()
+            item.progress = /^\d+\/\d+$/.test(val) ? val : Number(val)
+          } else if (k === 'due') item.due = v
           break
         }
       }
@@ -215,8 +217,15 @@ export function serializeStructure(items: Record<string, StructureItem>, indent 
 // ── Validation ───────────────────────────────────────────────────────────────
 function validateUpdatePayload(data: UpdatePayload) {
   if (data.progress !== undefined && data.progress !== '') {
-    const p = Number(data.progress)
-    if (isNaN(p) || p < 0 || p > 100) throw new Error('Progress must be 0–100')
+    const s = String(data.progress)
+    const xy = s.match(/^(\d+)\/(\d+)$/)
+    if (xy) {
+      const total = Number(xy[2])
+      if (total <= 0) throw new Error('Progress total must be > 0')
+    } else {
+      const p = Number(s)
+      if (isNaN(p) || p < 0 || p > 100) throw new Error('Progress must be 0–100 or X/Y format')
+    }
   }
   if (data.due !== undefined && data.due !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(data.due)) {
     throw new Error('Due date must be YYYY-MM-DD format')
@@ -261,7 +270,7 @@ export async function updateItem(path: string, data: UpdatePayload, graphName = 
 
   if (data.progress !== undefined) {
     if (data.progress === '') delete item.progress
-    else item.progress = data.progress as number
+    else item.progress = data.progress as number | string
   }
   if (data.context !== undefined) {
     if (data.context === '') delete item.context
@@ -304,7 +313,7 @@ export async function createItem(parentPath: string, data: UpdatePayload, graphN
   const item: StructureItem = {
     title: data.name,
     children: {},
-    ...(typeof data.progress === 'number' && { progress: data.progress }),
+    ...(data.progress !== undefined && data.progress !== '' && { progress: data.progress as number | string }),
     ...(data.context && { context: data.context }),
     ...(data.due && { due: data.due }),
   }
