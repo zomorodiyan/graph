@@ -63,16 +63,18 @@
 
 .add-card .add-icon {
   font-size: 2rem;
-  color: var(--text-secondary);
+  color: var(--slate-dark);
   font-weight: 300;
   line-height: 1;
 }
+[data-theme='dark'] .add-card .add-icon { color: var(--slate-light); }
 
 .add-card .add-text {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--slate-dark);
 }
+[data-theme='dark'] .add-card .add-text { color: var(--slate-light); }
 
 /* Graphs container */
 .graphs-container {

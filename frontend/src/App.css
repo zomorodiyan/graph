@@ -494,6 +494,9 @@
 .color-slate                           { color: var(--slate-dark); }
 [data-theme='dark'] .color-slate       { color: var(--slate-light); }
 
+.color-slate-dark                      { color: var(--slate-darker); }
+[data-theme='dark'] .color-slate-dark  { color: var(--slate-lighter); }
+
 .color-royal-blue                      { color: var(--royal-blue-dark); }
 [data-theme='dark'] .color-royal-blue  { color: var(--royal-blue-light); }
 

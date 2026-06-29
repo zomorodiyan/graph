@@ -207,7 +207,7 @@ function Section({
           // Check if this child item is editable
           const childEditable = showEditButton && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
           const l2Color = L2_COLORS[childIndex % 2]
-          const l3Color = l2Color === 'sky' ? 'royal-blue' : l2Color === 'slate' ? 'slate' : null
+          const l3Color = l2Color === 'sky' ? 'royal-blue' : l2Color === 'slate' ? 'slate-dark' : null
           const childColorClass = l2Color ? `color-${l2Color}` : ''
           const grandColorClass = l3Color ? `color-${l3Color}` : ''
 
