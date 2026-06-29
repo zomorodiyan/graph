@@ -211,42 +211,45 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
         autoFocus
       />
 
-      {showProgressEditor && (
-        <div className="inline-edit-progress">
-          <input
-            ref={progressDoneRef}
-            className="inline-edit-small"
-            type="number"
-            min={0}
-            value={progressDone}
-            onChange={(e) => setProgressDone(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="done"
-          />
-          <span className="progress-sep">/</span>
-          <input
-            ref={progressTotalRef}
-            className="inline-edit-small"
-            type="number"
-            min={1}
-            value={progressTotal}
-            onChange={(e) => setProgressTotal(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="total"
-          />
+      {(showProgressEditor || showDueEditor) && (
+        <div className="inline-edit-fields-row">
+          {showProgressEditor && (
+            <div className="inline-edit-progress">
+              <input
+                ref={progressDoneRef}
+                className="inline-edit-small"
+                type="number"
+                min={0}
+                value={progressDone}
+                onChange={(e) => setProgressDone(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="done"
+              />
+              <span className="progress-sep">/</span>
+              <input
+                ref={progressTotalRef}
+                className="inline-edit-small"
+                type="number"
+                min={1}
+                value={progressTotal}
+                onChange={(e) => setProgressTotal(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="total"
+              />
+            </div>
+          )}
+          {showDueEditor && (
+            <input
+              ref={dueRef}
+              className="inline-edit-small inline-edit-due"
+              type="date"
+              value={due}
+              onChange={(e) => setDue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="due"
+            />
+          )}
         </div>
-      )}
-
-      {showDueEditor && (
-        <input
-          ref={dueRef}
-          className="inline-edit-small"
-          type="date"
-          value={due}
-          onChange={(e) => setDue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="due"
-        />
       )}
 
       {showContextEditor && (

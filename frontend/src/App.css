@@ -388,11 +388,23 @@
   pointer-events: none;
 }
 
+/* Progress + due on the same row */
+.inline-edit-fields-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.inline-edit-due {
+  flex: 1;
+  min-width: 0;
+}
+
 /* Progress editor (done / total) */
 .inline-edit-progress {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  flex-shrink: 0;
 }
 .inline-edit-progress .inline-edit-small {
   width: 4.5rem;
