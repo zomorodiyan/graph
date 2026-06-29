@@ -98,14 +98,6 @@
   --blue-medium:      #00796B;
   --blue-lighter:     #B2DFDB;
 }
-[data-color-scheme='green'] {
-  --sky-dark:         #388E3C;
-  --sky-light:        #81C784;
-  --royal-blue-dark:  #2E7D32;
-  --royal-blue-light: #A5D6A7;
-  --blue-medium:      #388E3C;
-  --blue-lighter:     #C8E6C9;
-}
 [data-color-scheme='amber'] {
   --sky-dark:         #FF8F00;
   --sky-light:        #FFB74D;

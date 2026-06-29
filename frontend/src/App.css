@@ -646,6 +646,30 @@
   opacity: 0.5;
 }
 
+/* Depth picker — long-press popover */
+.depth-wrapper {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+
+.depth-picker {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+}
+
+.depth-picker-btn {
+  opacity: 0.25;
+}
+
+.depth-picker-btn.enabled {
+  opacity: 1;
+}
+
 .copy-btn {
   width: 44px;
   height: 44px;

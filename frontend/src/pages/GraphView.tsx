@@ -40,6 +40,20 @@ function GraphView() {
   useSwipeNavigation()
   const { toggleTheme } = useTheme()
   const [depth, setDepth] = useState<0 | 1 | 2 | 3>(3)
+  const [enabledDepths, setEnabledDepths] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem('enabled-depths')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      }
+    } catch {}
+    return [3, 2, 1, 0]
+  })
+  const [showDepthPicker, setShowDepthPicker] = useState(false)
+  const depthPickerRef = useRef<HTMLDivElement>(null)
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isLongPress = useRef(false)
   const [viewMode, setViewMode] = useState<'default' | 'context'>('context')
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
@@ -51,6 +65,66 @@ function GraphView() {
   const createItem = useCreateItem(graphName)
   
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Persist enabled depths
+  useEffect(() => {
+    localStorage.setItem('enabled-depths', JSON.stringify(enabledDepths))
+  }, [enabledDepths])
+
+  // Close depth picker on outside click
+  useEffect(() => {
+    if (!showDepthPicker) return
+    const handleOutside = (e: PointerEvent) => {
+      if (depthPickerRef.current && !depthPickerRef.current.contains(e.target as Node)) {
+        setShowDepthPicker(false)
+      }
+    }
+    document.addEventListener('pointerdown', handleOutside)
+    return () => document.removeEventListener('pointerdown', handleOutside)
+  }, [showDepthPicker])
+
+  const cycleDepth = () => {
+    const sorted = [...enabledDepths].sort((a, b) => b - a) as (0 | 1 | 2 | 3)[]
+    const idx = sorted.indexOf(depth)
+    setDepth(sorted[idx === -1 ? 0 : (idx + 1) % sorted.length])
+  }
+
+  const toggleEnabledDepth = (d: number) => {
+    if (enabledDepths.includes(d) && enabledDepths.length === 1) return
+    const next = enabledDepths.includes(d)
+      ? enabledDepths.filter(x => x !== d)
+      : [...enabledDepths, d]
+    setEnabledDepths(next)
+    if (!next.includes(depth)) {
+      const sorted = [...next].sort((a, b) => b - a) as (0 | 1 | 2 | 3)[]
+      setDepth(sorted[0])
+    }
+  }
+
+  const handleDepthPointerDown = () => {
+    isLongPress.current = false
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true
+      setShowDepthPicker(true)
+    }, 500)
+  }
+
+  const handleDepthPointerUp = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+    if (!isLongPress.current) cycleDepth()
+    isLongPress.current = false
+  }
+
+  const handleDepthPointerCancel = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+    isLongPress.current = false
+  }
 
   // Drag state
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
@@ -794,11 +868,28 @@ function GraphView() {
             onClick={() => setViewMode(m => m === 'context' ? 'default' : 'context')}
             title={viewMode === 'context' ? 'Context on — tap to hide' : 'Context off — tap to show'}
           >C</button>
-          <button
-            className="depth-toggle"
-            onClick={() => setDepth(d => d === 3 ? 2 : d === 2 ? 1 : d === 1 ? 0 : 3)}
-            title={depth === 3 ? 'Showing 3 levels' : depth === 2 ? 'Showing 2 levels' : depth === 1 ? 'Showing 1 level' : 'Raw view'}
-          >{depth}</button>
+          <div ref={depthPickerRef} className="depth-wrapper">
+            {showDepthPicker ? (
+              <div className="depth-picker">
+                {([3, 2, 1, 0] as const).map(d => (
+                  <button
+                    key={d}
+                    className={`depth-toggle depth-picker-btn${enabledDepths.includes(d) ? ' enabled' : ''}`}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={() => toggleEnabledDepth(d)}
+                  >{d}</button>
+                ))}
+              </div>
+            ) : (
+              <button
+                className="depth-toggle"
+                onPointerDown={handleDepthPointerDown}
+                onPointerUp={handleDepthPointerUp}
+                onPointerCancel={handleDepthPointerCancel}
+                title={depth === 3 ? 'Showing 3 levels — hold to configure' : depth === 2 ? 'Showing 2 levels — hold to configure' : depth === 1 ? 'Showing 1 level — hold to configure' : 'Raw view — hold to configure'}
+              >{depth}</button>
+            )}
+          </div>
           <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
         </div>
       )}
