@@ -381,7 +381,7 @@
 .progress-label {
   position: absolute;
   right: 0;
-  top: -1rem;
+  top: -0.15rem;
   font-size: 0.625rem;
   opacity: 0.55;
   line-height: 1;
@@ -393,10 +393,12 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  width: 100%;
 }
 .inline-edit-due {
   flex: 1;
   min-width: 0;
+  width: 1px;
 }
 
 /* Progress editor (done / total) */
@@ -407,7 +409,7 @@
   flex-shrink: 0;
 }
 .inline-edit-progress .inline-edit-small {
-  width: 4.5rem;
+  width: 3rem;
   min-width: 0;
 }
 .progress-sep {
@@ -842,7 +844,7 @@
   flex-direction: column;
   gap: 0.35rem;
   width: auto;
-  max-width: 19rem;
+  max-width: 17rem;
   padding: 0.35rem;
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
