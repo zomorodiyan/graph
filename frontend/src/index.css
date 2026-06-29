@@ -89,7 +89,39 @@
   --border-color: #2a2a2a;
 }
 
-/* Red color scheme — replaces all blue accent variables at matching brightness */
+/* Color schemes — cycle: blue → teal → green → amber → purple → red */
+[data-color-scheme='teal'] {
+  --sky-dark:         #00796B;
+  --sky-light:        #4DB6AC;
+  --royal-blue-dark:  #00695C;
+  --royal-blue-light: #80CBC4;
+  --blue-medium:      #00796B;
+  --blue-lighter:     #B2DFDB;
+}
+[data-color-scheme='green'] {
+  --sky-dark:         #388E3C;
+  --sky-light:        #81C784;
+  --royal-blue-dark:  #2E7D32;
+  --royal-blue-light: #A5D6A7;
+  --blue-medium:      #388E3C;
+  --blue-lighter:     #C8E6C9;
+}
+[data-color-scheme='amber'] {
+  --sky-dark:         #FF8F00;
+  --sky-light:        #FFB74D;
+  --royal-blue-dark:  #E65100;
+  --royal-blue-light: #FFCC80;
+  --blue-medium:      #FF8F00;
+  --blue-lighter:     #FFE0B2;
+}
+[data-color-scheme='purple'] {
+  --sky-dark:         #7B1FA2;
+  --sky-light:        #AB47BC;
+  --royal-blue-dark:  #6A1B9A;
+  --royal-blue-light: #CE93D8;
+  --blue-medium:      #7B1FA2;
+  --blue-lighter:     #E1BEE7;
+}
 [data-color-scheme='red'] {
   --sky-dark:         #C62828;
   --sky-light:        #E57373;

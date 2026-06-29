@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-type ColorScheme = 'blue' | 'red'
+type ColorScheme = 'blue' | 'teal' | 'green' | 'amber' | 'purple' | 'red'
+
+const SCHEMES: ColorScheme[] = ['blue', 'teal', 'green', 'amber', 'purple', 'red']
 
 interface ColorSchemeContextType {
   colorScheme: ColorScheme
@@ -12,7 +14,7 @@ const ColorSchemeContext = createContext<ColorSchemeContextType | undefined>(und
 export function ColorSchemeProvider({ children }: { children: ReactNode }) {
   const [colorScheme, setColorScheme] = useState<ColorScheme>(() => {
     const saved = localStorage.getItem('color-scheme')
-    return (saved as ColorScheme) || 'blue'
+    return (SCHEMES.includes(saved as ColorScheme) ? saved : 'blue') as ColorScheme
   })
 
   useEffect(() => {
@@ -21,7 +23,10 @@ export function ColorSchemeProvider({ children }: { children: ReactNode }) {
   }, [colorScheme])
 
   const toggleColorScheme = () => {
-    setColorScheme(prev => (prev === 'blue' ? 'red' : 'blue'))
+    setColorScheme(prev => {
+      const idx = SCHEMES.indexOf(prev)
+      return SCHEMES[(idx + 1) % SCHEMES.length]
+    })
   }
 
   return (
