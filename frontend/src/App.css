@@ -491,6 +491,9 @@
 .bg-pistachio    { background-color: var(--pistachio-light); }
 .bg-royal-blue   { background-color: var(--royal-blue-light); }
 
+.color-slate                           { color: var(--slate-dark); }
+[data-theme='dark'] .color-slate       { color: var(--slate-light); }
+
 .color-royal-blue                      { color: var(--royal-blue-dark); }
 [data-theme='dark'] .color-royal-blue  { color: var(--royal-blue-light); }
 

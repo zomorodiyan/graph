@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
 import InlineItemEditor from './InlineItemEditor'
 
-const L2_COLORS = ['sky', null] as const
+const L2_COLORS = ['sky', 'slate'] as const
 
 interface SectionProps {
   itemKey: string
@@ -198,7 +198,7 @@ function Section({
       </div>
 
       {/* Layer 2 - Subcategories */}
-      {depth >= 2 && <div className={`layer2-section${!hasAnyGrandchildren && childEntries.length > 0 ? ' layer2-flat' : ''}`}>
+      {depth >= 2 && <div className={`layer2-section${(depth < 3 || !hasAnyGrandchildren) && childEntries.length > 0 ? ' layer2-flat' : ''}`}>
         {childEntries.map(([childKey, childItem], childIndex) => {
           const childPath = `${itemPath}.${childKey}`
           const childTitle = (childItem as StructureItem).title || childKey
@@ -207,7 +207,7 @@ function Section({
           // Check if this child item is editable
           const childEditable = showEditButton && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
           const l2Color = L2_COLORS[childIndex % 2]
-          const l3Color = l2Color === 'sky' ? 'royal-blue' : null
+          const l3Color = l2Color === 'sky' ? 'royal-blue' : l2Color === 'slate' ? 'slate' : null
           const childColorClass = l2Color ? `color-${l2Color}` : ''
           const grandColorClass = l3Color ? `color-${l3Color}` : ''
 
