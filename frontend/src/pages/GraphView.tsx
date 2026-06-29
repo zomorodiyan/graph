@@ -863,11 +863,7 @@ function GraphView() {
     <>
       {!inlineEdit && !inlineCreate && (
         <div className="top-buttons">
-          <button
-            className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}`}
-            onClick={() => setViewMode(m => m === 'context' ? 'default' : 'context')}
-            title={viewMode === 'context' ? 'Context on — tap to hide' : 'Context off — tap to show'}
-          >C</button>
+          <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
           <div ref={depthPickerRef} className="depth-wrapper">
             {showDepthPicker ? (
               <div className="depth-picker">
@@ -890,7 +886,11 @@ function GraphView() {
               >{depth}</button>
             )}
           </div>
-          <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
+          <button
+            className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}`}
+            onClick={() => setViewMode(m => m === 'context' ? 'default' : 'context')}
+            title={viewMode === 'context' ? 'Context on — tap to hide' : 'Context off — tap to show'}
+          >C</button>
         </div>
       )}
 

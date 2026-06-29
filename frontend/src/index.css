@@ -89,7 +89,7 @@
   --border-color: #2a2a2a;
 }
 
-/* Color schemes — cycle: blue → teal → green → amber → purple → red */
+/* Color schemes — cycle: blue → teal → purple → red */
 [data-color-scheme='teal'] {
   --sky-dark:         #00796B;
   --sky-light:        #4DB6AC;
@@ -97,14 +97,6 @@
   --royal-blue-light: #80CBC4;
   --blue-medium:      #00796B;
   --blue-lighter:     #B2DFDB;
-}
-[data-color-scheme='amber'] {
-  --sky-dark:         #FF8F00;
-  --sky-light:        #FFB74D;
-  --royal-blue-dark:  #E65100;
-  --royal-blue-light: #FFCC80;
-  --blue-medium:      #FF8F00;
-  --blue-lighter:     #FFE0B2;
 }
 [data-color-scheme='purple'] {
   --sky-dark:         #7B1FA2;
