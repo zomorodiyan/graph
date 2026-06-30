@@ -864,7 +864,7 @@ function GraphView() {
       {!inlineEdit && !inlineCreate && (
         <div className="top-buttons">
           <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
-          <div ref={depthPickerRef} className="depth-wrapper">
+          <div ref={depthPickerRef} className={`depth-wrapper${showDepthPicker ? ' depth-wrapper--open' : ''}`}>
             {showDepthPicker ? (
               <div className="depth-picker">
                 {([3, 2, 1, 0] as const).map(d => (

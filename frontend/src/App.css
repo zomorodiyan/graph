@@ -46,7 +46,7 @@
 
 .breadcrumb {
   position: fixed;
-  bottom: 6px;
+  bottom: 72px;
   left: 20px;
   display: flex;
   flex-wrap: wrap;
@@ -581,7 +581,7 @@
 /* Top buttons container */
 .top-buttons {
   position: fixed;
-  bottom: 34px;
+  bottom: 20px;
   left: 20px;
   display: flex;
   gap: 10px;
@@ -653,12 +653,13 @@
   height: 44px;
 }
 
+.depth-wrapper--open {
+  width: auto;
+}
+
 .depth-picker {
-  position: absolute;
-  bottom: 0;
-  left: 0;
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: row;
   gap: 8px;
 }
 
