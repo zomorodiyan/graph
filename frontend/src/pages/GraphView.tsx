@@ -54,6 +54,7 @@ function GraphView() {
   const depthPickerRef = useRef<HTMLDivElement>(null)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isLongPress = useRef(false)
+  const [viewMode, setViewMode] = useState<'default' | 'context'>('context')
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
   const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
@@ -240,7 +241,7 @@ function GraphView() {
         .map(p => p.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(' › ')
       result[key] = {
         ...item, title,
-        context: true && parentLabel ? `📍 ${parentLabel}` : undefined,
+        context: viewMode === 'context' && parentLabel ? `📍 ${parentLabel}` : undefined,
         originalPath: fullPath, nonEditable: true, children: undefined,
       }
     }
@@ -265,7 +266,7 @@ function GraphView() {
         .map(p => p.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(' › ')
       result[key] = {
         ...item, title,
-        context: true && parentLabel ? `📍 ${parentLabel}` : undefined,
+        context: viewMode === 'context' && parentLabel ? `📍 ${parentLabel}` : undefined,
         originalPath: fullPath, nonEditable: true, children: undefined,
       }
     }
@@ -885,10 +886,15 @@ function GraphView() {
               >{depth}</button>
             )}
           </div>
+          <button
+            className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}`}
+            onClick={() => setViewMode(m => m === 'context' ? 'default' : 'context')}
+            title={viewMode === 'context' ? 'Context on — tap to hide' : 'Context off — tap to show'}
+          >C</button>
         </div>
       )}
 
-      {/* Breadcrumb — fixed above bottom buttons */}
+      {/* Breadcrumb — fixed below bottom buttons */}
       {!inlineEdit && !inlineCreate && (
         <nav className="breadcrumb">
           {breadcrumb.map((crumb, i) => (
@@ -986,7 +992,7 @@ function GraphView() {
                 onCopyClick={handleCopyItem}
                 isPending={isPending}
                 isTimeView={isVirtualView}
-                showContext={true}
+                showContext={viewMode === 'context'}
                 depth={depth}
                 showRaw={depth === 0}
                 rawText={depth === 0 ? serializeItem(key, item as StructureItem, 0).trimEnd() : undefined}
@@ -1044,7 +1050,7 @@ function GraphView() {
               onCopyClick={handleCopyItem}
               isPending={false}
               isTimeView={true}
-              showContext={true}
+              showContext={viewMode === 'context'}
               depth={depth}
               showRaw={depth === 0}
               rawText={depth === 0 ? serializeItem('overview', displayItems['overview'] as StructureItem, 0).trimEnd() : undefined}

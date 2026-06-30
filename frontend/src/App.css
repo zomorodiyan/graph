@@ -46,7 +46,7 @@
 
 .breadcrumb {
   position: fixed;
-  bottom: 72px;
+  bottom: 6px;
   left: 20px;
   display: flex;
   flex-wrap: wrap;
@@ -581,7 +581,7 @@
 /* Top buttons container */
 .top-buttons {
   position: fixed;
-  bottom: 20px;
+  bottom: 34px;
   left: 20px;
   display: flex;
   gap: 10px;
@@ -658,7 +658,7 @@
   bottom: 0;
   left: 0;
   display: flex;
-  flex-direction: row;
+  flex-direction: column-reverse;
   gap: 8px;
 }
 
