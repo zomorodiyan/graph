@@ -22,31 +22,31 @@ export const GRAPH_TEMPLATES: GraphTemplate[] = [
   Process Simulation
     progress: 3/5
     due: 2026-09-15
-    "Model the process parameters that drive part quality"
+    "Parameters drive part quality"
   Multi-Material
     progress: 2/4
-    "Focus on the interface behavior between dissimilar materials"
+    "Interface behavior, dissimilar materials"
   Digital Twin
     progress: 1/4
-    "Feed real-time sensor data back into the defect predictions"
+    "Sensor data feeds defect predictions"
 Advising
   Advisor Meeting
     due: 2026-07-10
-    "Bring blockers and preliminary results, not just status"
+    "Bring blockers, not status"
   Lab Meeting
     progress: 3/4
   Committee
     Qualifying Exam Feedback
       progress: 60/100
       due: 2026-08-15
-      "Feeds directly into the candidacy defense prep below"
-Grants & Talks
+      "Feeds the candidacy defense"
+Outreach
   Grant Proposal
     progress: 1/4
     due: 2026-08-01
     Problem Statement
     Draft Narrative
-      "Get feedback from advisor before the internal deadline"
+      "Get advisor feedback first"
     Budget Justification
   Conference Talk
     progress: 1/3
@@ -55,7 +55,7 @@ Goals
     Laser Interaction
       progress: 1/3
       due: 2026-09-15
-      "Target a venue before drafting, not after"
+      "Pick venue before drafting"
       Checkpoint 1
         due: 2026-07-15
       Checkpoint 2
@@ -74,21 +74,21 @@ Goals
   Candidacy Exam
     progress: 3/6
     due: 2027-01-15
-    "Built from committee feedback — track it as it comes in"
+    "Track committee feedback"
   Internship
     progress: 1/5
-    "No citizenship requirement, open to out-of-state — cast a wide net"
+    "No citizenship requirement needed"
   Next Position
     Postdoc
     Research Scientist
-    "Start the search a year out; academic hiring cycles are slow"`,
+    "Start search a year out"`,
   },
   {
     name: 'self',
     displayName: 'Self',
-    description: 'Learning, fitness, daily rhythm',
-    structure: `Learning
-  Now
+    description: 'Practice, fitness, daily rhythm',
+    structure: `Practice
+  Skills
     Japanese
       progress: 15/100
       Section 1
@@ -163,7 +163,7 @@ Goals
           due: 2026-07-05
     Chess
       progress: 6/20
-      "Working through tactics puzzles most days"
+      "Tactics puzzles most days"
     Machine Learning
       Fundamentals
       Projects
@@ -171,6 +171,8 @@ Goals
     Systems Design
     Photography
     Surfing
+    Redwoods Trip
+      "Coming target"
   Output
     Notes
     Blog Posts
@@ -191,7 +193,7 @@ Health
           progress: 70/100
     Cardio
       Zone 2
-        "45 min, keep HR under 140"
+        "45 min, HR under 140"
       Intervals
   Nutrition
     Hydration
@@ -199,24 +201,16 @@ Health
     Protein
   Recovery
     Sleep
-      "7-8 hours, consistent schedule — same target as Night's Sleep by 11pm"
+      "7-8 hours, consistent schedule"
+    Lower Back
+      "Nags after long desk days"
+      PT Checkup
+        due: 2026-07-25
   Metrics
     Weight
     Bloodwork
       due: 2026-12-01
-Hobbies
-  Guitar
-    progress: 50/100
-    Technique
-      Barre Chords
-        "Still buzzing on the B string"
-      Fingerpicking
-    Songs
-      Learning
-        Blackbird
-        Wish You Were Here
-      Mastered
-        progress: 6/6
+Leisure
   Reading
     Sci-Fi
   Watchlist
@@ -224,10 +218,10 @@ Hobbies
       Watching
         One Piece
           progress: 1085/1120
-          "Egghead arc — no spoilers past this"
+          "Egghead arc, no spoilers"
         Attack on Titan
           progress: 4/4
-          "Rewatching before the final chapter manga"
+          "Rewatching before final chapter"
       Queue
         Frieren
     Movies
@@ -245,9 +239,14 @@ Daily Rhythm
   Morning
     Wake 6am
     Workout
-      "Alternate run and lift days — see Health > Fitness for the split"
+      "Alternate run and lift days"
     Plan Day
       Top 3 Tasks
+    Commute
+      "By bicycle"
+      Bike Maintenance
+        due: 2026-07-20
+        "Chain, brakes, tire pressure"
   Midday
     Lunch
     Deep Work
@@ -260,6 +259,7 @@ Daily Rhythm
       Read
         "30 min, no screens"
       Journal
+        "One good, one hard"
     Sleep by 11pm
   Weekend
     Meal Prep
@@ -285,14 +285,14 @@ Daily Rhythm
     Work
   Nurture
     Reach Out
-      "Reconnect — it's been almost a year"
+      "It's been almost a year"
     Birthdays
     Thank Yous
 Kitchen
   Recipes
     Weeknight
       Stir Fry
-        "Tofu, bok choy, garlic ginger sauce — 20 minutes, one pan"
+        "20 minutes, one pan"
       Pasta Primavera
     Breakfast
       Bread, Cheese, Walnuts or Vegetables
@@ -301,13 +301,13 @@ Kitchen
     Batch Meals
       Tomato Stew
         progress: 0/4
-        "Makes 4 meals — freeze the rest"
+        "Freeze the rest"
       Vegetable Stew
         progress: 0/4
-        "Makes 4 meals — freeze the rest"
+        "Freeze the rest"
       Lasagna
         progress: 0/4
-        "Makes 4 meals — freeze the rest"
+        "Freeze the rest"
     To Try
       Thai Green Curry
       Shakshuka
@@ -315,7 +315,7 @@ Kitchen
     Produce
       "Bok choy for stir fry"
     Pantry
-      "Garlic ginger sauce, grains for batch cook"
+      "Grains for batch cook"
       Rice
       Potato
       Onion
@@ -340,7 +340,7 @@ Kitchen
       "Tofu for stir fry"
   Meal Prep
     Batch Cook
-      "Sundays — grains and roast veg from this week's Groceries"
+      "Sundays, grains and roast veg"
     Freezer Meals
 Chores
   Bedroom
@@ -355,27 +355,31 @@ Chores
 Finances
   Fixed Costs
     Rent
+      progress: 950/2300
+      "Share of monthly income"
     Utilities
+      progress: 135/150
     Insurance
+      progress: 110/110
     Subscriptions
+      progress: 55/60
   Investments
-    Retirement
-      401k
-        "Contribute up to the employer match first"
-      Roth IRA
-        progress: 35/100
-    Brokerage
-      Index Funds
-        VTI
-        VXUS
-      Individual
+    Roth IRA
+      progress: 600/6500
+      "$50 per month"
     Emergency Fund
-      progress: 80/100
-      "Six months of expenses"
+      progress: 3000/7500
+      "Lawyer, income gaps, health, gifts"
   Goals
     Pay Off Loan
+      progress: 1200/6000
       due: 2027-01-01
-    House Down Payment
-      progress: 20/100`,
+Admin
+  Visa Status
+    due: 2026-09-01
+    "Renew before it expires"
+  ID Renewal
+  Taxes
+    due: 2027-04-15`,
   },
 ]
