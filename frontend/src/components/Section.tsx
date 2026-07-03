@@ -46,22 +46,22 @@ function formatDueDate(dueDate: string): string {
   return new Date(dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-// Helper to parse X/Y or legacy number progress — pct capped at 100 for bar width
-function parseProgress(p: number | string | undefined): { done: number; total: number; pct: number } | null {
+// Helper to parse "X/Y" progress — pct capped at 100 for bar width
+function parseProgress(p: string | undefined): { done: number; total: number; pct: number } | null {
   if (p === undefined || p === null) return null
-  if (typeof p === 'number') return { done: p, total: 100, pct: Math.min(p, 100) }
   const m = String(p).match(/^(\d+)\/(\d+)$/)
   if (!m) return null
   const done = Number(m[1]), total = Number(m[2])
   return { done, total, pct: total > 0 ? Math.min((done / total) * 100, 100) : 0 }
 }
 
-// Format progress for display: raw "7/5" or "42%" — no capping on the label
-function formatProgressText(p: number | string | undefined): string | null {
+// Format progress for display: "42%" when total is 100, otherwise raw "3/10"
+function formatProgressText(p: string | undefined): string | null {
   if (p === undefined || p === null) return null
-  if (typeof p === 'string' && /^\d+\/\d+$/.test(p)) return p
-  const n = Number(p)
-  return isNaN(n) ? null : `${n}%`
+  const m = String(p).match(/^(\d+)\/(\d+)$/)
+  if (!m) return null
+  const [, done, total] = m
+  return total === '100' ? `${done}%` : `${done}/${total}`
 }
 
 function Section({

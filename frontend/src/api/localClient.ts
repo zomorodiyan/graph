@@ -4,7 +4,7 @@ export interface StructureItem {
   id?: string
   title?: string
   context?: string
-  progress?: number | string  // number: legacy 0-100%; string: "X/Y" fraction e.g. "3/10"
+  progress?: string  // "X/Y" fraction, e.g. "3/10" or "40/100" (displayed as "40%" when Y is 100)
   due?: string
   children?: Record<string, StructureItem>
   [key: string]: unknown
@@ -25,7 +25,7 @@ export interface GraphUpdatePayload { display_name?: string; description?: strin
 export interface ItemResponse { path: string; name: string; data: StructureItem }
 
 export interface UpdatePayload {
-  name?: string; progress?: number | string | ''; context?: string | ''; due?: string | ''
+  name?: string; progress?: string | ''; context?: string | ''; due?: string | ''
 }
 
 export interface GraphStateVersion { graph: string; version: number; backend: string }
@@ -175,7 +175,7 @@ function parseIndentedText(text: string): Record<string, StructureItem> {
           const item = stack[i].lastItem!
           if (k === 'progress') {
             const val = v.trim()
-            item.progress = /^\d+\/\d+$/.test(val) ? val : Number(val)
+            item.progress = /^\d+\/\d+$/.test(val) ? val : `${Number(val)}/100`
           } else if (k === 'due') item.due = v
           break
         }
@@ -270,7 +270,7 @@ export async function updateItem(path: string, data: UpdatePayload, graphName = 
 
   if (data.progress !== undefined) {
     if (data.progress === '') delete item.progress
-    else item.progress = data.progress as number | string
+    else item.progress = data.progress
   }
   if (data.context !== undefined) {
     if (data.context === '') delete item.context
@@ -313,7 +313,7 @@ export async function createItem(parentPath: string, data: UpdatePayload, graphN
   const item: StructureItem = {
     title: data.name,
     children: {},
-    ...(data.progress !== undefined && data.progress !== '' && { progress: data.progress as number | string }),
+    ...(data.progress !== undefined && data.progress !== '' && { progress: data.progress }),
     ...(data.context && { context: data.context }),
     ...(data.due && { due: data.due }),
   }

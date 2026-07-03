@@ -161,10 +161,9 @@ function GraphView() {
     setTimeout(() => setNotification(null), 3000)
   }
 
-  // Parse "X/Y" or legacy number into {done, total, pct} — pct capped at 100 for bar width
-  const parseProgressValue = (p: number | string | undefined): { done: number; total: number; pct: number } | null => {
+  // Parse "X/Y" into {done, total, pct} — pct capped at 100 for bar width
+  const parseProgressValue = (p: string | undefined): { done: number; total: number; pct: number } | null => {
     if (p === undefined || p === null) return null
-    if (typeof p === 'number') return { done: p, total: 100, pct: Math.min(p, 100) }
     const m = String(p).match(/^(\d+)\/(\d+)$/)
     if (!m) return null
     const done = Number(m[1]), total = Number(m[2])
@@ -184,7 +183,7 @@ function GraphView() {
   }
 
   // Progress bucket — 3 states
-  const getProgressCategory = (progress: number | string): 'not_started' | 'in_progress' | 'done' | null => {
+  const getProgressCategory = (progress: string): 'not_started' | 'in_progress' | 'done' | null => {
     const info = parseProgressValue(progress)
     if (!info) return null
     if (info.done <= 0) return 'not_started'
@@ -256,7 +255,7 @@ function GraphView() {
   ): Record<string, StructureItem> => {
     const filtered = collectProgressItems(rootItems).filter(({ item }) =>
       item.progress !== undefined && item.progress !== null &&
-      getProgressCategory(item.progress as number | string) === category
+      getProgressCategory(item.progress as string) === category
     )
     const result: Record<string, StructureItem> = {}
     for (const { path: relPath, item, title } of filtered) {
@@ -544,7 +543,7 @@ function GraphView() {
 
       const newItem: StructureItem = {
         title: data.name,
-        ...(typeof data.progress === 'number' && { progress: data.progress }),
+        ...(data.progress && { progress: data.progress }),
         ...(data.context && { context: data.context }),
         ...(data.due && { due: data.due }),
       }
@@ -641,7 +640,7 @@ function GraphView() {
           if (data.progress === '') {
             delete updatedItem.progress
           } else {
-            updatedItem.progress = data.progress as number
+            updatedItem.progress = data.progress
           }
         }
         if (data.context !== undefined) {

@@ -1,7 +1,8 @@
 // Sample graphs offered to new users via the "New Graph" card's left zone.
 // `structure` is 2-space-indented text in the same format as clipboard paste:
 //   - a line is an item; nesting is by indentation (depth is free-form)
-//   - `progress: N` / `due: YYYY-MM-DD` are properties of the item above
+//   - `progress: X/Y` (shown as "X%" when Y is 100, otherwise "X/Y") / `due: YYYY-MM-DD` are
+//     properties of the item above
 //   - a "quoted" line sets that item's context note
 // Each template flexes the features differently to suit its domain.
 
@@ -14,12 +15,12 @@ export interface GraphTemplate {
 
 export const GRAPH_TEMPLATES: GraphTemplate[] = [
   {
-    name: 'career',
-    displayName: 'Career',
-    description: 'Projects, money, team',
+    name: 'work',
+    displayName: 'Work',
+    description: 'Projects, team, growth',
     structure: `Projects
   Q3 Launch
-    progress: 40
+    progress: 2/5
     due: 2026-09-15
     Backend
       API
@@ -36,45 +37,35 @@ export const GRAPH_TEMPLATES: GraphTemplate[] = [
     Bugs
     Tech Debt
 Team
+  1:1s
+    due: 2026-07-10
+    "Bring blockers, not just status"
   Mentors
   Reports
+    progress: 3/4
 Admin
   Expenses
-  Reviews
     due: 2026-07-31
-Investments
-  Retirement
-    401k
-      "Contribute up to the employer match first"
-    Roth IRA
-      progress: 35
-  Brokerage
-    Index Funds
-      VTI
-      VXUS
-    Individual
-  Emergency Fund
-    progress: 80
-    "Six months of expenses"
-Fixed Costs
-  Rent
-  Utilities
-  Insurance
-  Subscriptions
+  Reviews
+    progress: 60/100
+    due: 2026-08-15
 Goals
-  Pay Off Loan
+  Promotion Case
+    progress: 3/6
+    "Track impact write-ups as they happen, not at review time"
+  Certification
     due: 2027-01-01
-  House Down Payment
-    progress: 20`,
+  Conference Talk
+    progress: 1/3`,
   },
   {
-    name: 'life',
-    displayName: 'Life',
-    description: 'Learning, hobbies, people',
+    name: 'body-mind',
+    displayName: 'Body & Mind',
+    description: 'Learning, fitness, daily rhythm',
     structure: `Learning
   Now
     Spanish
-      progress: 45
+      progress: 45/100
       Grammar
         Subjunctive
           "Trickiest part — drill a little daily"
@@ -95,7 +86,7 @@ Goals
     Blog Posts
 Hobbies
   Guitar
-    progress: 50
+    progress: 50/100
     Technique
       Barre Chords
         "Still buzzing on the B string"
@@ -105,6 +96,7 @@ Hobbies
         Blackbird
         Wish You Were Here
       Mastered
+        progress: 6/6
   Reading
     Sci-Fi
   Watchlist
@@ -118,42 +110,18 @@ Hobbies
     Shows
       Watching
         Severance
-          progress: 40
+          progress: 6/9
       Queue
         The Bear
     Games
       Playing
         Elden Ring
-          progress: 65
+          progress: 65/100
       Backlog
     Documentaries
       Planet Earth
-Relationships
-  Family
-    Parents
-      "Call every Sunday"
-    Siblings
-      Sister
-        "Birthday — Mar 12"
-      Brother
-  Friends
-    Close
-      Alex
-      Sam
-    College
-    Work
-  Nurture
-    Reach Out
-      "Reconnect — it's been almost a year"
-    Birthdays
-    Thank Yous`,
-  },
-  {
-    name: 'health',
-    displayName: 'Health',
-    description: 'Body and daily rhythm',
-    structure: `Fitness
-  progress: 60
+Fitness
+  progress: 4/7
   Strength
     Push
       Bench Press
@@ -165,7 +133,7 @@ Relationships
       Rows
     Legs
       Squat
-        progress: 70
+        progress: 70/100
   Cardio
     Zone 2
       "45 min, keep HR under 140"
@@ -205,10 +173,29 @@ Weekend
   Long Walk`,
   },
   {
-    name: 'home',
-    displayName: 'Home',
-    description: 'House, upkeep, meals',
-    structure: `Maintenance
+    name: 'home-relationships',
+    displayName: 'Home & Relationships',
+    description: 'House, meals, people',
+    structure: `Relationships
+  Family
+    Parents
+      "Call every Sunday"
+    Siblings
+      Sister
+        "Birthday — Mar 12"
+      Brother
+  Friends
+    Close
+      Alex
+      Sam
+    College
+    Work
+  Nurture
+    Reach Out
+      "Reconnect — it's been almost a year"
+    Birthdays
+    Thank Yous
+Maintenance
   Urgent
     Leaky Faucet
       "Call the plumber"
@@ -247,98 +234,31 @@ Groceries
 Meal Prep
   Batch Cook
     "Sundays — grains and roast veg"
-  Freezer Meals`,
-  },
-  {
-    name: 'earth',
-    displayName: 'Earth',
-    description: 'Land, sky, core',
-    structure: `Surface
-  Waterways
-    Oceans
-      Pacific
-        "Largest and deepest ocean basin"
-        Mariana Trench
-          "Deepest point on Earth, ~10,935 m down"
-      Atlantic
-      Indian
-      Southern
-      Arctic
-    Rivers
-      Nile
-      Amazon
-        "Largest river by water discharge"
-    Lakes
-  Continents
-    Asia
-      "Largest continent, ~44.6M km²"
-    Africa
-    North America
-    South America
-    Antarctica
-    Europe
-    Australia
-  Life
-    "Animalia · Plantae · Fungi · Protista · Bacteria · Archaea"
-Atmosphere
-  Layers
-    Troposphere
-      "0-12 km; holds ~75% of air mass and all weather"
-    Stratosphere
-      "12-50 km; contains the ozone layer"
-    Mesosphere
-      "50-85 km; meteors burn up here"
-    Thermosphere
-      "85-600 km; auroras and the ISS"
-    Exosphere
-      "600-10,000 km; fades into space"
-  Weather & Phenomena
-    Clouds
-    Precipitation
-      Rain
-      Snow
-    Storms
-      Hurricanes
-        "Sustained winds over 119 km/h, fueled by warm ocean water"
-      Tornadoes
-    Lightning
-      "Channel reaches ~30,000 °C, hotter than the Sun's surface"
-    Aurora
-  Observable Universe
-    "What reaches us through the sky"
-    Sun
-      "~150M km away (8 light-minutes); surface ~5,500 °C"
-      Solar Radiation
-        "Solar constant ~1,361 W/m² at the top of the atmosphere"
-    Moon
-      "~384,400 km away; its gravity drives the tides"
-    Stars & Deep Sky
-      "Nearest star ~4.2 light-years away"
-      Milky Way
-Interior
-  Crust
-    "Thin, rigid outer shell"
-    Oceanic Crust
-      "~7 km thick, basaltic"
-    Continental Crust
-      "~35 km thick, granitic"
-  Mantle
-    "~2,900 km thick; ~84% of Earth's volume"
-    Upper Mantle
-      Asthenosphere
-        "Soft, slowly flowing rock the plates ride on"
-    Lower Mantle
-  Outer Core
-    "Liquid iron-nickel; its motion generates the magnetic field"
-  Inner Core
-    "Solid iron, ~5,400 °C; nearly as hot as the Sun's surface"
-  Dynamics
-    "Interior heat drives surface change"
-    Plate Tectonics
-      "Plates drift ~2-10 cm per year"
-      Earthquakes
-      Volcanoes
-    Magnetic Field
-      "Shields Earth from solar wind; reverses over geologic time"`,
+  Freezer Meals
+Finances
+  Fixed Costs
+    Rent
+    Utilities
+    Insurance
+    Subscriptions
+  Investments
+    Retirement
+      401k
+        "Contribute up to the employer match first"
+      Roth IRA
+        progress: 35/100
+    Brokerage
+      Index Funds
+        VTI
+        VXUS
+      Individual
+    Emergency Fund
+      progress: 80/100
+      "Six months of expenses"
+  Goals
+    Pay Off Loan
+      due: 2027-01-01
+    House Down Payment
+      progress: 20/100`,
   },
 ]
