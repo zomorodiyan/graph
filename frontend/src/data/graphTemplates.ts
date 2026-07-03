@@ -17,55 +17,71 @@ export const GRAPH_TEMPLATES: GraphTemplate[] = [
   {
     name: 'work',
     displayName: 'Work',
-    description: 'Projects, team, growth',
+    description: 'Research, advising, growth',
     structure: `Projects
-  Q3 Launch
-    progress: 2/5
+  Process Simulation
+    progress: 3/5
     due: 2026-09-15
-    Backend
-      API
-        Auth
-        Endpoints
-      Database
-        Migrations
-    Frontend
-      Components
-      State
-    QA
-      "Block release on any critical bug"
-  Maintenance
-    Bugs
-    Tech Debt
-Operations
-  1:1s
+    "Model the process parameters that drive part quality"
+  Multi-Material
+    progress: 2/4
+    "Focus on the interface behavior between dissimilar materials"
+  Digital Twin
+    progress: 1/4
+    "Feed real-time sensor data back into the defect predictions"
+Advising
+  Advisor Meeting
     due: 2026-07-10
-    "Bring blockers, not just status"
-  Mentors
-  Reports
+    "Bring blockers and preliminary results, not just status"
+  Lab Meeting
     progress: 3/4
-  Expenses
-    due: 2026-07-31
-  Performance Review
-    progress: 60/100
-    due: 2026-08-15
-    "Evidence feeds directly into the promotion case below"
-Goals
-  Promotion Case
-    progress: 3/6
-    "Built from Performance Review evidence — track write-ups as they happen"
-  Certification
-    due: 2027-01-01
-  Conference Talk
-    progress: 1/3
-Pitches
-  New Initiative Proposal
+  Committee
+    Qualifying Exam Feedback
+      progress: 60/100
+      due: 2026-08-15
+      "Feeds directly into the candidacy defense prep below"
+Grants & Talks
+  Grant Proposal
     progress: 1/4
     due: 2026-08-01
     Problem Statement
-    Draft Deck
-      "Get feedback from a mentor before the review meeting"
-    Stakeholder Buy-in
-    Budget Ask`,
+    Draft Narrative
+      "Get feedback from advisor before the internal deadline"
+    Budget Justification
+  Conference Talk
+    progress: 1/3
+Goals
+  Publications
+    Laser Interaction
+      progress: 1/3
+      due: 2026-09-15
+      "Target a venue before drafting, not after"
+      Checkpoint 1
+        due: 2026-07-15
+      Checkpoint 2
+        due: 2026-08-15
+      Checkpoint 3
+        due: 2026-09-15
+    Multi-Material Simulation
+      progress: 1/3
+      due: 2026-09-15
+      Checkpoint 1
+        due: 2026-07-15
+      Checkpoint 2
+        due: 2026-08-15
+      Checkpoint 3
+        due: 2026-09-15
+  Candidacy Exam
+    progress: 3/6
+    due: 2027-01-15
+    "Built from committee feedback — track it as it comes in"
+  Internship
+    progress: 1/5
+    "No citizenship requirement, open to out-of-state — cast a wide net"
+  Next Position
+    Postdoc
+    Research Scientist
+    "Start the search a year out; academic hiring cycles are slow"`,
   },
   {
     name: 'self',
@@ -73,26 +89,121 @@ Pitches
     description: 'Learning, fitness, daily rhythm',
     structure: `Learning
   Now
-    Spanish
-      progress: 45/100
-      Grammar
-        Subjunctive
-          "Trickiest part — drill a little daily"
-        Past Tenses
-      Vocab
-        Flashcards
+    Japanese
+      progress: 15/100
+      Section 1
+        progress: 9/9
+        Order Food
+          progress: 3/3
+        Describe People
+          progress: 3/3
+        Introduce Yourself
+          progress: 3/3
+        Order Food and Drink
+          progress: 3/3
+        Talk About Countries
+          progress: 3/3
+        Ask for Directions
+          progress: 3/3
+        Describe Belongings
+          progress: 3/3
+        Talk About Neighbors
+          progress: 3/3
+        Tell Time
+          progress: 3/3
+      Section 2
+        progress: 15/30
+        Get Help When Traveling
+          progress: 3/3
+        Get to Know People
+          progress: 3/3
+        Describe Your Family
+          progress: 3/3
+        Talk About Hobbies
+          progress: 3/3
+        Describe Eating Habits
+          progress: 3/3
+        Shop for Clothes
+          progress: 3/3
+        Order Food and Drink
+          progress: 3/3
+        Use Present Tense Verbs
+          progress: 3/3
+        Get Around a Station
+          progress: 3/3
+        Describe Your Routine
+          progress: 3/3
+        Talk About Interests
+          progress: 3/3
+        Describe Your Home
+          progress: 3/3
+        Take Public Transit
+          progress: 3/3
+        Use Na-Adjectives
+          progress: 3/3
+        Get Emergency Help
+          progress: 3/3
+        Talk About Weather
+        Describe Your Family
+        Discuss Chores
+        Say What You Want to Do
+        Discuss a Family Visit
+        Order Pastries
+        Use Negative Verbs
+        Discuss Classes
+        Talk About Jobs
+        Get Around a Theme Park
+        Discuss Media
+        Communication at Work
+        Talk About Hobbies
+        Discuss Seasonal Events
+        Talk About Date Plans
       Speaking
         Weekly Tutor
           due: 2026-07-05
+    Chess
+      progress: 6/20
+      "Working through tactics puzzles most days"
     Machine Learning
       Fundamentals
       Projects
   Queue
     Systems Design
     Photography
+    Surfing
   Output
     Notes
     Blog Posts
+Health
+  Fitness
+    progress: 4/7
+    Strength
+      Push
+        Bench Press
+          "3x5 @ 80kg, then deload"
+        Overhead Press
+      Pull
+        Deadlift
+          "1x5 @ 120kg"
+        Rows
+      Legs
+        Squat
+          progress: 70/100
+    Cardio
+      Zone 2
+        "45 min, keep HR under 140"
+      Intervals
+  Nutrition
+    Hydration
+      "Target 2.5L per day"
+    Protein
+  Recovery
+    Sleep
+      "7-8 hours, consistent schedule — same target as Night's Sleep by 11pm"
+  Metrics
+    Weight
+    Bloodwork
+      due: 2026-12-01
 Hobbies
   Guitar
     progress: 50/100
@@ -130,36 +241,6 @@ Hobbies
         progress: 65/100
     Documentaries
       Planet Earth
-Health
-  Fitness
-    progress: 4/7
-    Strength
-      Push
-        Bench Press
-          "3x5 @ 80kg, then deload"
-        Overhead Press
-      Pull
-        Deadlift
-          "1x5 @ 120kg"
-        Rows
-      Legs
-        Squat
-          progress: 70/100
-    Cardio
-      Zone 2
-        "45 min, keep HR under 140"
-      Intervals
-  Nutrition
-    Hydration
-      "Target 2.5L per day"
-    Protein
-  Recovery
-    Sleep
-      "7-8 hours, consistent schedule — same target as Night's Sleep by 11pm"
-  Metrics
-    Weight
-    Bloodwork
-      due: 2026-12-01
 Daily Rhythm
   Morning
     Wake 6am
@@ -207,31 +288,26 @@ Daily Rhythm
       "Reconnect — it's been almost a year"
     Birthdays
     Thank Yous
-Maintenance
-  Urgent
-    Leaky Faucet
-      "Call the plumber"
-  Seasonal
-    Spring
-      Gutters
-      Garden Beds
-    Fall
-      Winterize Pipes
-      Furnace Service
-        due: 2026-10-15
-Rooms
-  Garage
-    Declutter
-    Shelving
-  Purchases
-    Vacuum
-    Couch
 Kitchen
   Recipes
     Weeknight
       Stir Fry
         "Tofu, bok choy, garlic ginger sauce — 20 minutes, one pan"
       Pasta Primavera
+    Breakfast
+      Bread, Cheese, Walnuts or Vegetables
+      Sweetened Tea
+      Boiled Eggs
+    Batch Meals
+      Tomato Stew
+        progress: 0/4
+        "Makes 4 meals — freeze the rest"
+      Vegetable Stew
+        progress: 0/4
+        "Makes 4 meals — freeze the rest"
+      Lasagna
+        progress: 0/4
+        "Makes 4 meals — freeze the rest"
     To Try
       Thai Green Curry
       Shakshuka
@@ -240,12 +316,42 @@ Kitchen
       "Bok choy for stir fry"
     Pantry
       "Garlic ginger sauce, grains for batch cook"
+      Rice
+      Potato
+      Onion
+        progress: 0/1
+        "Out — restock"
+      Oil
+      Spices
+      Bread
+      Milk
+      Sugar
+      Yogurt
+      Fruits
+      Vegetables
+        progress: 0/1
+        "Out — restock"
+      Lemons
+        progress: 0/1
+        "Out — restock"
+      Eggs
+      Walnuts
     Proteins
       "Tofu for stir fry"
   Meal Prep
     Batch Cook
       "Sundays — grains and roast veg from this week's Groceries"
     Freezer Meals
+Chores
+  Bedroom
+    Clean
+    Laundry
+  Bathroom
+    Clean
+    Bathe
+  Kitchen
+    Clean
+    Dishes
 Finances
   Fixed Costs
     Rent
