@@ -56,11 +56,20 @@ Goals
   Certification
     due: 2027-01-01
   Conference Talk
-    progress: 1/3`,
+    progress: 1/3
+Pitches
+  New Initiative Proposal
+    progress: 1/4
+    due: 2026-08-01
+    Problem Statement
+    Draft Deck
+      "Get feedback from a mentor before the review meeting"
+    Stakeholder Buy-in
+    Budget Ask`,
   },
   {
-    name: 'body-mind',
-    displayName: 'Body & Mind',
+    name: 'self',
+    displayName: 'Self',
     description: 'Learning, fitness, daily rhythm',
     structure: `Learning
   Now
@@ -100,24 +109,25 @@ Hobbies
   Reading
     Sci-Fi
   Watchlist
-    Movies
-      To Watch
-        Dune Part Two
-        Oppenheimer
-          "Recommended by Sam"
-      Watched
-        Arrival
-    Shows
+    Anime
       Watching
-        Severance
-          progress: 6/9
+        One Piece
+          progress: 1085/1120
+          "Egghead arc — no spoilers past this"
+        Attack on Titan
+          progress: 4/4
+          "Rewatching before the final chapter manga"
       Queue
-        The Bear
+        Frieren
+    Movies
+      Oppenheimer
+        "Recommended by Sam"
+    Shows
+      Severance
+        progress: 6/9
     Games
-      Playing
-        Elden Ring
-          progress: 65/100
-      Backlog
+      Elden Ring
+        progress: 65/100
     Documentaries
       Planet Earth
 Health
@@ -175,8 +185,8 @@ Daily Rhythm
     Long Walk`,
   },
   {
-    name: 'home-relationships',
-    displayName: 'Home & Relationships',
+    name: 'home',
+    displayName: 'Home',
     description: 'House, meals, people',
     structure: `Relationships
   Family
@@ -213,7 +223,6 @@ Rooms
   Garage
     Declutter
     Shelving
-  Kitchen
   Purchases
     Vacuum
     Couch
