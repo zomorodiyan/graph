@@ -36,23 +36,23 @@ export const GRAPH_TEMPLATES: GraphTemplate[] = [
   Maintenance
     Bugs
     Tech Debt
-Team
+Operations
   1:1s
     due: 2026-07-10
     "Bring blockers, not just status"
   Mentors
   Reports
     progress: 3/4
-Admin
   Expenses
     due: 2026-07-31
-  Reviews
+  Performance Review
     progress: 60/100
     due: 2026-08-15
+    "Evidence feeds directly into the promotion case below"
 Goals
   Promotion Case
     progress: 3/6
-    "Track impact write-ups as they happen, not at review time"
+    "Built from Performance Review evidence — track write-ups as they happen"
   Certification
     due: 2027-01-01
   Conference Talk
@@ -120,57 +120,59 @@ Hobbies
       Backlog
     Documentaries
       Planet Earth
-Fitness
-  progress: 4/7
-  Strength
-    Push
-      Bench Press
-        "3x5 @ 80kg, then deload"
-      Overhead Press
-    Pull
-      Deadlift
-        "1x5 @ 120kg"
-      Rows
-    Legs
-      Squat
-        progress: 70/100
-  Cardio
-    Zone 2
-      "45 min, keep HR under 140"
-    Intervals
-Nutrition
-  Hydration
-    "Target 2.5L per day"
-  Protein
-Recovery
-  Sleep
-    "7-8 hours, consistent schedule"
-Metrics
-  Weight
-  Bloodwork
-    due: 2026-12-01
-Morning
-  Wake 6am
-  Workout
-    "Alternate run and lift days"
-  Plan Day
-    Top 3 Tasks
-Midday
-  Lunch
-  Deep Work
-    "Phone in another room"
-Evening
-  Cook
-  Family Time
-Night
-  Wind Down
-    Read
-      "30 min, no screens"
-    Journal
-  Sleep by 11pm
-Weekend
-  Meal Prep
-  Long Walk`,
+Health
+  Fitness
+    progress: 4/7
+    Strength
+      Push
+        Bench Press
+          "3x5 @ 80kg, then deload"
+        Overhead Press
+      Pull
+        Deadlift
+          "1x5 @ 120kg"
+        Rows
+      Legs
+        Squat
+          progress: 70/100
+    Cardio
+      Zone 2
+        "45 min, keep HR under 140"
+      Intervals
+  Nutrition
+    Hydration
+      "Target 2.5L per day"
+    Protein
+  Recovery
+    Sleep
+      "7-8 hours, consistent schedule — same target as Night's Sleep by 11pm"
+  Metrics
+    Weight
+    Bloodwork
+      due: 2026-12-01
+Daily Rhythm
+  Morning
+    Wake 6am
+    Workout
+      "Alternate run and lift days — see Health > Fitness for the split"
+    Plan Day
+      Top 3 Tasks
+  Midday
+    Lunch
+    Deep Work
+      "Phone in another room"
+  Evening
+    Cook
+    Family Time
+  Night
+    Wind Down
+      Read
+        "30 min, no screens"
+      Journal
+    Sleep by 11pm
+  Weekend
+    Meal Prep
+    Long Walk`,
   },
   {
     name: 'home-relationships',
@@ -212,29 +214,29 @@ Rooms
     Declutter
     Shelving
   Kitchen
-Purchases
-  Vacuum
-  Couch
-Recipes
-  Weeknight
-    Stir Fry
-      Ingredients
-        Tofu
-        Bok Choy
-        Garlic Ginger Sauce
-      "20 minutes, one pan"
-    Pasta Primavera
-  To Try
-    Thai Green Curry
-    Shakshuka
-Groceries
-  Produce
-  Pantry
-  Proteins
-Meal Prep
-  Batch Cook
-    "Sundays — grains and roast veg"
-  Freezer Meals
+  Purchases
+    Vacuum
+    Couch
+Kitchen
+  Recipes
+    Weeknight
+      Stir Fry
+        "Tofu, bok choy, garlic ginger sauce — 20 minutes, one pan"
+      Pasta Primavera
+    To Try
+      Thai Green Curry
+      Shakshuka
+  Groceries
+    Produce
+      "Bok choy for stir fry"
+    Pantry
+      "Garlic ginger sauce, grains for batch cook"
+    Proteins
+      "Tofu for stir fry"
+  Meal Prep
+    Batch Cook
+      "Sundays — grains and roast veg from this week's Groceries"
+    Freezer Meals
 Finances
   Fixed Costs
     Rent
