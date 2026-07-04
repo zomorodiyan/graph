@@ -1,4 +1,5 @@
 .graph-container {
+  max-width: 75rem;
   margin: 0 auto;
   padding: 0 0 12rem;
   display: flex;
@@ -7,10 +8,7 @@
   gap: 0;
 }
 
-/* CSS columns — items flow top-to-bottom per column, no gaps.
-   The 14rem column width is only the pre-JS fallback: fitColumns in
-   GraphView overrides column-count with the fewest columns whose content
-   fits the viewport height, so bubbles get the widest layout available. */
+/* CSS columns — items flow top-to-bottom per column, no gaps */
 .items-grid {
   flex: 0 0 100%;
   columns: 14rem;
@@ -23,19 +21,14 @@
   margin: 2px;
 }
 
-/* Bubbles keep their natural fit-content width from .section, so a bubble
-   only grows as wide as its content actually needs within the column. */
+.items-grid .section {
+  width: 100%;
+}
 
 /* New + Paste and virtual (time/progress) bubbles blend with page background */
 .new-paste-wrapper .section,
 .virtual-section .section {
   background: var(--bg-primary);
-}
-
-/* New + Paste keeps its dense-column footprint instead of shrink-wrapping */
-.new-paste-wrapper .section {
-  width: 14rem;
-  max-width: 100%;
 }
 
 /* New + Paste — two layer1 items inside one section bubble */
@@ -228,12 +221,6 @@
   flex-direction: row;
   flex-wrap: wrap;
   gap: 0;
-}
-
-/* In the flat (side-by-side) layout, context notes have no chip padding of
-   their own — keep neighbouring notes from running together. */
-.layer2-flat .item-context {
-  padding-right: 0.75rem;
 }
 
 .layer2-container {
