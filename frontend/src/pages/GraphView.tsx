@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
@@ -370,26 +370,50 @@ function GraphView() {
     setLocalItems(null)
   }, [path])
 
-  // Per-bubble compactness: apply CSS classes based on each section-wrapper's rendered width
-  useEffect(() => {
+  // Adaptive columns: use the fewest columns whose balanced height still fits
+  // the viewport, so bubbles get the widest layout available; degrades to the
+  // dense 14rem grid when content is tall. Also owns the per-bubble
+  // compactness classes (narrow wrappers stack their levels vertically).
+  useLayoutEffect(() => {
     const container = containerRef.current
     if (!container) return
-    const REM = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    const COMPACT_PX = 28 * REM  // < 28rem → L2 below L1
-    const STACK_PX = 20 * REM    // < 20rem → L3 below L2
+    const grid = container.querySelector<HTMLElement>('.items-grid')
+    if (!grid) return
 
-    const ro = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        const w = entry.contentRect.width
-        const el = entry.target as HTMLElement
-        el.classList.toggle('section-wrapper--compact', w < COMPACT_PX)
-        el.classList.toggle('section-wrapper--stack', w < STACK_PX)
+    const fitColumns = () => {
+      const REM = parseFloat(getComputedStyle(document.documentElement).fontSize)
+      const MIN_COL_PX = 14 * REM  // dense-grid floor, matches the CSS fallback
+      const COMPACT_PX = 28 * REM  // < 28rem → L2 below L1
+      const STACK_PX = 20 * REM    // < 20rem → L3 below L2
+
+      const width = grid.clientWidth
+      if (width <= 0) return
+      const gridTop = grid.getBoundingClientRect().top + window.scrollY
+      // Keep content clear of the fixed breadcrumb/buttons zone at the bottom
+      const available = window.innerHeight - gridTop - (72 + 2.5 * REM)
+      const maxCols = Math.max(1, Math.floor(width / MIN_COL_PX))
+      const wrappers = grid.querySelectorAll<HTMLElement>('.section-wrapper')
+
+      for (let n = 1; n <= maxCols; n++) {
+        // Compactness must be set before measuring: it changes bubble heights
+        const wrapperWidth = width / n - 4 // 2px wrapper margin per side
+        wrappers.forEach(el => {
+          el.classList.toggle('section-wrapper--compact', wrapperWidth < COMPACT_PX)
+          el.classList.toggle('section-wrapper--stack', wrapperWidth < STACK_PX)
+        })
+        grid.style.columnWidth = 'auto'
+        grid.style.columnCount = String(n)
+        if (grid.scrollHeight <= available) break
       }
-    })
+    }
 
-    container.querySelectorAll('.section-wrapper').forEach(el => ro.observe(el))
+    fitColumns()
+    // Re-fit when the grid reflows (window resize, zoom, content changes).
+    // fitColumns is idempotent, so the observer settles after one extra pass.
+    const ro = new ResizeObserver(fitColumns)
+    ro.observe(grid)
     return () => ro.disconnect()
-  }, [structure])
+  }, [rawItemsKeyString, localItems, localOrder, path, depth, viewMode, inlineEdit, inlineCreate])
   
   // The display items: always overlay the virtual overview from rawItems so it stays reactive
   const displayItems = useMemo(() => {
