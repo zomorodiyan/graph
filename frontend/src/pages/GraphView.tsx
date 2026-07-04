@@ -370,20 +370,20 @@ function GraphView() {
     setLocalItems(null)
   }, [path])
 
-  // Per-bubble compactness: apply CSS classes based on each section-wrapper's rendered width
+  // Per-bubble width rule: once a bubble is wide enough to show L1 beside a
+  // row of L2 blocks (each with its own row of L3 items), switch it to that
+  // layout via .section-wrapper--wide; narrower bubbles stay fully stacked.
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
     const REM = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    const COMPACT_PX = 28 * REM  // < 28rem → L2 below L1
-    const STACK_PX = 20 * REM    // < 20rem → L3 below L2
+    const WIDE_PX = 28 * REM
 
     const ro = new ResizeObserver(entries => {
       for (const entry of entries) {
         const w = entry.contentRect.width
         const el = entry.target as HTMLElement
-        el.classList.toggle('section-wrapper--compact', w < COMPACT_PX)
-        el.classList.toggle('section-wrapper--stack', w < STACK_PX)
+        el.classList.toggle('section-wrapper--wide', w >= WIDE_PX)
       }
     })
 
