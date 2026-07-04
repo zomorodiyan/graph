@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
 import InlineItemEditor from './InlineItemEditor'
 
@@ -88,24 +88,7 @@ function Section({
   const title = item.title || itemKey
 
   const sectionRef = useRef<HTMLDivElement>(null)
-  const layer1Ref = useRef<HTMLDivElement>(null)
-  const [l1Wide, setL1Wide] = useState(false)
 
-  useEffect(() => {
-    const measure = () => {
-      if (sectionRef.current && layer1Ref.current) {
-        // scrollWidth = intrinsic content width, unaffected by flex layout changes.
-        // Only observe sectionRef — observing layer1Ref causes a loop because
-        // applying section--wide-l1 changes layer1-container's offsetWidth,
-        // which would re-fire the observer and oscillate at boundary zoom levels.
-        setL1Wide(layer1Ref.current.scrollWidth > sectionRef.current.offsetWidth / 3)
-      }
-    }
-    const observer = new ResizeObserver(measure)
-    if (sectionRef.current) observer.observe(sectionRef.current)
-    return () => observer.disconnect()
-  }, [])
-  
   // Don't show edit buttons in time view, when pending, or for non-editable items
   const showEditButton = !isTimeView && !item.nonEditable
   const showLoading = isPending
@@ -113,11 +96,6 @@ function Section({
   // Get child items for layer2
   const children = item.children || {}
   const childEntries = Object.entries(children)
-
-  // Check if any level 2 child has its own children (level 3 items)
-  const hasAnyGrandchildren = childEntries.some(
-    ([, child]) => !!(child as StructureItem).children && Object.keys((child as StructureItem).children!).length > 0
-  )
 
   const [copied, setCopied] = useState(false)
   function handleCopy(e: React.MouseEvent) {
@@ -142,10 +120,10 @@ function Section({
   }
 
   return (
-    <div className={`section${l1Wide ? ' section--wide-l1' : ''}`} ref={sectionRef}>
+    <div className="section" ref={sectionRef}>
       <div className="section-body">
       {/* Layer 1 - Main category */}
-      <div className="layer1-container" ref={layer1Ref}>
+      <div className="layer1-container">
         <div className="layer1-wrapper" style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
           {showLoading && <span className="loading-spinner" title="Syncing...">⟳</span>}
           {editingPath === itemPath ? (
@@ -198,7 +176,7 @@ function Section({
       </div>
 
       {/* Layer 2 - Subcategories */}
-      {depth >= 2 && <div className={`layer2-section${(depth < 3 || !hasAnyGrandchildren) && childEntries.length > 0 ? ' layer2-flat' : ''}`}>
+      {depth >= 2 && <div className="layer2-section">
         {childEntries.map(([childKey, childItem], childIndex) => {
           const childPath = `${itemPath}.${childKey}`
           const childTitle = (childItem as StructureItem).title || childKey
