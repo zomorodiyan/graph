@@ -8,11 +8,11 @@ A personal knowledge graph editor that runs entirely in your browser — no serv
 
 ## What it does
 
-Organize anything as a hierarchy of named nodes. Each node can have a description, a progress value, and a due date. Navigate by drilling down through levels, or jump straight from a filtered view of all overdue or blocked items.
+Organize anything as a hierarchy of named nodes. Each node can have a description, a progress value, and a due date. Navigate by drilling down through levels, or jump straight to an Overview filtered by due date (Overdue / Today / This Week / This Month) or by progress (Not Started / In Progress / Done).
 
 ## Sync (optional)
 
-Your data lives in your browser. To back it up or use it across devices, connect a GitHub account:
+Your data lives in your browser. To back it up or use it across devices, connect with a GitHub token:
 
 1. Generate a token at [github.com/settings/tokens](https://github.com/settings/tokens/new?scopes=gist&description=Knowledge+Graph+Sync) — tick **gist** only
 2. Click the **↻** button in the app and paste the token
@@ -30,4 +30,4 @@ Same token on any device → same data. Save your token somewhere safe — you'l
 
 ## Tech
 
-React + TypeScript, deployed as a PWA to GitHub Pages via GitHub Actions on every push to `offline`.
+React + TypeScript, with React Query for data and React Router for navigation. Deployed as a PWA to GitHub Pages via GitHub Actions on every push to `main`.
