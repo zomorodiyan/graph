@@ -10,7 +10,7 @@ import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useSyncManager, loadSyncStatus, GraphSyncStatus, SyncAllResult } from '../hooks/useSyncManager'
 import Notification from '../components/Notification'
 import InlineGraphEditor from '../components/InlineGraphEditor'
-import { GRAPH_TEMPLATES, GraphTemplate } from '../data/graphTemplates'
+import { GRAPH_TEMPLATES, GraphTemplate, resolveTemplateDates } from '../data/graphTemplates'
 import './StructuresView.css'
 
 // Icons for different graph types (randomly assigned based on name hash)
@@ -125,7 +125,7 @@ function StructuresView() {
   const handleCreateFromTemplate = async (tpl: GraphTemplate) => {
     const graphName = generateUniqueName(tpl.name)
     try {
-      await createGraph(graphName, tpl.description, tpl.structure)
+      await createGraph(graphName, tpl.description, resolveTemplateDates(tpl.structure))
       await updateGraph(graphName, { display_name: tpl.displayName })
       showNotification(`Created "${tpl.displayName}"!`)
       setShowTemplates(false)

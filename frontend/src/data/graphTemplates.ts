@@ -1,8 +1,11 @@
 // Sample graphs offered to new users via the "New Graph" card's left zone.
 // `structure` is 2-space-indented text in the same format as clipboard paste:
 //   - a line is an item; nesting is by indentation (depth is free-form)
-//   - `progress: X/Y` (shown as "X%" when Y is 100, otherwise "X/Y") / `due: YYYY-MM-DD` are
+//   - `progress: X/Y` (shown as "X%" when Y is 100, otherwise "X/Y") are
 //     properties of the item above
+//   - `due: +Nd` is a deadline N days from the moment the template is instantiated
+//     (resolved to a real YYYY-MM-DD by `resolveTemplateDates`); a negative N is
+//     allowed for dates meant to already be overdue in the sample
 //   - a "quoted" line sets that item's context note
 // Each template flexes the features differently to suit its domain.
 
@@ -13,6 +16,17 @@ export interface GraphTemplate {
   structure: string
 }
 
+// Replaces `due: +Nd` with a real YYYY-MM-DD, N days from `now` (today by default).
+// Templates author dates as offsets so they never read as stale/overdue no matter
+// when a user creates the sample graph.
+export function resolveTemplateDates(structure: string, now: Date = new Date()): string {
+  return structure.replace(/due:\s*([+-]\d+)d\s*$/gm, (_match, offset: string) => {
+    const d = new Date(now)
+    d.setDate(d.getDate() + Number(offset))
+    return `due: ${d.toISOString().slice(0, 10)}`
+  })
+}
+
 export const GRAPH_TEMPLATES: GraphTemplate[] = [
   {
     name: 'work',
@@ -21,7 +35,7 @@ export const GRAPH_TEMPLATES: GraphTemplate[] = [
     structure: `Projects
   Process Simulation
     progress: 3/5
-    due: 2026-09-15
+    due: +67d
     "Parameters drive part quality"
   Multi-Material
     progress: 2/4
@@ -31,19 +45,19 @@ export const GRAPH_TEMPLATES: GraphTemplate[] = [
     "Sensor data feeds defect predictions"
 Advising
   Advisor Meeting
-    due: 2026-07-10
+    due: +0d
     "Bring blockers, not status"
   Lab Meeting
     progress: 3/4
   Committee
     Qualifying Exam Feedback
       progress: 60/100
-      due: 2026-08-15
+      due: +36d
       "Feeds the candidacy defense"
 Outreach
   Grant Proposal
     progress: 1/4
-    due: 2026-08-01
+    due: +22d
     Problem Statement
     Draft Narrative
       "Get advisor feedback first"
@@ -54,26 +68,26 @@ Goals
   Publications
     Laser Interaction
       progress: 1/3
-      due: 2026-09-15
+      due: +67d
       "Pick venue before drafting"
       Checkpoint 1
-        due: 2026-07-15
+        due: +5d
       Checkpoint 2
-        due: 2026-08-15
+        due: +36d
       Checkpoint 3
-        due: 2026-09-15
+        due: +67d
     Multi-Material Simulation
       progress: 1/3
-      due: 2026-09-15
+      due: +67d
       Checkpoint 1
-        due: 2026-07-15
+        due: +5d
       Checkpoint 2
-        due: 2026-08-15
+        due: +36d
       Checkpoint 3
-        due: 2026-09-15
+        due: +67d
   Candidacy Exam
     progress: 3/6
-    due: 2027-01-15
+    due: +189d
     "Track committee feedback"
   Internship
     progress: 1/5
@@ -118,7 +132,7 @@ Goals
           "Communication at Work, Discuss Seasonal Events, Talk About Date Plans"
       Speaking
         Weekly Tutor
-          due: 2026-07-05
+          due: +2d
     Chess
       progress: 6/20
       "Tactics puzzles most days"
@@ -163,11 +177,11 @@ Health
     Lower Back
       "Nags after long desk days"
       PT Checkup
-        due: 2026-07-25
+        due: +15d
   Metrics
     Weight
     Bloodwork
-      due: 2026-12-01
+      due: +144d
 Leisure
   Reading
     Sci-Fi
@@ -203,7 +217,7 @@ Daily Rhythm
     Commute
       "By bicycle"
       Bike Maintenance
-        due: 2026-07-20
+        due: +10d
         "Chain, brakes, tire pressure"
   Midday
     Lunch
@@ -331,13 +345,13 @@ Finances
   Goals
     Pay Off Loan
       progress: 1200/6000
-      due: 2027-01-01
+      due: +175d
 Admin
   Visa Status
-    due: 2026-09-01
+    due: +53d
     "Renew before it expires"
   ID Renewal
   Taxes
-    due: 2027-04-15`,
+    due: +279d`,
   },
 ]
