@@ -39,7 +39,6 @@ function GraphView() {
   // Enable swipe navigation (browser-like back/forward)
   useSwipeNavigation()
   const { toggleTheme } = useTheme()
-  const [depth, setDepth] = useState<0 | 1 | 2 | 3>(3)
   const [enabledDepths, setEnabledDepths] = useState<number[]>(() => {
     try {
       const saved = localStorage.getItem('enabled-depths')
@@ -49,6 +48,16 @@ function GraphView() {
       }
     } catch {}
     return [3, 2, 1, 0]
+  })
+  const [depth, setDepth] = useState<0 | 1 | 2 | 3>(() => {
+    try {
+      const saved = localStorage.getItem('active-depth')
+      if (saved !== null) {
+        const parsed = Number(saved)
+        if ([0, 1, 2, 3].includes(parsed) && enabledDepths.includes(parsed)) return parsed as 0 | 1 | 2 | 3
+      }
+    } catch {}
+    return (enabledDepths[0] ?? 3) as 0 | 1 | 2 | 3
   })
   const [showDepthPicker, setShowDepthPicker] = useState(false)
   const depthPickerRef = useRef<HTMLDivElement>(null)
@@ -70,6 +79,11 @@ function GraphView() {
   useEffect(() => {
     localStorage.setItem('enabled-depths', JSON.stringify(enabledDepths))
   }, [enabledDepths])
+
+  // Persist active depth so it's consistent across menu <-> graph navigation
+  useEffect(() => {
+    localStorage.setItem('active-depth', String(depth))
+  }, [depth])
 
   // Close depth picker on outside click
   useEffect(() => {
