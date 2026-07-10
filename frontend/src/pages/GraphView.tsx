@@ -63,7 +63,13 @@ function GraphView() {
   const depthPickerRef = useRef<HTMLDivElement>(null)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isLongPress = useRef(false)
-  const [viewMode, setViewMode] = useState<'default' | 'context'>('context')
+  const [viewMode, setViewMode] = useState<'default' | 'context'>(() => {
+    try {
+      const saved = localStorage.getItem('active-view-mode')
+      if (saved === 'default' || saved === 'context') return saved
+    } catch {}
+    return 'context'
+  })
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
   const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
@@ -84,6 +90,11 @@ function GraphView() {
   useEffect(() => {
     localStorage.setItem('active-depth', String(depth))
   }, [depth])
+
+  // Persist context toggle so it's consistent across menu <-> graph navigation
+  useEffect(() => {
+    localStorage.setItem('active-view-mode', viewMode)
+  }, [viewMode])
 
   // Close depth picker on outside click
   useEffect(() => {
