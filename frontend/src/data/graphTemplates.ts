@@ -93,71 +93,29 @@ Goals
       progress: 15/100
       Section 1
         progress: 9/9
-        Order Food
-          progress: 3/3
-        Describe People
-          progress: 3/3
-        Introduce Yourself
-          progress: 3/3
-        Order Food and Drink
-          progress: 3/3
-        Talk About Countries
-          progress: 3/3
-        Ask for Directions
-          progress: 3/3
-        Describe Belongings
-          progress: 3/3
-        Talk About Neighbors
-          progress: 3/3
-        Tell Time
-          progress: 3/3
+        Lessons 1-5
+          progress: 15/15
+          "Order Food, Describe People, Introduce Yourself, Order Food and Drink, Talk About Countries"
+        Lessons 6-9
+          progress: 12/12
+          "Ask for Directions, Describe Belongings, Talk About Neighbors, Tell Time"
       Section 2
         progress: 15/30
-        Get Help When Traveling
-          progress: 3/3
-        Get to Know People
-          progress: 3/3
-        Describe Your Family
-          progress: 3/3
-        Talk About Hobbies
-          progress: 3/3
-        Describe Eating Habits
-          progress: 3/3
-        Shop for Clothes
-          progress: 3/3
-        Order Food and Drink
-          progress: 3/3
-        Use Present Tense Verbs
-          progress: 3/3
-        Get Around a Station
-          progress: 3/3
-        Describe Your Routine
-          progress: 3/3
-        Talk About Interests
-          progress: 3/3
-        Describe Your Home
-          progress: 3/3
-        Take Public Transit
-          progress: 3/3
-        Use Na-Adjectives
-          progress: 3/3
-        Get Emergency Help
-          progress: 3/3
-        Talk About Weather
-        Describe Your Family
-        Discuss Chores
-        Say What You Want to Do
-        Discuss a Family Visit
-        Order Pastries
-        Use Negative Verbs
-        Discuss Classes
-        Talk About Jobs
-        Get Around a Theme Park
-        Discuss Media
-        Communication at Work
-        Talk About Hobbies
-        Discuss Seasonal Events
-        Talk About Date Plans
+        Lessons 1-5
+          progress: 15/15
+          "Get Help When Traveling, Get to Know People, Describe Your Family, Talk About Hobbies, Describe Eating Habits"
+        Lessons 6-10
+          progress: 15/15
+          "Shop for Clothes, Order Food and Drink, Use Present Tense Verbs, Get Around a Station, Describe Your Routine"
+        Lessons 11-15
+          progress: 15/15
+          "Talk About Interests, Describe Your Home, Take Public Transit, Use Na-Adjectives, Get Emergency Help"
+        Lessons 16-20
+          "Talk About Weather, Discuss Chores, Say What You Want to Do, Discuss a Family Visit, Order Pastries"
+        Lessons 21-25
+          "Use Negative Verbs, Discuss Classes, Talk About Jobs, Get Around a Theme Park, Discuss Media"
+        Lessons 26-28
+          "Communication at Work, Discuss Seasonal Events, Talk About Date Plans"
       Speaking
         Weekly Tutor
           due: 2026-07-05
