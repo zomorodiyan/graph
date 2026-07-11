@@ -57,7 +57,7 @@
   font-size: 18px;
   color: var(--text-secondary);
   z-index: 999;
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
   opacity: 0.85;
   padding: 0.25rem 0.6rem;
   border-radius: 0.5rem;
