@@ -151,33 +151,61 @@ Goals
 Health
   Fitness
     progress: 4/7
-    Strength
-      Push
-        Bench Press
-          "3x5 @ 80kg, then deload"
-        Overhead Press
-      Pull
-        Deadlift
-          "1x5 @ 120kg"
-        Rows
-      Legs
-        Squat
-          progress: 70/100
     Cardio
-      Zone 2
-        "45 min, HR under 140"
-      Intervals
+      Run
+        "10 min"
+    Lower Back
+      progress: 60/100
+      "Recovering — nags after long desk days"
+      PT Checkup
+        due: +15d
+      Bird Dog
+      Dead Bug
+    Knee
+      Terminal Knee Extension
+      Step-Ups
+      Wall Sit
+    Shoulder
+      Face Pulls
+      Band Pull-Aparts
+      Scapular Push-Ups
+    General
+      Squat
+        progress: 70/100
+      Deadlift
+        "1x5 @ 120kg"
+      Bench Press
+        "3x5 @ 80kg, then deload"
   Nutrition
     Hydration
       "Target 2.5L per day"
+    Calories
+      "Target ~2325 kcal per day (155lb x 15 kcal/lb)"
+      Breakfast
+        "~580 kcal"
+      Lunch
+        "~815 kcal"
+      Dinner
+        "~700 kcal"
+      Snacks
+        "~230 kcal"
     Protein
+      "Target ~124g per day (155lb x 0.8g/lb)"
+      Breakfast
+        "~31g"
+      Lunch
+        "~43g"
+      Dinner
+        "~37g"
+      Snacks
+        "~13g"
+    Fiber
+      "Target ~30g per day"
+    Sugar & Processed Food
+      "Keep added sugar under 30g per day"
   Recovery
     Sleep
       "7-8 hours, consistent schedule"
-    Lower Back
-      "Nags after long desk days"
-      PT Checkup
-        due: +15d
   Metrics
     Weight
     Bloodwork
