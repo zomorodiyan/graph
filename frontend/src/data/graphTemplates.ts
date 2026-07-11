@@ -351,24 +351,33 @@ Finances
   Fixed Costs
     Rent
       progress: 950/2300
-      "Share of monthly income"
-    Utilities
-      progress: 135/150
+      "Share of total, utilities included"
     Insurance
-      progress: 110/110
+      progress: 55/110
+      "Share of total"
     Subscriptions
-      progress: 55/60
+      progress: 30/60
+      "Share of total"
+  Budgeted
+    Groceries
+      progress: 200/450
+    Dining Out
+      progress: 90/200
+    Transport
+      progress: 110/250
+    Clothes
+      progress: 0/115
   Investments
     Roth IRA
       progress: 600/6500
       "$50 per month"
     Emergency Fund
       progress: 3000/7500
-      "Lawyer, income gaps, health, gifts"
+      "$250 per month — lawyer, income gaps, health, gifts"
   Goals
     Pay Off Loan
-      progress: 1200/6000
-      due: +175d
+      progress: 0/12000
+      due: +1000d
 Admin
   Visa Status
     due: +53d
