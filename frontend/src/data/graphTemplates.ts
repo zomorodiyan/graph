@@ -136,9 +136,6 @@ Goals
     Chess
       progress: 6/20
       "Tactics puzzles most days"
-    Machine Learning
-      Fundamentals
-      Projects
   Queue
     Systems Design
     Photography
@@ -231,36 +228,34 @@ Leisure
       Severance
         progress: 6/9
     Games
-      Elden Ring
-        progress: 65/100
+      Hollow Knight: Silksong
+        progress: 60/100
+      Minecraft
     Documentaries
       Planet Earth
 Daily Rhythm
-  Morning
-    Wake 6am
-    Workout
-      "Alternate run and lift days"
-    Plan Day
-      Top 3 Tasks
-    Commute
-      "By bicycle"
-      Bike Maintenance
-        due: +10d
-        "Chain, brakes, tire pressure"
-  Midday
-    Lunch
-    Deep Work
-      "Phone in another room"
-  Evening
-    Cook
-    Family Time
-  Night
-    Wind Down
-      Read
-        "30 min, no screens"
-      Journal
-        "One good, one hard"
-    Sleep by 11pm
+  Wake 6am
+  Clean
+  Breakfast
+  Commute
+  Workout
+    "Alternate run and lift days"
+  Plan Day
+    Top 3 Tasks
+  Focus
+    "Phone in another room"
+  Lunch
+  Focus
+  Commute
+  Cook
+    "Wed, Fri"
+  Family Time
+  Wind Down
+    Read
+      "30 min, no screens"
+    Journal
+      "One good, one hard"
+  Sleep by 11pm
   Weekend
     Meal Prep
     Long Walk`,
