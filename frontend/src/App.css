@@ -87,8 +87,8 @@
 }
 
 /* Default (narrow) layout: L2 stacks below L1, L3 stacks below each L2.
-   Widened by .section-wrapper--wide below once the bubble has enough room to
-   show L1 beside a row of L2 blocks, each with its own row of L3 items. */
+   Widened via the @container rule below once the bubble has enough room to
+   show L1 beside the L2 column. */
 .section-body {
   display: flex;
   flex-direction: column;
@@ -845,6 +845,7 @@
 /* Section wrapper sizing — min-width is the wrapping floor */
 .section-wrapper {
   min-width: 14rem;
+  container-type: inline-size;
 }
 
 /* Pending item styles */
@@ -853,12 +854,13 @@
   pointer-events: none;
 }
 
-/* Single width rule (class applied by ResizeObserver in GraphView): once a
-   bubble is wide enough, lay L1 beside the L2 column instead of above it.
-   L2 items themselves always wrap into a row when they fit (see
+/* Once a bubble is wide enough, lay L1 beside the L2 column instead of
+   above it. L2 items themselves always wrap into a row when they fit (see
    .layer2-section), independent of this bubble-level L1/L2 swap. */
-.section-wrapper--wide .section-body {
-  flex-direction: row;
+@container (min-width: 28rem) {
+  .section-body {
+    flex-direction: row;
+  }
 }
 
 /* Inline item editing */

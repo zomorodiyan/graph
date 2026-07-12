@@ -79,8 +79,6 @@ function GraphView() {
   const reorderItem = useReorderItem(graphName)
   const createItem = useCreateItem(graphName)
   
-  const containerRef = useRef<HTMLDivElement>(null)
-
   // Persist enabled depths
   useEffect(() => {
     localStorage.setItem('enabled-depths', JSON.stringify(enabledDepths))
@@ -395,27 +393,6 @@ function GraphView() {
     setLocalItems(null)
   }, [path])
 
-  // Per-bubble width rule: once a bubble is wide enough to show L1 beside a
-  // row of L2 blocks (each with its own row of L3 items), switch it to that
-  // layout via .section-wrapper--wide; narrower bubbles stay fully stacked.
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    const REM = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    const WIDE_PX = 28 * REM
-
-    const ro = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        const w = entry.contentRect.width
-        const el = entry.target as HTMLElement
-        el.classList.toggle('section-wrapper--wide', w >= WIDE_PX)
-      }
-    })
-
-    container.querySelectorAll('.section-wrapper').forEach(el => ro.observe(el))
-    return () => ro.disconnect()
-  }, [structure])
-  
   // The display items: always overlay the virtual overview from rawItems so it stays reactive
   const displayItems = useMemo(() => {
     if (localItems) {
@@ -934,7 +911,7 @@ function GraphView() {
         </nav>
       )}
 
-      <div className="graph-container" ref={containerRef}>
+      <div className="graph-container">
         {/* Items grid — CSS columns for tight packing with no gaps */}
         <div className="items-grid">
         {/* New + Paste — top card (creates/pastes at the top of the list) */}
