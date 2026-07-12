@@ -227,9 +227,18 @@
 
 .layer2-container {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: flex-start;
   gap: 0;
+  container-type: inline-size;
+}
+
+/* Once there's enough room beside the L2 label for its L3 chips, lay them
+   out in the same row instead of stacking the L3 row below. */
+@container (min-width: 16rem) {
+  .layer2-container {
+    flex-direction: row;
+  }
 }
 
 .layer2-content {
