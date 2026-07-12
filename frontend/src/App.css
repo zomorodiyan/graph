@@ -231,20 +231,15 @@
   gap: 0;
 }
 
+/* L2 label beside its L3 chips when they fit; chips wrap onto their own
+   line(s) below the label when they don't, via flex-wrap (no width
+   measurement needed — same approach as .layer2-section's own wrapping). */
 .layer2-l3-frame {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 0;
-  container-type: inline-size;
-}
-
-/* Once there's enough room beside the L2 label for its L3 chips, lay them
-   out in the same row instead of stacking the L3 row below. */
-@container (min-width: 16rem) {
-  .layer2-l3-frame {
-    flex-direction: row;
-  }
 }
 
 .layer2-content {
