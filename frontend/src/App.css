@@ -220,7 +220,8 @@
 .layer2-section {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 0;
 }
 
@@ -853,15 +854,11 @@
 }
 
 /* Single width rule (class applied by ResizeObserver in GraphView): once a
-   bubble is wide enough, lay L1 beside a row of L2 blocks — each showing its
-   own title beside a row of its L3 items — instead of stacking everything. */
+   bubble is wide enough, lay L1 beside the L2 column instead of above it.
+   L2 items themselves always wrap into a row when they fit (see
+   .layer2-section), independent of this bubble-level L1/L2 swap. */
 .section-wrapper--wide .section-body {
   flex-direction: row;
-}
-
-.section-wrapper--wide .layer2-section {
-  flex-direction: row;
-  flex-wrap: wrap;
 }
 
 /* Inline item editing */
