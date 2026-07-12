@@ -1,37 +1,47 @@
 import { useEffect, useRef } from 'react'
 
+let nextModalId = 0
+
+// Marks whether *this* hook instance is the one that owns the current
+// top-of-stack history entry. Derived from window.history.state (not just an
+// internal ref) so React StrictMode's double-invoked effects, or remounts,
+// can never push a duplicate entry or desync from real browser history.
 export function useModalBackButton(isOpen: boolean, onClose: () => void) {
-  const modalOpenRef = useRef(false)
-  const ignoreNextCloseRef = useRef(false)
+  const modalIdRef = useRef<number | null>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
-    const handlePopState = () => {
-      if (!modalOpenRef.current) return
+    const handlePopState = (e: PopStateEvent) => {
+      const ownId = modalIdRef.current
+      if (ownId === null) return
+      const state = e.state as { modalId?: number } | null
+      if (state?.modalId === ownId) return
 
-      modalOpenRef.current = false
-      ignoreNextCloseRef.current = true
-      onClose()
+      modalIdRef.current = null
+      onCloseRef.current()
     }
 
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
-  }, [onClose])
+  }, [])
 
   useEffect(() => {
-    if (isOpen && !modalOpenRef.current) {
-      window.history.pushState({ modal: true }, '')
-      modalOpenRef.current = true
+    const currentState = window.history.state as { modalId?: number } | null
+
+    if (isOpen && modalIdRef.current === null) {
+      const id = nextModalId++
+      modalIdRef.current = id
+      window.history.pushState({ modalId: id }, '')
       return
     }
 
-    if (!isOpen && modalOpenRef.current) {
-      modalOpenRef.current = false
-      window.history.back()
-      return
-    }
-
-    if (!isOpen && ignoreNextCloseRef.current) {
-      ignoreNextCloseRef.current = false
+    if (!isOpen && modalIdRef.current !== null) {
+      const ownId = modalIdRef.current
+      modalIdRef.current = null
+      if (currentState?.modalId === ownId) {
+        window.history.back()
+      }
     }
   }, [isOpen])
 }
