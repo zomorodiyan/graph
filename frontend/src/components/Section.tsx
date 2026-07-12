@@ -191,119 +191,121 @@ function Section({
 
           return (
             <div key={childKey} className="layer2-container">
-              <div className="layer2-content">
-                <div className={`layer2-wrapper${childColorClass ? ' ' + childColorClass : ''}`}>
-                  {editingPath === childPath ? (
-                    <InlineItemEditor
-                      itemKey={childKey}
-                      item={childItem as StructureItem}
-                      onSave={(data) => onInlineSave?.(childPath, data)}
-                      onCancel={() => onInlineCancel?.()}
-                      onDelete={childEditable ? () => onInlineDelete?.(childPath) : undefined}
-                    />
-                  ) : (
-                    <>
-                      {childEditable && (
-                        <div
-                          className="item-edit-zone"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onEditClick(childPath, childTitle, childItem as StructureItem)
-                          }}
-                          title="Edit item"
-                        />
-                      )}
-                      <div className={`layer2${childColorClass ? ' ' + childColorClass : ''}`}>
-                        <span className="item-title" onClick={() => onItemClick(childPath, childHasChildren)}>
-                          {childTitle}
-                          {(childItem as StructureItem).due && (
-                            <span className={`item-due due-${getDueCategory((childItem as StructureItem).due)}`}>
-                              {formatDueDate((childItem as StructureItem).due!)}
-                            </span>
-                          )}
-                        </span>
+              <div className="layer2-l3-frame">
+                <div className="layer2-content">
+                  <div className={`layer2-wrapper${childColorClass ? ' ' + childColorClass : ''}`}>
+                    {editingPath === childPath ? (
+                      <InlineItemEditor
+                        itemKey={childKey}
+                        item={childItem as StructureItem}
+                        onSave={(data) => onInlineSave?.(childPath, data)}
+                        onCancel={() => onInlineCancel?.()}
+                        onDelete={childEditable ? () => onInlineDelete?.(childPath) : undefined}
+                      />
+                    ) : (
+                      <>
+                        {childEditable && (
+                          <div
+                            className="item-edit-zone"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onEditClick(childPath, childTitle, childItem as StructureItem)
+                            }}
+                            title="Edit item"
+                          />
+                        )}
+                        <div className={`layer2${childColorClass ? ' ' + childColorClass : ''}`}>
+                          <span className="item-title" onClick={() => onItemClick(childPath, childHasChildren)}>
+                            {childTitle}
+                            {(childItem as StructureItem).due && (
+                              <span className={`item-due due-${getDueCategory((childItem as StructureItem).due)}`}>
+                                {formatDueDate((childItem as StructureItem).due!)}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {/* Progress bar for layer2 */}
+                  {(childItem as StructureItem).progress !== undefined && (() => {
+                    const pi = parseProgress((childItem as StructureItem).progress)
+                    return pi ? (
+                      <div className="progress-bar">
+                        <div className={`progress-fill${l2Color ? ' bg-' + l2Color : ' bg-sky'}`} style={{ width: `${pi.pct}%` }} />
+                        <span className="progress-label">{formatProgressText((childItem as StructureItem).progress)}</span>
                       </div>
-                    </>
+                    ) : null
+                  })()}
+                  {/* Context for layer2 */}
+                  {showContext && (childItem as StructureItem).context && (
+                    <div className="item-context">{(childItem as StructureItem).context}</div>
                   )}
                 </div>
-                {/* Progress bar for layer2 */}
-                {(childItem as StructureItem).progress !== undefined && (() => {
-                  const pi = parseProgress((childItem as StructureItem).progress)
-                  return pi ? (
-                    <div className="progress-bar">
-                      <div className={`progress-fill${l2Color ? ' bg-' + l2Color : ' bg-sky'}`} style={{ width: `${pi.pct}%` }} />
-                      <span className="progress-label">{formatProgressText((childItem as StructureItem).progress)}</span>
-                    </div>
-                  ) : null
-                })()}
-                {/* Context for layer2 */}
-                {showContext && (childItem as StructureItem).context && (
-                  <div className="item-context">{(childItem as StructureItem).context}</div>
-                )}
-              </div>
 
-              {/* Layer 3 - Items */}
-              {depth >= 3 && Object.keys(grandchildren).length > 0 && (
-                <div className="layer3-container">
-                  {Object.entries(grandchildren).map(([grandKey, grandItem]) => {
-                    const grandPath = `${childPath}.${grandKey}`
-                    const grandTitle = (grandItem as StructureItem).title || grandKey
-                    const grandHasChildren = !!(grandItem as StructureItem).children
-                    // Check if this grandchild item is editable
-                    const grandEditable = showEditButton && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
+                {/* Layer 3 - Items */}
+                {depth >= 3 && Object.keys(grandchildren).length > 0 && (
+                  <div className="layer3-container">
+                    {Object.entries(grandchildren).map(([grandKey, grandItem]) => {
+                      const grandPath = `${childPath}.${grandKey}`
+                      const grandTitle = (grandItem as StructureItem).title || grandKey
+                      const grandHasChildren = !!(grandItem as StructureItem).children
+                      // Check if this grandchild item is editable
+                      const grandEditable = showEditButton && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
 
-                    return (
-                      <div key={grandKey}>
-                        <div className={`layer3-wrapper${grandColorClass ? ' ' + grandColorClass : ''}`}>
-                          {editingPath === grandPath ? (
-                            <InlineItemEditor
-                              itemKey={grandKey}
-                              item={grandItem as StructureItem}
-                              onSave={(data) => onInlineSave?.(grandPath, data)}
-                              onCancel={() => onInlineCancel?.()}
-                              onDelete={grandEditable ? () => onInlineDelete?.(grandPath) : undefined}
-                            />
-                          ) : (
-                            <>
-                              {grandEditable && (
-                                <div
-                                  className="item-edit-zone"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    onEditClick(grandPath, grandTitle, grandItem as StructureItem)
-                                  }}
-                                  title="Edit item"
-                                />
-                              )}
-                              <div className={`layer3-item${grandColorClass ? ' ' + grandColorClass : ''}`}>
-                                <span className="item-title" onClick={() => onItemClick(grandPath, grandHasChildren)}>
-                                  {grandTitle}
-                                  {formatProgressText((grandItem as StructureItem).progress) && (
-                                    <span style={{ marginLeft: '0.375rem', opacity: 0.6, fontSize: '0.6875rem' }}>
-                                      {formatProgressText((grandItem as StructureItem).progress)}
-                                    </span>
-                                  )}
-                                  {(grandItem as StructureItem).due && (
-                                    <span className={`item-due due-${getDueCategory((grandItem as StructureItem).due)}`}>
-                                      {formatDueDate((grandItem as StructureItem).due!)}
-                                    </span>
-                                  )}
-                                </span>
-                              </div>
-                            </>
+                      return (
+                        <div key={grandKey}>
+                          <div className={`layer3-wrapper${grandColorClass ? ' ' + grandColorClass : ''}`}>
+                            {editingPath === grandPath ? (
+                              <InlineItemEditor
+                                itemKey={grandKey}
+                                item={grandItem as StructureItem}
+                                onSave={(data) => onInlineSave?.(grandPath, data)}
+                                onCancel={() => onInlineCancel?.()}
+                                onDelete={grandEditable ? () => onInlineDelete?.(grandPath) : undefined}
+                              />
+                            ) : (
+                              <>
+                                {grandEditable && (
+                                  <div
+                                    className="item-edit-zone"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      onEditClick(grandPath, grandTitle, grandItem as StructureItem)
+                                    }}
+                                    title="Edit item"
+                                  />
+                                )}
+                                <div className={`layer3-item${grandColorClass ? ' ' + grandColorClass : ''}`}>
+                                  <span className="item-title" onClick={() => onItemClick(grandPath, grandHasChildren)}>
+                                    {grandTitle}
+                                    {formatProgressText((grandItem as StructureItem).progress) && (
+                                      <span style={{ marginLeft: '0.375rem', opacity: 0.6, fontSize: '0.6875rem' }}>
+                                        {formatProgressText((grandItem as StructureItem).progress)}
+                                      </span>
+                                    )}
+                                    {(grandItem as StructureItem).due && (
+                                      <span className={`item-due due-${getDueCategory((grandItem as StructureItem).due)}`}>
+                                        {formatDueDate((grandItem as StructureItem).due!)}
+                                      </span>
+                                    )}
+                                  </span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                          {/* Context for layer3 */}
+                          {showContext && (grandItem as StructureItem).context && (
+                            <div className="item-context" style={{ marginLeft: '0.5rem' }}>
+                              {(grandItem as StructureItem).context}
+                            </div>
                           )}
                         </div>
-                        {/* Context for layer3 */}
-                        {showContext && (grandItem as StructureItem).context && (
-                          <div className="item-context" style={{ marginLeft: '0.5rem' }}>
-                            {(grandItem as StructureItem).context}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )
         })}
