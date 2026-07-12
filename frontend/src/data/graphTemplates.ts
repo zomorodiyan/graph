@@ -29,8 +29,8 @@ export function resolveTemplateDates(structure: string, now: Date = new Date()):
 
 export const GRAPH_TEMPLATES: GraphTemplate[] = [
   {
-    name: 'work',
-    displayName: 'Work',
+    name: 'career',
+    displayName: 'Career',
     description: 'Research, advising, growth',
     structure: `Projects
   Process Simulation
@@ -98,10 +98,29 @@ Goals
     "Start search a year out"`,
   },
   {
-    name: 'self',
-    displayName: 'Self',
-    description: 'Practice, fitness, daily rhythm',
-    structure: `Practice
+    name: 'personal',
+    displayName: 'Personal',
+    description: 'People, health, home, downtime',
+    structure: `People
+  Family
+    Parents
+      "Call every Sunday"
+    Siblings
+      Sister
+        "Birthday — Mar 12"
+      Brother
+  Friends
+    Close
+      Alex
+      Sam
+    College
+    Work
+  Nurture
+    Reach Out
+      "It's been almost a year"
+    Birthdays
+    Thank Yous
+Practice
   Skills
     Japanese
       progress: 15/100
@@ -207,82 +226,6 @@ Health
     Weight
     Bloodwork
       due: +144d
-Leisure
-  Reading
-    Sci-Fi
-  Watchlist
-    Anime
-      Watching
-        One Piece
-          progress: 1085/1120
-          "Egghead arc, no spoilers"
-        Attack on Titan
-          progress: 4/4
-          "Rewatching before final chapter"
-      Queue
-        Frieren
-    Movies
-      Oppenheimer
-        "Recommended by Sam"
-    Shows
-      Severance
-        progress: 6/9
-    Games
-      Hollow Knight: Silksong
-        progress: 60/100
-      Minecraft
-    Documentaries
-      Planet Earth
-Daily Rhythm
-  Wake 6am
-  Clean
-  Breakfast
-  Commute
-  Workout
-    "Alternate run and lift days"
-  Plan Day
-    Top 3 Tasks
-  Focus
-    "Phone in another room"
-  Lunch
-  Focus
-  Commute
-  Cook
-    "Wed, Fri"
-  Family Time
-  Wind Down
-    Read
-      "30 min, no screens"
-    Journal
-      "One good, one hard"
-  Sleep by 11pm
-  Weekend
-    Meal Prep
-    Long Walk`,
-  },
-  {
-    name: 'home',
-    displayName: 'Home',
-    description: 'House, meals, people',
-    structure: `Relationships
-  Family
-    Parents
-      "Call every Sunday"
-    Siblings
-      Sister
-        "Birthday — Mar 12"
-      Brother
-  Friends
-    Close
-      Alex
-      Sam
-    College
-    Work
-  Nurture
-    Reach Out
-      "It's been almost a year"
-    Birthdays
-    Thank Yous
 Kitchen
   Recipes
     Weeknight
@@ -347,11 +290,39 @@ Chores
   Kitchen
     Clean
     Dishes
+Leisure
+  Reading
+    Sci-Fi
+  Watchlist
+    Anime
+      Watching
+        One Piece
+          progress: 1085/1120
+          "Egghead arc, no spoilers"
+        Attack on Titan
+          progress: 4/4
+          "Rewatching before final chapter"
+      Queue
+        Frieren
+    Movies
+      Oppenheimer
+        "Recommended by Sam"
+    Shows
+      Severance
+        progress: 6/9
+    Games
+      Hollow Knight: Silksong
+        progress: 60/100
+      Minecraft
+    Documentaries
+      Planet Earth
 Finances
+  progress: 1640/2300
   Fixed Costs
+    progress: 1035/1120
     Rent
-      progress: 950/2300
-      "Share of total, utilities included"
+      progress: 950/950
+      "Paid, my share of total"
     Insurance
       progress: 55/110
       "Share of total"
@@ -359,25 +330,68 @@ Finances
       progress: 30/60
       "Share of total"
   Budgeted
+    progress: 425/880
     Groceries
-      progress: 200/450
+      progress: 200/400
     Dining Out
-      progress: 90/200
+      progress: 60/90
     Transport
-      progress: 110/250
+      progress: 65/105
     Clothes
-      progress: 0/115
+      progress: 0/80
+    Household Supplies
+      progress: 20/40
+      "Cleaning, bathroom"
+    Office Supplies
+      progress: 10/25
+      "Pens, paper, small gear"
+    Personal Care
+      progress: 30/60
+    Health/Medical
+      progress: 40/80
+      "Copays, prescriptions"
   Investments
+    progress: 300/300
     Roth IRA
-      progress: 600/6500
+      progress: 50/50
       "$50 per month"
     Emergency Fund
-      progress: 3000/7500
+      progress: 250/250
       "$250 per month — lawyer, income gaps, health, gifts"
   Goals
     Pay Off Loan
       progress: 0/12000
       due: +1000d
+Daily Rhythm
+  Wake 6am
+  Clean
+  Breakfast
+  Commute
+  Workout
+    "Alternate run and lift days"
+  Plan Day
+    Top 3 Tasks
+  Focus
+    "Phone in another room"
+  Lunch
+  Focus
+  Commute
+  Cook
+    "Wed, Fri"
+  Family Time
+  Wind Down
+    Read
+      "30 min, no screens"
+    Journal
+      "One good, one hard"
+  Sleep by 11pm
+  Weekend
+    Meal Prep
+    Long Walk
+    Grocery Run
+      "Restock pantry, produce for the week"
+    Review Budget
+      "Check spend against Budgeted categories"
 Admin
   Visa Status
     due: +53d
