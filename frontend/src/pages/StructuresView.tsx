@@ -152,22 +152,8 @@ function StructuresView() {
   const handleCopyGraph = async (e: React.MouseEvent, name: string) => {
     e.stopPropagation()
     try {
-      const raw = await fetchStructureText(name)
-      const lines = raw.split('\n')
-      const structureIdx = lines.findIndex(l => l === 'structure')
-      const bodyLines = structureIdx >= 0 ? lines.slice(structureIdx + 1) : lines
-      const text = bodyLines
-        .map(l => {
-          const deindented = l.startsWith('  ') ? l.slice(2) : l
-          const ctxMatch = deindented.match(/^(\s*)context: (.+)$/)
-          if (ctxMatch) {
-            const escaped = ctxMatch[2].replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-            return `${ctxMatch[1]}"${escaped}"`
-          }
-          return deindented
-        })
-        .join('\n')
-        .trimEnd()
+      // serializeStructure output is already the canonical clipboard format
+      const text = (await fetchStructureText(name)).trimEnd()
       await navigator.clipboard.writeText(text)
       setCopiedGraph(name)
       setTimeout(() => setCopiedGraph(null), 2000)
