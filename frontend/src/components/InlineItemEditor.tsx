@@ -7,9 +7,12 @@ interface InlineItemEditorProps {
   onSave: (data: UpdatePayload) => void
   onCancel: () => void
   onDelete?: () => void
+  // Create mode: prefill the title (preselected so typing replaces it);
+  // committing without edits saves an item with this name
+  defaultName?: string
 }
 
-function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineItemEditorProps) {
+function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultName }: InlineItemEditorProps) {
   const initialName = item.title || itemKey
   const initialDue = item.due || ''
   const initialContext = item.context || ''
@@ -26,7 +29,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
     return { initDone: '', initTotal: '', initialProgressStr: '' }
   })()
 
-  const [name, setName] = useState(initialName)
+  const [name, setName] = useState(defaultName ?? initialName)
   const [progressDone, setProgressDone] = useState(initDone)
   const [progressTotal, setProgressTotal] = useState(initTotal)
   const [due, setDue] = useState(initialDue)
@@ -125,6 +128,17 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete }: InlineI
       cancel()
     }
   }
+
+  // Preselect the default name so typing immediately replaces it
+  useEffect(() => {
+    if (defaultName) {
+      requestAnimationFrame(() => {
+        inputRef.current?.focus()
+        inputRef.current?.select()
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent | TouchEvent) => {

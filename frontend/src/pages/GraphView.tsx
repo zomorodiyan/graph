@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
@@ -13,6 +13,9 @@ import { loadViewPreferences } from '../utils/viewPreferences'
 
 // Color assignment based on index
 const COLORS = ['sky', 'indigo', 'fuchsia']
+
+// View depths — 3 levels, 2 levels, Raw (0) — each gets its own button
+const DEPTHS = [3, 2, 0] as const
 
 function GraphView() {
   const location = useLocation()
@@ -39,30 +42,16 @@ function GraphView() {
   // Enable swipe navigation (browser-like back/forward)
   useSwipeNavigation()
   const { toggleTheme } = useTheme()
-  const [enabledDepths, setEnabledDepths] = useState<number[]>(() => {
-    try {
-      const saved = localStorage.getItem('enabled-depths')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed
-      }
-    } catch {}
-    return [3, 2, 1, 0]
-  })
-  const [depth, setDepth] = useState<0 | 1 | 2 | 3>(() => {
+  const [depth, setDepth] = useState<0 | 2 | 3>(() => {
     try {
       const saved = localStorage.getItem('active-depth')
       if (saved !== null) {
         const parsed = Number(saved)
-        if ([0, 1, 2, 3].includes(parsed) && enabledDepths.includes(parsed)) return parsed as 0 | 1 | 2 | 3
+        if ([0, 2, 3].includes(parsed)) return parsed as 0 | 2 | 3
       }
     } catch {}
-    return (enabledDepths[0] ?? 3) as 0 | 1 | 2 | 3
+    return 3
   })
-  const [showDepthPicker, setShowDepthPicker] = useState(false)
-  const depthPickerRef = useRef<HTMLDivElement>(null)
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isLongPress = useRef(false)
   const [viewMode, setViewMode] = useState<'default' | 'context'>(() => {
     try {
       const saved = localStorage.getItem('active-view-mode')
@@ -79,11 +68,6 @@ function GraphView() {
   const reorderItem = useReorderItem(graphName)
   const createItem = useCreateItem(graphName)
   
-  // Persist enabled depths
-  useEffect(() => {
-    localStorage.setItem('enabled-depths', JSON.stringify(enabledDepths))
-  }, [enabledDepths])
-
   // Persist active depth so it's consistent across menu <-> graph navigation
   useEffect(() => {
     localStorage.setItem('active-depth', String(depth))
@@ -93,61 +77,6 @@ function GraphView() {
   useEffect(() => {
     localStorage.setItem('active-view-mode', viewMode)
   }, [viewMode])
-
-  // Close depth picker on outside click
-  useEffect(() => {
-    if (!showDepthPicker) return
-    const handleOutside = (e: PointerEvent) => {
-      if (depthPickerRef.current && !depthPickerRef.current.contains(e.target as Node)) {
-        setShowDepthPicker(false)
-      }
-    }
-    document.addEventListener('pointerdown', handleOutside)
-    return () => document.removeEventListener('pointerdown', handleOutside)
-  }, [showDepthPicker])
-
-  const cycleDepth = () => {
-    const sorted = [...enabledDepths].sort((a, b) => b - a) as (0 | 1 | 2 | 3)[]
-    const idx = sorted.indexOf(depth)
-    setDepth(sorted[idx === -1 ? 0 : (idx + 1) % sorted.length])
-  }
-
-  const toggleEnabledDepth = (d: number) => {
-    if (enabledDepths.includes(d) && enabledDepths.length === 1) return
-    const next = enabledDepths.includes(d)
-      ? enabledDepths.filter(x => x !== d)
-      : [...enabledDepths, d]
-    setEnabledDepths(next)
-    if (!next.includes(depth)) {
-      const sorted = [...next].sort((a, b) => b - a) as (0 | 1 | 2 | 3)[]
-      setDepth(sorted[0])
-    }
-  }
-
-  const handleDepthPointerDown = () => {
-    isLongPress.current = false
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true
-      setShowDepthPicker(true)
-    }, 500)
-  }
-
-  const handleDepthPointerUp = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current)
-      longPressTimer.current = null
-    }
-    if (!isLongPress.current) cycleDepth()
-    isLongPress.current = false
-  }
-
-  const handleDepthPointerCancel = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current)
-      longPressTimer.current = null
-    }
-    isLongPress.current = false
-  }
 
   // Drag state
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
@@ -165,16 +94,20 @@ function GraphView() {
   // Inline create state - 'top' or 'bottom' determines where the editor appears and where the item lands
   const [inlineCreate, setInlineCreate] = useState<'top' | 'bottom' | false>(false)
 
+  // Sub-item create state — the parent path whose "+" chip is currently an editor
+  const [subCreate, setSubCreate] = useState<string | null>(null)
+
   // Inline edit state for item editing
   const [inlineEdit, setInlineEdit] = useState<{ path: string } | null>(null)
-  
+
   const [notification, setNotification] = useState<{
     message: string
     type: 'success' | 'error' | 'syncing'
   } | null>(null)
 
-  useModalBackButton(!!inlineCreate || Boolean(inlineEdit), () => {
+  useModalBackButton(!!inlineCreate || Boolean(inlineEdit) || !!subCreate, () => {
     if (inlineEdit) { setInlineEdit(null); return }
+    if (subCreate) { setSubCreate(null); return }
     setInlineCreate(false)
   })
 
@@ -451,8 +384,8 @@ function GraphView() {
     return crumbs
   }
 
-  // Handle item click - navigate to item page (always, even without children)
-  const handleItemClick = (itemPath: string, _hasChildren: boolean) => {
+  // Handle item click - navigate to item page (only when it has children)
+  const handleItemClick = (itemPath: string, hasChildren: boolean) => {
     // For time/progress view items that have an originalPath, navigate to the parent location
     const currentItems = getCurrentItems()
     
@@ -477,9 +410,10 @@ function GraphView() {
       // Go to the parent path (remove the item name itself)
       const parentPath = originalParts.slice(0, -1).join('.')
       navigate(buildPath(parentPath || ''), { replace: true })
-    } else {
+    } else if (hasChildren) {
       navigate(buildPath(itemPath), { replace: true })
     }
+    // Childless items don't navigate — sub-items are added via their "+" chip
   }
 
   // Handle edit click
@@ -594,6 +528,73 @@ function GraphView() {
         }
       )
     }
+  }
+
+  // Handle "+" chip click — open the sub-create editor under this parent
+  const handleSubCreateStart = (parentPath: string) => {
+    setInlineEdit(null)
+    setInlineCreate(false)
+    setSubCreate(parentPath)
+  }
+
+  // Handle save from a "+" chip editor — creates a child under parentPath
+  const handleSubCreateSave = (parentPath: string, data: UpdatePayload) => {
+    setSubCreate(null)
+    if (!data.name) return
+
+    const normalizedName = data.name.toLowerCase().replace(/ /g, '_')
+    const newItem: StructureItem = {
+      title: data.name,
+      ...(data.progress && { progress: data.progress }),
+      ...(data.context && { context: data.context }),
+      ...(data.due && { due: data.due }),
+    }
+
+    const currentPathParts = path ? path.split('.') : []
+    const relativeParts = parentPath.split('.').slice(currentPathParts.length)
+
+    // Insert (or remove, for rollback) the child at the parent's position in localItems
+    const withChild = (items: Record<string, StructureItem>, insert: boolean): Record<string, StructureItem> => {
+      const newItems = JSON.parse(JSON.stringify(items))
+      let target = newItems
+      for (let i = 0; i < relativeParts.length; i++) {
+        const key = relativeParts[i]
+        if (!target[key]) return items
+        if (i === relativeParts.length - 1) {
+          if (!target[key].children) target[key].children = {}
+          if (insert) target[key].children[normalizedName] = newItem
+          else delete target[key].children[normalizedName]
+        } else {
+          target = target[key].children || target[key]
+        }
+      }
+      return newItems
+    }
+
+    // IMMEDIATELY update local state for instant visual feedback
+    setLocalItems(prev => prev ? withChild(prev, true) : prev)
+
+    const newItemPath = `${parentPath}.${normalizedName}`
+    setPendingItems(prev => new Set(prev).add(newItemPath))
+
+    // Then sync to server in background
+    createItem.mutate(
+      { parentPath, data },
+      {
+        onSuccess: () => showNotification('Created!'),
+        onError: () => {
+          showNotification('Failed to create', 'error')
+          setLocalItems(prev => prev ? withChild(prev, false) : prev)
+        },
+        onSettled: () => {
+          setPendingItems(prev => {
+            const next = new Set(prev)
+            next.delete(newItemPath)
+            return next
+          })
+        }
+      }
+    )
   }
 
   // Apply edit mutation with optimistic local update
@@ -862,31 +863,17 @@ function GraphView() {
 
   return (
     <>
-      {!inlineEdit && !inlineCreate && (
+      {!inlineEdit && !inlineCreate && !subCreate && (
         <div className="top-buttons">
           <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
-          <div ref={depthPickerRef} className={`depth-wrapper${showDepthPicker ? ' depth-wrapper--open' : ''}`}>
-            {showDepthPicker ? (
-              <div className="depth-picker">
-                {([3, 2, 1, 0] as const).map(d => (
-                  <button
-                    key={d}
-                    className={`depth-toggle depth-picker-btn${enabledDepths.includes(d) ? ' enabled' : ''}`}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={() => toggleEnabledDepth(d)}
-                  >{d}</button>
-                ))}
-              </div>
-            ) : (
-              <button
-                className="depth-toggle"
-                onPointerDown={handleDepthPointerDown}
-                onPointerUp={handleDepthPointerUp}
-                onPointerCancel={handleDepthPointerCancel}
-                title={depth === 3 ? 'Showing 3 levels — hold to configure' : depth === 2 ? 'Showing 2 levels — hold to configure' : depth === 1 ? 'Showing 1 level — hold to configure' : 'Raw view — hold to configure'}
-              >{depth}</button>
-            )}
-          </div>
+          {DEPTHS.map(d => (
+            <button
+              key={d}
+              className={`depth-toggle${depth === d ? ' active' : ''}`}
+              onClick={() => setDepth(d)}
+              title={d === 0 ? 'Raw view' : `Show ${d} levels`}
+            >{d === 0 ? 'R' : d}</button>
+          ))}
           <button
             className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}`}
             onClick={() => setViewMode(m => m === 'context' ? 'default' : 'context')}
@@ -896,7 +883,7 @@ function GraphView() {
       )}
 
       {/* Breadcrumb — fixed below bottom buttons */}
-      {!inlineEdit && !inlineCreate && (
+      {!inlineEdit && !inlineCreate && !subCreate && (
         <nav className="breadcrumb">
           {breadcrumb.map((crumb, i) => (
             <span key={crumb.path}>
@@ -946,7 +933,7 @@ function GraphView() {
           if (!item) return null
           const itemPath = path ? `${path}.${key}` : key
           const isPending = pendingItems.has(itemPath)
-          const canDrag = !isPending && !isVirtualView && !inlineEdit
+          const canDrag = !isPending && !isVirtualView && !inlineEdit && !subCreate
           
           return (
             <div
@@ -991,6 +978,10 @@ function GraphView() {
                 onInlineCancel={() => setInlineEdit(null)}
                 onInlineDelete={handleDelete}
                 onCopyClick={handleCopyItem}
+                creatingPath={subCreate}
+                onSubCreateStart={handleSubCreateStart}
+                onSubCreateSave={handleSubCreateSave}
+                onSubCreateCancel={() => setSubCreate(null)}
                 isPending={isPending}
                 isTimeView={isVirtualView}
                 showContext={viewMode === 'context'}

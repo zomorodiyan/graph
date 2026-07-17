@@ -165,8 +165,9 @@ function parseIndentedText(text: string): Record<string, StructureItem> {
       continue
     }
 
-    // Known property line
-    const propMatch = trimmed.match(/^(progress|due):\s*(.+)$/)
+    // Known property line ("context:" is the legacy unquoted form — older
+    // clients pushed it to the Gist, so keep accepting it on pull)
+    const propMatch = trimmed.match(/^(progress|due|context):\s*(.+)$/)
     if (propMatch) {
       // Find deepest frame with indent < this line's indent and a lastItem
       for (let i = stack.length - 1; i >= 0; i--) {
@@ -177,6 +178,7 @@ function parseIndentedText(text: string): Record<string, StructureItem> {
             const val = v.trim()
             item.progress = /^\d+\/\d+$/.test(val) ? val : `${Number(val)}/100`
           } else if (k === 'due') item.due = v
+          else if (k === 'context') item.context = v
           break
         }
       }
@@ -206,7 +208,10 @@ export function serializeStructure(items: Record<string, StructureItem>, indent 
   for (const [key, item] of Object.entries(items)) {
     out += `${pad}${key}\n`
     if (item.progress !== undefined) out += `${pad}  progress: ${item.progress}\n`
-    if (item.context) out += `${pad}  context: ${item.context}\n`
+    if (item.context) {
+      const escaped = item.context.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
+      out += `${pad}  "${escaped}"\n`
+    }
     if (item.due)     out += `${pad}  due: ${item.due}\n`
     if (item.children && Object.keys(item.children).length)
       out += serializeStructure(item.children, indent + 1)
@@ -309,7 +314,10 @@ export async function createItem(parentPath: string, data: UpdatePayload, graphN
   const container = parentPath ? getContainer(s.structure, parentPath) : s.structure
   if (!container) throw new Error(`Parent not found: ${parentPath}`)
 
-  const key = data.name.toLowerCase().replace(/ /g, '_')
+  // Suffix duplicate keys (like paste does) instead of overwriting an existing item
+  const baseKey = data.name.toLowerCase().replace(/ /g, '_')
+  let key = baseKey, n = 2
+  while (key in container) key = `${baseKey}_${n++}`
   const item: StructureItem = {
     title: data.name,
     children: {},
