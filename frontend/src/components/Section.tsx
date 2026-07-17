@@ -16,6 +16,11 @@ interface SectionProps {
   onInlineCancel?: () => void
   onInlineDelete?: (path: string) => void
   onCopyClick?: (itemKey: string, item: StructureItem) => void
+  // "+" chip sub-item creation: parentPath currently being created under, and its callbacks
+  creatingPath?: string | null
+  onSubCreateStart?: (parentPath: string) => void
+  onSubCreateSave?: (parentPath: string, data: UpdatePayload) => void
+  onSubCreateCancel?: () => void
   isPending?: boolean
   isTimeView?: boolean
   showContext?: boolean
@@ -76,6 +81,10 @@ function Section({
   onInlineCancel,
   onInlineDelete,
   onCopyClick,
+  creatingPath = null,
+  onSubCreateStart,
+  onSubCreateSave,
+  onSubCreateCancel,
   isPending = false,
   isTimeView = false,
   showContext = true,
@@ -180,8 +189,8 @@ function Section({
         {childEntries.map(([childKey, childItem], childIndex) => {
           const childPath = `${itemPath}.${childKey}`
           const childTitle = (childItem as StructureItem).title || childKey
-          const childHasChildren = !!(childItem as StructureItem).children
           const grandchildren = (childItem as StructureItem).children || {}
+          const childHasChildren = Object.keys(grandchildren).length > 0
           // Check if this child item is editable
           const childEditable = showEditButton && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
           const l2Color = L2_COLORS[childIndex % 2]
@@ -244,12 +253,12 @@ function Section({
                 </div>
 
                 {/* Layer 3 - Items */}
-                {depth >= 3 && Object.keys(grandchildren).length > 0 && (
+                {depth >= 3 && (Object.keys(grandchildren).length > 0 || (childEditable && !!onSubCreateStart)) && (
                   <div className="layer3-container">
                     {Object.entries(grandchildren).map(([grandKey, grandItem]) => {
                       const grandPath = `${childPath}.${grandKey}`
                       const grandTitle = (grandItem as StructureItem).title || grandKey
-                      const grandHasChildren = !!(grandItem as StructureItem).children
+                      const grandHasChildren = Object.keys((grandItem as StructureItem).children || {}).length > 0
                       // Check if this grandchild item is editable
                       const grandEditable = showEditButton && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
 
@@ -303,12 +312,58 @@ function Section({
                         </div>
                       )
                     })}
+                    {/* "+" chip — create a sub-item under this layer2 item */}
+                    {childEditable && onSubCreateStart && (
+                      creatingPath === childPath ? (
+                        <div className="layer3-wrapper">
+                          <InlineItemEditor
+                            itemKey=""
+                            item={{} as StructureItem}
+                            defaultName="new item"
+                            onSave={(data) => onSubCreateSave?.(childPath, data)}
+                            onCancel={() => onSubCreateCancel?.()}
+                            onDelete={() => onSubCreateCancel?.()}
+                          />
+                        </div>
+                      ) : (
+                        <div className="layer3-item add-sub" title="Add sub-item">
+                          <span className="item-title" onClick={() => onSubCreateStart(childPath)}>+</span>
+                        </div>
+                      )
+                    )}
                   </div>
                 )}
               </div>
             </div>
           )
         })}
+        {/* "+" chip — create a sub-item under this layer1 item */}
+        {showEditButton && onSubCreateStart && (
+          <div className="layer2-container add-sub-container">
+            <div className="layer2-l3-frame">
+              <div className="layer2-content">
+                {creatingPath === itemPath ? (
+                  <div className="layer2-wrapper">
+                    <InlineItemEditor
+                      itemKey=""
+                      item={{} as StructureItem}
+                      defaultName="new item"
+                      onSave={(data) => onSubCreateSave?.(itemPath, data)}
+                      onCancel={() => onSubCreateCancel?.()}
+                      onDelete={() => onSubCreateCancel?.()}
+                    />
+                  </div>
+                ) : (
+                  <div className="layer2-wrapper">
+                    <div className="layer2 add-sub" title="Add sub-item">
+                      <span className="item-title" onClick={() => onSubCreateStart(itemPath)}>+</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>}
       </div>
       {/* Copy zone — full-height strip on the right */}
