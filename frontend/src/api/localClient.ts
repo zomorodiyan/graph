@@ -119,6 +119,31 @@ function injectIds(items: Record<string, StructureItem>, parentId = '') {
   }
 }
 
+// ── Legacy data repair ───────────────────────────────────────────────────────
+// Older clients mis-parsed pulled "context: ..." lines into child items literally
+// titled "context: ...". Fold those back into the parent's context property.
+// Deliberately does NOT bump modified_at: the repaired copy must not win a sync
+// against genuinely newer remote edits; it gets pushed with the next real edit.
+function repairLegacyContextItems(items: Record<string, StructureItem>, parent?: StructureItem): boolean {
+  let changed = false
+  for (const [key, item] of Object.entries(items)) {
+    const m = typeof item.title === 'string' ? item.title.match(/^context:\s*(.+)$/) : null
+    const isLeaf = !item.children || Object.keys(item.children).length === 0
+    if (m && isLeaf && parent) {
+      if (!parent.context) {
+        parent.context = m[1]
+      } else if (parent.context !== m[1]) {
+        continue // parent has a different context — keep the item rather than lose text
+      }
+      delete items[key]
+      changed = true
+      continue
+    }
+    if (item.children && repairLegacyContextItems(item.children, item)) changed = true
+  }
+  return changed
+}
+
 // ── Path navigation ──────────────────────────────────────────────────────────
 function getContainer(structure: Record<string, StructureItem>, path: string): Record<string, StructureItem> | null {
   if (!path) return structure
@@ -245,6 +270,7 @@ function validateUpdatePayload(data: UpdatePayload) {
 
 export async function fetchStructure(graphName = 'default'): Promise<Structure> {
   const s = loadStructure(graphName)
+  if (repairLegacyContextItems(s.structure)) saveStructure(graphName, s)
   injectIds(s.structure)
   return s
 }
