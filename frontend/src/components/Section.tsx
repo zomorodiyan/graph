@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
 import InlineItemEditor from './InlineItemEditor'
 
@@ -58,6 +58,15 @@ function parseProgress(p: string | undefined): { done: number; total: number; pc
   if (!m) return null
   const done = Number(m[1]), total = Number(m[2])
   return { done, total, pct: total > 0 ? Math.min((done / total) * 100, 100) : 0 }
+}
+
+// Progress as a background fill: tint the chip's background up to pct%
+function progressFillStyle(p: string | undefined, color: string): CSSProperties | undefined {
+  const pi = parseProgress(p)
+  if (!pi) return undefined
+  return {
+    background: `linear-gradient(90deg, color-mix(in srgb, ${color} 22%, transparent) ${pi.pct}%, transparent ${pi.pct}%)`,
+  }
 }
 
 // Format progress for display: "42%" when total is 100, otherwise raw "3/10"
@@ -155,9 +164,12 @@ function Section({
                   title="Edit item"
                 />
               )}
-              <div className="layer1">
+              <div className="layer1" style={progressFillStyle(item.progress, 'var(--blue-medium)')}>
                 <span className="item-title" onClick={() => onItemClick(itemPath, hasChildren)}>
                   {title}
+                  {formatProgressText(item.progress) && (
+                    <span className="item-progress-inline">{formatProgressText(item.progress)}</span>
+                  )}
                   {item.due && (
                     <span className={`item-due due-${getDueCategory(item.due)}`}>
                       {formatDueDate(item.due)}
@@ -168,16 +180,6 @@ function Section({
             </>
           )}
         </div>
-        {/* Progress bar + label */}
-        {item.progress !== undefined && (() => {
-          const pi = parseProgress(item.progress)
-          return pi ? (
-            <div className="progress-bar">
-              <div className="progress-fill bg-sky" style={{ width: `${pi.pct}%` }} />
-              <span className="progress-label">{formatProgressText(item.progress)}</span>
-            </div>
-          ) : null
-        })()}
         {/* Context */}
         {showContext && item.context && (
           <div className="item-context">{item.context}</div>
@@ -223,9 +225,15 @@ function Section({
                             title="Edit item"
                           />
                         )}
-                        <div className={`layer2${childColorClass ? ' ' + childColorClass : ''}`}>
+                        <div
+                          className={`layer2${childColorClass ? ' ' + childColorClass : ''}`}
+                          style={progressFillStyle((childItem as StructureItem).progress, 'currentColor')}
+                        >
                           <span className="item-title" onClick={() => onItemClick(childPath, childHasChildren)}>
                             {childTitle}
+                            {formatProgressText((childItem as StructureItem).progress) && (
+                              <span className="item-progress-inline">{formatProgressText((childItem as StructureItem).progress)}</span>
+                            )}
                             {(childItem as StructureItem).due && (
                               <span className={`item-due due-${getDueCategory((childItem as StructureItem).due)}`}>
                                 {formatDueDate((childItem as StructureItem).due!)}
@@ -236,16 +244,6 @@ function Section({
                       </>
                     )}
                   </div>
-                  {/* Progress bar for layer2 */}
-                  {(childItem as StructureItem).progress !== undefined && (() => {
-                    const pi = parseProgress((childItem as StructureItem).progress)
-                    return pi ? (
-                      <div className="progress-bar">
-                        <div className={`progress-fill${l2Color ? ' bg-' + l2Color : ' bg-sky'}`} style={{ width: `${pi.pct}%` }} />
-                        <span className="progress-label">{formatProgressText((childItem as StructureItem).progress)}</span>
-                      </div>
-                    ) : null
-                  })()}
                   {/* Context for layer2 */}
                   {showContext && (childItem as StructureItem).context && (
                     <div className="item-context">{(childItem as StructureItem).context}</div>
@@ -285,11 +283,14 @@ function Section({
                                     title="Edit item"
                                   />
                                 )}
-                                <div className={`layer3-item${grandColorClass ? ' ' + grandColorClass : ''}`}>
+                                <div
+                                  className={`layer3-item${grandColorClass ? ' ' + grandColorClass : ''}`}
+                                  style={progressFillStyle((grandItem as StructureItem).progress, 'currentColor')}
+                                >
                                   <span className="item-title" onClick={() => onItemClick(grandPath, grandHasChildren)}>
                                     {grandTitle}
                                     {formatProgressText((grandItem as StructureItem).progress) && (
-                                      <span style={{ marginLeft: '0.375rem', opacity: 0.6, fontSize: '0.6875rem' }}>
+                                      <span className="item-progress-inline">
                                         {formatProgressText((grandItem as StructureItem).progress)}
                                       </span>
                                     )}
