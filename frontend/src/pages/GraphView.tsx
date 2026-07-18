@@ -393,32 +393,36 @@ function GraphView() {
     return crumbs
   }
 
-  // Handle item click - navigate to item page (only when it has children)
+  // Handle item click - navigate INTO the item (its subitems become the new
+  // 1st-level items), only when it has children
   const handleItemClick = (itemPath: string, hasChildren: boolean) => {
-    // For time/progress view items that have an originalPath, navigate to the parent location
+    // For time/progress view items that have an originalPath, navigate into
+    // the real item itself
     const currentItems = getCurrentItems()
-    
+
     // Traverse the path to find the item
     const pathParts = itemPath.split('.')
     const basePath = path ? path.split('.') : []
     const relativeParts = pathParts.slice(basePath.length)
-    
+
     let targetItem: StructureItem | undefined = undefined
     let current: Record<string, StructureItem> | undefined = currentItems
-    
+
     for (const part of relativeParts) {
       if (!current) break
       targetItem = current[part]
       current = targetItem?.children
     }
-    
+
     if (targetItem?.originalPath) {
-      // Navigate to the parent location (where the item appears)
+      // Overview/time-progress items are virtual pointers with children
+      // stripped, so `hasChildren` is always false for them — look up the
+      // real item to know whether there's anything to drill into.
       const originalPath = targetItem.originalPath as string
-      const originalParts = originalPath.split('.')
-      // Go to the parent path (remove the item name itself)
-      const parentPath = originalParts.slice(0, -1).join('.')
-      navigate(buildPath(parentPath || ''), { replace: true })
+      const realItem = getItemByPath(structure, originalPath)
+      if (realItem?.children && Object.keys(realItem.children).length > 0) {
+        navigate(buildPath(originalPath), { replace: true })
+      }
     } else if (hasChildren) {
       navigate(buildPath(itemPath), { replace: true })
     }
