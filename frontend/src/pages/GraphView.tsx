@@ -913,18 +913,24 @@ function GraphView() {
       <div className="graph-container">
         {/* Items grid — CSS columns for tight packing with no gaps */}
         <div className="items-grid">
-        {/* New + Paste — top card (creates/pastes at the top of the list) */}
+        {/* New + Paste — top cards (creates/pastes at the top of the list) */}
         {!isVirtualView && (
-          <div className="section-wrapper new-paste-wrapper">
-            <div className="section">
-              <div className="layer1 color-slate" onClick={() => handleAddClick('top')} title="Add new item at top">
-                <span className="item-title">+ New</span>
-              </div>
-              <div className="layer1 color-slate" onClick={() => handlePasteItem('top')} title="Paste from clipboard at top">
-                <span className="item-title">Paste</span>
+          <>
+            <div className="section-wrapper new-paste-wrapper">
+              <div className="section">
+                <div className="layer1 add-item" onClick={() => handleAddClick('top')} title="Add new item at top">
+                  <span className="item-title">+ New</span>
+                </div>
               </div>
             </div>
-          </div>
+            <div className="section-wrapper new-paste-wrapper">
+              <div className="section">
+                <div className="layer1 add-item" onClick={() => handlePasteItem('top')} title="Paste from clipboard at top">
+                  <span className="item-title">Paste</span>
+                </div>
+              </div>
+            </div>
+          </>
         )}
         {/* Inline create editor — top position */}
         {!isVirtualView && inlineCreate === 'top' && (
@@ -1023,18 +1029,24 @@ function GraphView() {
           </div>
         )}
 
-        {/* New + Paste — bottom card (creates/pastes at the bottom of the list) */}
+        {/* New + Paste — bottom cards (creates/pastes at the bottom of the list) */}
         {!isVirtualView && (
-          <div className="section-wrapper new-paste-wrapper">
-            <div className="section">
-              <div className="layer1 color-slate" onClick={() => handleAddClick('bottom')} title="Add new item at bottom">
-                <span className="item-title">+ New</span>
-              </div>
-              <div className="layer1 color-slate" onClick={() => handlePasteItem('bottom')} title="Paste from clipboard at bottom">
-                <span className="item-title">Paste</span>
+          <>
+            <div className="section-wrapper new-paste-wrapper">
+              <div className="section">
+                <div className="layer1 add-item" onClick={() => handleAddClick('bottom')} title="Add new item at bottom">
+                  <span className="item-title">+ New</span>
+                </div>
               </div>
             </div>
-          </div>
+            <div className="section-wrapper new-paste-wrapper">
+              <div className="section">
+                <div className="layer1 add-item" onClick={() => handlePasteItem('bottom')} title="Paste from clipboard at bottom">
+                  <span className="item-title">Paste</span>
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Overview card — always last */}

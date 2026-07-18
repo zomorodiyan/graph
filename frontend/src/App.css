@@ -28,23 +28,19 @@
   width: 100%;
 }
 
-/* New + Paste and virtual (time/progress) bubbles blend with page background */
-.new-paste-wrapper .section,
+/* Virtual (time/progress) bubbles blend with page background */
 .virtual-section .section {
   background: var(--bg-primary);
 }
 
-/* New + Paste — two layer1 items inside one section bubble */
+/* New / Paste — each is its own full-width level-1 item, styled like a real
+   one (scheme accent color) but with a neutral outline marking it as an
+   action rather than content (see .layer1.add-item below) */
 .new-paste-wrapper .layer1 {
-  flex: 1;
   cursor: pointer;
 }
 .new-paste-wrapper .layer1 .item-title {
   text-align: center;
-}
-.new-paste-wrapper .layer1:hover,
-[data-theme='dark'] .new-paste-wrapper .layer1:hover {
-  background: transparent;
 }
 
 .breadcrumb {
@@ -221,6 +217,16 @@
   background-color: rgba(255,255,255,0.06);
 }
 
+/* "New" / "Paste" — colored like the scheme accent (the only per-scheme color
+   level-1 items have), with a neutral outline marking it as an action */
+.layer1.add-item,
+.layer1.add-item .item-title {
+  color: var(--blue-medium);
+}
+.layer1.add-item {
+  border: 1px solid var(--border-color);
+}
+
 .layer2-section {
   flex: 1;
   display: flex;
@@ -317,16 +323,12 @@
   background-color: rgba(255,255,255,0.06);
 }
 
-/* "+" chip — creates a sub-item under its parent; muted until hovered */
-.layer2.add-sub .item-title,
-.layer3-item.add-sub .item-title {
-  color: var(--text-secondary);
-  opacity: 0.45;
-}
-
-.layer2.add-sub:hover .item-title,
-.layer3-item.add-sub:hover .item-title {
-  opacity: 1;
+/* "+" chip — creates a sub-item under its parent. Colored the same as the
+   sibling it would create (via the same color-* class real siblings get),
+   with a neutral outline marking it as an action rather than content. */
+.layer2.add-sub,
+.layer3-item.add-sub {
+  border: 1px solid var(--border-color);
 }
 
 /* Context and due date display */

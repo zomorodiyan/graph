@@ -205,6 +205,8 @@ function Section({
   }
 
   const layer1Delta = formatCheckpointDelta(item.progress, item.checkpoints)
+  // Color the "add sub-item" chip like the child it would create, following the same cycle real siblings use
+  const nextL2ColorClass = `color-${L2_COLORS[childEntries.length % 2]}`
 
   return (
     <div className="section" ref={sectionRef}>
@@ -413,8 +415,10 @@ function Section({
                           />
                         </div>
                       ) : (
-                        <div className="layer3-item add-sub" title="Add sub-item">
-                          <span className="item-title" onClick={() => onSubCreateStart(childPath)}>+</span>
+                        <div className={`layer3-wrapper${grandColorClass ? ' ' + grandColorClass : ''}`}>
+                          <div className={`layer3-item add-sub${grandColorClass ? ' ' + grandColorClass : ''}`} title="Add sub-item">
+                            <span className="item-title" onClick={() => onSubCreateStart(childPath)}>+</span>
+                          </div>
                         </div>
                       )
                     )}
@@ -441,8 +445,8 @@ function Section({
                     />
                   </div>
                 ) : (
-                  <div className="layer2-wrapper">
-                    <div className="layer2 add-sub" title="Add sub-item">
+                  <div className={`layer2-wrapper ${nextL2ColorClass}`}>
+                    <div className={`layer2 add-sub ${nextL2ColorClass}`} title="Add sub-item">
                       <span className="item-title" onClick={() => onSubCreateStart(itemPath)}>+</span>
                     </div>
                   </div>
