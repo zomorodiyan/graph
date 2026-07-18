@@ -297,6 +297,12 @@ function applyOptimisticUpdate(structure: any, path: string, data: UpdatePayload
       } else if (data.due === '') {
         delete item.due
       }
+
+      if (data.checkpoints !== undefined && data.checkpoints.length > 0) {
+        item.checkpoints = data.checkpoints
+      } else if (data.checkpoints !== undefined && data.checkpoints.length === 0) {
+        delete item.checkpoints
+      }
     }
   }
 
@@ -331,6 +337,9 @@ function applyOptimisticCreate(structure: any, parentPath: string, data: UpdateP
     }
     if (data.due !== undefined && data.due !== '') {
       newItem.due = data.due
+    }
+    if (data.checkpoints !== undefined && data.checkpoints.length > 0) {
+      newItem.checkpoints = data.checkpoints
     }
     parentContainer[data.name] = newItem
   }

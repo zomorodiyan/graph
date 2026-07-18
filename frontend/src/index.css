@@ -79,6 +79,10 @@
   --slate-lighter: #B0BEC5;
   --slate-dark: #37474F;
   --slate-darker: #263238;
+
+  /* Checkpoint status colors — actual vs. expected-by-date progress */
+  --status-good: #388E3C;
+  --status-bad:  #E65100;
 }
 
 [data-theme='dark'] {
@@ -97,6 +101,9 @@
   --royal-blue-light: #80CBC4;
   --blue-medium:      #00796B;
   --blue-lighter:     #B2DFDB;
+  /* green (the default "good") reads too close to teal's own accent — swap to violet */
+  --status-good:      #7E57C2;
+  --status-bad:       #E65100;
 }
 [data-color-scheme='purple'] {
   --sky-dark:         #7B1FA2;
@@ -105,6 +112,8 @@
   --royal-blue-light: #CE93D8;
   --blue-medium:      #7B1FA2;
   --blue-lighter:     #E1BEE7;
+  --status-good:      #388E3C;
+  --status-bad:       #E65100;
 }
 [data-color-scheme='red'] {
   --sky-dark:         #C62828;
@@ -113,6 +122,9 @@
   --royal-blue-light: #EF9A9A;
   --blue-medium:      #C62828;
   --blue-lighter:     #FFCDD2;
+  /* default green/amber both collide with red's own accent — bespoke pair */
+  --status-good:      #0F9D8D;
+  --status-bad:       #5F52D6;
 }
 
 * {

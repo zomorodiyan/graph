@@ -29,20 +29,34 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
     return { initDone: '', initTotal: '', initialProgressStr: '' }
   })()
 
+  // Parse initial checkpoints into {date, done} pairs for chip display — total is
+  // never edited per-checkpoint, it always tracks the live progress total instead
+  const initCheckpoints = (() => {
+    const cps = item.checkpoints
+    if (!Array.isArray(cps)) return []
+    return cps.map(cp => {
+      const m = typeof cp.progress === 'string' ? cp.progress.match(/^(\d+)\/(\d+)$/) : null
+      return { date: cp.date ?? '', done: m ? m[1] : '' }
+    })
+  })()
+
   const [name, setName] = useState(defaultName ?? initialName)
   const [progressDone, setProgressDone] = useState(initDone)
   const [progressTotal, setProgressTotal] = useState(initTotal)
   const [due, setDue] = useState(initialDue)
   const [context, setContext] = useState(initialContext)
+  const [checkpoints, setCheckpoints] = useState(initCheckpoints)
   const [showProgressEditor, setShowProgressEditor] = useState(initialProgressStr !== '')
   const [showDueEditor, setShowDueEditor] = useState(initialDue !== '')
   const [showContextEditor, setShowContextEditor] = useState(false)
+  const [showCheckpointsEditor, setShowCheckpointsEditor] = useState(initCheckpoints.length > 0)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const progressDoneRef = useRef<HTMLInputElement>(null)
   const progressTotalRef = useRef<HTMLInputElement>(null)
   const dueRef = useRef<HTMLInputElement>(null)
   const contextRef = useRef<HTMLInputElement>(null)
+  const checkpointDateRefs = useRef<(HTMLInputElement | null)[]>([])
   const rootRef = useRef<HTMLDivElement>(null)
   const didCommitRef = useRef(false)
 
@@ -69,6 +83,20 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
     }
   }
 
+  const addCheckpoint = () => setCheckpoints(cps => [...cps, { date: '', done: '' }])
+  const removeCheckpoint = (idx: number) => setCheckpoints(cps => cps.filter((_, i) => i !== idx))
+  const updateCheckpoint = (idx: number, field: 'date' | 'done', value: string) =>
+    setCheckpoints(cps => cps.map((cp, i) => i === idx ? { ...cp, [field]: value } : cp))
+
+  // Focus the date field of a freshly-added blank checkpoint
+  useEffect(() => {
+    const idx = checkpoints.length - 1
+    if (idx >= 0 && checkpoints[idx].date === '' && checkpoints[idx].done === '') {
+      requestAnimationFrame(() => checkpointDateRefs.current[idx]?.focus())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkpoints.length])
+
   const payload = useMemo<UpdatePayload>(() => {
     const next: UpdatePayload = {}
 
@@ -91,8 +119,26 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
       next.context = context || ''
     }
 
+    // Checkpoints only make sense while progress is shown; if the editor's closed
+    // (or progress got cleared), fall back to "unchanged from the original item"
+    const finalCheckpoints = showCheckpointsEditor && progressDone && progressTotal
+      ? checkpoints
+          .filter(cp => cp.date && cp.done !== '')
+          .map(cp => ({ date: cp.date, progress: `${cp.done}/${progressTotal}` }))
+          .sort((a, b) => a.date.localeCompare(b.date))
+      : (item.checkpoints ?? [])
+    const initialCheckpoints = item.checkpoints ?? []
+    if (JSON.stringify(finalCheckpoints) !== JSON.stringify(initialCheckpoints)) {
+      next.checkpoints = finalCheckpoints
+    }
+    // Clearing progress makes any checkpoints meaningless — clear them too
+    if (next.progress === '' && finalCheckpoints.length > 0) {
+      next.checkpoints = []
+    }
+
     return next
-  }, [name, progressDone, progressTotal, due, context, initialName, initialProgressStr, initialDue, initialContext])
+  }, [name, progressDone, progressTotal, due, context, checkpoints, showCheckpointsEditor,
+      initialName, initialProgressStr, initialDue, initialContext, item.checkpoints])
 
   const commit = () => {
     if (didCommitRef.current) return
@@ -203,6 +249,16 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
         >
           Due
         </button>
+        {showProgressEditor && progressDone && progressTotal && (
+          <button
+            type="button"
+            className={`inline-tool ${showCheckpointsEditor || checkpoints.length > 0 ? 'active' : ''}`}
+            onClick={() => setShowCheckpointsEditor(true)}
+            title="Checkpoints"
+          >
+            Checkpoints
+          </button>
+        )}
         {onDelete && (
           <button
             type="button"
@@ -263,6 +319,48 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
               placeholder="due"
             />
           )}
+        </div>
+      )}
+
+      {showCheckpointsEditor && progressDone && progressTotal && (
+        <div className="inline-edit-checkpoints">
+          {checkpoints.map((cp, i) => (
+            <div className="checkpoint-chip" key={i}>
+              <input
+                ref={el => { checkpointDateRefs.current[i] = el }}
+                type="date"
+                className="inline-edit-small"
+                value={cp.date}
+                onChange={(e) => updateCheckpoint(i, 'date', e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+              <input
+                type="number"
+                min={0}
+                className="inline-edit-small"
+                value={cp.done}
+                onChange={(e) => updateCheckpoint(i, 'done', e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="done"
+              />
+              <button
+                type="button"
+                className="checkpoint-remove"
+                onClick={() => removeCheckpoint(i)}
+                title="Remove checkpoint"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="checkpoint-chip checkpoint-add"
+            title="Add checkpoint"
+            onClick={addCheckpoint}
+          >
+            +
+          </button>
         </div>
       )}
 

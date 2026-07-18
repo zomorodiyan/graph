@@ -6,6 +6,7 @@ export interface StructureItem {
   context?: string
   progress?: string  // "X/Y" fraction, e.g. "3/10" or "40/100" (displayed as "40%" when Y is 100)
   due?: string
+  checkpoints?: { date: string; progress: string }[]  // sorted by date; "X/Y" per entry, same format as progress
   children?: Record<string, StructureItem>
   [key: string]: unknown
 }
@@ -26,6 +27,7 @@ export interface ItemResponse { path: string; name: string; data: StructureItem 
 
 export interface UpdatePayload {
   name?: string; progress?: string | ''; context?: string | ''; due?: string | ''
+  checkpoints?: { date: string; progress: string }[]  // undefined=untouched, []=cleared, non-empty=wholesale replace
 }
 
 export interface GraphStateVersion { graph: string; version: number; backend: string }
@@ -192,7 +194,7 @@ function parseIndentedText(text: string): Record<string, StructureItem> {
 
     // Known property line ("context:" is the legacy unquoted form — older
     // clients pushed it to the Gist, so keep accepting it on pull)
-    const propMatch = trimmed.match(/^(progress|due|context):\s*(.+)$/)
+    const propMatch = trimmed.match(/^(progress|due|context|checkpoints):\s*(.+)$/)
     if (propMatch) {
       // Find deepest frame with indent < this line's indent and a lastItem
       for (let i = stack.length - 1; i >= 0; i--) {
@@ -204,6 +206,19 @@ function parseIndentedText(text: string): Record<string, StructureItem> {
             item.progress = /^\d+\/\d+$/.test(val) ? val : `${Number(val)}/100`
           } else if (k === 'due') item.due = v
           else if (k === 'context') item.context = v
+          else if (k === 'checkpoints') {
+            const parsed: { date: string; progress: string }[] = []
+            for (const raw of v.split(',')) {
+              const pair = raw.trim()
+              if (!pair) continue
+              const colon = pair.indexOf(':')  // dates use '-' not ':', so the first ':' is unambiguous
+              if (colon === -1) continue        // malformed — skip rather than throw
+              const date = pair.slice(0, colon).trim()
+              const cpProgress = pair.slice(colon + 1).trim()
+              if (date && cpProgress) parsed.push({ date, progress: cpProgress })
+            }
+            if (parsed.length) item.checkpoints = parsed
+          }
           break
         }
       }
@@ -233,6 +248,8 @@ export function serializeStructure(items: Record<string, StructureItem>, indent 
   for (const [key, item] of Object.entries(items)) {
     out += `${pad}${key}\n`
     if (item.progress !== undefined) out += `${pad}  progress: ${item.progress}\n`
+    if (item.checkpoints && item.checkpoints.length)
+      out += `${pad}  checkpoints: ${item.checkpoints.map(cp => `${cp.date}:${cp.progress}`).join(', ')}\n`
     if (item.context) {
       const escaped = item.context.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
       out += `${pad}  "${escaped}"\n`
@@ -245,17 +262,20 @@ export function serializeStructure(items: Record<string, StructureItem>, indent 
 }
 
 // ── Validation ───────────────────────────────────────────────────────────────
+function validateProgressValue(s: string, label = 'Progress') {
+  const xy = s.match(/^(\d+)\/(\d+)$/)
+  if (xy) {
+    const total = Number(xy[2])
+    if (total <= 0) throw new Error(`${label} total must be > 0`)
+  } else {
+    const p = Number(s)
+    if (isNaN(p) || p < 0 || p > 100) throw new Error(`${label} must be 0–100 or X/Y format`)
+  }
+}
+
 function validateUpdatePayload(data: UpdatePayload) {
   if (data.progress !== undefined && data.progress !== '') {
-    const s = String(data.progress)
-    const xy = s.match(/^(\d+)\/(\d+)$/)
-    if (xy) {
-      const total = Number(xy[2])
-      if (total <= 0) throw new Error('Progress total must be > 0')
-    } else {
-      const p = Number(s)
-      if (isNaN(p) || p < 0 || p > 100) throw new Error('Progress must be 0–100 or X/Y format')
-    }
+    validateProgressValue(String(data.progress))
   }
   if (data.due !== undefined && data.due !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(data.due)) {
     throw new Error('Due date must be YYYY-MM-DD format')
@@ -263,6 +283,15 @@ function validateUpdatePayload(data: UpdatePayload) {
   if (data.name !== undefined && !data.name.trim()) throw new Error('Name cannot be empty')
   if (data.context !== undefined && typeof data.context === 'string' && data.context.length > 10000) {
     throw new Error('Context too long (max 10000 chars)')
+  }
+  if (data.checkpoints !== undefined) {
+    for (const cp of data.checkpoints) {
+      if (!cp || typeof cp.date !== 'string' || typeof cp.progress !== 'string') {
+        throw new Error('Invalid checkpoint entry')
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(cp.date)) throw new Error('Checkpoint date must be YYYY-MM-DD format')
+      validateProgressValue(cp.progress, 'Checkpoint progress')
+    }
   }
 }
 
@@ -311,6 +340,10 @@ export async function updateItem(path: string, data: UpdatePayload, graphName = 
     if (data.due === '') delete item.due
     else item.due = data.due
   }
+  if (data.checkpoints !== undefined) {
+    if (data.checkpoints.length === 0) delete item.checkpoints
+    else item.checkpoints = data.checkpoints
+  }
 
   if (data.name !== undefined) {
     const newKey = data.name.toLowerCase().replace(/ /g, '_')
@@ -350,6 +383,7 @@ export async function createItem(parentPath: string, data: UpdatePayload, graphN
     ...(data.progress !== undefined && data.progress !== '' && { progress: data.progress }),
     ...(data.context && { context: data.context }),
     ...(data.due && { due: data.due }),
+    ...(data.checkpoints !== undefined && data.checkpoints.length > 0 && { checkpoints: data.checkpoints }),
   }
   container[key] = item
   saveStructure(graphName, s)

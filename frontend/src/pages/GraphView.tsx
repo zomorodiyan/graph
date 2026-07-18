@@ -482,6 +482,7 @@ function GraphView() {
         ...(data.progress && { progress: data.progress }),
         ...(data.context && { context: data.context }),
         ...(data.due && { due: data.due }),
+        ...(data.checkpoints && data.checkpoints.length > 0 && { checkpoints: data.checkpoints }),
       }
 
       // Use callback pattern to avoid stale closure
@@ -548,6 +549,7 @@ function GraphView() {
       ...(data.progress && { progress: data.progress }),
       ...(data.context && { context: data.context }),
       ...(data.due && { due: data.due }),
+      ...(data.checkpoints && data.checkpoints.length > 0 && { checkpoints: data.checkpoints }),
     }
 
     const currentPathParts = path ? path.split('.') : []
@@ -660,7 +662,14 @@ function GraphView() {
             updatedItem.due = data.due
           }
         }
-        
+        if (data.checkpoints !== undefined) {
+          if (data.checkpoints.length === 0) {
+            delete updatedItem.checkpoints
+          } else {
+            updatedItem.checkpoints = data.checkpoints
+          }
+        }
+
         // Handle name change (rename)
         if (isRename) {
           delete target[itemKey]
@@ -832,6 +841,9 @@ function GraphView() {
     // Add properties
     if (item.progress !== undefined) {
       result += `${spaces}  progress: ${item.progress}\n`
+    }
+    if (item.checkpoints && item.checkpoints.length) {
+      result += `${spaces}  checkpoints: ${item.checkpoints.map(cp => `${cp.date}:${cp.progress}`).join(', ')}\n`
     }
     if (item.context) {
       // Escape backslashes and quotes for safe serialization
