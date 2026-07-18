@@ -60,12 +60,79 @@ function parseProgress(p: string | undefined): { done: number; total: number; pc
   return { done, total, pct: total > 0 ? Math.min((done / total) * 100, 100) : 0 }
 }
 
-// Progress as a background fill: tint the chip's background up to pct%
-function progressFillStyle(p: string | undefined, color: string): CSSProperties | undefined {
-  const pi = parseProgress(p)
+// Interpolate expected % between the checkpoint pair straddling `today`. Each
+// checkpoint is normalized by its OWN embedded total (not the item's current
+// total), so old checkpoints stay correct even if the item's total changes later.
+// Before the first checkpoint: null (no claim yet). Past the last: held flat.
+function getExpectedPct(
+  checkpoints: { date: string; progress: string }[] | undefined,
+  today: Date = new Date(),
+): number | null {
+  if (!checkpoints || checkpoints.length < 1) return null
+  const points = checkpoints
+    .map(cp => ({ date: cp.date, pct: parseProgress(cp.progress)?.pct }))
+    .filter((p): p is { date: string; pct: number } => p.pct !== undefined && !isNaN(new Date(p.date).getTime()))
+    .sort((a, b) => a.date.localeCompare(b.date))
+  if (points.length < 1) return null
+
+  const t0 = new Date(today); t0.setHours(0, 0, 0, 0)
+  const t = t0.getTime()
+  if (t < new Date(points[0].date).getTime()) return null
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const d0 = new Date(points[i].date).getTime()
+    const d1 = new Date(points[i + 1].date).getTime()
+    if (t <= d1) {
+      const frac = d1 === d0 ? 1 : (t - d0) / (d1 - d0)
+      return points[i].pct + frac * (points[i + 1].pct - points[i].pct)
+    }
+  }
+  return points[points.length - 1].pct  // past all checkpoints — hold flat, no extrapolation
+}
+
+// Signed delta badge ("+8%"/"−8%") plus which status color to use. Null when
+// there's no computable expected value, or actual already matches it exactly.
+function formatCheckpointDelta(
+  progress: string | undefined,
+  checkpoints: { date: string; progress: string }[] | undefined,
+): { text: string; varName: '--status-good' | '--status-bad' } | null {
+  const pi = parseProgress(progress)
+  if (!pi) return null
+  const expectedPct = getExpectedPct(checkpoints)
+  if (expectedPct === null || Math.round(pi.pct) === Math.round(expectedPct)) return null
+  const delta = Math.round(pi.pct - expectedPct)
+  if (delta === 0) return null
+  return { text: `${delta > 0 ? '+' : '−'}${Math.abs(delta)}%`, varName: delta > 0 ? '--status-good' : '--status-bad' }
+}
+
+// Progress as a background fill: tint the chip's background up to pct%. When
+// checkpoints give a computable "expected by today" value that differs from
+// actual, a second gradient layer shows the gap as a good/bad-colored sliver.
+function progressFillStyle(
+  progress: string | undefined,
+  checkpoints: { date: string; progress: string }[] | undefined,
+  color: string,
+): CSSProperties | undefined {
+  const pi = parseProgress(progress)
   if (!pi) return undefined
+
+  const expectedPct = getExpectedPct(checkpoints)
+  if (expectedPct === null || pi.pct === expectedPct) {
+    return {
+      backgroundColor: 'transparent',
+      backgroundImage: `linear-gradient(90deg, color-mix(in srgb, ${color} 22%, transparent) ${pi.pct}%, transparent ${pi.pct}%)`,
+    }
+  }
+
+  const lo = Math.min(pi.pct, expectedPct)
+  const hi = Math.max(pi.pct, expectedPct)
+  const statusVar = pi.pct > expectedPct ? '--status-good' : '--status-bad'
   return {
-    background: `linear-gradient(90deg, color-mix(in srgb, ${color} 22%, transparent) ${pi.pct}%, transparent ${pi.pct}%)`,
+    backgroundColor: 'transparent',
+    backgroundImage: [
+      `linear-gradient(90deg, color-mix(in srgb, ${color} 22%, transparent) ${lo}%, transparent ${lo}%)`,
+      `linear-gradient(90deg, transparent ${lo}%, color-mix(in srgb, var(${statusVar}) 45%, transparent) ${lo}%, color-mix(in srgb, var(${statusVar}) 45%, transparent) ${hi}%, transparent ${hi}%)`,
+    ].join(', '),
   }
 }
 
@@ -137,6 +204,8 @@ function Section({
     )
   }
 
+  const layer1Delta = formatCheckpointDelta(item.progress, item.checkpoints)
+
   return (
     <div className="section" ref={sectionRef}>
       <div className="section-body">
@@ -164,11 +233,16 @@ function Section({
                   title="Edit item"
                 />
               )}
-              <div className="layer1" style={progressFillStyle(item.progress, 'var(--blue-medium)')}>
+              <div className="layer1" style={progressFillStyle(item.progress, item.checkpoints, 'var(--blue-medium)')}>
                 <span className="item-title" onClick={() => onItemClick(itemPath, hasChildren)}>
                   {title}
                   {formatProgressText(item.progress) && (
                     <span className="item-progress-inline">{formatProgressText(item.progress)}</span>
+                  )}
+                  {layer1Delta && (
+                    <span className="item-checkpoint-delta" style={{ color: `var(${layer1Delta.varName})` }}>
+                      {layer1Delta.text}
+                    </span>
                   )}
                   {item.due && (
                     <span className={`item-due due-${getDueCategory(item.due)}`}>
@@ -199,6 +273,7 @@ function Section({
           const l3Color = l2Color === 'sky' ? 'royal-blue' : l2Color === 'slate' ? 'slate-dark' : null
           const childColorClass = l2Color ? `color-${l2Color}` : ''
           const grandColorClass = l3Color ? `color-${l3Color}` : ''
+          const layer2Delta = formatCheckpointDelta((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints)
 
           return (
             <div key={childKey} className="layer2-container">
@@ -227,12 +302,17 @@ function Section({
                         )}
                         <div
                           className={`layer2${childColorClass ? ' ' + childColorClass : ''}`}
-                          style={progressFillStyle((childItem as StructureItem).progress, 'currentColor')}
+                          style={progressFillStyle((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints, 'currentColor')}
                         >
                           <span className="item-title" onClick={() => onItemClick(childPath, childHasChildren)}>
                             {childTitle}
                             {formatProgressText((childItem as StructureItem).progress) && (
                               <span className="item-progress-inline">{formatProgressText((childItem as StructureItem).progress)}</span>
+                            )}
+                            {layer2Delta && (
+                              <span className="item-checkpoint-delta" style={{ color: `var(${layer2Delta.varName})` }}>
+                                {layer2Delta.text}
+                              </span>
                             )}
                             {(childItem as StructureItem).due && (
                               <span className={`item-due due-${getDueCategory((childItem as StructureItem).due)}`}>
@@ -259,6 +339,7 @@ function Section({
                       const grandHasChildren = Object.keys((grandItem as StructureItem).children || {}).length > 0
                       // Check if this grandchild item is editable
                       const grandEditable = showEditButton && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
+                      const layer3Delta = formatCheckpointDelta((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints)
 
                       return (
                         <div key={grandKey}>
@@ -285,13 +366,18 @@ function Section({
                                 )}
                                 <div
                                   className={`layer3-item${grandColorClass ? ' ' + grandColorClass : ''}`}
-                                  style={progressFillStyle((grandItem as StructureItem).progress, 'currentColor')}
+                                  style={progressFillStyle((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints, 'currentColor')}
                                 >
                                   <span className="item-title" onClick={() => onItemClick(grandPath, grandHasChildren)}>
                                     {grandTitle}
                                     {formatProgressText((grandItem as StructureItem).progress) && (
                                       <span className="item-progress-inline">
                                         {formatProgressText((grandItem as StructureItem).progress)}
+                                      </span>
+                                    )}
+                                    {layer3Delta && (
+                                      <span className="item-checkpoint-delta" style={{ color: `var(${layer3Delta.varName})` }}>
+                                        {layer3Delta.text}
                                       </span>
                                     )}
                                     {(grandItem as StructureItem).due && (
