@@ -59,6 +59,15 @@ function GraphView() {
     } catch {}
     return 'context'
   })
+  // "V" button — hides New/Paste, edit-zone bubbles, and add-sub "+" triggers for a cleaner read view
+  const [hideEditing, setHideEditing] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('active-hide-editing') === 'true'
+    } catch { return false }
+  })
+  useEffect(() => {
+    localStorage.setItem('active-hide-editing', String(hideEditing))
+  }, [hideEditing])
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
   const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
@@ -878,19 +887,21 @@ function GraphView() {
       {!inlineEdit && !inlineCreate && !subCreate && (
         <div className="top-buttons">
           <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
-          {DEPTHS.map(d => (
-            <button
-              key={d}
-              className={`depth-toggle${depth === d ? ' active' : ''}`}
-              onClick={() => setDepth(d)}
-              title={d === 0 ? 'Raw view' : `Show ${d} levels`}
-            >{d === 0 ? 'R' : d}</button>
-          ))}
+          <button
+            className="depth-toggle active"
+            onClick={() => setDepth(d => DEPTHS[(DEPTHS.indexOf(d) + 1) % DEPTHS.length])}
+            title={depth === 0 ? 'Raw view — tap to cycle' : `Showing ${depth} levels — tap to cycle`}
+          >{depth === 0 ? 'R' : depth}</button>
           <button
             className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}`}
             onClick={() => setViewMode(m => m === 'context' ? 'default' : 'context')}
             title={viewMode === 'context' ? 'Context on — tap to hide' : 'Context off — tap to show'}
           >C</button>
+          <button
+            className={`view-toggle${hideEditing ? ' active' : ''}`}
+            onClick={() => setHideEditing(v => !v)}
+            title={hideEditing ? 'Editing controls hidden — tap to show' : 'Hide editing controls'}
+          >V</button>
         </div>
       )}
 
@@ -913,24 +924,18 @@ function GraphView() {
       <div className="graph-container">
         {/* Items grid — CSS columns for tight packing with no gaps */}
         <div className="items-grid">
-        {/* New + Paste — top cards (creates/pastes at the top of the list) */}
-        {!isVirtualView && (
-          <>
-            <div className="section-wrapper new-paste-wrapper">
-              <div className="section">
-                <div className="layer1 add-item" onClick={() => handleAddClick('top')} title="Add new item at top">
-                  <span className="item-title">+ New</span>
-                </div>
+        {/* New + Paste — top card (creates/pastes at the top of the list) */}
+        {!isVirtualView && !hideEditing && (
+          <div className="section-wrapper new-paste-wrapper">
+            <div className="section">
+              <div className="layer1 add-item" onClick={() => handleAddClick('top')} title="Add new item at top">
+                <span className="item-title">+ New</span>
+              </div>
+              <div className="layer1 add-item" onClick={() => handlePasteItem('top')} title="Paste from clipboard at top">
+                <span className="item-title">Paste</span>
               </div>
             </div>
-            <div className="section-wrapper new-paste-wrapper">
-              <div className="section">
-                <div className="layer1 add-item" onClick={() => handlePasteItem('top')} title="Paste from clipboard at top">
-                  <span className="item-title">Paste</span>
-                </div>
-              </div>
-            </div>
-          </>
+          </div>
         )}
         {/* Inline create editor — top position */}
         {!isVirtualView && inlineCreate === 'top' && (
@@ -1002,6 +1007,7 @@ function GraphView() {
                 onSubCreateCancel={() => setSubCreate(null)}
                 isPending={isPending}
                 isTimeView={isVirtualView}
+                hideEditing={hideEditing}
                 showContext={viewMode === 'context'}
                 depth={depth}
                 showRaw={depth === 0}
@@ -1029,24 +1035,18 @@ function GraphView() {
           </div>
         )}
 
-        {/* New + Paste — bottom cards (creates/pastes at the bottom of the list) */}
-        {!isVirtualView && (
-          <>
-            <div className="section-wrapper new-paste-wrapper">
-              <div className="section">
-                <div className="layer1 add-item" onClick={() => handleAddClick('bottom')} title="Add new item at bottom">
-                  <span className="item-title">+ New</span>
-                </div>
+        {/* New + Paste — bottom card (creates/pastes at the bottom of the list) */}
+        {!isVirtualView && !hideEditing && (
+          <div className="section-wrapper new-paste-wrapper">
+            <div className="section">
+              <div className="layer1 add-item" onClick={() => handleAddClick('bottom')} title="Add new item at bottom">
+                <span className="item-title">+ New</span>
+              </div>
+              <div className="layer1 add-item" onClick={() => handlePasteItem('bottom')} title="Paste from clipboard at bottom">
+                <span className="item-title">Paste</span>
               </div>
             </div>
-            <div className="section-wrapper new-paste-wrapper">
-              <div className="section">
-                <div className="layer1 add-item" onClick={() => handlePasteItem('bottom')} title="Paste from clipboard at bottom">
-                  <span className="item-title">Paste</span>
-                </div>
-              </div>
-            </div>
-          </>
+          </div>
         )}
 
         {/* Overview card — always last */}
@@ -1066,6 +1066,7 @@ function GraphView() {
               onCopyClick={handleCopyItem}
               isPending={false}
               isTimeView={true}
+              hideEditing={hideEditing}
               showContext={viewMode === 'context'}
               depth={depth}
               showRaw={depth === 0}

@@ -23,6 +23,7 @@ interface SectionProps {
   onSubCreateCancel?: () => void
   isPending?: boolean
   isTimeView?: boolean
+  hideEditing?: boolean
   showContext?: boolean
   depth?: number
   showRaw?: boolean
@@ -163,6 +164,7 @@ function Section({
   onSubCreateCancel,
   isPending = false,
   isTimeView = false,
+  hideEditing = false,
   showContext = true,
   depth = 3,
   showRaw = false,
@@ -174,8 +176,8 @@ function Section({
 
   const sectionRef = useRef<HTMLDivElement>(null)
 
-  // Don't show edit buttons in time view, when pending, or for non-editable items
-  const showEditButton = !isTimeView && !item.nonEditable
+  // Don't show edit buttons in time view, when pending, for non-editable items, or in "V" (hide editing) mode
+  const showEditButton = !isTimeView && !item.nonEditable && !hideEditing
   const showLoading = isPending
 
   // Get child items for layer2
@@ -253,6 +255,18 @@ function Section({
                   )}
                 </span>
               </div>
+              {showEditButton && onSubCreateStart && creatingPath !== itemPath && (
+                <div
+                  className={`add-sub-trigger ${nextL2ColorClass}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onSubCreateStart(itemPath)
+                  }}
+                  title="Add sub-item"
+                >
+                  +
+                </div>
+              )}
             </>
           )}
         </div>
@@ -323,6 +337,18 @@ function Section({
                             )}
                           </span>
                         </div>
+                        {childEditable && onSubCreateStart && depth >= 3 && creatingPath !== childPath && (
+                          <div
+                            className={`add-sub-trigger${grandColorClass ? ' ' + grandColorClass : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onSubCreateStart(childPath)
+                            }}
+                            title="Add sub-item"
+                          >
+                            +
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -333,7 +359,7 @@ function Section({
                 </div>
 
                 {/* Layer 3 - Items */}
-                {depth >= 3 && (Object.keys(grandchildren).length > 0 || (childEditable && !!onSubCreateStart)) && (
+                {depth >= 3 && (Object.keys(grandchildren).length > 0 || creatingPath === childPath) && (
                   <div className="layer3-container">
                     {Object.entries(grandchildren).map(([grandKey, grandItem]) => {
                       const grandPath = `${childPath}.${grandKey}`
@@ -401,26 +427,18 @@ function Section({
                         </div>
                       )
                     })}
-                    {/* "+" chip — create a sub-item under this layer2 item */}
-                    {childEditable && onSubCreateStart && (
-                      creatingPath === childPath ? (
-                        <div className="layer3-wrapper">
-                          <InlineItemEditor
-                            itemKey=""
-                            item={{} as StructureItem}
-                            defaultName="new item"
-                            onSave={(data) => onSubCreateSave?.(childPath, data)}
-                            onCancel={() => onSubCreateCancel?.()}
-                            onDelete={() => onSubCreateCancel?.()}
-                          />
-                        </div>
-                      ) : (
-                        <div className={`layer3-wrapper${grandColorClass ? ' ' + grandColorClass : ''}`}>
-                          <div className={`layer3-item add-sub${grandColorClass ? ' ' + grandColorClass : ''}`} title="Add sub-item">
-                            <span className="item-title" onClick={() => onSubCreateStart(childPath)}>+</span>
-                          </div>
-                        </div>
-                      )
+                    {/* Inline create editor for a new layer3 sub-item (trigger lives in layer2-wrapper) */}
+                    {childEditable && onSubCreateStart && creatingPath === childPath && (
+                      <div className="layer3-wrapper">
+                        <InlineItemEditor
+                          itemKey=""
+                          item={{} as StructureItem}
+                          defaultName="new item"
+                          onSave={(data) => onSubCreateSave?.(childPath, data)}
+                          onCancel={() => onSubCreateCancel?.()}
+                          onDelete={() => onSubCreateCancel?.()}
+                        />
+                      </div>
                     )}
                   </div>
                 )}
@@ -428,29 +446,21 @@ function Section({
             </div>
           )
         })}
-        {/* "+" chip — create a sub-item under this layer1 item */}
-        {showEditButton && onSubCreateStart && (
+        {/* Inline create editor for a new layer2 sub-item (trigger lives in layer1-wrapper) */}
+        {showEditButton && onSubCreateStart && creatingPath === itemPath && (
           <div className="layer2-container add-sub-container">
             <div className="layer2-l3-frame">
               <div className="layer2-content">
-                {creatingPath === itemPath ? (
-                  <div className="layer2-wrapper">
-                    <InlineItemEditor
-                      itemKey=""
-                      item={{} as StructureItem}
-                      defaultName="new item"
-                      onSave={(data) => onSubCreateSave?.(itemPath, data)}
-                      onCancel={() => onSubCreateCancel?.()}
-                      onDelete={() => onSubCreateCancel?.()}
-                    />
-                  </div>
-                ) : (
-                  <div className={`layer2-wrapper ${nextL2ColorClass}`}>
-                    <div className={`layer2 add-sub ${nextL2ColorClass}`} title="Add sub-item">
-                      <span className="item-title" onClick={() => onSubCreateStart(itemPath)}>+</span>
-                    </div>
-                  </div>
-                )}
+                <div className="layer2-wrapper">
+                  <InlineItemEditor
+                    itemKey=""
+                    item={{} as StructureItem}
+                    defaultName="new item"
+                    onSave={(data) => onSubCreateSave?.(itemPath, data)}
+                    onCancel={() => onSubCreateCancel?.()}
+                    onDelete={() => onSubCreateCancel?.()}
+                  />
+                </div>
               </div>
             </div>
           </div>

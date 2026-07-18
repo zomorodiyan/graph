@@ -33,10 +33,11 @@
   background: var(--bg-primary);
 }
 
-/* New / Paste — each is its own full-width level-1 item, styled like a real
-   one (scheme accent color) but with a neutral outline marking it as an
+/* New / Paste — one combined bar with two halves, styled like a real level-1
+   item (scheme accent color) but with a neutral outline marking it as an
    action rather than content (see .layer1.add-item below) */
 .new-paste-wrapper .layer1 {
+  flex: 1;
   cursor: pointer;
 }
 .new-paste-wrapper .layer1 .item-title {
@@ -323,12 +324,31 @@
   background-color: rgba(255,255,255,0.06);
 }
 
-/* "+" chip — creates a sub-item under its parent. Colored the same as the
-   sibling it would create (via the same color-* class real siblings get),
-   with a neutral outline marking it as an action rather than content. */
-.layer2.add-sub,
-.layer3-item.add-sub {
+/* "+" trigger — creates a sub-item under this row. Lives inside the parent's
+   own non-wrapping wrapper (next to its edit-zone) instead of trailing in the
+   wrapping children list, so it can never be separated from its parent by
+   children wrapping onto a new line. Colored the same as the sibling it
+   would create (via the same color-* class real siblings get), with a
+   neutral outline marking it as an action rather than content. */
+.add-sub-trigger {
+  flex-shrink: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.5rem;
+  margin-left: 0.25rem;
   border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.add-sub-trigger:hover {
+  background-color: rgba(0,0,0,0.06);
+}
+[data-theme='dark'] .add-sub-trigger:hover {
+  background-color: rgba(255,255,255,0.06);
 }
 
 /* Context and due date display */
@@ -723,6 +743,34 @@
   color: #2d2d2d;
 }
 
+/* View-only button — hides New/Paste, edit-zone bubbles, and add-sub "+" triggers */
+.view-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  background: rgba(45, 45, 45, 0.45);
+  border: none;
+  color: #f5f5f5;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+  opacity: 0.3;
+}
+
+[data-theme="dark"] .view-toggle {
+  background: rgba(245, 245, 245, 0.45);
+  color: #2d2d2d;
+}
+
+.view-toggle.active {
+  opacity: 0.5;
+}
+
 .depth-toggle {
   color: #f5f5f5;
   font-size: 20px;
@@ -757,6 +805,7 @@
 .theme-toggle:hover,
 .depth-toggle:hover,
 .ctx-toggle:hover,
+.view-toggle:hover,
 .copy-btn:hover {
   transform: scale(1.1);
 }
