@@ -393,14 +393,14 @@ function GraphView() {
     return crumbs
   }
 
-  // Handle item click - navigate INTO the item (its subitems become the new
-  // 1st-level items), only when it has children
-  const handleItemClick = (itemPath: string, hasChildren: boolean) => {
-    // For time/progress view items that have an originalPath, navigate into
-    // the real item itself
+  // Handle item click - navigate to the item's PARENT page, so the clicked
+  // item shows up as a 1st-level item alongside its siblings (with its own
+  // children/grandchildren now visible as the 2nd/3rd levels below it).
+  const handleItemClick = (itemPath: string) => {
     const currentItems = getCurrentItems()
 
-    // Traverse the path to find the item
+    // Traverse the path to find the item (need this to resolve Overview/
+    // time-progress virtual items back to their real location)
     const pathParts = itemPath.split('.')
     const basePath = path ? path.split('.') : []
     const relativeParts = pathParts.slice(basePath.length)
@@ -414,19 +414,9 @@ function GraphView() {
       current = targetItem?.children
     }
 
-    if (targetItem?.originalPath) {
-      // Overview/time-progress items are virtual pointers with children
-      // stripped, so `hasChildren` is always false for them — look up the
-      // real item to know whether there's anything to drill into.
-      const originalPath = targetItem.originalPath as string
-      const realItem = getItemByPath(structure, originalPath)
-      if (realItem?.children && Object.keys(realItem.children).length > 0) {
-        navigate(buildPath(originalPath), { replace: true })
-      }
-    } else if (hasChildren) {
-      navigate(buildPath(itemPath), { replace: true })
-    }
-    // Childless items don't navigate — sub-items are added via their "+" chip
+    const realPath = (targetItem?.originalPath as string | undefined) ?? itemPath
+    const parentPath = realPath.split('.').slice(0, -1).join('.')
+    navigate(buildPath(parentPath), { replace: true })
   }
 
   // Handle edit click

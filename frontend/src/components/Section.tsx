@@ -9,7 +9,7 @@ interface SectionProps {
   item: StructureItem
   parentPath: string
   colorIndex: number
-  onItemClick: (path: string, hasChildren: boolean) => void
+  onItemClick: (path: string) => void
   onEditClick: (path: string, name: string, data: StructureItem) => void
   editingPath?: string | null
   onInlineSave?: (path: string, data: UpdatePayload) => void
@@ -171,7 +171,6 @@ function Section({
   rawText,
 }: SectionProps) {
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
-  const hasChildren = !!item.children && Object.keys(item.children).length > 0
   const title = item.title || itemKey
 
   const sectionRef = useRef<HTMLDivElement>(null)
@@ -238,7 +237,7 @@ function Section({
                 />
               )}
               <div className="layer1" style={progressFillStyle(item.progress, item.checkpoints, 'var(--blue-medium)')}>
-                <span className="item-title" onClick={() => onItemClick(itemPath, hasChildren)}>
+                <span className="item-title" onClick={() => onItemClick(itemPath)}>
                   {title}
                   {formatProgressText(item.progress) && (
                     <span className="item-progress-inline">{formatProgressText(item.progress)}</span>
@@ -282,7 +281,6 @@ function Section({
           const childPath = `${itemPath}.${childKey}`
           const childTitle = (childItem as StructureItem).title || childKey
           const grandchildren = (childItem as StructureItem).children || {}
-          const childHasChildren = Object.keys(grandchildren).length > 0
           // Check if this child item is editable
           const childEditable = showEditButton && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
           const l2Color = L2_COLORS[childIndex % 2]
@@ -320,7 +318,7 @@ function Section({
                           className={`layer2${childColorClass ? ' ' + childColorClass : ''}`}
                           style={progressFillStyle((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints, 'currentColor')}
                         >
-                          <span className="item-title" onClick={() => onItemClick(childPath, childHasChildren)}>
+                          <span className="item-title" onClick={() => onItemClick(childPath)}>
                             {childTitle}
                             {formatProgressText((childItem as StructureItem).progress) && (
                               <span className="item-progress-inline">{formatProgressText((childItem as StructureItem).progress)}</span>
@@ -364,7 +362,6 @@ function Section({
                     {Object.entries(grandchildren).map(([grandKey, grandItem]) => {
                       const grandPath = `${childPath}.${grandKey}`
                       const grandTitle = (grandItem as StructureItem).title || grandKey
-                      const grandHasChildren = Object.keys((grandItem as StructureItem).children || {}).length > 0
                       // Check if this grandchild item is editable
                       const grandEditable = showEditButton && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
                       const layer3Delta = formatCheckpointDelta((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints)
@@ -396,7 +393,7 @@ function Section({
                                   className={`layer3-item${grandColorClass ? ' ' + grandColorClass : ''}`}
                                   style={progressFillStyle((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints, 'currentColor')}
                                 >
-                                  <span className="item-title" onClick={() => onItemClick(grandPath, grandHasChildren)}>
+                                  <span className="item-title" onClick={() => onItemClick(grandPath)}>
                                     {grandTitle}
                                     {formatProgressText((grandItem as StructureItem).progress) && (
                                       <span className="item-progress-inline">
