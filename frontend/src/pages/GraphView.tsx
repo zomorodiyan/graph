@@ -59,11 +59,13 @@ function GraphView() {
     } catch {}
     return 'context'
   })
-  // "V" button — hides New/Paste, edit-zone bubbles, and add-sub "+" triggers for a cleaner read view
+  // "V" button — reveals New/Paste, edit-zone bubbles, and add-sub/paste-sub triggers
+  // ("edit mode"). Hidden by default (clean read view); tap "V" to turn editing on.
   const [hideEditing, setHideEditing] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('active-hide-editing') === 'true'
-    } catch { return false }
+      const saved = localStorage.getItem('active-hide-editing')
+      return saved === null ? true : saved === 'true'
+    } catch { return true }
   })
   useEffect(() => {
     localStorage.setItem('active-hide-editing', String(hideEditing))
@@ -469,6 +471,31 @@ function GraphView() {
     }
   }
 
+  // Handle paste as a specific item's sub-items (per-item paste trigger) — the only
+  // way to paste under an item that has no children yet, since navigating "into" it
+  // normally requires an existing child as a stepping stone (see handleItemClick)
+  const handlePasteSubItem = async (parentPath: string) => {
+    try {
+      const text = await navigator.clipboard.readText()
+      if (!text.trim()) {
+        showNotification('Clipboard is empty', 'error')
+        return
+      }
+
+      const result = await pasteItems(parentPath, text, graphName)
+      if (result.success) {
+        await queryClient.refetchQueries({ queryKey: ['structure', graphName], exact: true })
+        setLocalOrder(null)
+        setLocalItems(null)
+        showNotification(`Pasted ${result.added.length} item(s)!`)
+      }
+    } catch (err: any) {
+      console.error('Paste error:', err)
+      const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to paste'
+      showNotification(msg.substring(0, 60), 'error')
+    }
+  }
+
   // Handle create save from inline editor - uses local state for instant feedback
   const handleCreateSave = (data: UpdatePayload) => {
     const createPosition = inlineCreate  // capture before clearing
@@ -861,9 +888,9 @@ function GraphView() {
             title={viewMode === 'context' ? 'Context on — tap to hide' : 'Context off — tap to show'}
           >C</button>
           <button
-            className={`view-toggle${hideEditing ? ' active' : ''}`}
+            className={`view-toggle${!hideEditing ? ' active' : ''}`}
             onClick={() => setHideEditing(v => !v)}
-            title={hideEditing ? 'Editing controls hidden — tap to show' : 'Hide editing controls'}
+            title={hideEditing ? 'Editing controls hidden — tap to show' : 'Editing controls shown — tap to hide'}
           >V</button>
         </div>
       )}
@@ -968,6 +995,7 @@ function GraphView() {
                 onSubCreateStart={handleSubCreateStart}
                 onSubCreateSave={handleSubCreateSave}
                 onSubCreateCancel={() => setSubCreate(null)}
+                onPasteSubItem={handlePasteSubItem}
                 isPending={isPending}
                 isTimeView={isVirtualView}
                 hideEditing={hideEditing}

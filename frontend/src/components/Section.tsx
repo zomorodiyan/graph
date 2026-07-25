@@ -21,6 +21,10 @@ interface SectionProps {
   onSubCreateStart?: (parentPath: string) => void
   onSubCreateSave?: (parentPath: string, data: UpdatePayload) => void
   onSubCreateCancel?: () => void
+  // Paste-as-sub-item trigger — pastes clipboard content as this item's children
+  // directly, without navigating (the only way to paste under an item with no
+  // existing children, since click-to-navigate needs an existing child to reach it)
+  onPasteSubItem?: (parentPath: string) => void
   isPending?: boolean
   isTimeView?: boolean
   hideEditing?: boolean
@@ -162,6 +166,7 @@ function Section({
   onSubCreateStart,
   onSubCreateSave,
   onSubCreateCancel,
+  onPasteSubItem,
   isPending = false,
   isTimeView = false,
   hideEditing = false,
@@ -269,6 +274,18 @@ function Section({
                   +
                 </div>
               )}
+              {showEditButton && onPasteSubItem && (
+                <div
+                  className={`paste-sub-trigger ${nextL2ColorClass}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onPasteSubItem(itemPath)
+                  }}
+                  title="Paste as sub-item"
+                >
+                  📋
+                </div>
+              )}
             </>
           )}
         </div>
@@ -351,6 +368,18 @@ function Section({
                             title="Add sub-item"
                           >
                             +
+                          </div>
+                        )}
+                        {childEditable && onPasteSubItem && depth >= 3 && (
+                          <div
+                            className={`paste-sub-trigger${grandColorClass ? ' ' + grandColorClass : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onPasteSubItem(childPath)
+                            }}
+                            title="Paste as sub-item"
+                          >
+                            📋
                           </div>
                         )}
                       </>

@@ -351,6 +351,30 @@
   background-color: rgba(255,255,255,0.06);
 }
 
+/* "📋" trigger — pastes clipboard content as this item's sub-items directly,
+   no navigation needed. Sits right next to add-sub-trigger; same shape/sizing,
+   just a step further along the same row. */
+.paste-sub-trigger {
+  flex-shrink: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.5rem;
+  margin-left: 0.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.paste-sub-trigger:hover {
+  background-color: rgba(0,0,0,0.06);
+}
+[data-theme='dark'] .paste-sub-trigger:hover {
+  background-color: rgba(255,255,255,0.06);
+}
+
 /* Context and due date display */
 .item-context {
   font-size: 0.6875rem;
