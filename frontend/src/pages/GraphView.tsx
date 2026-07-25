@@ -5,7 +5,7 @@ import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, 
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useTheme } from '../context/ThemeContext'
-import { StructureItem, UpdatePayload, pasteItems } from '@api'
+import { StructureItem, UpdatePayload, pasteItems, serializeItem, getItemDueDate } from '@api'
 import InlineItemEditor from '../components/InlineItemEditor'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
@@ -161,7 +161,7 @@ function GraphView() {
     const result: Array<{path: string, item: StructureItem, title: string}> = []
     for (const [key, item] of Object.entries(items)) {
       const itemPath = parentPath ? `${parentPath}.${key}` : key
-      if (item.due) result.push({ path: itemPath, item, title: item.title || key })
+      if (getItemDueDate(item)) result.push({ path: itemPath, item, title: item.title || key })
       if (item.children) result.push(...collectDueItems(item.children, itemPath))
     }
     return result
@@ -196,7 +196,7 @@ function GraphView() {
     rootItems: Record<string, StructureItem>,
     contextPrefix: string
   ): Record<string, StructureItem> => {
-    const filtered = collectDueItems(rootItems).filter(({ item }) => item.due && getDueCategory(item.due) === category)
+    const filtered = collectDueItems(rootItems).filter(({ item }) => getDueCategory(getItemDueDate(item)!) === category)
     const result: Record<string, StructureItem> = {}
     for (const { path: relPath, item, title } of filtered) {
       const key = relPath.replace(/\./g, '_')
@@ -484,7 +484,7 @@ function GraphView() {
         title: data.name,
         ...(data.progress && { progress: data.progress }),
         ...(data.context && { context: data.context }),
-        ...(data.due && { due: data.due }),
+        ...(data.cost && { cost: data.cost }),
         ...(data.checkpoints && data.checkpoints.length > 0 && { checkpoints: data.checkpoints }),
       }
 
@@ -551,7 +551,7 @@ function GraphView() {
       title: data.name,
       ...(data.progress && { progress: data.progress }),
       ...(data.context && { context: data.context }),
-      ...(data.due && { due: data.due }),
+      ...(data.cost && { cost: data.cost }),
       ...(data.checkpoints && data.checkpoints.length > 0 && { checkpoints: data.checkpoints }),
     }
 
@@ -658,11 +658,11 @@ function GraphView() {
             updatedItem.context = data.context
           }
         }
-        if (data.due !== undefined) {
-          if (data.due === '') {
-            delete updatedItem.due
+        if (data.cost !== undefined) {
+          if (data.cost === null) {
+            delete updatedItem.cost
           } else {
-            updatedItem.due = data.due
+            updatedItem.cost = data.cost
           }
         }
         if (data.checkpoints !== undefined) {
@@ -836,40 +836,9 @@ function GraphView() {
   // Check if we're in a virtual view (time or progress - items can't be edited/reordered)
   const isVirtualView = !!(path && path.split('.').includes('overview'))
 
-  // Serialize an item and its children to structure.txt format
-  const serializeItem = (key: string, item: StructureItem, indent: number = 0): string => {
-    const spaces = '  '.repeat(indent)
-    let result = `${spaces}${key}\n`
-    
-    // Add properties
-    if (item.progress !== undefined) {
-      result += `${spaces}  progress: ${item.progress}\n`
-    }
-    if (item.checkpoints && item.checkpoints.length) {
-      result += `${spaces}  checkpoints: ${item.checkpoints.map(cp => `${cp.date}:${cp.progress}`).join(', ')}\n`
-    }
-    if (item.context) {
-      // Escape backslashes and quotes for safe serialization
-      const escaped = item.context.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
-      result += `${spaces}  "${escaped}"\n`
-    }
-    if (item.due) {
-      result += `${spaces}  due: ${item.due}\n`
-    }
-    
-    // Add children
-    if (item.children) {
-      for (const [childKey, childItem] of Object.entries(item.children)) {
-        result += serializeItem(childKey, childItem as StructureItem, indent + 1)
-      }
-    }
-    
-    return result
-  }
-
   const handleCopyItem = async (itemKey: string, item: StructureItem) => {
     try {
-      const text = serializeItem(itemKey, item, 0)
+      const text = serializeItem(itemKey, item, 1)
       await navigator.clipboard.writeText(text.trimEnd())
     } catch (err) {
       showNotification('Failed to copy', 'error')
@@ -1005,7 +974,7 @@ function GraphView() {
                 showContext={viewMode === 'context'}
                 depth={depth}
                 showRaw={depth === 0}
-                rawText={depth === 0 ? serializeItem(key, item as StructureItem, 0).trimEnd() : undefined}
+                rawText={depth === 0 ? serializeItem(key, item as StructureItem, 1).trimEnd() : undefined}
               />
             </div>
           )
@@ -1064,7 +1033,7 @@ function GraphView() {
               showContext={viewMode === 'context'}
               depth={depth}
               showRaw={depth === 0}
-              rawText={depth === 0 ? serializeItem('overview', displayItems['overview'] as StructureItem, 0).trimEnd() : undefined}
+              rawText={depth === 0 ? serializeItem('overview', displayItems['overview'] as StructureItem, 1).trimEnd() : undefined}
             />
           </div>
         )}

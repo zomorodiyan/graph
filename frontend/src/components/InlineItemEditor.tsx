@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { StructureItem, UpdatePayload } from '../api/localClient'
+import { StructureItem, UpdatePayload, getItemDueDate } from '../api/localClient'
 
 interface InlineItemEditorProps {
   itemKey: string
@@ -14,8 +14,11 @@ interface InlineItemEditorProps {
 
 function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultName }: InlineItemEditorProps) {
   const initialName = item.title || itemKey
-  const initialDue = item.due || ''
+  // A due date IS a checkpoint whose progress normalizes to done===total — there's
+  // no separate `due` field. The Due control just manages that one checkpoint.
+  const initialDue = getItemDueDate(item) ?? ''
   const initialContext = item.context || ''
+  const initialCost = item.cost ?? null
 
   // Parse initial progress into done/total strings
   const { initDone, initTotal, initialProgressStr } = (() => {
@@ -30,14 +33,17 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
   })()
 
   // Parse initial checkpoints into {date, done} pairs for chip display — total is
-  // never edited per-checkpoint, it always tracks the live progress total instead
+  // never edited per-checkpoint, it always tracks the live progress total instead.
+  // The due-date checkpoint (if any) is excluded — the Due control owns that one.
   const initCheckpoints = (() => {
     const cps = item.checkpoints
     if (!Array.isArray(cps)) return []
-    return cps.map(cp => {
-      const m = typeof cp.progress === 'string' ? cp.progress.match(/^(\d+)\/(\d+)$/) : null
-      return { date: cp.date ?? '', done: m ? m[1] : '' }
-    })
+    return cps
+      .filter(cp => !(initialDue && cp.date === initialDue))
+      .map(cp => {
+        const m = typeof cp.progress === 'string' ? cp.progress.match(/^(\d+)\/(\d+)$/) : null
+        return { date: cp.date ?? '', done: m ? m[1] : '' }
+      })
   })()
 
   const [name, setName] = useState(defaultName ?? initialName)
@@ -46,8 +52,11 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
   const [due, setDue] = useState(initialDue)
   const [context, setContext] = useState(initialContext)
   const [checkpoints, setCheckpoints] = useState(initCheckpoints)
+  const [costAmount, setCostAmount] = useState(initialCost ? String(initialCost.amount) : '')
+  const [costUnit, setCostUnit] = useState(initialCost ? initialCost.unit : '$')
   const [showProgressEditor, setShowProgressEditor] = useState(initialProgressStr !== '')
   const [showDueEditor, setShowDueEditor] = useState(initialDue !== '')
+  const [showCostEditor, setShowCostEditor] = useState(initialCost !== null)
   const [showContextEditor, setShowContextEditor] = useState(false)
   const [showCheckpointsEditor, setShowCheckpointsEditor] = useState(initCheckpoints.length > 0)
 
@@ -55,6 +64,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
   const progressDoneRef = useRef<HTMLInputElement>(null)
   const progressTotalRef = useRef<HTMLInputElement>(null)
   const dueRef = useRef<HTMLInputElement>(null)
+  const costAmountRef = useRef<HTMLInputElement>(null)
   const contextRef = useRef<HTMLInputElement>(null)
   const checkpointDateRefs = useRef<(HTMLInputElement | null)[]>([])
   const rootRef = useRef<HTMLDivElement>(null)
@@ -105,27 +115,33 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
       next.name = trimmed
     }
 
+    const dueChanged = due !== initialDue
     const currentProgressStr = progressDone !== '' && progressTotal !== ''
       ? `${progressDone}/${progressTotal}` : ''
-    if (currentProgressStr !== initialProgressStr) {
-      next.progress = currentProgressStr || ''
-    }
-
-    if (due !== initialDue) {
-      next.due = due || ''
+    // Setting a due date with no progress otherwise tracked gives the item a
+    // minimal 0/1 so the due checkpoint ("1/1") has a total to match
+    const effectiveProgressStr = currentProgressStr || (due && dueChanged ? '0/1' : '')
+    if (effectiveProgressStr !== initialProgressStr) {
+      next.progress = effectiveProgressStr || ''
     }
 
     if (context !== initialContext) {
       next.context = context || ''
     }
 
-    // Checkpoints only make sense while progress is shown; if the editor's closed
-    // (or progress got cleared), fall back to "unchanged from the original item"
-    const finalCheckpoints = showCheckpointsEditor && progressDone && progressTotal
-      ? checkpoints
-          .filter(cp => cp.date && cp.done !== '')
-          .map(cp => ({ date: cp.date, progress: `${cp.done}/${progressTotal}` }))
-          .sort((a, b) => a.date.localeCompare(b.date))
+    // Checkpoints only make sense while progress is shown; if neither the
+    // checkpoints editor nor the due date changed, fall back to "unchanged"
+    const checkpointsTouched = Boolean(showCheckpointsEditor && progressDone && progressTotal) || dueChanged
+    const effectiveTotal = progressTotal || '1'
+    const finalCheckpoints = checkpointsTouched
+      ? [
+          ...(showCheckpointsEditor && progressDone && progressTotal
+            ? checkpoints
+                .filter(cp => cp.date && cp.done !== '')
+                .map(cp => ({ date: cp.date, progress: `${cp.done}/${progressTotal}` }))
+            : (item.checkpoints ?? []).filter(cp => !(initialDue && cp.date === initialDue))),
+          ...(due ? [{ date: due, progress: `${effectiveTotal}/${effectiveTotal}` }] : []),
+        ].sort((a, b) => a.date.localeCompare(b.date))
       : (item.checkpoints ?? [])
     const initialCheckpoints = item.checkpoints ?? []
     if (JSON.stringify(finalCheckpoints) !== JSON.stringify(initialCheckpoints)) {
@@ -136,9 +152,17 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
       next.checkpoints = []
     }
 
+    const currentCost = showCostEditor && costAmount !== ''
+      ? { amount: Number(costAmount), unit: costUnit.trim() || '$' }
+      : null
+    if (JSON.stringify(currentCost) !== JSON.stringify(initialCost)) {
+      next.cost = currentCost
+    }
+
     return next
   }, [name, progressDone, progressTotal, due, context, checkpoints, showCheckpointsEditor,
-      initialName, initialProgressStr, initialDue, initialContext, item.checkpoints])
+      costAmount, costUnit, showCostEditor,
+      initialName, initialProgressStr, initialDue, initialContext, initialCost, item.checkpoints])
 
   const commit = () => {
     if (didCommitRef.current) return
@@ -249,6 +273,17 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
         >
           Due
         </button>
+        <button
+          type="button"
+          className={`inline-tool ${showCostEditor || costAmount ? 'active' : ''}`}
+          onClick={() => {
+            setShowCostEditor(true)
+            focusAndScroll(costAmountRef)
+          }}
+          title="Cost"
+        >
+          Cost
+        </button>
         {showProgressEditor && progressDone && progressTotal && (
           <button
             type="button"
@@ -281,7 +316,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
         autoFocus
       />
 
-      {(showProgressEditor || showDueEditor) && (
+      {(showProgressEditor || showDueEditor || showCostEditor) && (
         <div className="inline-edit-fields-row">
           {showProgressEditor && (
             <div className="inline-edit-progress">
@@ -318,6 +353,28 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
               onKeyDown={handleKeyDown}
               placeholder="due"
             />
+          )}
+          {showCostEditor && (
+            <div className="inline-edit-cost">
+              <input
+                ref={costAmountRef}
+                className="inline-edit-small"
+                type="number"
+                min={0}
+                value={costAmount}
+                onChange={(e) => setCostAmount(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="amount"
+              />
+              <input
+                className="inline-edit-small inline-edit-cost-unit"
+                type="text"
+                value={costUnit}
+                onChange={(e) => setCostUnit(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="$"
+              />
+            </div>
           )}
         </div>
       )}

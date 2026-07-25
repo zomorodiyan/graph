@@ -5,8 +5,11 @@ export interface StructureItem {
   title?: string
   context?: string
   progress?: string  // "X/Y" fraction, e.g. "3/10" or "40/100" (displayed as "40%" when Y is 100)
-  due?: string
-  checkpoints?: { date: string; progress: string }[]  // sorted by date; "X/Y" per entry, same format as progress
+  cost?: { amount: number; unit: string }  // unit defaults to "$" in the editor when left blank
+  // Sorted by date; "X/Y" per entry, same format as progress. There is no separate
+  // "due date" field — a due date IS a checkpoint whose progress normalizes to
+  // done===total (e.g. "1/1", "5/5"); see getItemDueDate.
+  checkpoints?: { date: string; progress: string }[]
   children?: Record<string, StructureItem>
   [key: string]: unknown
 }
@@ -26,7 +29,8 @@ export interface GraphUpdatePayload { display_name?: string; description?: strin
 export interface ItemResponse { path: string; name: string; data: StructureItem }
 
 export interface UpdatePayload {
-  name?: string; progress?: string | ''; context?: string | ''; due?: string | ''
+  name?: string; progress?: string | ''; context?: string | ''
+  cost?: { amount: number; unit: string } | null  // undefined=untouched, null=cleared
   checkpoints?: { date: string; progress: string }[]  // undefined=untouched, []=cleared, non-empty=wholesale replace
 }
 
@@ -146,6 +150,52 @@ function repairLegacyContextItems(items: Record<string, StructureItem>, parent?:
   return changed
 }
 
+// ── Legacy due-field migration ────────────────────────────────────────────────
+// Older items stored a standalone `due` field. Due dates are now represented as
+// a checkpoint whose progress normalizes to done===total (see getItemDueDate).
+// Fold any leftover `due` into checkpoints once, on load. An item with no other
+// progress gets "0/1" so the due-checkpoint ("1/1") has a total to match.
+// Deliberately does NOT bump modified_at — same reasoning as repairLegacyContextItems.
+function repairLegacyDueItems(items: Record<string, StructureItem>): boolean {
+  let changed = false
+  for (const item of Object.values(items)) {
+    const legacyDue = (item as { due?: unknown }).due
+    if (typeof legacyDue === 'string' && legacyDue) {
+      if (!item.progress) item.progress = '0/1'
+      const total = item.progress.match(/^\d+\/(\d+)$/)?.[1] ?? '1'
+      const cps = item.checkpoints ?? []
+      if (!cps.some(cp => cp.date === legacyDue)) {
+        item.checkpoints = [...cps, { date: legacyDue, progress: `${total}/${total}` }]
+      }
+      delete (item as { due?: unknown }).due
+      changed = true
+    }
+    if (item.children && repairLegacyDueItems(item.children)) changed = true
+  }
+  return changed
+}
+
+// A due date is a checkpoint whose progress normalizes to done===total — the
+// planned "finish line". Only the chronologically LAST checkpoint can be that
+// finish line (interpolation holds flat past it); if it isn't done===total,
+// the item has milestones but no due date yet.
+export function getItemDueDate(item: Pick<StructureItem, 'checkpoints'>): string | undefined {
+  const cps = item.checkpoints
+  if (!cps || !cps.length) return undefined
+  const last = [...cps].sort((a, b) => a.date.localeCompare(b.date))[cps.length - 1]
+  const m = last.progress.match(/^(\d+)\/(\d+)$/)
+  if (!m || m[1] !== m[2]) return undefined
+  return last.date
+}
+
+// Cost display/serialization: currency-like symbols prefix the number ("$500"),
+// alphanumeric units suffix it ("40h") — matches how people already write both.
+export function formatCost(cost: { amount: number; unit: string } | undefined): string | null {
+  if (!cost) return null
+  const isSymbol = /^[^a-zA-Z0-9]+$/.test(cost.unit)
+  return isSymbol ? `${cost.unit}${cost.amount}` : `${cost.amount}${cost.unit}`
+}
+
 // ── Path navigation ──────────────────────────────────────────────────────────
 function getContainer(structure: Record<string, StructureItem>, path: string): Record<string, StructureItem> | null {
   if (!path) return structure
@@ -166,99 +216,111 @@ function getParentAndKey(structure: Record<string, StructureItem>, path: string)
   return { parent, key }
 }
 
-// ── Indented-text parser (same format as serializeItem in GraphView) ─────────
-function parseIndentedText(text: string): Record<string, StructureItem> {
+// ── Markdown-heading parser (mirrors serializeStructure) ──────────────────────
+// Heading depth = nesting depth ("#" = top level, "##" = its children, ...).
+// A heading line is `#+ Title (progress)? cost?` — cost is the trailing token
+// (stripped first since it's the outermost), then a trailing "(x/y)" is progress.
+// A "- date: x/y" line is a checkpoint (attached to the nearest heading above);
+// a bare "Checkpoints:" line is a cosmetic label, skipped on parse. Everything
+// else is context text for the nearest heading above, verbatim (blank lines
+// inside are preserved; only leading/trailing blank lines are trimmed).
+function parseCostSuffix(s: string): { rest: string; cost?: { amount: number; unit: string } } {
+  let m = s.match(/^(.*?)\s+(\d+(?:\.\d+)?)([a-zA-Z]+)$/)
+  if (m) return { rest: m[1], cost: { amount: Number(m[2]), unit: m[3] } }
+  m = s.match(/^(.*?)\s+([^\sa-zA-Z0-9(){}[\]"]+)(\d+(?:\.\d+)?)$/)
+  if (m) return { rest: m[1], cost: { amount: Number(m[3]), unit: m[2] } }
+  return { rest: s }
+}
+
+function parseProgressSuffix(s: string): { rest: string; progress?: string } {
+  const m = s.match(/^(.*?)\s+\((\d+\/\d+)\)$/)
+  return m ? { rest: m[1], progress: m[2] } : { rest: s }
+}
+
+function parseMarkdownStructure(text: string): Record<string, StructureItem> {
   const root: Record<string, StructureItem> = {}
-  interface Frame { container: Record<string, StructureItem>; indent: number; lastItem: StructureItem | null }
-  const stack: Frame[] = [{ container: root, indent: -2, lastItem: null }]
+  interface Frame { container: Record<string, StructureItem>; depth: number; item: StructureItem | null }
+  const stack: Frame[] = [{ container: root, depth: 0, item: null }]
+  let contextLines: string[] | null = null
 
-  for (const line of text.split('\n')) {
-    if (!line.trim()) continue
-    const indent  = line.length - line.trimStart().length
-    const trimmed = line.trim()
-
-    // Quoted string (context) — unescape special characters
-    const quotedMatch = trimmed.match(/^"(.+)"$/)
-    if (quotedMatch) {
-      // Apply to last item in parent frame, unescaping sequences
-      for (let i = stack.length - 1; i >= 0; i--) {
-        if (stack[i].indent < indent && stack[i].lastItem) {
-          const escaped = quotedMatch[1]
-          const unescaped = escaped.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\')
-          stack[i].lastItem!.context = unescaped
-          break
-        }
-      }
-      continue
+  const flushContext = () => {
+    const item = stack[stack.length - 1].item
+    if (contextLines && item) {
+      const text = contextLines.join('\n').trim()
+      if (text) item.context = text
     }
-
-    // Known property line ("context:" is the legacy unquoted form — older
-    // clients pushed it to the Gist, so keep accepting it on pull)
-    const propMatch = trimmed.match(/^(progress|due|context|checkpoints):\s*(.+)$/)
-    if (propMatch) {
-      // Find deepest frame with indent < this line's indent and a lastItem
-      for (let i = stack.length - 1; i >= 0; i--) {
-        if (stack[i].indent < indent && stack[i].lastItem) {
-          const [, k, v] = propMatch
-          const item = stack[i].lastItem!
-          if (k === 'progress') {
-            const val = v.trim()
-            item.progress = /^\d+\/\d+$/.test(val) ? val : `${Number(val)}/100`
-          } else if (k === 'due') item.due = v
-          else if (k === 'context') item.context = v
-          else if (k === 'checkpoints') {
-            const parsed: { date: string; progress: string }[] = []
-            for (const raw of v.split(',')) {
-              const pair = raw.trim()
-              if (!pair) continue
-              const colon = pair.indexOf(':')  // dates use '-' not ':', so the first ':' is unambiguous
-              if (colon === -1) continue        // malformed — skip rather than throw
-              const date = pair.slice(0, colon).trim()
-              const cpProgress = pair.slice(colon + 1).trim()
-              if (date && cpProgress) parsed.push({ date, progress: cpProgress })
-            }
-            if (parsed.length) item.checkpoints = parsed
-          }
-          break
-        }
-      }
-      continue
-    }
-
-    // Pop stack until correct parent level
-    while (stack.length > 1 && indent <= stack[stack.length - 1].indent) stack.pop()
-
-    const frame = stack[stack.length - 1]
-    const rawKey = trimmed.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') || 'item'
-    let key = rawKey, n = 2
-    while (key in frame.container) key = `${rawKey}_${n++}`
-
-    const newItem: StructureItem = { title: trimmed, children: {} }
-    frame.container[key] = newItem
-    frame.lastItem = newItem
-    stack.push({ container: newItem.children!, indent, lastItem: null })
+    contextLines = null
   }
+
+  // Normalize CRLF/CR (clipboard text on Windows, some editors) to LF — the
+  // heading regex is "$"-anchored per line and "." doesn't consume "\r", so a
+  // stray trailing "\r" would otherwise make every heading silently fail to match.
+  for (const rawLine of text.replace(/\r\n?/g, '\n').split('\n')) {
+    const headingMatch = rawLine.match(/^(#+)\s+(.*)$/)
+    if (headingMatch) {
+      flushContext()
+      const depth = headingMatch[1].length
+      const { rest: afterCost, cost } = parseCostSuffix(headingMatch[2].trim())
+      const { rest: title, progress } = parseProgressSuffix(afterCost)
+
+      while (stack.length > 1 && stack[stack.length - 1].depth >= depth) stack.pop()
+      const frame = stack[stack.length - 1]
+
+      const rawKey = title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') || 'item'
+      let key = rawKey, n = 2
+      while (key in frame.container) key = `${rawKey}_${n++}`
+
+      const newItem: StructureItem = { title: title || 'Item', children: {} }
+      if (progress !== undefined) newItem.progress = progress
+      if (cost !== undefined) newItem.cost = cost
+
+      frame.container[key] = newItem
+      stack.push({ container: newItem.children!, depth, item: newItem })
+      contextLines = []
+      continue
+    }
+
+    const trimmed = rawLine.trim()
+    if (trimmed === 'Checkpoints:') continue
+
+    const cpMatch = trimmed.match(/^-\s+(\d{4}-\d{2}-\d{2}):\s*(\d+\/\d+)\s*$/)
+    const currentItem = stack[stack.length - 1].item
+    if (cpMatch && currentItem) {
+      currentItem.checkpoints = [...(currentItem.checkpoints ?? []), { date: cpMatch[1], progress: cpMatch[2] }]
+      continue
+    }
+
+    if (contextLines) contextLines.push(rawLine)
+  }
+  flushContext()
   return root
 }
 
-// ── Structure serializer (mirrors serializeItem in GraphView) ─────────────────
-export function serializeStructure(items: Record<string, StructureItem>, indent = 0): string {
-  let out = ''
-  const pad = '  '.repeat(indent)
-  for (const [key, item] of Object.entries(items)) {
-    out += `${pad}${key}\n`
-    if (item.progress !== undefined) out += `${pad}  progress: ${item.progress}\n`
-    if (item.checkpoints && item.checkpoints.length)
-      out += `${pad}  checkpoints: ${item.checkpoints.map(cp => `${cp.date}:${cp.progress}`).join(', ')}\n`
-    if (item.context) {
-      const escaped = item.context.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
-      out += `${pad}  "${escaped}"\n`
+// ── Structure serializer (mirrors parseMarkdownStructure) ─────────────────────
+export function serializeStructure(items: Record<string, StructureItem>, depth = 1): string {
+  const hashes = '#'.repeat(depth)
+  const blocks = Object.values(items).map(item => {
+    const progressSuffix = item.progress !== undefined ? ` (${item.progress})` : ''
+    const costText = formatCost(item.cost)
+    const costSuffix = costText ? ` ${costText}` : ''
+    let block = `${hashes} ${item.title}${progressSuffix}${costSuffix}\n`
+    if (item.context) block += `${item.context}\n`
+    if (item.checkpoints && item.checkpoints.length) {
+      block += `Checkpoints:\n`
+      for (const cp of [...item.checkpoints].sort((a, b) => a.date.localeCompare(b.date))) {
+        block += `- ${cp.date}: ${cp.progress}\n`
+      }
     }
-    if (item.due)     out += `${pad}  due: ${item.due}\n`
     if (item.children && Object.keys(item.children).length)
-      out += serializeStructure(item.children, indent + 1)
-  }
-  return out
+      block += serializeStructure(item.children, depth + 1)
+    return block
+  })
+  return blocks.join('\n')
+}
+
+// Serialize a single item (and its children) — used for single-item clipboard copy.
+export function serializeItem(key: string, item: StructureItem, depth = 1): string {
+  return serializeStructure({ [key]: item }, depth)
 }
 
 // ── Validation ───────────────────────────────────────────────────────────────
@@ -273,13 +335,18 @@ function validateProgressValue(s: string, label = 'Progress') {
   }
 }
 
+function validateCostValue(cost: { amount: number; unit: string }) {
+  if (typeof cost.amount !== 'number' || isNaN(cost.amount) || cost.amount < 0) {
+    throw new Error('Cost amount must be a non-negative number')
+  }
+  if (typeof cost.unit !== 'string' || !cost.unit.trim()) throw new Error('Cost unit cannot be empty')
+}
+
 function validateUpdatePayload(data: UpdatePayload) {
   if (data.progress !== undefined && data.progress !== '') {
     validateProgressValue(String(data.progress))
   }
-  if (data.due !== undefined && data.due !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(data.due)) {
-    throw new Error('Due date must be YYYY-MM-DD format')
-  }
+  if (data.cost !== undefined && data.cost !== null) validateCostValue(data.cost)
   if (data.name !== undefined && !data.name.trim()) throw new Error('Name cannot be empty')
   if (data.context !== undefined && typeof data.context === 'string' && data.context.length > 10000) {
     throw new Error('Context too long (max 10000 chars)')
@@ -299,7 +366,9 @@ function validateUpdatePayload(data: UpdatePayload) {
 
 export async function fetchStructure(graphName = 'default'): Promise<Structure> {
   const s = loadStructure(graphName)
-  if (repairLegacyContextItems(s.structure)) saveStructure(graphName, s)
+  let changed = repairLegacyContextItems(s.structure)
+  if (repairLegacyDueItems(s.structure)) changed = true
+  if (changed) saveStructure(graphName, s)
   injectIds(s.structure)
   return s
 }
@@ -336,9 +405,9 @@ export async function updateItem(path: string, data: UpdatePayload, graphName = 
     if (data.context === '') delete item.context
     else item.context = data.context
   }
-  if (data.due !== undefined) {
-    if (data.due === '') delete item.due
-    else item.due = data.due
+  if (data.cost !== undefined) {
+    if (data.cost === null) delete item.cost
+    else item.cost = data.cost
   }
   if (data.checkpoints !== undefined) {
     if (data.checkpoints.length === 0) delete item.checkpoints
@@ -382,7 +451,7 @@ export async function createItem(parentPath: string, data: UpdatePayload, graphN
     children: {},
     ...(data.progress !== undefined && data.progress !== '' && { progress: data.progress }),
     ...(data.context && { context: data.context }),
-    ...(data.due && { due: data.due }),
+    ...(data.cost && { cost: data.cost }),
     ...(data.checkpoints !== undefined && data.checkpoints.length > 0 && { checkpoints: data.checkpoints }),
   }
   container[key] = item
@@ -408,7 +477,7 @@ export async function pasteItems(
   const container = parentPath ? getContainer(s.structure, parentPath) : s.structure
   if (!container) throw new Error(`Parent not found: ${parentPath}`)
 
-  const parsed = parseIndentedText(content)
+  const parsed = parseMarkdownStructure(content)
   const added: string[] = []
 
   for (const [key, item] of Object.entries(parsed)) {
@@ -485,7 +554,7 @@ export async function createGraph(name: string, description = '', initialContent
 
   let structure: Record<string, StructureItem> = {}
   if (initialContent?.trim()) {
-    structure = parseIndentedText(initialContent)
+    structure = parseMarkdownStructure(initialContent)
   }
   saveStructure(name, { metadata: { title: name, description, version: '1.0' }, structure })
 
@@ -528,7 +597,7 @@ export async function fetchGraphMutations(graphName: string, sinceVersion = 0): 
 
 // ── Parse structure body text (used by Gist sync pull) ───────────────────────
 export function parseStructureText(text: string): Record<string, StructureItem> {
-  return parseIndentedText(text)
+  return parseMarkdownStructure(text)
 }
 
 // ── Bulk import: replace a graph's full structure (used by sync pull) ─────────

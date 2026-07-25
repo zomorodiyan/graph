@@ -1,5 +1,5 @@
 import { useRef, useState, type CSSProperties } from 'react'
-import { StructureItem, UpdatePayload } from '../api/localClient'
+import { StructureItem, UpdatePayload, getItemDueDate, formatCost } from '../api/localClient'
 import InlineItemEditor from './InlineItemEditor'
 
 const L2_COLORS = ['sky', 'slate'] as const
@@ -247,9 +247,12 @@ function Section({
                       {layer1Delta.text}
                     </span>
                   )}
-                  {item.due && (
-                    <span className={`item-due due-${getDueCategory(item.due)}`}>
-                      {formatDueDate(item.due)}
+                  {formatCost(item.cost) && (
+                    <span className="item-cost">{formatCost(item.cost)}</span>
+                  )}
+                  {getItemDueDate(item) && (
+                    <span className={`item-due due-${getDueCategory(getItemDueDate(item))}`}>
+                      {formatDueDate(getItemDueDate(item)!)}
                     </span>
                   )}
                 </span>
@@ -328,9 +331,12 @@ function Section({
                                 {layer2Delta.text}
                               </span>
                             )}
-                            {(childItem as StructureItem).due && (
-                              <span className={`item-due due-${getDueCategory((childItem as StructureItem).due)}`}>
-                                {formatDueDate((childItem as StructureItem).due!)}
+                            {formatCost((childItem as StructureItem).cost) && (
+                              <span className="item-cost">{formatCost((childItem as StructureItem).cost)}</span>
+                            )}
+                            {getItemDueDate(childItem as StructureItem) && (
+                              <span className={`item-due due-${getDueCategory(getItemDueDate(childItem as StructureItem))}`}>
+                                {formatDueDate(getItemDueDate(childItem as StructureItem)!)}
                               </span>
                             )}
                           </span>
@@ -405,9 +411,12 @@ function Section({
                                         {layer3Delta.text}
                                       </span>
                                     )}
-                                    {(grandItem as StructureItem).due && (
-                                      <span className={`item-due due-${getDueCategory((grandItem as StructureItem).due)}`}>
-                                        {formatDueDate((grandItem as StructureItem).due!)}
+                                    {formatCost((grandItem as StructureItem).cost) && (
+                                      <span className="item-cost">{formatCost((grandItem as StructureItem).cost)}</span>
+                                    )}
+                                    {getItemDueDate(grandItem as StructureItem) && (
+                                      <span className={`item-due due-${getDueCategory(getItemDueDate(grandItem as StructureItem))}`}>
+                                        {formatDueDate(getItemDueDate(grandItem as StructureItem)!)}
                                       </span>
                                     )}
                                   </span>
