@@ -351,9 +351,9 @@
   background-color: rgba(255,255,255,0.06);
 }
 
-/* "📋" trigger — pastes clipboard content as this item's sub-items directly,
-   no navigation needed. Sits right next to add-sub-trigger; same shape/sizing,
-   just a step further along the same row. */
+/* Clipboard-icon trigger — pastes clipboard content as this item's sub-items
+   directly, no navigation needed. Sits right next to add-sub-trigger; same
+   shape/sizing, just a step further along the same row. */
 .paste-sub-trigger {
   flex-shrink: 0;
   align-self: stretch;
@@ -364,9 +364,11 @@
   margin-left: 0.25rem;
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
-  font-size: 0.75rem;
   cursor: pointer;
   transition: background-color 0.2s;
+}
+.clipboard-icon {
+  opacity: 0.85;
 }
 .paste-sub-trigger:hover {
   background-color: rgba(0,0,0,0.06);
@@ -497,17 +499,12 @@
   color: #f3e8fd;
 }
 
-/* Progress + due on the same row */
+/* Progress + cost on the same row */
 .inline-edit-fields-row {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   width: 100%;
-}
-.inline-edit-due {
-  flex: 1;
-  min-width: 0;
-  width: 1px;
 }
 
 /* Cost editor (amount + unit) */

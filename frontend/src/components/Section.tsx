@@ -4,6 +4,17 @@ import InlineItemEditor from './InlineItemEditor'
 
 const L2_COLORS = ['sky', 'slate'] as const
 
+// Clipboard outline (rectangle + clip "bump" on top) for paste-sub-item triggers —
+// plain stroke, no fill, so it inherits color the same way the "+" glyph does.
+function ClipboardIcon() {
+  return (
+    <svg className="clipboard-icon" viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
+      <rect x="3" y="2.5" width="10" height="11.5" rx="1.2" />
+      <rect x="6" y="1" width="4" height="2.4" rx="0.6" />
+    </svg>
+  )
+}
+
 interface SectionProps {
   itemKey: string
   item: StructureItem
@@ -283,7 +294,7 @@ function Section({
                   }}
                   title="Paste as sub-item"
                 >
-                  📋
+                  <ClipboardIcon />
                 </div>
               )}
             </>
@@ -379,7 +390,7 @@ function Section({
                             }}
                             title="Paste as sub-item"
                           >
-                            📋
+                            <ClipboardIcon />
                           </div>
                         )}
                       </>

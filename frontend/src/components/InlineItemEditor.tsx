@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { StructureItem, UpdatePayload, getItemDueDate } from '../api/localClient'
+import { StructureItem, UpdatePayload } from '../api/localClient'
 
 interface InlineItemEditorProps {
   itemKey: string
@@ -14,9 +14,6 @@ interface InlineItemEditorProps {
 
 function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultName }: InlineItemEditorProps) {
   const initialName = item.title || itemKey
-  // A due date IS a checkpoint whose progress normalizes to done===total — there's
-  // no separate `due` field. The Due control just manages that one checkpoint.
-  const initialDue = getItemDueDate(item) ?? ''
   const initialContext = item.context || ''
   const initialCost = item.cost ?? null
 
@@ -34,28 +31,25 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
 
   // Parse initial checkpoints into {date, done} pairs for chip display — total is
   // never edited per-checkpoint, it always tracks the live progress total instead.
-  // The due-date checkpoint (if any) is excluded — the Due control owns that one.
+  // A checkpoint whose done===total IS a due date — there's no separate control
+  // for it; it's just a chip like any other (see addCheckpoint).
   const initCheckpoints = (() => {
     const cps = item.checkpoints
     if (!Array.isArray(cps)) return []
-    return cps
-      .filter(cp => !(initialDue && cp.date === initialDue))
-      .map(cp => {
-        const m = typeof cp.progress === 'string' ? cp.progress.match(/^(\d+)\/(\d+)$/) : null
-        return { date: cp.date ?? '', done: m ? m[1] : '' }
-      })
+    return cps.map(cp => {
+      const m = typeof cp.progress === 'string' ? cp.progress.match(/^(\d+)\/(\d+)$/) : null
+      return { date: cp.date ?? '', done: m ? m[1] : '' }
+    })
   })()
 
   const [name, setName] = useState(defaultName ?? initialName)
   const [progressDone, setProgressDone] = useState(initDone)
   const [progressTotal, setProgressTotal] = useState(initTotal)
-  const [due, setDue] = useState(initialDue)
   const [context, setContext] = useState(initialContext)
   const [checkpoints, setCheckpoints] = useState(initCheckpoints)
   const [costAmount, setCostAmount] = useState(initialCost ? String(initialCost.amount) : '')
   const [costUnit, setCostUnit] = useState(initialCost ? initialCost.unit : '$')
   const [showProgressEditor, setShowProgressEditor] = useState(initialProgressStr !== '')
-  const [showDueEditor, setShowDueEditor] = useState(initialDue !== '')
   const [showCostEditor, setShowCostEditor] = useState(initialCost !== null)
   const [showContextEditor, setShowContextEditor] = useState(false)
   const [showCheckpointsEditor, setShowCheckpointsEditor] = useState(initCheckpoints.length > 0)
@@ -63,7 +57,6 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
   const inputRef = useRef<HTMLInputElement>(null)
   const progressDoneRef = useRef<HTMLInputElement>(null)
   const progressTotalRef = useRef<HTMLInputElement>(null)
-  const dueRef = useRef<HTMLInputElement>(null)
   const costAmountRef = useRef<HTMLInputElement>(null)
   const contextRef = useRef<HTMLInputElement>(null)
   const checkpointDateRefs = useRef<(HTMLInputElement | null)[]>([])
@@ -81,27 +74,27 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
     })
   }
 
-  const openDuePicker = () => {
-    const input = dueRef.current as (HTMLInputElement & { showPicker?: () => void }) | null
-    if (!input) return
-    input.focus()
-    input.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-    if (typeof input.showPicker === 'function') {
-      input.showPicker()
-    } else {
-      input.click()
+  // New chips default "done" to the current total — i.e. "fully done by this
+  // date" (a due date) — since that's the common case; lower it for a partial
+  // milestone instead. If nothing tracks progress yet, this starts it at 0/1
+  // (same minimal total a plain due date used to create).
+  const addCheckpoint = () => {
+    if (progressDone === '' && progressTotal === '') {
+      setProgressDone('0')
+      setProgressTotal('1')
     }
+    const total = progressTotal || '1'
+    setCheckpoints(cps => [...cps, { date: '', done: total }])
   }
-
-  const addCheckpoint = () => setCheckpoints(cps => [...cps, { date: '', done: '' }])
   const removeCheckpoint = (idx: number) => setCheckpoints(cps => cps.filter((_, i) => i !== idx))
   const updateCheckpoint = (idx: number, field: 'date' | 'done', value: string) =>
     setCheckpoints(cps => cps.map((cp, i) => i === idx ? { ...cp, [field]: value } : cp))
 
-  // Focus the date field of a freshly-added blank checkpoint
+  // Focus the date field of a freshly-added checkpoint (done is pre-filled, so
+  // only the date is ever blank on a fresh chip)
   useEffect(() => {
     const idx = checkpoints.length - 1
-    if (idx >= 0 && checkpoints[idx].date === '' && checkpoints[idx].done === '') {
+    if (idx >= 0 && checkpoints[idx].date === '') {
       requestAnimationFrame(() => checkpointDateRefs.current[idx]?.focus())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,33 +108,23 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
       next.name = trimmed
     }
 
-    const dueChanged = due !== initialDue
     const currentProgressStr = progressDone !== '' && progressTotal !== ''
       ? `${progressDone}/${progressTotal}` : ''
-    // Setting a due date with no progress otherwise tracked gives the item a
-    // minimal 0/1 so the due checkpoint ("1/1") has a total to match
-    const effectiveProgressStr = currentProgressStr || (due && dueChanged ? '0/1' : '')
-    if (effectiveProgressStr !== initialProgressStr) {
-      next.progress = effectiveProgressStr || ''
+    if (currentProgressStr !== initialProgressStr) {
+      next.progress = currentProgressStr || ''
     }
 
     if (context !== initialContext) {
       next.context = context || ''
     }
 
-    // Checkpoints only make sense while progress is shown; if neither the
-    // checkpoints editor nor the due date changed, fall back to "unchanged"
-    const checkpointsTouched = Boolean(showCheckpointsEditor && progressDone && progressTotal) || dueChanged
-    const effectiveTotal = progressTotal || '1'
-    const finalCheckpoints = checkpointsTouched
-      ? [
-          ...(showCheckpointsEditor && progressDone && progressTotal
-            ? checkpoints
-                .filter(cp => cp.date && cp.done !== '')
-                .map(cp => ({ date: cp.date, progress: `${cp.done}/${progressTotal}` }))
-            : (item.checkpoints ?? []).filter(cp => !(initialDue && cp.date === initialDue))),
-          ...(due ? [{ date: due, progress: `${effectiveTotal}/${effectiveTotal}` }] : []),
-        ].sort((a, b) => a.date.localeCompare(b.date))
+    // Checkpoints only make sense while progress is tracked; if the editor's
+    // closed (or progress got cleared), fall back to "unchanged from the original"
+    const finalCheckpoints = showCheckpointsEditor && progressDone !== '' && progressTotal !== ''
+      ? checkpoints
+          .filter(cp => cp.date && cp.done !== '')
+          .map(cp => ({ date: cp.date, progress: `${cp.done}/${progressTotal}` }))
+          .sort((a, b) => a.date.localeCompare(b.date))
       : (item.checkpoints ?? [])
     const initialCheckpoints = item.checkpoints ?? []
     if (JSON.stringify(finalCheckpoints) !== JSON.stringify(initialCheckpoints)) {
@@ -160,9 +143,9 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
     }
 
     return next
-  }, [name, progressDone, progressTotal, due, context, checkpoints, showCheckpointsEditor,
+  }, [name, progressDone, progressTotal, context, checkpoints, showCheckpointsEditor,
       costAmount, costUnit, showCostEditor,
-      initialName, initialProgressStr, initialDue, initialContext, initialCost, item.checkpoints])
+      initialName, initialProgressStr, initialContext, initialCost, item.checkpoints])
 
   const commit = () => {
     if (didCommitRef.current) return
@@ -239,9 +222,9 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
             setShowContextEditor(true)
             focusAndScroll(contextRef)
           }}
-          title="Context"
+          title="Note"
         >
-          Context
+          Note
         </button>
         <button
           type="button"
@@ -254,24 +237,9 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
             setShowProgressEditor(true)
             focusAndScroll(progressDoneRef)
           }}
-          title="Progress"
+          title="Ratio"
         >
-          Progress
-        </button>
-        <button
-          type="button"
-          className={`inline-tool ${showDueEditor || due ? 'active' : ''}`}
-          onClick={() => {
-            if (!showDueEditor) {
-              setShowDueEditor(true)
-              requestAnimationFrame(() => openDuePicker())
-            } else {
-              openDuePicker()
-            }
-          }}
-          title="Due date"
-        >
-          Due
+          Ratio
         </button>
         <button
           type="button"
@@ -282,18 +250,16 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
           }}
           title="Cost"
         >
-          Cost
+          $
         </button>
-        {showProgressEditor && progressDone && progressTotal && (
-          <button
-            type="button"
-            className={`inline-tool ${showCheckpointsEditor || checkpoints.length > 0 ? 'active' : ''}`}
-            onClick={() => setShowCheckpointsEditor(true)}
-            title="Checkpoints"
-          >
-            Checkpoints
-          </button>
-        )}
+        <button
+          type="button"
+          className={`inline-tool ${showCheckpointsEditor || checkpoints.length > 0 ? 'active' : ''}`}
+          onClick={() => setShowCheckpointsEditor(true)}
+          title="Plan — includes due dates (a checkpoint fully done by its date)"
+        >
+          Plan
+        </button>
         {onDelete && (
           <button
             type="button"
@@ -301,7 +267,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
             onClick={onDelete}
             title="Delete"
           >
-              Delete
+              Del
           </button>
         )}
       </div>
@@ -316,7 +282,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
         autoFocus
       />
 
-      {(showProgressEditor || showDueEditor || showCostEditor) && (
+      {(showProgressEditor || showCostEditor) && (
         <div className="inline-edit-fields-row">
           {showProgressEditor && (
             <div className="inline-edit-progress">
@@ -343,17 +309,6 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
               />
             </div>
           )}
-          {showDueEditor && (
-            <input
-              ref={dueRef}
-              className="inline-edit-small inline-edit-due"
-              type="date"
-              value={due}
-              onChange={(e) => setDue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="due"
-            />
-          )}
           {showCostEditor && (
             <div className="inline-edit-cost">
               <input
@@ -379,7 +334,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
         </div>
       )}
 
-      {showCheckpointsEditor && progressDone && progressTotal && (
+      {showCheckpointsEditor && (
         <div className="inline-edit-checkpoints">
           {checkpoints.map((cp, i) => (
             <div className="checkpoint-chip" key={i}>
