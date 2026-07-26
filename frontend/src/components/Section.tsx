@@ -248,7 +248,17 @@ function Section({
                     )
                   : {})}
               >
-                <span className="item-title" onClick={() => onItemClick(itemPath)}>
+                <span
+                  className="item-title"
+                  // Tapping a level-1 title never navigates (its parent IS the current
+                  // page, so onItemClick would be a same-page no-op — its children/
+                  // grandchildren are already visible inline as level 2/3 rows). Left-swipe
+                  // is also awkward here since level-1 rows sit flush against the screen
+                  // edge, leaving little room for a leftward drag — so a plain tap opens
+                  // edit too, same as left-swipe. Non-editable rows (e.g. the virtual
+                  // Overview item) keep the old click behavior.
+                  onClick={() => rowEditable ? onEditClick(itemPath, title, item) : onItemClick(itemPath)}
+                >
                   {title}
                   {!minimal && formatProgressText(item.progress) && (
                     <span className="item-progress-inline">{formatProgressText(item.progress)}</span>
