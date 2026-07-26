@@ -62,6 +62,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
   const checkpointDateRefs = useRef<(HTMLInputElement | null)[]>([])
   const rootRef = useRef<HTMLDivElement>(null)
   const didCommitRef = useRef(false)
+  const justAddedCheckpointRef = useRef<number | null>(null)
 
   // Focus only — no manual scrollIntoView. The browser already scrolls a
   // focused input above the mobile keyboard on its own; driving scroll
@@ -77,30 +78,35 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
     })
   }
 
-  // New chips default "done" to the current total — i.e. "fully done by this
-  // date" (a due date) — since that's the common case; lower it for a partial
-  // milestone instead. If nothing tracks progress yet, this starts it at 0/1
-  // (same minimal total a plain due date used to create).
+  // New chips default to today's date and "done" equal to the current total —
+  // i.e. "fully done as of today" (a due date) — since that's the common
+  // case; both are still editable for a future date or a partial milestone.
+  // If nothing tracks progress yet, this starts it at 0/1 (same minimal
+  // total a plain due date used to create).
   const addCheckpoint = () => {
     if (progressDone === '' && progressTotal === '') {
       setProgressDone('0')
       setProgressTotal('1')
     }
     const total = progressTotal || '1'
-    setCheckpoints(cps => [...cps, { date: '', done: total }])
+    const today = new Date().toISOString().slice(0, 10)
+    setCheckpoints(cps => {
+      justAddedCheckpointRef.current = cps.length
+      return [...cps, { date: today, done: total }]
+    })
   }
   const removeCheckpoint = (idx: number) => setCheckpoints(cps => cps.filter((_, i) => i !== idx))
   const updateCheckpoint = (idx: number, field: 'date' | 'done', value: string) =>
     setCheckpoints(cps => cps.map((cp, i) => i === idx ? { ...cp, [field]: value } : cp))
 
-  // Focus the date field of a freshly-added checkpoint (done is pre-filled, so
-  // only the date is ever blank on a fresh chip)
+  // Focus the date field of a freshly-added checkpoint. Both fields are
+  // pre-filled now (today's date + the total), so blank-field detection no
+  // longer works — addCheckpoint marks its own index instead.
   useEffect(() => {
-    const idx = checkpoints.length - 1
-    if (idx >= 0 && checkpoints[idx].date === '') {
-      requestAnimationFrame(() => checkpointDateRefs.current[idx]?.focus())
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (justAddedCheckpointRef.current === null) return
+    const idx = justAddedCheckpointRef.current
+    justAddedCheckpointRef.current = null
+    requestAnimationFrame(() => checkpointDateRefs.current[idx]?.focus())
   }, [checkpoints.length])
 
   const payload = useMemo<UpdatePayload>(() => {
@@ -324,6 +330,14 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
           {showCostEditor && (
             <div className="inline-edit-cost">
               <input
+                className="inline-edit-small inline-edit-cost-unit"
+                type="text"
+                value={costUnit}
+                onChange={(e) => setCostUnit(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="$"
+              />
+              <input
                 ref={costAmountRef}
                 className="inline-edit-small"
                 type="number"
@@ -332,14 +346,6 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
                 onChange={(e) => setCostAmount(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="amount"
-              />
-              <input
-                className="inline-edit-small inline-edit-cost-unit"
-                type="text"
-                value={costUnit}
-                onChange={(e) => setCostUnit(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="$"
               />
             </div>
           )}
