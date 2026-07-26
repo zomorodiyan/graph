@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-type ColorScheme = 'blue' | 'teal' | 'purple' | 'red'
+type ColorScheme = 'blue' | 'purple' | 'green'
 
-const SCHEMES: ColorScheme[] = ['blue', 'teal', 'purple', 'red']
+const SCHEMES: ColorScheme[] = ['blue', 'purple', 'green']
 
 interface ColorSchemeContextType {
   colorScheme: ColorScheme
