@@ -33,9 +33,9 @@
   background: var(--bg-primary);
 }
 
-/* New / Paste — one combined bar with two halves, styled like a real level-1
-   item (scheme accent color) but with a neutral outline marking it as an
-   action rather than content (see .layer1.add-item below) */
+/* New / Paste — one combined bar with two halves, shaped like a real level-1
+   item but in neutral gray with an outline, marking it as an action rather
+   than content (see .layer1.add-item below) */
 .new-paste-wrapper .layer1 {
   flex: 1;
   cursor: pointer;
@@ -218,10 +218,15 @@
 }
 
 /* "New" / "Paste" — action buttons, not real items, so they opt out of the
-   level color and keep the original neutral outlined look */
+   level/scheme accent color and use a neutral gray instead (same 80%/20%
+   lightness pair as level 2's title color), same in every color scheme. */
 .layer1.add-item,
 .layer1.add-item .item-title {
-  color: var(--blue-medium);
+  color: #333333;
+}
+[data-theme='dark'] .layer1.add-item,
+[data-theme='dark'] .layer1.add-item .item-title {
+  color: #cccccc;
 }
 .layer1.add-item {
   border: 1px solid var(--border-color);
