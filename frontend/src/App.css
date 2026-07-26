@@ -210,12 +210,6 @@
   cursor: pointer;
   padding: 0.25rem 0.5rem;
 }
-.item-edit-zone + .layer1 .item-title,
-.item-edit-zone + .layer2 .item-title,
-.item-edit-zone + .layer3-item .item-title {
-  padding-left: 0;
-}
-
 .layer1:hover {
   background-color: rgba(0,0,0,0.06);
 }
@@ -336,59 +330,6 @@
   color: var(--text-primary);
 }
 [data-theme='dark'] .layer3-item:hover {
-  background-color: rgba(255,255,255,0.06);
-}
-
-/* "+" trigger — creates a sub-item under this row. Lives inside the parent's
-   own non-wrapping wrapper (next to its edit-zone) instead of trailing in the
-   wrapping children list, so it can never be separated from its parent by
-   children wrapping onto a new line. Colored the same as the sibling it
-   would create (via the same color-* class real siblings get), with a
-   neutral outline marking it as an action rather than content. */
-.add-sub-trigger {
-  flex-shrink: 0;
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0.5rem;
-  margin-left: 0.25rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-.add-sub-trigger:hover {
-  background-color: rgba(0,0,0,0.06);
-}
-[data-theme='dark'] .add-sub-trigger:hover {
-  background-color: rgba(255,255,255,0.06);
-}
-
-/* Clipboard-icon trigger — pastes clipboard content as this item's sub-items
-   directly, no navigation needed. Sits right next to add-sub-trigger; same
-   shape/sizing, just a step further along the same row. */
-.paste-sub-trigger {
-  flex-shrink: 0;
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0.5rem;
-  margin-left: 0.25rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-.clipboard-icon {
-  opacity: 0.85;
-}
-.paste-sub-trigger:hover {
-  background-color: rgba(0,0,0,0.06);
-}
-[data-theme='dark'] .paste-sub-trigger:hover {
   background-color: rgba(255,255,255,0.06);
 }
 
@@ -862,34 +803,6 @@
   color: #2d2d2d;
 }
 
-/* View-only button — hides New/Paste, edit-zone bubbles, and add-sub "+" triggers */
-.view-toggle {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s;
-  background: rgba(45, 45, 45, 0.45);
-  border: none;
-  color: #f5f5f5;
-  font-size: 20px;
-  font-weight: 400;
-  line-height: 1;
-  opacity: 0.3;
-}
-
-[data-theme="dark"] .view-toggle {
-  background: rgba(245, 245, 245, 0.45);
-  color: #2d2d2d;
-}
-
-.view-toggle.active {
-  opacity: 0.5;
-}
-
 .depth-toggle {
   color: #f5f5f5;
   font-size: 20px;
@@ -924,7 +837,6 @@
 .theme-toggle:hover,
 .depth-toggle:hover,
 .ctx-toggle:hover,
-.view-toggle:hover,
 .copy-btn:hover {
   transform: scale(1.1);
 }
@@ -1028,32 +940,6 @@
 .btn-danger:hover {
   background: #b71c1c;
 }
-
-/* Left edit zone for all item levels */
-:root                          { --ez-mix: 4.5%; --ez-mix-hover: 9%; }
-:root:not([data-theme='dark']) { --ez-mix: 6%;   --ez-mix-hover: 13%; }
-
-.item-edit-zone {
-  flex-shrink: 0;
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, currentColor var(--ez-mix), transparent);
-  cursor: pointer;
-  transition: background 0.2s;
-  border-radius: 0.75rem;
-}
-
-/* Width per level so the square matches item height */
-.layer1-wrapper .item-edit-zone { width: 1.75rem; }
-.layer2-wrapper .item-edit-zone { width: 1.5rem; }
-.layer3-wrapper .item-edit-zone { width: 1.25rem; }
-
-.item-edit-zone:hover {
-  background: color-mix(in srgb, currentColor var(--ez-mix-hover), transparent);
-}
-
 
 /* Layer wrappers */
 .layer2-wrapper,

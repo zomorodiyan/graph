@@ -74,17 +74,6 @@ function GraphView() {
     } catch {}
     return 'context'
   })
-  // "V" button — reveals New/Paste, edit-zone bubbles, and add-sub/paste-sub triggers
-  // ("edit mode"). Hidden by default (clean read view); tap "V" to turn editing on.
-  const [hideEditing, setHideEditing] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem('active-hide-editing')
-      return saved === null ? true : saved === 'true'
-    } catch { return true }
-  })
-  useEffect(() => {
-    localStorage.setItem('active-hide-editing', String(hideEditing))
-  }, [hideEditing])
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
   const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
@@ -949,11 +938,6 @@ function GraphView() {
             onClick={() => setViewMode(m => m === 'context' ? 'default' : 'context')}
             title={viewMode === 'context' ? 'Context on — tap to hide' : 'Context off — tap to show'}
           >C</button>
-          <button
-            className={`view-toggle${!hideEditing ? ' active' : ''}`}
-            onClick={() => setHideEditing(v => !v)}
-            title={hideEditing ? 'Editing controls hidden — tap to show' : 'Editing controls shown — tap to hide'}
-          >V</button>
         </div>
       )}
 
@@ -977,7 +961,7 @@ function GraphView() {
         {/* Items grid — CSS columns for tight packing with no gaps */}
         <div className="items-grid">
         {/* New + Paste — top card (creates/pastes at the top of the list) */}
-        {!isVirtualView && !hideEditing && (
+        {!isVirtualView && (
           <div className="section-wrapper new-paste-wrapper">
             <div className="section">
               <div className="layer1 add-item" onClick={() => handleAddClick('top')} title="Add new item at top">
@@ -1058,11 +1042,9 @@ function GraphView() {
                 onSubCreateStart={handleSubCreateStart}
                 onSubCreateSave={handleSubCreateSave}
                 onSubCreateCancel={() => setSubCreate(null)}
-                onPasteSubItem={handlePasteSubItem}
                 onContextMenu={handleItemContextMenu}
                 isPending={isPending}
                 isTimeView={isVirtualView}
-                hideEditing={hideEditing}
                 showContext={viewMode === 'context'}
                 depth={depth}
                 showRaw={depth === 0}
@@ -1091,7 +1073,7 @@ function GraphView() {
         )}
 
         {/* New + Paste — bottom card (creates/pastes at the bottom of the list) */}
-        {!isVirtualView && !hideEditing && (
+        {!isVirtualView && (
           <div className="section-wrapper new-paste-wrapper">
             <div className="section">
               <div className="layer1 add-item" onClick={() => handleAddClick('bottom')} title="Add new item at bottom">
@@ -1122,7 +1104,6 @@ function GraphView() {
               onCopyClick={handleCopyItem}
               isPending={false}
               isTimeView={true}
-              hideEditing={hideEditing}
               showContext={viewMode === 'context'}
               depth={depth}
               showRaw={depth === 0}
