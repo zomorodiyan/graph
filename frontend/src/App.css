@@ -1244,9 +1244,17 @@
   border-radius: 1rem 1rem 0 0;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
   padding: 0.75rem;
+  /* Clears the home-indicator gesture area when flush with the screen bottom.
+     Dropped once the keyboard is open (.keyboard-open) — that safe area is
+     covered by the keyboard itself then, so the padding would just be dead
+     space between the sheet's content and the keyboard. */
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
   max-height: 70vh;
   overflow-y: auto;
+}
+
+.mobile-edit-sheet.keyboard-open {
+  padding-bottom: 0.75rem;
 }
 
 .mobile-edit-sheet-context {

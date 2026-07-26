@@ -22,7 +22,10 @@ function MobileEditSheet({ itemKey, item, parentLabel, defaultName, onSave, onCa
   const keyboardInset = useKeyboardInset()
 
   return (
-    <div className="mobile-edit-sheet" style={{ bottom: keyboardInset }}>
+    <div
+      className={`mobile-edit-sheet${keyboardInset > 0 ? ' keyboard-open' : ''}`}
+      style={{ bottom: keyboardInset }}
+    >
       {parentLabel && <div className="mobile-edit-sheet-context">Adding to: {parentLabel}</div>}
       <InlineItemEditor
         itemKey={itemKey}
