@@ -23,6 +23,11 @@ interface SectionProps {
   onItemClick: (path: string) => void
   onEditClick: (path: string, name: string, data: StructureItem) => void
   editingPath?: string | null
+  // When false (mobile), an item being edited/added-to stays in place with just
+  // a highlight — the form itself renders elsewhere, in a MobileEditSheet — since
+  // swapping it in inline is what let the on-screen keyboard cover it. Desktop
+  // has no on-screen keyboard, so it keeps the inline swap (default true).
+  editInline?: boolean
   onInlineSave?: (path: string, data: UpdatePayload) => void
   onInlineCancel?: () => void
   onInlineDelete?: (path: string) => void
@@ -169,6 +174,7 @@ function Section({
   onItemClick,
   onEditClick,
   editingPath = null,
+  editInline = true,
   onInlineSave,
   onInlineCancel,
   onInlineDelete,
@@ -232,7 +238,7 @@ function Section({
       <div className="layer1-container">
         <div className="layer1-wrapper" style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
           {showLoading && <span className="loading-spinner" title="Syncing...">⟳</span>}
-          {editingPath === itemPath ? (
+          {editingPath === itemPath && editInline ? (
             <InlineItemEditor
               itemKey={itemKey}
               item={item}
@@ -252,7 +258,10 @@ function Section({
                   title="Edit item"
                 />
               )}
-              <div className="layer1" style={progressFillStyle(item.progress, item.checkpoints, 'var(--blue-medium)')}>
+              <div
+                className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}`}
+                style={progressFillStyle(item.progress, item.checkpoints, 'var(--blue-medium)')}
+              >
                 <span className="item-title" onClick={() => onItemClick(itemPath)}>
                   {title}
                   {formatProgressText(item.progress) && (
@@ -325,7 +334,7 @@ function Section({
               <div className="layer2-l3-frame">
                 <div className="layer2-content">
                   <div className={`layer2-wrapper${childColorClass ? ' ' + childColorClass : ''}`}>
-                    {editingPath === childPath ? (
+                    {editingPath === childPath && editInline ? (
                       <InlineItemEditor
                         itemKey={childKey}
                         item={childItem as StructureItem}
@@ -346,7 +355,7 @@ function Section({
                           />
                         )}
                         <div
-                          className={`layer2${childColorClass ? ' ' + childColorClass : ''}`}
+                          className={`layer2${childColorClass ? ' ' + childColorClass : ''}${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}`}
                           style={progressFillStyle((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints, 'currentColor')}
                         >
                           <span className="item-title" onClick={() => onItemClick(childPath)}>
@@ -403,7 +412,7 @@ function Section({
                 </div>
 
                 {/* Layer 3 - Items */}
-                {depth >= 3 && (Object.keys(grandchildren).length > 0 || creatingPath === childPath) && (
+                {depth >= 3 && (Object.keys(grandchildren).length > 0 || (creatingPath === childPath && editInline)) && (
                   <div className="layer3-container">
                     {Object.entries(grandchildren).map(([grandKey, grandItem]) => {
                       const grandPath = `${childPath}.${grandKey}`
@@ -415,7 +424,7 @@ function Section({
                       return (
                         <div key={grandKey}>
                           <div className={`layer3-wrapper${grandColorClass ? ' ' + grandColorClass : ''}`}>
-                            {editingPath === grandPath ? (
+                            {editingPath === grandPath && editInline ? (
                               <InlineItemEditor
                                 itemKey={grandKey}
                                 item={grandItem as StructureItem}
@@ -436,7 +445,7 @@ function Section({
                                   />
                                 )}
                                 <div
-                                  className={`layer3-item${grandColorClass ? ' ' + grandColorClass : ''}`}
+                                  className={`layer3-item${grandColorClass ? ' ' + grandColorClass : ''}${!editInline && editingPath === grandPath ? ' item-editing' : ''}`}
                                   style={progressFillStyle((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints, 'currentColor')}
                                 >
                                   <span className="item-title" onClick={() => onItemClick(grandPath)}>
@@ -474,7 +483,7 @@ function Section({
                       )
                     })}
                     {/* Inline create editor for a new layer3 sub-item (trigger lives in layer2-wrapper) */}
-                    {childEditable && onSubCreateStart && creatingPath === childPath && (
+                    {childEditable && onSubCreateStart && creatingPath === childPath && editInline && (
                       <div className="layer3-wrapper">
                         <InlineItemEditor
                           itemKey=""
@@ -493,7 +502,7 @@ function Section({
           )
         })}
         {/* Inline create editor for a new layer2 sub-item (trigger lives in layer1-wrapper) */}
-        {showEditButton && onSubCreateStart && creatingPath === itemPath && (
+        {showEditButton && onSubCreateStart && creatingPath === itemPath && editInline && (
           <div className="layer2-container add-sub-container">
             <div className="layer2-l3-frame">
               <div className="layer2-content">

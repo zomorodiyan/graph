@@ -7,9 +7,17 @@ import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useTheme } from '../context/ThemeContext'
 import { StructureItem, UpdatePayload, pasteItems, serializeItem, getItemDueDate } from '@api'
 import InlineItemEditor from '../components/InlineItemEditor'
+import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
 import { loadViewPreferences } from '../utils/viewPreferences'
+
+// True on touch-primary devices (no on-screen keyboard problem on desktop,
+// so only mobile needs the item-stays-in-place + bottom-sheet editing pattern —
+// see MobileEditSheet and the "editInline" prop on Section)
+function isTouchDevice(): boolean {
+  return typeof window !== 'undefined' && !!window.matchMedia?.('(hover: none) and (pointer: coarse)').matches
+}
 
 // Color assignment based on index
 const COLORS = ['sky', 'indigo', 'fuchsia']
@@ -42,6 +50,14 @@ function GraphView() {
   // Enable swipe navigation (browser-like back/forward)
   useSwipeNavigation()
   const { toggleTheme } = useTheme()
+  const [isMobile, setIsMobile] = useState(isTouchDevice)
+  useEffect(() => {
+    const mq = window.matchMedia?.('(hover: none) and (pointer: coarse)')
+    if (!mq) return
+    const handler = () => setIsMobile(mq.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
   const [depth, setDepth] = useState<0 | 2 | 3>(() => {
     try {
       const saved = localStorage.getItem('active-depth')
@@ -872,6 +888,45 @@ function GraphView() {
     }
   }
 
+  // Mobile-only: whichever of edit / sub-create / top-level-create is active,
+  // resolved into the props MobileEditSheet needs. The corresponding item (or
+  // its parent, for sub-create) gets a border highlight in the list instead —
+  // see Section.tsx's "editInline" prop and the ".item-editing" CSS class.
+  const mobileSheet = (() => {
+    if (!isMobile) return null
+    if (inlineEdit) {
+      const item = getItemByPath(structure, inlineEdit.path)
+      if (!item) return null
+      return {
+        itemKey: inlineEdit.path.split('.').pop() ?? '',
+        item,
+        onSave: (data: UpdatePayload) => handleInlineSave(inlineEdit.path, data),
+        onCancel: () => setInlineEdit(null),
+        onDelete: () => handleDelete(inlineEdit.path),
+      }
+    }
+    if (subCreate) {
+      const parentItem = getItemByPath(structure, subCreate)
+      return {
+        itemKey: '',
+        item: {} as StructureItem,
+        defaultName: 'new item',
+        parentLabel: parentItem?.title || subCreate,
+        onSave: (data: UpdatePayload) => handleSubCreateSave(subCreate, data),
+        onCancel: () => setSubCreate(null),
+      }
+    }
+    if (inlineCreate) {
+      return {
+        itemKey: '',
+        item: {} as StructureItem,
+        onSave: handleCreateSave,
+        onCancel: () => setInlineCreate(false),
+      }
+    }
+    return null
+  })()
+
   return (
     <>
       {!inlineEdit && !inlineCreate && !subCreate && (
@@ -928,7 +983,7 @@ function GraphView() {
           </div>
         )}
         {/* Inline create editor — top position */}
-        {!isVirtualView && inlineCreate === 'top' && (
+        {!isVirtualView && inlineCreate === 'top' && !isMobile && (
           <div className="section">
             <div className="layer1-container">
               <InlineItemEditor
@@ -987,6 +1042,7 @@ function GraphView() {
                 onItemClick={handleItemClick}
                 onEditClick={handleEditClick}
                 editingPath={inlineEdit?.path || null}
+                editInline={!isMobile}
                 onInlineSave={handleInlineSave}
                 onInlineCancel={() => setInlineEdit(null)}
                 onInlineDelete={handleDelete}
@@ -1013,7 +1069,7 @@ function GraphView() {
         )}
 
         {/* Inline create editor — bottom position */}
-        {!isVirtualView && inlineCreate === 'bottom' && (
+        {!isVirtualView && inlineCreate === 'bottom' && !isMobile && (
           <div className="section">
             <div className="layer1-container">
               <InlineItemEditor
@@ -1051,6 +1107,7 @@ function GraphView() {
               onItemClick={handleItemClick}
               onEditClick={handleEditClick}
               editingPath={inlineEdit?.path || null}
+              editInline={!isMobile}
               onInlineSave={handleInlineSave}
               onInlineCancel={() => setInlineEdit(null)}
               onInlineDelete={handleDelete}
@@ -1072,6 +1129,9 @@ function GraphView() {
       {notification && (
         <Notification message={notification.message} type={notification.type} />
       )}
+
+      {/* Mobile edit/create sheet — see the mobileSheet derivation above */}
+      {mobileSheet && <MobileEditSheet {...mobileSheet} />}
     </>
   )
 }
