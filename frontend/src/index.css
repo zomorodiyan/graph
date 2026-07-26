@@ -5,7 +5,12 @@
   --text-primary: #000000;
   --text-secondary: #333333;
   --border-color: #e0e0e0;
-  
+
+  /* Item title color — same one the "Knowledge Graphs" home header uses
+     (see .structures-header h1), applied uniformly across all item depths;
+     hierarchy comes from size/weight, not a different hue per level */
+  --item-title: var(--royal-blue-dark);
+
   /* Theme colors */
   --green-light: #A5D6A7;
   --green-lighter: #C8E6C9;
@@ -91,6 +96,7 @@
   --text-primary: #ffffff;
   --text-secondary: #e0e0e0;
   --border-color: #2a2a2a;
+  --item-title: var(--sky-light);
 }
 
 /* Color schemes — cycle: blue → teal → purple → red */
