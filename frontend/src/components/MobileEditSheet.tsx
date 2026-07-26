@@ -1,4 +1,4 @@
-import { useKeyboardInset } from '../hooks/useKeyboardInset'
+import { useVisualViewportRect } from '../hooks/useVisualViewportRect'
 import InlineItemEditor from './InlineItemEditor'
 import { StructureItem, UpdatePayload } from '../api/localClient'
 
@@ -16,25 +16,33 @@ interface MobileEditSheetProps {
 }
 
 // Mobile-only: docks the item editor to the bottom of the viewport, above the
-// on-screen keyboard (tracked live via useKeyboardInset), instead of expanding
-// the item inline in the list. See GraphView.tsx for the desktop/mobile split.
+// on-screen keyboard, instead of expanding the item inline in the list. See
+// GraphView.tsx for the desktop/mobile split.
+//
+// The outer div is sized/positioned to exactly match window.visualViewport
+// (see useVisualViewportRect) — i.e. the actually-visible area, keyboard
+// excluded — and the sheet itself is absolutely pinned to ITS bottom. That
+// makes "sits right above the keyboard" true by construction: there's no
+// keyboard-height number to compute or get wrong, since the outer div's
+// bottom edge already IS the top of the keyboard whenever one is open, and
+// the true screen bottom whenever one isn't.
 function MobileEditSheet({ itemKey, item, parentLabel, defaultName, onSave, onCancel, onDelete }: MobileEditSheetProps) {
-  const keyboardInset = useKeyboardInset()
+  const { top, height } = useVisualViewportRect()
+  const keyboardLikelyOpen = height < window.innerHeight - 80 // rough guess, only used to skip safe-area padding
 
   return (
-    <div
-      className={`mobile-edit-sheet${keyboardInset > 0 ? ' keyboard-open' : ''}`}
-      style={{ bottom: keyboardInset }}
-    >
-      {parentLabel && <div className="mobile-edit-sheet-context">Adding to: {parentLabel}</div>}
-      <InlineItemEditor
-        itemKey={itemKey}
-        item={item}
-        defaultName={defaultName}
-        onSave={onSave}
-        onCancel={onCancel}
-        onDelete={onDelete}
-      />
+    <div className="mobile-edit-sheet-viewport" style={{ top, height }}>
+      <div className={`mobile-edit-sheet${keyboardLikelyOpen ? ' keyboard-open' : ''}`}>
+        {parentLabel && <div className="mobile-edit-sheet-context">Adding to: {parentLabel}</div>}
+        <InlineItemEditor
+          itemKey={itemKey}
+          item={item}
+          defaultName={defaultName}
+          onSave={onSave}
+          onCancel={onCancel}
+          onDelete={onDelete}
+        />
+      </div>
     </div>
   )
 }

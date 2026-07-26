@@ -1234,11 +1234,24 @@
   outline-offset: -2px;
 }
 
-.mobile-edit-sheet {
+/* Sized/positioned to exactly match window.visualViewport (see
+   useVisualViewportRect) — i.e. the actually-visible area, keyboard
+   excluded. Transparent and click-through everywhere except the sheet
+   itself, which is pinned to ITS bottom below. */
+.mobile-edit-sheet-viewport {
   position: fixed;
   left: 0;
   right: 0;
   z-index: 1500;
+  pointer-events: none;
+}
+
+.mobile-edit-sheet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  pointer-events: auto;
   background: var(--bg-primary);
   border-top: 1px solid var(--border-color);
   border-radius: 1rem 1rem 0 0;
