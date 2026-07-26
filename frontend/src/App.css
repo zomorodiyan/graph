@@ -262,8 +262,9 @@
   flex-shrink: 0;
 }
 
-/* Level 2 — same --item-title color as level 1 and 3; distinguished by
-   size/weight only */
+/* Level 2 — the theme's primary text color (black in light mode, white in
+   dark mode) instead of --item-title, so it reads as visually distinct
+   from level 1 and 3 */
 .layer2 {
   font-size: 0.875rem;
   font-weight: 500;
@@ -273,7 +274,7 @@
   display: flex;
   align-items: stretch;
   background: transparent;
-  color: var(--item-title);
+  color: var(--text-primary);
   transition: background-color 0.2s;
 }
 
