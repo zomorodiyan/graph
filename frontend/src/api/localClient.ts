@@ -125,56 +125,6 @@ function injectIds(items: Record<string, StructureItem>, parentId = '') {
   }
 }
 
-// ── Legacy data repair ───────────────────────────────────────────────────────
-// Older clients mis-parsed pulled "context: ..." lines into child items literally
-// titled "context: ...". Fold those back into the parent's context property.
-// Deliberately does NOT bump modified_at: the repaired copy must not win a sync
-// against genuinely newer remote edits; it gets pushed with the next real edit.
-function repairLegacyContextItems(items: Record<string, StructureItem>, parent?: StructureItem): boolean {
-  let changed = false
-  for (const [key, item] of Object.entries(items)) {
-    const m = typeof item.title === 'string' ? item.title.match(/^context:\s*(.+)$/) : null
-    const isLeaf = !item.children || Object.keys(item.children).length === 0
-    if (m && isLeaf && parent) {
-      if (!parent.context) {
-        parent.context = m[1]
-      } else if (parent.context !== m[1]) {
-        continue // parent has a different context — keep the item rather than lose text
-      }
-      delete items[key]
-      changed = true
-      continue
-    }
-    if (item.children && repairLegacyContextItems(item.children, item)) changed = true
-  }
-  return changed
-}
-
-// ── Legacy due-field migration ────────────────────────────────────────────────
-// Older items stored a standalone `due` field. Due dates are now represented as
-// a checkpoint whose progress normalizes to done===total (see getItemDueDate).
-// Fold any leftover `due` into checkpoints once, on load. An item with no other
-// progress gets "0/1" so the due-checkpoint ("1/1") has a total to match.
-// Deliberately does NOT bump modified_at — same reasoning as repairLegacyContextItems.
-function repairLegacyDueItems(items: Record<string, StructureItem>): boolean {
-  let changed = false
-  for (const item of Object.values(items)) {
-    const legacyDue = (item as { due?: unknown }).due
-    if (typeof legacyDue === 'string' && legacyDue) {
-      if (!item.progress) item.progress = '0/1'
-      const total = item.progress.match(/^\d+\/(\d+)$/)?.[1] ?? '1'
-      const cps = item.checkpoints ?? []
-      if (!cps.some(cp => cp.date === legacyDue)) {
-        item.checkpoints = [...cps, { date: legacyDue, progress: `${total}/${total}` }]
-      }
-      delete (item as { due?: unknown }).due
-      changed = true
-    }
-    if (item.children && repairLegacyDueItems(item.children)) changed = true
-  }
-  return changed
-}
-
 // A due date is a checkpoint whose progress normalizes to done===total — the
 // planned "finish line". Only the chronologically LAST checkpoint can be that
 // finish line (interpolation holds flat past it); if it isn't done===total,
@@ -196,35 +146,64 @@ export function formatCost(cost: { amount: number; unit: string } | undefined): 
   return isSymbol ? `${cost.unit}${cost.amount}` : `${cost.amount}${cost.unit}`
 }
 
-function accumulateValues(item: StructureItem, totals: Record<string, number>): void {
-  if (item.cost && typeof item.cost.amount === 'number' && !isNaN(item.cost.amount) && item.cost.unit) {
-    totals[item.cost.unit] = (totals[item.cost.unit] ?? 0) + item.cost.amount
+export interface ValueTotal { actual: number; target?: number }
+
+// A non-leaf's own `cost` is a target/budget, not spent money — it must never be
+// added into an ancestor's rollup (that would double-count it on top of its own
+// children). Only true leaves contribute to the actual sum.
+function accumulateLeafValues(item: StructureItem, totals: Record<string, number>): void {
+  const children = item.children ? Object.values(item.children) : []
+  if (children.length === 0) {
+    if (item.cost && typeof item.cost.amount === 'number' && !isNaN(item.cost.amount) && item.cost.unit) {
+      totals[item.cost.unit] = (totals[item.cost.unit] ?? 0) + item.cost.amount
+    }
+    return
   }
-  if (item.children) {
-    for (const child of Object.values(item.children)) accumulateValues(child, totals)
-  }
+  for (const child of children) accumulateLeafValues(child, totals)
 }
 
-// Self + all descendants, grouped by unit (can't sum "$" and "lb" together). Walks the
-// real item.children tree to unbounded depth, independent of how many levels Section.tsx
-// renders at once.
-export function sumValues(item: StructureItem): Record<string, number> {
+// Leaf: its own value, shown plainly. Parent: sum of all leaf values in its
+// subtree — and if the parent itself has a `cost` set, that value is the
+// denominator (a target/budget) the leaf sum is measured against, per unit.
+// Walks the real item.children tree to unbounded depth, independent of how
+// many levels Section.tsx renders at once.
+export function sumValues(item: StructureItem): Record<string, ValueTotal> {
+  const hasChildren = !!item.children && Object.keys(item.children).length > 0
   const totals: Record<string, number> = {}
-  accumulateValues(item, totals)
+
+  if (hasChildren) {
+    for (const child of Object.values(item.children!)) accumulateLeafValues(child, totals)
+  } else if (item.cost && typeof item.cost.amount === 'number' && !isNaN(item.cost.amount) && item.cost.unit) {
+    totals[item.cost.unit] = item.cost.amount
+  }
+
+  const out: Record<string, ValueTotal> = {}
   for (const unit of Object.keys(totals)) {
     // Round once, after all additions — rounding per recursion level would compound error.
-    totals[unit] = Math.round(totals[unit] * 100) / 100
+    out[unit] = { actual: Math.round(totals[unit] * 100) / 100 }
   }
-  return totals
+
+  if (hasChildren && item.cost && typeof item.cost.amount === 'number' && !isNaN(item.cost.amount) && item.cost.unit) {
+    const unit = item.cost.unit
+    out[unit] = { actual: out[unit]?.actual ?? 0, target: Math.round(item.cost.amount * 100) / 100 }
+  }
+
+  return out
 }
 
 // Multi-unit display: each unit formatted via formatCost's own symbol/suffix heuristic,
-// joined with " · ". Empty totals (nothing anywhere in the subtree) → null, no badge —
-// same as today's "no cost = no badge".
-export function formatValueTotals(totals: Record<string, number>): string | null {
+// joined with " · ". A unit with a target renders as "actual/target" (fraction against
+// the parent's own value) instead of the plain amount. Empty totals (nothing anywhere
+// in the subtree) → null, no badge — same as today's "no cost = no badge".
+export function formatValueTotals(totals: Record<string, ValueTotal>): string | null {
   const units = Object.keys(totals)
   if (units.length === 0) return null
-  return units.map(unit => formatCost({ amount: totals[unit], unit })).join(' · ')
+  return units.map(unit => {
+    const { actual, target } = totals[unit]
+    if (target === undefined) return formatCost({ amount: actual, unit })
+    const isSymbol = /^[^a-zA-Z0-9]+$/.test(unit)
+    return isSymbol ? `${unit}${actual}/${target}` : `${actual}/${target}${unit}`
+  }).join(' · ')
 }
 
 // ── Path navigation ──────────────────────────────────────────────────────────
@@ -397,9 +376,6 @@ function validateUpdatePayload(data: UpdatePayload) {
 
 export async function fetchStructure(graphName = 'default'): Promise<Structure> {
   const s = loadStructure(graphName)
-  let changed = repairLegacyContextItems(s.structure)
-  if (repairLegacyDueItems(s.structure)) changed = true
-  if (changed) saveStructure(graphName, s)
   injectIds(s.structure)
   return s
 }

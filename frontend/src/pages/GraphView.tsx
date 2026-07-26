@@ -32,18 +32,12 @@ function GraphView() {
   const location = useLocation()
   const { graphName } = useParams<{ graphName?: string }>()
   
-  // Parse path from URL, handling both /g/{graphName}/... and legacy /... routes
+  // Parse path from URL: /g/{graphName}/path/to/item -> path.to.item
   const getPathFromLocation = () => {
     const pathname = location.pathname
-    if (graphName) {
-      // Route: /g/{graphName}/path/to/item -> path.to.item
-      const prefix = `/g/${graphName}`
-      const remaining = pathname.startsWith(prefix) ? pathname.slice(prefix.length) : pathname
-      return remaining === '' || remaining === '/' ? '' : remaining.slice(1).replace(/\//g, '.')
-    } else {
-      // Legacy route: /path/to/item -> path.to.item
-      return pathname === '/' ? '' : pathname.slice(1).replace(/\//g, '.')
-    }
+    const prefix = `/g/${graphName}`
+    const remaining = pathname.startsWith(prefix) ? pathname.slice(prefix.length) : pathname
+    return remaining === '' || remaining === '/' ? '' : remaining.slice(1).replace(/\//g, '.')
   }
   
   const path = getPathFromLocation()

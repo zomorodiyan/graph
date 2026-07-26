@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import { ColorSchemeProvider } from './context/ColorSchemeContext'
 import { ZoomProvider } from './context/ZoomContext'
@@ -21,8 +21,8 @@ function AppContent() {
         {/* Graph view: /g/{graphName}/* */}
         <Route path="/g/:graphName/*" element={<GraphView />} />
 
-        {/* Backwards compatibility: old routes without graph prefix (uses default) */}
-        <Route path="/*" element={<GraphView />} />
+        {/* Unmatched routes go home */}
+        <Route path="/*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   )

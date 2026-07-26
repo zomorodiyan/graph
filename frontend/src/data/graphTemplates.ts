@@ -416,43 +416,43 @@ Recommended by Sam
 ### Documentaries
 #### Planet Earth
 
-# Finances (1640/2300)
-## Fixed Costs (1035/1120)
-### Rent (950/950)
+# Finances $2300
+## Fixed Costs $1120
+### Rent $950
 Paid, my share of total
 
-### Insurance (55/110)
+### Insurance $55
 Share of total
 
-### Subscriptions (30/60)
+### Subscriptions $30
 Share of total
 
-## Budgeted (425/880)
-### Groceries (200/400)
+## Budgeted $880
+### Groceries $200
 
-### Dining Out (60/90)
+### Dining Out $60
 
-### Transport (65/105)
+### Transport $65
 
-### Clothes (0/80)
+### Clothes $0
 
-### Household Supplies (20/40)
+### Household Supplies $20
 Cleaning, bathroom
 
-### Office Supplies (10/25)
+### Office Supplies $10
 Pens, paper, small gear
 
-### Personal Care (30/60)
+### Personal Care $30
 
-### Health/Medical (40/80)
+### Health/Medical $40
 Copays, prescriptions
 
-## Investments (300/300)
-### Roth IRA (50/50)
-$50 per month
+## Investments $300
+### Roth IRA $50
+Monthly contribution
 
-### Emergency Fund (250/250)
-$250 per month — lawyer, income gaps, health, gifts
+### Emergency Fund $250
+Monthly contribution — lawyer, income gaps, health, gifts
 
 ## Goals
 ### Pay Off Loan (0/12000)
