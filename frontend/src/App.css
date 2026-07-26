@@ -218,15 +218,16 @@
 }
 
 /* "New" / "Paste" — action buttons, not real items, so they opt out of the
-   level/scheme accent color and use a neutral gray instead (same 80%/20%
-   lightness pair as level 2's title color), same in every color scheme. */
+   level/scheme accent color and use a muted mid-gray instead (a 40%/60%
+   lightness pair, closer to neutral than level 2's title color so they
+   stay unobtrusive), same in every color scheme. */
 .layer1.add-item,
 .layer1.add-item .item-title {
-  color: #333333;
+  color: #666666;
 }
 [data-theme='dark'] .layer1.add-item,
 [data-theme='dark'] .layer1.add-item .item-title {
-  color: #cccccc;
+  color: #999999;
 }
 .layer1.add-item {
   border: 1px solid var(--border-color);
