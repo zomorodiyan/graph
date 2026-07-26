@@ -215,6 +215,38 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
     }
   }, [payload, onCancel, onSave])
 
+  // Keep the edit card above the on-screen keyboard, but scroll only the exact
+  // amount the keyboard actually covers — not a generic "nearest" scroll per
+  // input. The keyboard resizes window.visualViewport (not the layout viewport),
+  // so we compare the card's position against that shrunk visible area and
+  // nudge just enough to uncover it, no more.
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+
+    const keepCardVisible = () => {
+      const el = rootRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      const visibleBottom = vv.offsetTop + vv.height
+      const overlap = rect.bottom - visibleBottom
+      if (overlap > 0) {
+        window.scrollBy({ top: overlap + 8, behavior: 'smooth' })
+      }
+    }
+
+    vv.addEventListener('resize', keepCardVisible)
+    vv.addEventListener('scroll', keepCardVisible)
+    // Catch the keyboard opening from the initial autoFocus too
+    const initialCheck = requestAnimationFrame(keepCardVisible)
+
+    return () => {
+      vv.removeEventListener('resize', keepCardVisible)
+      vv.removeEventListener('scroll', keepCardVisible)
+      cancelAnimationFrame(initialCheck)
+    }
+  }, [])
+
   return (
     <div ref={rootRef} className="inline-edit" onBlur={handleContainerBlur}>
       <div className="inline-edit-tools">
@@ -270,7 +302,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
             onClick={onDelete}
             title="Delete"
           >
-              Del
+              Delete
           </button>
         )}
       </div>
