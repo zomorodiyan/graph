@@ -1,6 +1,7 @@
 import { useRef, useState, type CSSProperties } from 'react'
 import { StructureItem, UpdatePayload, getItemDueDate, formatCost } from '../api/localClient'
 import { parseLocalDate, daysUntil } from '../utils/dates'
+import { useItemSwipe } from '../hooks/useItemSwipe'
 import InlineItemEditor from './InlineItemEditor'
 
 // Clipboard outline (rectangle + clip "bump" on top) for paste-sub-item triggers —
@@ -198,7 +199,13 @@ function Section({
 
   // Don't show edit buttons in time view, when pending, for non-editable items, or in "V" (hide editing) mode
   const showEditButton = !isTimeView && !item.nonEditable && !hideEditing
+  // Right-click menu / swipe-gesture eligibility — same as showEditButton but NOT
+  // gated on hideEditing: both are invisible until invoked, so "V" mode (which only
+  // declutters visible buttons) shouldn't have to be toggled on first to use them.
+  const rowEditable = !isTimeView && !item.nonEditable
   const showLoading = isPending
+  // Left swipe = edit, right swipe = add sub-item (mirrors the right-click menu).
+  const makeSwipeHandlers = useItemSwipe()
 
   // Get child items for layer2
   const children = item.children || {}
@@ -258,7 +265,13 @@ function Section({
               <div
                 className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}`}
                 style={progressFillStyle(item.progress, item.checkpoints, 'var(--blue-medium)')}
-                onContextMenu={showEditButton ? (e) => onContextMenu?.(e, itemPath, true) : undefined}
+                onContextMenu={rowEditable ? (e) => onContextMenu?.(e, itemPath, true) : undefined}
+                {...(rowEditable
+                  ? makeSwipeHandlers(
+                      () => onEditClick(itemPath, title, item),
+                      () => onSubCreateStart?.(itemPath),
+                    )
+                  : {})}
               >
                 <span className="item-title" onClick={() => onItemClick(itemPath)}>
                   {title}
@@ -321,6 +334,7 @@ function Section({
           const grandchildren = (childItem as StructureItem).children || {}
           // Check if this child item is editable
           const childEditable = showEditButton && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
+          const childRowEditable = rowEditable && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
           const layer2Delta = formatCheckpointDelta((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints)
 
           return (
@@ -351,7 +365,13 @@ function Section({
                         <div
                           className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}`}
                           style={progressFillStyle((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints, 'currentColor')}
-                          onContextMenu={childEditable ? (e) => onContextMenu?.(e, childPath, depth >= 3) : undefined}
+                          onContextMenu={childRowEditable ? (e) => onContextMenu?.(e, childPath, depth >= 3) : undefined}
+                          {...(childRowEditable
+                            ? makeSwipeHandlers(
+                                () => onEditClick(childPath, childTitle, childItem as StructureItem),
+                                () => { if (depth >= 3) onSubCreateStart?.(childPath) },
+                              )
+                            : {})}
                         >
                           <span className="item-title" onClick={() => onItemClick(childPath)}>
                             {childTitle}
@@ -414,6 +434,7 @@ function Section({
                       const grandTitle = (grandItem as StructureItem).title || grandKey
                       // Check if this grandchild item is editable
                       const grandEditable = showEditButton && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
+                      const grandRowEditable = rowEditable && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
                       const layer3Delta = formatCheckpointDelta((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints)
 
                       return (
@@ -442,7 +463,13 @@ function Section({
                                 <div
                                   className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}`}
                                   style={progressFillStyle((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints, 'currentColor')}
-                                  onContextMenu={grandEditable ? (e) => onContextMenu?.(e, grandPath, false) : undefined}
+                                  onContextMenu={grandRowEditable ? (e) => onContextMenu?.(e, grandPath, false) : undefined}
+                                  {...(grandRowEditable
+                                    ? makeSwipeHandlers(
+                                        () => onEditClick(grandPath, grandTitle, grandItem as StructureItem),
+                                        () => {},
+                                      )
+                                    : {})}
                                 >
                                   <span className="item-title" onClick={() => onItemClick(grandPath)}>
                                     {grandTitle}
@@ -478,8 +505,10 @@ function Section({
                         </div>
                       )
                     })}
-                    {/* Inline create editor for a new layer3 sub-item (trigger lives in layer2-wrapper) */}
-                    {childEditable && onSubCreateStart && creatingPath === childPath && editInline && (
+                    {/* Inline create editor for a new layer3 sub-item (trigger lives in layer2-wrapper,
+                        or the right-click menu — which works even in "V" hide-editing mode, so this
+                        doesn't gate on childEditable/showEditButton the way the "+" chip itself does) */}
+                    {onSubCreateStart && creatingPath === childPath && editInline && (
                       <div className="layer3-wrapper">
                         <InlineItemEditor
                           itemKey=""
@@ -497,8 +526,10 @@ function Section({
             </div>
           )
         })}
-        {/* Inline create editor for a new layer2 sub-item (trigger lives in layer1-wrapper) */}
-        {showEditButton && onSubCreateStart && creatingPath === itemPath && editInline && (
+        {/* Inline create editor for a new layer2 sub-item (trigger lives in layer1-wrapper,
+            or the right-click menu — see the layer3 block above for why this doesn't
+            gate on showEditButton) */}
+        {onSubCreateStart && creatingPath === itemPath && editInline && (
           <div className="layer2-container add-sub-container">
             <div className="layer2-l3-frame">
               <div className="layer2-content">

@@ -3,7 +3,6 @@ import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
-import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useTheme } from '../context/ThemeContext'
 import { StructureItem, UpdatePayload, pasteItems, serializeItem, getItemDueDate } from '@api'
 import InlineItemEditor from '../components/InlineItemEditor'
@@ -49,8 +48,6 @@ function GraphView() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   
-  // Enable swipe navigation (browser-like back/forward)
-  useSwipeNavigation()
   const { toggleTheme } = useTheme()
   const [isMobile, setIsMobile] = useState(isTouchDevice)
   useEffect(() => {
@@ -277,7 +274,7 @@ function GraphView() {
 
     if (viewPreferences.showProgress) {
       const progressCategories: Array<['not_started' | 'in_progress' | 'done', string]> = [
-        ['not_started', 'Not Started'], ['in_progress', 'In Progress'], ['done', 'Done'],
+        ['done', 'Done'],
       ]
       for (const [cat, label] of progressCategories) {
         const items = getProgressChildrenFromRoot(cat, rootItems, scopePath)

@@ -3,14 +3,11 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 export const MIN_ZOOM = 0.5
 export const MAX_ZOOM = 1.5
 export const PINCH_ZOOM_STEP = 0.05
-const SWIPE_ZOOM_STEP = 0.1
 const STORAGE_KEY = 'graph-font-zoom'
 
 interface ZoomContextType {
   zoom: number
   setZoom: (zoom: number) => void
-  zoomIn: () => void
-  zoomOut: () => void
 }
 
 const ZoomContext = createContext<ZoomContextType | null>(null)
@@ -38,16 +35,8 @@ export function ZoomProvider({ children }: { children: ReactNode }) {
     setZoomState(Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom)))
   }, [])
 
-  const zoomIn = useCallback(() => {
-    setZoomState(prev => Math.min(MAX_ZOOM, Math.round((prev + SWIPE_ZOOM_STEP) * 10) / 10))
-  }, [])
-
-  const zoomOut = useCallback(() => {
-    setZoomState(prev => Math.max(MIN_ZOOM, Math.round((prev - SWIPE_ZOOM_STEP) * 10) / 10))
-  }, [])
-
   return (
-    <ZoomContext.Provider value={{ zoom, setZoom, zoomIn, zoomOut }}>
+    <ZoomContext.Provider value={{ zoom, setZoom }}>
       {children}
     </ZoomContext.Provider>
   )
