@@ -6,9 +6,11 @@ import { useColorScheme } from '../context/ColorSchemeContext'
 import { createGraph, fetchStructureText, updateGraph, deleteGraph, GraphInfo } from '@api'
 import { useGraphs } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
+import { useLongPress } from '../hooks/useLongPress'
 import { useSyncManager, loadSyncStatus, GraphSyncStatus, SyncAllResult } from '../hooks/useSyncManager'
 import Notification from '../components/Notification'
 import InlineGraphEditor from '../components/InlineGraphEditor'
+import AgentAccessGuide from '../components/AgentAccessGuide'
 import { GRAPH_TEMPLATES, GraphTemplate, resolveTemplateDates } from '../data/graphTemplates'
 import './StructuresView.css'
 
@@ -35,6 +37,7 @@ function StructuresView() {
     type: 'success' | 'error'
   } | null>(null)
   const [showGistConfig, setShowGistConfig] = useState(false)
+  const [showAgentGuide, setShowAgentGuide] = useState(false)
   const [patInput, setPatInput] = useState('')
   const [copiedGraph, setCopiedGraph] = useState<string | null>(null)
   const [flashDirections, setFlashDirections] = useState<Record<string, string>>({})
@@ -54,6 +57,7 @@ function StructuresView() {
   useModalBackButton(inlineCreate, () => setInlineCreate(false))
   useModalBackButton(showTemplates, () => setShowTemplates(false))
   useModalBackButton(Boolean(inlineEditGraph), () => setInlineEditGraph(null))
+  useModalBackButton(showAgentGuide, () => setShowAgentGuide(false))
 
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type })
@@ -87,6 +91,10 @@ function StructuresView() {
       }
     }
   }
+
+  // Sync button: tap runs handleSyncClick as before; long-press opens the
+  // agent-access guide instead (independent of connection state).
+  const syncLongPress = useLongPress(() => setShowAgentGuide(true), handleSyncClick)
 
   const handleSaveGistConfig = async () => {
     configure(patInput, '')
@@ -253,8 +261,8 @@ function StructuresView() {
             <>
               <button
                 className={`sync-btn${isSyncing ? ' sync-btn--spinning' : ''}${pat ? ' sync-btn--connected' : ''}`}
-                onClick={handleSyncClick}
-                title={pat ? `Sync with GitHub Gist${gistId ? ` (${gistId.slice(0, 8)}…)` : ''}` : 'Connect GitHub to enable sync'}
+                {...syncLongPress}
+                title={pat ? `Sync with GitHub Gist${gistId ? ` (${gistId.slice(0, 8)}…)` : ''} — long-press for agent access` : 'Connect GitHub to enable sync — long-press for agent access'}
                 disabled={isSyncing}
               >
                 ↻
@@ -421,6 +429,8 @@ function StructuresView() {
       {notification && (
         <Notification message={notification.message} type={notification.type} />
       )}
+
+      {showAgentGuide && <AgentAccessGuide onClose={() => setShowAgentGuide(false)} />}
     </div>
   )
 }
