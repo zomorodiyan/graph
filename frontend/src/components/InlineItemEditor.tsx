@@ -63,11 +63,14 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
   const rootRef = useRef<HTMLDivElement>(null)
   const didCommitRef = useRef(false)
 
+  // Focus only — no manual scrollIntoView. The browser already scrolls a
+  // focused input above the mobile keyboard on its own; driving scroll
+  // ourselves on top of that fights the native behavior and is what made
+  // the page jump around on every tap.
   const focusAndScroll = (ref: React.RefObject<HTMLInputElement | null>) => {
     requestAnimationFrame(() => {
       if (!ref.current) return
       ref.current.focus()
-      ref.current.scrollIntoView({ block: 'nearest', inline: 'nearest' })
       if (ref.current.type !== 'date') {
         ref.current.select()
       }
