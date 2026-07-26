@@ -6,7 +6,6 @@ import { useColorScheme } from '../context/ColorSchemeContext'
 import { createGraph, fetchStructureText, updateGraph, deleteGraph, GraphInfo } from '@api'
 import { useGraphs } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
-import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { useSyncManager, loadSyncStatus, GraphSyncStatus, SyncAllResult } from '../hooks/useSyncManager'
 import Notification from '../components/Notification'
 import InlineGraphEditor from '../components/InlineGraphEditor'
@@ -55,9 +54,6 @@ function StructuresView() {
   useModalBackButton(inlineCreate, () => setInlineCreate(false))
   useModalBackButton(showTemplates, () => setShowTemplates(false))
   useModalBackButton(Boolean(inlineEditGraph), () => setInlineEditGraph(null))
-
-  // Enable swipe navigation (back/forward)
-  useSwipeNavigation()
 
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type })
