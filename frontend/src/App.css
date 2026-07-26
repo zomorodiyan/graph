@@ -163,7 +163,8 @@
 
 /* Center the copy handle icon within any zone */
 .section-copy-zone .copy-handle,
-.card-action-zone .copy-handle {
+.card-action-zone .copy-handle,
+.agent-guide-copy-btn .copy-handle {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);

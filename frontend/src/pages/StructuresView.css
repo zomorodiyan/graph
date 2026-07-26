@@ -675,6 +675,71 @@
   cursor: pointer;
 }
 
+/* Agent Access guide — long-press on the sync button. Uses the shared
+   .modal-overlay/.modal base (above) with a wider, scrollable modifier since
+   it holds multiple code blocks instead of a couple of inputs. */
+.agent-guide-modal {
+  max-width: 34rem;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.agent-guide-intro {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0 0 1.25rem;
+}
+
+.agent-guide-block {
+  margin-bottom: 1.1rem;
+}
+
+.agent-guide-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.agent-guide-copy-btn {
+  position: relative;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.agent-guide-code {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-family: 'SF Mono', Consolas, monospace;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.agent-guide-caveat {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
 /* Per-graph sync status badge — inline before graph name */
 .sync-badge {
   display: inline;
