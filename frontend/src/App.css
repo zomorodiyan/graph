@@ -184,9 +184,10 @@
   margin-right: 0;
 }
 
-/* Level 1 — low-contrast title (muted, doesn't jump out) — same "slate" tone
-   the old alternating scheme used, just applied to every level-1 item instead
-   of cycling. Transparent background throughout, as before. */
+/* Level 1 — low-contrast title: light blue in light mode, dark blue in dark
+   mode (i.e. the color leans the SAME direction as the theme, unlike level
+   2's sky tone below, which leans opposite for legibility) — the existing
+   --blue-light/--blue-dark pair. Transparent background throughout, as before. */
 .layer1 {
   font-size: 1rem;
   font-weight: 600;
@@ -196,11 +197,11 @@
   display: flex;
   align-items: stretch;
   background: transparent;
-  color: var(--slate-dark);
+  color: var(--blue-light);
   transition: background-color 0.2s;
 }
 [data-theme='dark'] .layer1 {
-  color: var(--slate-light);
+  color: var(--blue-dark);
 }
 
 .layer1 .item-title {
@@ -307,12 +308,12 @@
   gap: 0;
 }
 
-/* Level 3 — low-contrast title, same "slate" tone as level 1 (it's the
+/* Level 3 — low-contrast title, same treatment as level 1 (it's the
    deepest, least prominent level; its context note is what actually reads
    as muted — see .layer3-container .item-context below) */
 .layer3-item {
   font-size: 0.78125rem;
-  color: var(--slate-dark);
+  color: var(--blue-light);
   user-select: none;
   border-radius: 0.25rem;
   overflow: hidden;
@@ -322,7 +323,7 @@
   transition: background-color 0.2s;
 }
 [data-theme='dark'] .layer3-item {
-  color: var(--slate-light);
+  color: var(--blue-dark);
 }
 
 .layer3-item .item-title {
@@ -415,7 +416,7 @@
   max-width: 16rem;
   /* Inset from the card edge so the rounded corner doesn't clip the text */
   margin-left: 0.5rem;
-  color: var(--slate-dark);
+  color: var(--blue-dark);
 }
 [data-theme='dark'] .layer1-container .item-context {
   color: white;
