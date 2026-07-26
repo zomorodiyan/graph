@@ -1,5 +1,5 @@
 import { useRef, useState, type CSSProperties } from 'react'
-import { StructureItem, UpdatePayload, getItemDueDate, formatCost } from '../api/localClient'
+import { StructureItem, UpdatePayload, getItemDueDate, sumValues, formatValueTotals } from '../api/localClient'
 import { parseLocalDate, daysUntil } from '../utils/dates'
 import { useItemSwipe } from '../hooks/useItemSwipe'
 import InlineItemEditor from './InlineItemEditor'
@@ -218,6 +218,7 @@ function Section({
   }
 
   const layer1Delta = formatCheckpointDelta(item.progress, item.checkpoints)
+  const layer1Value = formatValueTotals(sumValues(item))
 
   return (
     <div className="section" ref={sectionRef}>
@@ -257,8 +258,8 @@ function Section({
                       {layer1Delta.text}
                     </span>
                   )}
-                  {!minimal && formatCost(item.cost) && (
-                    <span className="item-cost">{formatCost(item.cost)}</span>
+                  {!minimal && layer1Value && (
+                    <span className="item-cost">{layer1Value}</span>
                   )}
                   {!minimal && getItemDueDate(item) && (
                     <span className={`item-due due-${getDueCategory(getItemDueDate(item))}`}>
@@ -285,6 +286,7 @@ function Section({
           // Check if this child item is editable
           const childRowEditable = rowEditable && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
           const layer2Delta = formatCheckpointDelta((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints)
+          const layer2Value = formatValueTotals(sumValues(childItem as StructureItem))
 
           return (
             <div key={childKey} className="layer2-container">
@@ -322,8 +324,8 @@ function Section({
                                 {layer2Delta.text}
                               </span>
                             )}
-                            {!minimal && formatCost((childItem as StructureItem).cost) && (
-                              <span className="item-cost">{formatCost((childItem as StructureItem).cost)}</span>
+                            {!minimal && layer2Value && (
+                              <span className="item-cost">{layer2Value}</span>
                             )}
                             {!minimal && getItemDueDate(childItem as StructureItem) && (
                               <span className={`item-due due-${getDueCategory(getItemDueDate(childItem as StructureItem))}`}>
@@ -350,6 +352,7 @@ function Section({
                       // Check if this grandchild item is editable
                       const grandRowEditable = rowEditable && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
                       const layer3Delta = formatCheckpointDelta((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints)
+                      const layer3Value = formatValueTotals(sumValues(grandItem as StructureItem))
 
                       return (
                         <div key={grandKey}>
@@ -387,8 +390,8 @@ function Section({
                                         {layer3Delta.text}
                                       </span>
                                     )}
-                                    {!minimal && formatCost((grandItem as StructureItem).cost) && (
-                                      <span className="item-cost">{formatCost((grandItem as StructureItem).cost)}</span>
+                                    {!minimal && layer3Value && (
+                                      <span className="item-cost">{layer3Value}</span>
                                     )}
                                     {!minimal && getItemDueDate(grandItem as StructureItem) && (
                                       <span className={`item-due due-${getDueCategory(getItemDueDate(grandItem as StructureItem))}`}>

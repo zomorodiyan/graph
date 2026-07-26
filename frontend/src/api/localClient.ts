@@ -196,6 +196,37 @@ export function formatCost(cost: { amount: number; unit: string } | undefined): 
   return isSymbol ? `${cost.unit}${cost.amount}` : `${cost.amount}${cost.unit}`
 }
 
+function accumulateValues(item: StructureItem, totals: Record<string, number>): void {
+  if (item.cost && typeof item.cost.amount === 'number' && !isNaN(item.cost.amount) && item.cost.unit) {
+    totals[item.cost.unit] = (totals[item.cost.unit] ?? 0) + item.cost.amount
+  }
+  if (item.children) {
+    for (const child of Object.values(item.children)) accumulateValues(child, totals)
+  }
+}
+
+// Self + all descendants, grouped by unit (can't sum "$" and "lb" together). Walks the
+// real item.children tree to unbounded depth, independent of how many levels Section.tsx
+// renders at once.
+export function sumValues(item: StructureItem): Record<string, number> {
+  const totals: Record<string, number> = {}
+  accumulateValues(item, totals)
+  for (const unit of Object.keys(totals)) {
+    // Round once, after all additions — rounding per recursion level would compound error.
+    totals[unit] = Math.round(totals[unit] * 100) / 100
+  }
+  return totals
+}
+
+// Multi-unit display: each unit formatted via formatCost's own symbol/suffix heuristic,
+// joined with " · ". Empty totals (nothing anywhere in the subtree) → null, no badge —
+// same as today's "no cost = no badge".
+export function formatValueTotals(totals: Record<string, number>): string | null {
+  const units = Object.keys(totals)
+  if (units.length === 0) return null
+  return units.map(unit => formatCost({ amount: totals[unit], unit })).join(' · ')
+}
+
 // ── Path navigation ──────────────────────────────────────────────────────────
 function getContainer(structure: Record<string, StructureItem>, path: string): Record<string, StructureItem> | null {
   if (!path) return structure

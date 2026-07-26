@@ -264,9 +264,9 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
             setShowCostEditor(true)
             focusAndScroll(costAmountRef)
           }}
-          title="Cost"
+          title="Value"
         >
-          $
+          {extremeZoom ? 'Val' : 'Value'}
         </button>
         <button
           type="button"
@@ -342,7 +342,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
                 value={costUnit}
                 onChange={(e) => setCostUnit(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="$"
+                placeholder="unit"
               />
               <input
                 ref={costAmountRef}
