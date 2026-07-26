@@ -220,6 +220,15 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
   // input. The keyboard resizes window.visualViewport (not the layout viewport),
   // so we compare the card's position against that shrunk visible area and
   // nudge just enough to uncover it, no more.
+  //
+  // Two things that previously caused over-scroll: (1) also listening for
+  // visualViewport's "scroll" event — our own corrective scrollBy fires that
+  // event too, creating a feedback loop that kept adding more scroll; and
+  // (2) "resize" can fire several times while the keyboard animates open, so
+  // computing the overlap against each in-between height overshoots the
+  // final target. Fixed by only reacting to "resize", debounced until the
+  // viewport height stops changing, and scrolling instantly (no animation
+  // to race further events against).
   useEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
@@ -231,19 +240,22 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
       const visibleBottom = vv.offsetTop + vv.height
       const overlap = rect.bottom - visibleBottom
       if (overlap > 0) {
-        window.scrollBy({ top: overlap + 8, behavior: 'smooth' })
+        window.scrollBy({ top: overlap + 8 })
       }
     }
 
-    vv.addEventListener('resize', keepCardVisible)
-    vv.addEventListener('scroll', keepCardVisible)
-    // Catch the keyboard opening from the initial autoFocus too
-    const initialCheck = requestAnimationFrame(keepCardVisible)
+    let debounceId: ReturnType<typeof setTimeout> | null = null
+    const scheduleCheck = () => {
+      if (debounceId !== null) clearTimeout(debounceId)
+      debounceId = setTimeout(keepCardVisible, 120)
+    }
+
+    vv.addEventListener('resize', scheduleCheck)
+    scheduleCheck() // catch the keyboard already being open (e.g. initial autoFocus)
 
     return () => {
-      vv.removeEventListener('resize', keepCardVisible)
-      vv.removeEventListener('scroll', keepCardVisible)
-      cancelAnimationFrame(initialCheck)
+      vv.removeEventListener('resize', scheduleCheck)
+      if (debounceId !== null) clearTimeout(debounceId)
     }
   }, [])
 
@@ -272,9 +284,9 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
             setShowProgressEditor(true)
             focusAndScroll(progressDoneRef)
           }}
-          title="Ratio"
+          title="Progress"
         >
-          Ratio
+          Progress
         </button>
         <button
           type="button"
