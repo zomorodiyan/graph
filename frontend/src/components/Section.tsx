@@ -3,8 +3,6 @@ import { StructureItem, UpdatePayload, getItemDueDate, formatCost } from '../api
 import { parseLocalDate, daysUntil } from '../utils/dates'
 import InlineItemEditor from './InlineItemEditor'
 
-const L2_COLORS = ['sky', 'slate'] as const
-
 // Clipboard outline (rectangle + clip "bump" on top) for paste-sub-item triggers —
 // plain stroke, no fill, so it inherits color the same way the "+" glyph does.
 function ClipboardIcon() {
@@ -138,8 +136,7 @@ function progressFillStyle(
   const expectedPct = getExpectedPct(checkpoints)
   if (expectedPct === null || pi.pct === expectedPct) {
     return {
-      backgroundColor: 'transparent',
-      backgroundImage: `linear-gradient(90deg, color-mix(in srgb, ${color} 22%, transparent) ${pi.pct}%, transparent ${pi.pct}%)`,
+      backgroundImage: `linear-gradient(90deg, color-mix(in srgb, ${color} 11%, transparent) ${pi.pct}%, transparent ${pi.pct}%)`,
     }
   }
 
@@ -147,10 +144,9 @@ function progressFillStyle(
   const hi = Math.max(pi.pct, expectedPct)
   const statusVar = pi.pct > expectedPct ? '--status-good' : '--status-bad'
   return {
-    backgroundColor: 'transparent',
     backgroundImage: [
-      `linear-gradient(90deg, color-mix(in srgb, ${color} 22%, transparent) ${lo}%, transparent ${lo}%)`,
-      `linear-gradient(90deg, transparent ${lo}%, color-mix(in srgb, var(${statusVar}) 45%, transparent) ${lo}%, color-mix(in srgb, var(${statusVar}) 45%, transparent) ${hi}%, transparent ${hi}%)`,
+      `linear-gradient(90deg, color-mix(in srgb, ${color} 11%, transparent) ${lo}%, transparent ${lo}%)`,
+      `linear-gradient(90deg, transparent ${lo}%, color-mix(in srgb, var(${statusVar}) 22%, transparent) ${lo}%, color-mix(in srgb, var(${statusVar}) 22%, transparent) ${hi}%, transparent ${hi}%)`,
     ].join(', '),
   }
 }
@@ -226,8 +222,6 @@ function Section({
   }
 
   const layer1Delta = formatCheckpointDelta(item.progress, item.checkpoints)
-  // Color the "add sub-item" chip like the child it would create, following the same cycle real siblings use
-  const nextL2ColorClass = `color-${L2_COLORS[childEntries.length % 2]}`
 
   return (
     <div className="section" ref={sectionRef}>
@@ -282,7 +276,7 @@ function Section({
               </div>
               {showEditButton && onSubCreateStart && creatingPath !== itemPath && (
                 <div
-                  className={`add-sub-trigger ${nextL2ColorClass}`}
+                  className="add-sub-trigger"
                   onClick={(e) => {
                     e.stopPropagation()
                     onSubCreateStart(itemPath)
@@ -294,7 +288,7 @@ function Section({
               )}
               {showEditButton && onPasteSubItem && (
                 <div
-                  className={`paste-sub-trigger ${nextL2ColorClass}`}
+                  className="paste-sub-trigger"
                   onClick={(e) => {
                     e.stopPropagation()
                     onPasteSubItem(itemPath)
@@ -315,23 +309,19 @@ function Section({
 
       {/* Layer 2 - Subcategories */}
       {depth >= 2 && <div className="layer2-section">
-        {childEntries.map(([childKey, childItem], childIndex) => {
+        {childEntries.map(([childKey, childItem]) => {
           const childPath = `${itemPath}.${childKey}`
           const childTitle = (childItem as StructureItem).title || childKey
           const grandchildren = (childItem as StructureItem).children || {}
           // Check if this child item is editable
           const childEditable = showEditButton && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
-          const l2Color = L2_COLORS[childIndex % 2]
-          const l3Color = l2Color === 'sky' ? 'royal-blue' : l2Color === 'slate' ? 'slate-dark' : null
-          const childColorClass = l2Color ? `color-${l2Color}` : ''
-          const grandColorClass = l3Color ? `color-${l3Color}` : ''
           const layer2Delta = formatCheckpointDelta((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints)
 
           return (
             <div key={childKey} className="layer2-container">
               <div className="layer2-l3-frame">
                 <div className="layer2-content">
-                  <div className={`layer2-wrapper${childColorClass ? ' ' + childColorClass : ''}`}>
+                  <div className="layer2-wrapper">
                     {editingPath === childPath && editInline ? (
                       <InlineItemEditor
                         itemKey={childKey}
@@ -353,7 +343,7 @@ function Section({
                           />
                         )}
                         <div
-                          className={`layer2${childColorClass ? ' ' + childColorClass : ''}${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}`}
+                          className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}`}
                           style={progressFillStyle((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints, 'currentColor')}
                         >
                           <span className="item-title" onClick={() => onItemClick(childPath)}>
@@ -378,7 +368,7 @@ function Section({
                         </div>
                         {childEditable && onSubCreateStart && depth >= 3 && creatingPath !== childPath && (
                           <div
-                            className={`add-sub-trigger${grandColorClass ? ' ' + grandColorClass : ''}`}
+                            className="add-sub-trigger"
                             onClick={(e) => {
                               e.stopPropagation()
                               onSubCreateStart(childPath)
@@ -390,7 +380,7 @@ function Section({
                         )}
                         {childEditable && onPasteSubItem && depth >= 3 && (
                           <div
-                            className={`paste-sub-trigger${grandColorClass ? ' ' + grandColorClass : ''}`}
+                            className="paste-sub-trigger"
                             onClick={(e) => {
                               e.stopPropagation()
                               onPasteSubItem(childPath)
@@ -421,7 +411,7 @@ function Section({
 
                       return (
                         <div key={grandKey}>
-                          <div className={`layer3-wrapper${grandColorClass ? ' ' + grandColorClass : ''}`}>
+                          <div className="layer3-wrapper">
                             {editingPath === grandPath && editInline ? (
                               <InlineItemEditor
                                 itemKey={grandKey}
@@ -443,7 +433,7 @@ function Section({
                                   />
                                 )}
                                 <div
-                                  className={`layer3-item${grandColorClass ? ' ' + grandColorClass : ''}${!editInline && editingPath === grandPath ? ' item-editing' : ''}`}
+                                  className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}`}
                                   style={progressFillStyle((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints, 'currentColor')}
                                 >
                                   <span className="item-title" onClick={() => onItemClick(grandPath)}>

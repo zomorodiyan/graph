@@ -184,6 +184,8 @@
   margin-right: 0;
 }
 
+/* Level 1 — low-contrast fill (blends toward the page background), so it
+   doesn't visually compete with level 2's high-contrast fill below it */
 .layer1 {
   font-size: 1rem;
   font-weight: 600;
@@ -192,8 +194,12 @@
   overflow: hidden;
   display: flex;
   align-items: stretch;
-  background: transparent;
-  transition: background-color 0.2s;
+  background-color: var(--blue-lighter);
+  color: var(--text-primary);
+  transition: background-color 0.2s, filter 0.2s;
+}
+[data-theme='dark'] .layer1 {
+  background-color: color-mix(in srgb, var(--blue-medium) 35%, black);
 }
 
 .layer1 .item-title {
@@ -211,21 +217,28 @@
   padding-left: 0;
 }
 
-.layer1:hover {
-  background-color: rgba(0,0,0,0.06);
+.layer1:not(.add-item):hover {
+  filter: brightness(0.94);
 }
-[data-theme='dark'] .layer1:hover {
-  background-color: rgba(255,255,255,0.06);
+[data-theme='dark'] .layer1:not(.add-item):hover {
+  filter: brightness(1.3);
 }
 
-/* "New" / "Paste" — colored like the scheme accent (the only per-scheme color
-   level-1 items have), with a neutral outline marking it as an action */
+/* "New" / "Paste" — action buttons, not real items, so they opt out of the
+   level fill entirely and keep the original neutral outlined look */
 .layer1.add-item,
 .layer1.add-item .item-title {
   color: var(--blue-medium);
 }
 .layer1.add-item {
+  background-color: transparent;
   border: 1px solid var(--border-color);
+}
+.layer1.add-item:hover {
+  background-color: rgba(0,0,0,0.06);
+}
+[data-theme='dark'] .layer1.add-item:hover {
+  background-color: rgba(255,255,255,0.06);
 }
 
 .layer2-section {
@@ -257,6 +270,8 @@
   flex-shrink: 0;
 }
 
+/* Level 2 — high-contrast fill (the solid scheme accent), so it reads as the
+   most prominent level even though level 1 and 3 are visually bigger/smaller */
 .layer2 {
   font-size: 0.875rem;
   font-weight: 500;
@@ -265,8 +280,9 @@
   overflow: hidden;
   display: flex;
   align-items: stretch;
-  background: transparent;
-  transition: background-color 0.2s;
+  background-color: var(--blue-medium);
+  color: white;
+  transition: background-color 0.2s, filter 0.2s;
 }
 
 .layer2 .item-title {
@@ -280,10 +296,10 @@
 }
 
 .layer2:hover {
-  background-color: rgba(0,0,0,0.06);
+  filter: brightness(0.9);
 }
 [data-theme='dark'] .layer2:hover {
-  background-color: rgba(255,255,255,0.06);
+  filter: brightness(1.2);
 }
 
 .layer3-container {
@@ -294,16 +310,22 @@
   gap: 0;
 }
 
+/* Level 3 — low-contrast fill, same treatment as level 1 (it's the deepest,
+   least prominent level; its context note is what actually reads as muted —
+   see .layer3-container .item-context below) */
 .layer3-item {
   font-size: 0.78125rem;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   user-select: none;
   border-radius: 0.25rem;
   overflow: hidden;
   display: flex;
   align-items: stretch;
-  background: transparent;
-  transition: background-color 0.2s;
+  background-color: var(--blue-lighter);
+  transition: background-color 0.2s, filter 0.2s;
+}
+[data-theme='dark'] .layer3-item {
+  background-color: color-mix(in srgb, var(--blue-medium) 35%, black);
 }
 
 .layer3-item .item-title {
@@ -317,11 +339,10 @@
 }
 
 .layer3-item:hover {
-  background-color: rgba(0,0,0,0.06);
-  color: var(--text-primary);
+  filter: brightness(0.94);
 }
 [data-theme='dark'] .layer3-item:hover {
-  background-color: rgba(255,255,255,0.06);
+  filter: brightness(1.3);
 }
 
 /* "+" trigger — creates a sub-item under this row. Lives inside the parent's
@@ -395,21 +416,21 @@
   /* Inset from the card edge so the rounded corner doesn't clip the text */
   margin-left: 0.5rem;
 }
+/* The context note sits BELOW the colored bubble, on the page background —
+   not layered on top of it — so literal white only reads in dark mode
+   (near-black page background); light mode needs a readable dark tint instead */
 .layer2-content .item-context {
   max-width: 12rem;
+  color: var(--blue-dark);
 }
+[data-theme='dark'] .layer2-content .item-context {
+  color: white;
+}
+/* Level 3 keeps the default .item-context color (var(--text-secondary),
+   already a light gray in dark mode) — it's the one place that muted
+   look still reads as intentional, since level 3 is the least prominent */
 .layer3-container .item-context {
   max-width: 9rem;
-}
-
-/* Context under colored (sky/royal-blue) items inherits the blue tone */
-.layer2-wrapper.color-sky ~ .item-context,
-.layer3-wrapper.color-royal-blue ~ .item-context {
-  color: var(--royal-blue-dark);
-}
-[data-theme='dark'] .layer2-wrapper.color-sky ~ .item-context,
-[data-theme='dark'] .layer3-wrapper.color-royal-blue ~ .item-context {
-  color: var(--blue-lighter);
 }
 
 .item-due {
