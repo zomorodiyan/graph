@@ -94,10 +94,15 @@ function GraphView() {
       return DEPTHS[(idx + 1) % DEPTHS.length]
     }),
   )
-  // Context button: tap toggles notes, long-press toggles minimal (titles-only) view.
+  // Context button: long-press enters minimal (titles-only) view; tap exits it if
+  // active, otherwise tap toggles notes. So the same tap gesture that got a user
+  // into minimal view (via a follow-up press) also gets them back out.
   const ctxLongPress = useLongPress(
     () => setMinimalView(v => !v),
-    () => setViewMode(m => m === 'context' ? 'default' : 'context'),
+    () => {
+      if (minimalView) { setMinimalView(false); return }
+      setViewMode(m => m === 'context' ? 'default' : 'context')
+    },
   )
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
@@ -961,7 +966,9 @@ function GraphView() {
           <button
             className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}${minimalView ? ' minimal' : ''}`}
             {...ctxLongPress}
-            title={`${viewMode === 'context' ? 'Context on' : 'Context off'} — tap to toggle, long-press for ${minimalView ? 'normal' : 'minimal'} view`}
+            title={minimalView
+              ? 'Minimal view — tap to return to normal'
+              : `${viewMode === 'context' ? 'Context on' : 'Context off'} — tap to toggle, long-press for minimal view`}
           >C</button>
         </div>
       )}
