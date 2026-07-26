@@ -99,16 +99,18 @@
   --item-title: var(--sky-light);
 }
 
-/* Color schemes — cycle: blue → purple → green.
-   Purple/green derived from blue's own on-black/on-white HSL recipe
-   (same S/L, hue rotated), then hand-picked by hue and darkness level. */
-[data-color-scheme='purple'] {
-  --sky-dark:         #431BBB;
-  --sky-light:        #7D5AE7;
-  --royal-blue-dark:  #330986;
-  --royal-blue-light: #A490DF;
-  --blue-medium:      #431BBB;
-  --blue-lighter:     #D0C8EA;
+/* Color schemes — cycle: blue → indigo → green → red.
+   Each is derived from blue's own on-black/on-white HSL recipe (same
+   S/L, hue rotated) then hand-tuned per hue, since hues don't share
+   perceived luminance at equal L — indigo needed a lighter on-black
+   value than blue's raw recipe to hit the same ~7:1 contrast. */
+[data-color-scheme='indigo'] {
+  --sky-dark:         #231BBB;
+  --sky-light:        #9591F0;
+  --royal-blue-dark:  #220DA1;
+  --royal-blue-light: #9490DF;
+  --blue-medium:      #231BBB;
+  --blue-lighter:     #C9C8EA;
   --status-good:      #388E3C;
   --status-bad:       #E65100;
 }
@@ -122,6 +124,17 @@
   /* default green "good" status would vanish into the scheme's own accent — swap to violet */
   --status-good:      #7E57C2;
   --status-bad:       #E65100;
+}
+[data-color-scheme='red'] {
+  --sky-dark:         #BB331B;
+  --sky-light:        #E8705B;
+  --royal-blue-dark:  #A1310D;
+  --royal-blue-light: #DF9C90;
+  --blue-medium:      #BB331B;
+  --blue-lighter:     #EACDC8;
+  /* default red-leaning "bad" status collides with red's own accent — swap to indigo */
+  --status-good:      #388E3C;
+  --status-bad:       #231BBB;
 }
 
 * {
