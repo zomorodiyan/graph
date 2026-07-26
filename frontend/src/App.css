@@ -562,6 +562,18 @@
 }
 .checkpoint-chip input[type="date"] { width: 6.5rem; }
 .checkpoint-chip input[type="number"] { width: 2.75rem; }
+/* Denominator next to a checkpoint's amount — always the item's live total,
+   never edited per-checkpoint, so it's plain text (not an input) and faint */
+.checkpoint-amount {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+.checkpoint-total {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
 .checkpoint-remove {
   background: transparent;
   border: none;

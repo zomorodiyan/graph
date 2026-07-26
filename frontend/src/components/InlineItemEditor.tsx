@@ -258,7 +258,16 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
         <button
           type="button"
           className={`inline-tool ${showCheckpointsEditor || checkpoints.length > 0 ? 'active' : ''}`}
-          onClick={() => setShowCheckpointsEditor(true)}
+          onClick={() => {
+            // First tap: open the panel AND add a checkpoint immediately (defaults
+            // to "fully done" — i.e. a due date) so it behaves like the old
+            // dedicated Due button — pick a date, done. The "+" inside the panel
+            // is for adding further (optionally partial) checkpoints afterward.
+            if (!showCheckpointsEditor) {
+              setShowCheckpointsEditor(true)
+              addCheckpoint()
+            }
+          }}
           title="Plan — includes due dates (a checkpoint fully done by its date)"
         >
           Plan
@@ -349,15 +358,18 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
                 onChange={(e) => updateCheckpoint(i, 'date', e.target.value)}
                 onKeyDown={handleKeyDown}
               />
-              <input
-                type="number"
-                min={0}
-                className="inline-edit-small"
-                value={cp.done}
-                onChange={(e) => updateCheckpoint(i, 'done', e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="done"
-              />
+              <div className="checkpoint-amount">
+                <input
+                  type="number"
+                  min={0}
+                  className="inline-edit-small"
+                  value={cp.done}
+                  onChange={(e) => updateCheckpoint(i, 'done', e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="done"
+                />
+                <span className="checkpoint-total">/ {progressTotal || '1'}</span>
+              </div>
               <button
                 type="button"
                 className="checkpoint-remove"
