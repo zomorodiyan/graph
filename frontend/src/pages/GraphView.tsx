@@ -1145,6 +1145,7 @@ function GraphView() {
           y={contextMenu.y}
           onClose={() => setContextMenu(null)}
           items={[
+            { label: 'Edit', onClick: () => setInlineEdit({ path: contextMenu.path }) },
             ...(contextMenu.canAddSub ? [{ label: 'New', onClick: () => handleSubCreateStart(contextMenu.path) }] : []),
             ...(contextMenu.canAddSub ? [{ label: 'Paste', onClick: () => handlePasteSubItem(contextMenu.path) }] : []),
             { label: 'Delete', onClick: () => handleDelete(contextMenu.path), danger: true },
