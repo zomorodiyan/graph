@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(git commit -m ' *)",
+      "PowerShell(gh run list --limit 5)",
+      "PowerShell(gh api repos/zomorodiyan/graph/pages --jq '{status: .status, build_type: .build_type, source: .source, html_url: .html_url}')",
+      "Bash(curl -s \"https://api.github.com/repos/zomorodiyan/graph/actions/runs?per_page=6\")",
+      "Bash(node -e ' *)",
+      "Bash(curl -s \"https://api.github.com/repos/zomorodiyan/graph/actions/runs/28706427967\")",
+      "Bash(git credential *)",
+      "Bash(curl -s \"https://api.github.com/repos/zomorodiyan/graph/actions/runs/28707495256\")",
+      "Bash(curl -s \"https://api.github.com/repos/zomorodiyan/graph/actions/runs?per_page=4\")",
+      "Bash(curl -s \"https://www.githubstatus.com/api/v2/summary.json\")"
+    ]
+  }
+}
