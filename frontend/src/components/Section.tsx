@@ -1,5 +1,6 @@
 import { useRef, useState, type CSSProperties } from 'react'
 import { StructureItem, UpdatePayload, getItemDueDate, formatCost } from '../api/localClient'
+import { parseLocalDate, daysUntil } from '../utils/dates'
 import InlineItemEditor from './InlineItemEditor'
 
 const L2_COLORS = ['sky', 'slate'] as const
@@ -53,23 +54,20 @@ interface SectionProps {
 // Helper to calculate due date category for CSS class
 function getDueCategory(dueDate: string | undefined): string | null {
   if (!dueDate) return null
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const due = new Date(dueDate); due.setHours(0, 0, 0, 0)
-  const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  const diffDays = daysUntil(dueDate)
   if (diffDays < 0) return 'overdue'
   if (diffDays === 0) return 'today'
   if (diffDays <= 7) return 'soon'
   return 'later'
 }
 
-// Helper to format due date display — today shows "1d", tomorrow "2d", etc.
+// Helper to format due date display — today shows "Today", tomorrow "2d", etc.
 function formatDueDate(dueDate: string): string {
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const due = new Date(dueDate); due.setHours(0, 0, 0, 0)
-  const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  const diffDays = daysUntil(dueDate)
   if (diffDays < 0) return `${Math.abs(diffDays)}d overdue`
+  if (diffDays === 0) return 'Today'
   if (diffDays <= 7) return `${diffDays + 1}d`
-  return new Date(dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return parseLocalDate(dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 // Helper to parse "X/Y" progress — pct capped at 100 for bar width
@@ -92,17 +90,17 @@ function getExpectedPct(
   if (!checkpoints || checkpoints.length < 1) return null
   const points = checkpoints
     .map(cp => ({ date: cp.date, pct: parseProgress(cp.progress)?.pct }))
-    .filter((p): p is { date: string; pct: number } => p.pct !== undefined && !isNaN(new Date(p.date).getTime()))
+    .filter((p): p is { date: string; pct: number } => p.pct !== undefined && !isNaN(parseLocalDate(p.date).getTime()))
     .sort((a, b) => a.date.localeCompare(b.date))
   if (points.length < 1) return null
 
   const t0 = new Date(today); t0.setHours(0, 0, 0, 0)
   const t = t0.getTime()
-  if (t < new Date(points[0].date).getTime()) return null
+  if (t < parseLocalDate(points[0].date).getTime()) return null
 
   for (let i = 0; i < points.length - 1; i++) {
-    const d0 = new Date(points[i].date).getTime()
-    const d1 = new Date(points[i + 1].date).getTime()
+    const d0 = parseLocalDate(points[i].date).getTime()
+    const d1 = parseLocalDate(points[i + 1].date).getTime()
     if (t <= d1) {
       const frac = d1 === d0 ? 1 : (t - d0) / (d1 - d0)
       return points[i].pct + frac * (points[i + 1].pct - points[i].pct)

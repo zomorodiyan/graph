@@ -11,6 +11,7 @@ import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
 import { loadViewPreferences } from '../utils/viewPreferences'
+import { daysUntil } from '../utils/dates'
 
 // True on touch-primary devices (no on-screen keyboard problem on desktop,
 // so only mobile needs the item-stays-in-place + bottom-sheet editing pattern —
@@ -155,9 +156,7 @@ function GraphView() {
 
   // Due-date bucket
   const getDueCategory = (dueDate: string): 'over' | 'day' | 'week' | 'month' | null => {
-    const today = new Date(); today.setHours(0, 0, 0, 0)
-    const due = new Date(dueDate); due.setHours(0, 0, 0, 0)
-    const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    const diffDays = daysUntil(dueDate)
     if (diffDays < 0) return 'over'
     if (diffDays === 0) return 'day'
     if (diffDays <= 7) return 'week'
