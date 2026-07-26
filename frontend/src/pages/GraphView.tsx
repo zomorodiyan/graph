@@ -10,6 +10,7 @@ import InlineItemEditor from '../components/InlineItemEditor'
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
+import ContextMenu from '../components/ContextMenu'
 import { loadViewPreferences } from '../utils/viewPreferences'
 import { daysUntil } from '../utils/dates'
 
@@ -127,6 +128,9 @@ function GraphView() {
 
   // Inline edit state for item editing
   const [inlineEdit, setInlineEdit] = useState<{ path: string } | null>(null)
+
+  // Right-click item menu — path + screen position of the row that was right-clicked
+  const [contextMenu, setContextMenu] = useState<{ path: string; x: number; y: number; canAddSub: boolean } | null>(null)
 
   const [notification, setNotification] = useState<{
     message: string
@@ -574,6 +578,13 @@ function GraphView() {
         }
       )
     }
+  }
+
+  // Handle right-click on an item row — open the Delete/New/Paste menu at the cursor
+  const handleItemContextMenu = (e: React.MouseEvent, itemPath: string, canAddSub: boolean) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setContextMenu({ path: itemPath, x: e.clientX, y: e.clientY, canAddSub })
   }
 
   // Handle "+" chip click — open the sub-create editor under this parent
@@ -1051,6 +1062,7 @@ function GraphView() {
                 onSubCreateSave={handleSubCreateSave}
                 onSubCreateCancel={() => setSubCreate(null)}
                 onPasteSubItem={handlePasteSubItem}
+                onContextMenu={handleItemContextMenu}
                 isPending={isPending}
                 isTimeView={isVirtualView}
                 hideEditing={hideEditing}
@@ -1127,6 +1139,20 @@ function GraphView() {
       {/* Notification */}
       {notification && (
         <Notification message={notification.message} type={notification.type} />
+      )}
+
+      {/* Right-click item menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          items={[
+            ...(contextMenu.canAddSub ? [{ label: 'New', onClick: () => handleSubCreateStart(contextMenu.path) }] : []),
+            ...(contextMenu.canAddSub ? [{ label: 'Paste', onClick: () => handlePasteSubItem(contextMenu.path) }] : []),
+            { label: 'Delete', onClick: () => handleDelete(contextMenu.path), danger: true },
+          ]}
+        />
       )}
 
       {/* Mobile edit/create sheet — see the mobileSheet derivation above */}

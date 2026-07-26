@@ -774,6 +774,41 @@
   }
 }
 
+/* Right-click item menu */
+.context-menu {
+  position: fixed;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  min-width: 8.5rem;
+  padding: 0.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.context-menu-item:hover {
+  background: var(--bg-primary);
+}
+
+.context-menu-item.danger {
+  color: #c62828;
+}
+
 /* Top buttons container */
 .top-buttons {
   position: fixed;

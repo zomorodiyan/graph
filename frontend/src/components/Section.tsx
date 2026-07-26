@@ -40,6 +40,10 @@ interface SectionProps {
   // directly, without navigating (the only way to paste under an item with no
   // existing children, since click-to-navigate needs an existing child to reach it)
   onPasteSubItem?: (parentPath: string) => void
+  // Right-click menu (Delete / New / Paste). canAddSub tells the caller whether
+  // this row supports sub-item creation — false for layer3, which has no "+"/
+  // paste-sub UI to open (there's no layer4 rendering to swap an editor into).
+  onContextMenu?: (e: React.MouseEvent, path: string, canAddSub: boolean) => void
   isPending?: boolean
   isTimeView?: boolean
   hideEditing?: boolean
@@ -178,6 +182,7 @@ function Section({
   onSubCreateSave,
   onSubCreateCancel,
   onPasteSubItem,
+  onContextMenu,
   isPending = false,
   isTimeView = false,
   hideEditing = false,
@@ -253,6 +258,7 @@ function Section({
               <div
                 className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}`}
                 style={progressFillStyle(item.progress, item.checkpoints, 'var(--blue-medium)')}
+                onContextMenu={showEditButton ? (e) => onContextMenu?.(e, itemPath, true) : undefined}
               >
                 <span className="item-title" onClick={() => onItemClick(itemPath)}>
                   {title}
@@ -345,6 +351,7 @@ function Section({
                         <div
                           className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}`}
                           style={progressFillStyle((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints, 'currentColor')}
+                          onContextMenu={childEditable ? (e) => onContextMenu?.(e, childPath, depth >= 3) : undefined}
                         >
                           <span className="item-title" onClick={() => onItemClick(childPath)}>
                             {childTitle}
@@ -435,6 +442,7 @@ function Section({
                                 <div
                                   className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}`}
                                   style={progressFillStyle((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints, 'currentColor')}
+                                  onContextMenu={grandEditable ? (e) => onContextMenu?.(e, grandPath, false) : undefined}
                                 >
                                   <span className="item-title" onClick={() => onItemClick(grandPath)}>
                                     {grandTitle}
