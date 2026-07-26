@@ -822,6 +822,13 @@
   opacity: 0.5;
 }
 
+/* Long-press states — Raw view / minimal (titles-only) view */
+.depth-toggle.raw,
+.ctx-toggle.minimal {
+  opacity: 0.5;
+  box-shadow: 0 0 0 2px var(--blue-medium);
+}
+
 .copy-btn {
   width: 44px;
   height: 44px;

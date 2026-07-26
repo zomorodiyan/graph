@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
+import { useLongPress } from '../hooks/useLongPress'
 import { useTheme } from '../context/ThemeContext'
 import { StructureItem, UpdatePayload, pasteItems, serializeItem, getItemDueDate } from '@api'
 import InlineItemEditor from '../components/InlineItemEditor'
@@ -23,8 +24,9 @@ function isTouchDevice(): boolean {
 // Color assignment based on index
 const COLORS = ['sky', 'indigo', 'fuchsia']
 
-// View depths — 3 levels, 2 levels, Raw (0) — each gets its own button
-const DEPTHS = [3, 2, 0] as const
+// View depths cycled by tapping the depth button — 3 levels, 2 levels.
+// Raw (0) isn't part of the cycle; long-pressing the button jumps to it directly.
+const DEPTHS = [3, 2] as const
 
 function GraphView() {
   const location = useLocation()
@@ -74,6 +76,29 @@ function GraphView() {
     } catch {}
     return 'context'
   })
+  // Long-press on the context button — hides progress/cost/due/notes too,
+  // leaving just item titles. Independent of viewMode (which only toggles notes).
+  const [minimalView, setMinimalView] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('active-minimal-view') === 'true'
+    } catch { return false }
+  })
+  useEffect(() => {
+    localStorage.setItem('active-minimal-view', String(minimalView))
+  }, [minimalView])
+  // Depth button: tap cycles 3/2, long-press jumps straight to Raw (0).
+  const depthLongPress = useLongPress(
+    () => setDepth(0),
+    () => setDepth(d => {
+      const idx = (DEPTHS as readonly number[]).indexOf(d)
+      return DEPTHS[(idx + 1) % DEPTHS.length]
+    }),
+  )
+  // Context button: tap toggles notes, long-press toggles minimal (titles-only) view.
+  const ctxLongPress = useLongPress(
+    () => setMinimalView(v => !v),
+    () => setViewMode(m => m === 'context' ? 'default' : 'context'),
+  )
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
   const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
@@ -929,14 +954,14 @@ function GraphView() {
         <div className="top-buttons">
           <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
           <button
-            className="depth-toggle active"
-            onClick={() => setDepth(d => DEPTHS[(DEPTHS.indexOf(d) + 1) % DEPTHS.length])}
-            title={depth === 0 ? 'Raw view — tap to cycle' : `Showing ${depth} levels — tap to cycle`}
+            className={`depth-toggle active${depth === 0 ? ' raw' : ''}`}
+            {...depthLongPress}
+            title={depth === 0 ? 'Raw view — tap to return, long-press elsewhere for Raw' : `Showing ${depth} levels — tap to cycle, long-press for Raw`}
           >{depth === 0 ? 'R' : depth}</button>
           <button
-            className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}`}
-            onClick={() => setViewMode(m => m === 'context' ? 'default' : 'context')}
-            title={viewMode === 'context' ? 'Context on — tap to hide' : 'Context off — tap to show'}
+            className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}${minimalView ? ' minimal' : ''}`}
+            {...ctxLongPress}
+            title={`${viewMode === 'context' ? 'Context on' : 'Context off'} — tap to toggle, long-press for ${minimalView ? 'normal' : 'minimal'} view`}
           >C</button>
         </div>
       )}
@@ -1045,7 +1070,8 @@ function GraphView() {
                 onContextMenu={handleItemContextMenu}
                 isPending={isPending}
                 isTimeView={isVirtualView}
-                showContext={viewMode === 'context'}
+                showContext={viewMode === 'context' && !minimalView}
+                minimal={minimalView}
                 depth={depth}
                 showRaw={depth === 0}
                 rawText={depth === 0 ? serializeItem(key, item as StructureItem, 1).trimEnd() : undefined}
@@ -1104,7 +1130,8 @@ function GraphView() {
               onCopyClick={handleCopyItem}
               isPending={false}
               isTimeView={true}
-              showContext={viewMode === 'context'}
+              showContext={viewMode === 'context' && !minimalView}
+              minimal={minimalView}
               depth={depth}
               showRaw={depth === 0}
               rawText={depth === 0 ? serializeItem('overview', displayItems['overview'] as StructureItem, 1).trimEnd() : undefined}

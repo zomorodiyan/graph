@@ -34,6 +34,9 @@ interface SectionProps {
   isPending?: boolean
   isTimeView?: boolean
   showContext?: boolean
+  // Long-press on the context toggle: hides progress/cost/due/delta badges too,
+  // leaving just the title (showContext is expected to be forced off alongside this)
+  minimal?: boolean
   depth?: number
   showRaw?: boolean
   rawText?: string
@@ -171,6 +174,7 @@ function Section({
   isPending = false,
   isTimeView = false,
   showContext = true,
+  minimal = false,
   depth = 3,
   showRaw = false,
   rawText,
@@ -245,18 +249,18 @@ function Section({
               >
                 <span className="item-title" onClick={() => onItemClick(itemPath)}>
                   {title}
-                  {formatProgressText(item.progress) && (
+                  {!minimal && formatProgressText(item.progress) && (
                     <span className="item-progress-inline">{formatProgressText(item.progress)}</span>
                   )}
-                  {layer1Delta && (
+                  {!minimal && layer1Delta && (
                     <span className="item-checkpoint-delta" style={{ color: `var(${layer1Delta.varName})` }}>
                       {layer1Delta.text}
                     </span>
                   )}
-                  {formatCost(item.cost) && (
+                  {!minimal && formatCost(item.cost) && (
                     <span className="item-cost">{formatCost(item.cost)}</span>
                   )}
-                  {getItemDueDate(item) && (
+                  {!minimal && getItemDueDate(item) && (
                     <span className={`item-due due-${getDueCategory(getItemDueDate(item))}`}>
                       {formatDueDate(getItemDueDate(item)!)}
                     </span>
@@ -310,18 +314,18 @@ function Section({
                         >
                           <span className="item-title" onClick={() => onItemClick(childPath)}>
                             {childTitle}
-                            {formatProgressText((childItem as StructureItem).progress) && (
+                            {!minimal && formatProgressText((childItem as StructureItem).progress) && (
                               <span className="item-progress-inline">{formatProgressText((childItem as StructureItem).progress)}</span>
                             )}
-                            {layer2Delta && (
+                            {!minimal && layer2Delta && (
                               <span className="item-checkpoint-delta" style={{ color: `var(${layer2Delta.varName})` }}>
                                 {layer2Delta.text}
                               </span>
                             )}
-                            {formatCost((childItem as StructureItem).cost) && (
+                            {!minimal && formatCost((childItem as StructureItem).cost) && (
                               <span className="item-cost">{formatCost((childItem as StructureItem).cost)}</span>
                             )}
-                            {getItemDueDate(childItem as StructureItem) && (
+                            {!minimal && getItemDueDate(childItem as StructureItem) && (
                               <span className={`item-due due-${getDueCategory(getItemDueDate(childItem as StructureItem))}`}>
                                 {formatDueDate(getItemDueDate(childItem as StructureItem)!)}
                               </span>
@@ -373,20 +377,20 @@ function Section({
                                 >
                                   <span className="item-title" onClick={() => onItemClick(grandPath)}>
                                     {grandTitle}
-                                    {formatProgressText((grandItem as StructureItem).progress) && (
+                                    {!minimal && formatProgressText((grandItem as StructureItem).progress) && (
                                       <span className="item-progress-inline">
                                         {formatProgressText((grandItem as StructureItem).progress)}
                                       </span>
                                     )}
-                                    {layer3Delta && (
+                                    {!minimal && layer3Delta && (
                                       <span className="item-checkpoint-delta" style={{ color: `var(${layer3Delta.varName})` }}>
                                         {layer3Delta.text}
                                       </span>
                                     )}
-                                    {formatCost((grandItem as StructureItem).cost) && (
+                                    {!minimal && formatCost((grandItem as StructureItem).cost) && (
                                       <span className="item-cost">{formatCost((grandItem as StructureItem).cost)}</span>
                                     )}
-                                    {getItemDueDate(grandItem as StructureItem) && (
+                                    {!minimal && getItemDueDate(grandItem as StructureItem) && (
                                       <span className={`item-due due-${getDueCategory(getItemDueDate(grandItem as StructureItem))}`}>
                                         {formatDueDate(getItemDueDate(grandItem as StructureItem)!)}
                                       </span>
