@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
+import { useZoom } from '../context/ZoomContext'
+
+// Above this, the toolbar's longer labels get abbreviated so 5 buttons
+// still have a fighting chance of fitting a phone-width row before wrapping.
+const EXTREME_ZOOM_THRESHOLD = 1.3
 
 interface InlineItemEditorProps {
   itemKey: string
@@ -13,6 +18,8 @@ interface InlineItemEditorProps {
 }
 
 function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultName }: InlineItemEditorProps) {
+  const { zoom } = useZoom()
+  const extremeZoom = zoom >= EXTREME_ZOOM_THRESHOLD
   const initialName = item.title || itemKey
   const initialContext = item.context || ''
   const initialCost = item.cost ?? null
@@ -248,7 +255,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
           }}
           title="Progress"
         >
-          Progress
+          {extremeZoom ? 'Prog' : 'Progress'}
         </button>
         <button
           type="button"
@@ -285,7 +292,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
             onClick={onDelete}
             title="Delete"
           >
-              Delete
+              {extremeZoom ? 'Del' : 'Delete'}
           </button>
         )}
       </div>

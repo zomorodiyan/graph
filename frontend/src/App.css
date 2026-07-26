@@ -458,9 +458,11 @@
   color: #f3e8fd;
 }
 
-/* Progress + cost on the same row */
+/* Progress + cost on the same row (wraps to two rows if they don't both fit —
+   e.g. at high zoom, where rem-based widths grow but the sheet doesn't) */
 .inline-edit-fields-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
   width: 100%;
@@ -1033,6 +1035,7 @@
 
 .inline-edit-tools {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.3rem;
   justify-content: flex-start;
 }
@@ -1219,6 +1222,19 @@
 
 .mobile-edit-sheet.keyboard-open {
   padding-bottom: 0.75rem;
+}
+
+/* The editor is normally an inline-width chip that hugs its content, sized to
+   drop into a specific spot in the (desktop) item list. Inside the mobile
+   sheet there's no list position to hug — stretch it to fill the sheet edge
+   to edge and drop its own border/background so it reads as one card, not
+   a smaller mismatched box floating inside a bigger one. */
+.mobile-edit-sheet .inline-edit {
+  display: flex;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
 }
 
 .mobile-edit-sheet-context {
