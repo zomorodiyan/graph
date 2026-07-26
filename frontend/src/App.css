@@ -184,8 +184,9 @@
   margin-right: 0;
 }
 
-/* Level 1 — low-contrast fill (blends toward the page background), so it
-   doesn't visually compete with level 2's high-contrast fill below it */
+/* Level 1 — low-contrast title (muted, doesn't jump out) — same "slate" tone
+   the old alternating scheme used, just applied to every level-1 item instead
+   of cycling. Transparent background throughout, as before. */
 .layer1 {
   font-size: 1rem;
   font-weight: 600;
@@ -194,12 +195,12 @@
   overflow: hidden;
   display: flex;
   align-items: stretch;
-  background-color: var(--blue-lighter);
-  color: var(--text-primary);
-  transition: background-color 0.2s, filter 0.2s;
+  background: transparent;
+  color: var(--slate-dark);
+  transition: background-color 0.2s;
 }
 [data-theme='dark'] .layer1 {
-  background-color: color-mix(in srgb, var(--blue-medium) 35%, black);
+  color: var(--slate-light);
 }
 
 .layer1 .item-title {
@@ -217,28 +218,21 @@
   padding-left: 0;
 }
 
-.layer1:not(.add-item):hover {
-  filter: brightness(0.94);
+.layer1:hover {
+  background-color: rgba(0,0,0,0.06);
 }
-[data-theme='dark'] .layer1:not(.add-item):hover {
-  filter: brightness(1.3);
+[data-theme='dark'] .layer1:hover {
+  background-color: rgba(255,255,255,0.06);
 }
 
 /* "New" / "Paste" — action buttons, not real items, so they opt out of the
-   level fill entirely and keep the original neutral outlined look */
+   level color and keep the original neutral outlined look */
 .layer1.add-item,
 .layer1.add-item .item-title {
   color: var(--blue-medium);
 }
 .layer1.add-item {
-  background-color: transparent;
   border: 1px solid var(--border-color);
-}
-.layer1.add-item:hover {
-  background-color: rgba(0,0,0,0.06);
-}
-[data-theme='dark'] .layer1.add-item:hover {
-  background-color: rgba(255,255,255,0.06);
 }
 
 .layer2-section {
@@ -270,8 +264,8 @@
   flex-shrink: 0;
 }
 
-/* Level 2 — high-contrast fill (the solid scheme accent), so it reads as the
-   most prominent level even though level 1 and 3 are visually bigger/smaller */
+/* Level 2 — high-contrast title (pops clearly against the page), the "sky"
+   tone the old alternating scheme used, applied to every level-2 item */
 .layer2 {
   font-size: 0.875rem;
   font-weight: 500;
@@ -280,9 +274,12 @@
   overflow: hidden;
   display: flex;
   align-items: stretch;
-  background-color: var(--blue-medium);
-  color: white;
-  transition: background-color 0.2s, filter 0.2s;
+  background: transparent;
+  color: var(--sky-dark);
+  transition: background-color 0.2s;
+}
+[data-theme='dark'] .layer2 {
+  color: var(--sky-light);
 }
 
 .layer2 .item-title {
@@ -296,10 +293,10 @@
 }
 
 .layer2:hover {
-  filter: brightness(0.9);
+  background-color: rgba(0,0,0,0.06);
 }
 [data-theme='dark'] .layer2:hover {
-  filter: brightness(1.2);
+  background-color: rgba(255,255,255,0.06);
 }
 
 .layer3-container {
@@ -310,22 +307,22 @@
   gap: 0;
 }
 
-/* Level 3 — low-contrast fill, same treatment as level 1 (it's the deepest,
-   least prominent level; its context note is what actually reads as muted —
-   see .layer3-container .item-context below) */
+/* Level 3 — low-contrast title, same "slate" tone as level 1 (it's the
+   deepest, least prominent level; its context note is what actually reads
+   as muted — see .layer3-container .item-context below) */
 .layer3-item {
   font-size: 0.78125rem;
-  color: var(--text-primary);
+  color: var(--slate-dark);
   user-select: none;
   border-radius: 0.25rem;
   overflow: hidden;
   display: flex;
   align-items: stretch;
-  background-color: var(--blue-lighter);
-  transition: background-color 0.2s, filter 0.2s;
+  background: transparent;
+  transition: background-color 0.2s;
 }
 [data-theme='dark'] .layer3-item {
-  background-color: color-mix(in srgb, var(--blue-medium) 35%, black);
+  color: var(--slate-light);
 }
 
 .layer3-item .item-title {
@@ -339,10 +336,11 @@
 }
 
 .layer3-item:hover {
-  filter: brightness(0.94);
+  background-color: rgba(0,0,0,0.06);
+  color: var(--text-primary);
 }
 [data-theme='dark'] .layer3-item:hover {
-  filter: brightness(1.3);
+  background-color: rgba(255,255,255,0.06);
 }
 
 /* "+" trigger — creates a sub-item under this row. Lives inside the parent's
@@ -410,18 +408,21 @@
 
 /* Cap context width per level, matching that level's title cap, so long
    descriptions wrap onto multiple (tightly-spaced) lines instead of
-   stretching the bubble or overflowing. */
+   stretching the bubble or overflowing. Context sits on the plain page
+   background (not a colored fill), so literal white only reads in dark
+   mode — light mode needs a readable dark tint instead. */
 .layer1-container .item-context {
   max-width: 16rem;
   /* Inset from the card edge so the rounded corner doesn't clip the text */
   margin-left: 0.5rem;
+  color: var(--slate-dark);
 }
-/* The context note sits BELOW the colored bubble, on the page background —
-   not layered on top of it — so literal white only reads in dark mode
-   (near-black page background); light mode needs a readable dark tint instead */
+[data-theme='dark'] .layer1-container .item-context {
+  color: white;
+}
 .layer2-content .item-context {
   max-width: 12rem;
-  color: var(--blue-dark);
+  color: var(--sky-dark);
 }
 [data-theme='dark'] .layer2-content .item-context {
   color: white;
