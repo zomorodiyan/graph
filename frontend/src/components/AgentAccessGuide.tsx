@@ -194,10 +194,10 @@ async function main() {
 main().catch(err => { console.error('Error:', err.message); process.exit(1) })
 `
 
-const BLOCKS: { id: string; label: string; content: string }[] = [
+const BLOCKS: { id: string; label: string; content: string; download?: string }[] = [
   { id: 'setup', label: 'One-time setup — run in your own terminal (copy your token to the clipboard first)', content: SETUP_COMMAND },
-  { id: 'skill', label: 'Save as ~/.claude/skills/graph/SKILL.md', content: SKILL_MD },
-  { id: 'script', label: 'Save as ~/.claude/skills/graph/scripts/gist.mjs', content: GIST_MJS },
+  { id: 'skill', label: 'Save as ~/.claude/skills/graph/SKILL.md', content: SKILL_MD, download: 'SKILL.md' },
+  { id: 'script', label: 'Save as ~/.claude/skills/graph/scripts/gist.mjs', content: GIST_MJS, download: 'gist.mjs' },
 ]
 
 function AgentAccessGuide({ onClose }: AgentAccessGuideProps) {
@@ -219,6 +219,17 @@ function AgentAccessGuide({ onClose }: AgentAccessGuideProps) {
     } catch { /* clipboard unavailable — no-op */ }
   }
 
+  const handleDownload = (filename: string, content: string) => {
+    const url = URL.createObjectURL(new Blob([content], { type: 'text/plain' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal agent-guide-modal" onClick={e => e.stopPropagation()}>
@@ -232,15 +243,24 @@ function AgentAccessGuide({ onClose }: AgentAccessGuideProps) {
           <div className="agent-guide-block" key={block.id}>
             <div className="agent-guide-block-header">
               <span>{block.label}</span>
-              <button
-                className="agent-guide-copy-btn"
-                onClick={() => handleCopy(block.id, block.content)}
-                title="Copy to clipboard"
-              >
-                {copiedBlock === block.id ? <span className="copy-check">✔</span> : <span className="copy-handle" />}
-              </button>
+              {block.download ? (
+                <button
+                  className="agent-guide-download-btn"
+                  onClick={() => handleDownload(block.download!, block.content)}
+                >
+                  Download
+                </button>
+              ) : (
+                <button
+                  className="agent-guide-copy-btn"
+                  onClick={() => handleCopy(block.id, block.content)}
+                  title="Copy to clipboard"
+                >
+                  {copiedBlock === block.id ? <span className="copy-check">✔</span> : <span className="copy-handle" />}
+                </button>
+              )}
             </div>
-            <pre className="agent-guide-code">{block.content}</pre>
+            {!block.download && <pre className="agent-guide-code">{block.content}</pre>}
           </div>
         ))}
 

@@ -717,6 +717,22 @@
   cursor: pointer;
 }
 
+.agent-guide-download-btn {
+  flex: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-color);
+  border-radius: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+}
+
+.agent-guide-download-btn:hover {
+  background: var(--bg-tertiary, var(--bg-secondary));
+}
+
 .agent-guide-code {
   margin: 0;
   padding: 0.75rem 0.9rem;
