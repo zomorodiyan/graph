@@ -262,9 +262,9 @@
   flex-shrink: 0;
 }
 
-/* Level 2 — the theme's primary text color (black in light mode, white in
-   dark mode) instead of --item-title, so it reads as visually distinct
-   from level 1 and 3 */
+/* Level 2 — off-black in light mode, off-white in dark mode (softer than
+   pure --text-primary) instead of --item-title, so it reads as visually
+   distinct from level 1 and 3 without being as stark as true black/white */
 .layer2 {
   font-size: 0.875rem;
   font-weight: 500;
@@ -274,8 +274,11 @@
   display: flex;
   align-items: stretch;
   background: transparent;
-  color: var(--text-primary);
+  color: #1a1a1a;
   transition: background-color 0.2s;
+}
+[data-theme='dark'] .layer2 {
+  color: #f0f0f0;
 }
 
 .layer2 .item-title {
