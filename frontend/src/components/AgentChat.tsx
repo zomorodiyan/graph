@@ -44,6 +44,7 @@ function AgentChat() {
   useModalBackButton(isOpen, () => setIsOpen(false))
 
   const { top, height } = useVisualViewportRect()
+  const keyboardLikelyOpen = height < window.innerHeight - 80 // same heuristic as MobileEditSheet.tsx
 
   const viewContext = useMemo(() => {
     if (!graphName) {
@@ -124,7 +125,7 @@ function AgentChat() {
 
       {isOpen && (
         <div className="agent-chat-viewport" style={{ top, height }}>
-          <div className="agent-chat-panel">
+          <div className={`agent-chat-panel${keyboardLikelyOpen ? ' keyboard-open' : ''}`}>
             <div className="agent-chat-header">
               <span>Agent</span>
               <button className="agent-chat-close" onClick={() => setIsOpen(false)} title="Close">&times;</button>

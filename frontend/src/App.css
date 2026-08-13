@@ -1365,6 +1365,10 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+.agent-chat-panel.keyboard-open {
+  padding-bottom: 0;
+}
+
 @media (min-width: 32rem) {
   .agent-chat-panel {
     left: auto;
