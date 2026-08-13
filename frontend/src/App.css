@@ -209,6 +209,7 @@
   background: transparent;
   color: var(--item-title);
   transition: background-color 0.2s, transform 0.15s ease;
+  cursor: pointer;
 }
 
 /* Swipe drag feedback (translateX set inline, following the finger) — shared
@@ -297,6 +298,7 @@
   background: transparent;
   color: #333333;
   transition: background-color 0.2s, transform 0.15s ease;
+  cursor: pointer;
 }
 [data-theme='dark'] .layer2 {
   color: #cccccc;
@@ -340,6 +342,7 @@
   align-items: stretch;
   background: transparent;
   transition: background-color 0.2s, transform 0.15s ease;
+  cursor: pointer;
 }
 
 .layer3-item .item-title {
@@ -1224,6 +1227,30 @@
   outline-offset: -2px;
 }
 
+/* Two-way "point at an item" channel with the agent chat (see
+   useHighlights.ts / AgentChat.tsx) — click/tap the row background (not the
+   title) to toggle; the agent highlights via its highlight_items tool.
+   box-shadow rather than outline (already used by .item-editing above) so
+   an item can carry both rings at once without the two competing — the
+   .layer1.user-highlighted.agent-highlighted rule below stacks them. */
+.layer1.user-highlighted,
+.layer2.user-highlighted,
+.layer3-item.user-highlighted {
+  box-shadow: 0 0 0 2px rgba(67, 160, 71, 0.85) inset;
+}
+
+.layer1.agent-highlighted,
+.layer2.agent-highlighted,
+.layer3-item.agent-highlighted {
+  box-shadow: 0 0 0 2px rgba(251, 140, 0, 0.85) inset;
+}
+
+.layer1.user-highlighted.agent-highlighted,
+.layer2.user-highlighted.agent-highlighted,
+.layer3-item.user-highlighted.agent-highlighted {
+  box-shadow: 0 0 0 2px rgba(67, 160, 71, 0.85) inset, 0 0 0 4px rgba(251, 140, 0, 0.85) inset;
+}
+
 /* Sized/positioned to exactly match window.visualViewport (see
    useVisualViewportRect) — i.e. the actually-visible area, keyboard
    excluded. Transparent and click-through everywhere except the sheet
@@ -1409,6 +1436,13 @@
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   border-bottom-left-radius: 0.2rem;
+}
+
+.agent-chat-tool-use {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--text-secondary);
 }
 
 .agent-chat-error {

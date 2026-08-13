@@ -40,6 +40,14 @@ interface SectionProps {
   // this row supports sub-item creation — false for layer3, which has no "+"/
   // paste-sub UI to open (there's no layer4 rendering to swap an editor into).
   onContextMenu?: (e: React.MouseEvent, path: string, canAddSub: boolean) => void
+  // Two-way "point at an item" channel with the agent chat (see
+  // useHighlights.ts) — desktop: click the row background (not the title,
+  // which keeps its own click); mobile: a plain tap (long-press still opens
+  // the editor). userHighlights/agentHighlights are absolute paths, same
+  // format as itemPath/childPath/grandPath below.
+  onToggleHighlight?: (path: string) => void
+  userHighlights?: Set<string>
+  agentHighlights?: Set<string>
   isPending?: boolean
   // Level-2/3 drag reordering — level-1 drag lives in GraphView's own
   // section-wrapper, outside this component. draggedPath/dragOverPath are full
@@ -65,6 +73,13 @@ interface SectionProps {
   depth?: number
   showRaw?: boolean
   rawText?: string
+}
+
+// Appends the highlight class(es) for a row — both can apply at once (see
+// useHighlights.ts and the .user-highlighted/.agent-highlighted CSS, which
+// layer as independent box-shadow rings rather than competing outlines).
+function highlightClasses(path: string, userHighlights?: Set<string>, agentHighlights?: Set<string>): string {
+  return `${userHighlights?.has(path) ? ' user-highlighted' : ''}${agentHighlights?.has(path) ? ' agent-highlighted' : ''}`
 }
 
 // Which part of a row a drag is hovering over — mirrors GraphView's own
@@ -207,6 +222,9 @@ function Section({
   onSubCreateSave,
   onSubCreateCancel,
   onContextMenu,
+  onToggleHighlight,
+  userHighlights,
+  agentHighlights,
   isPending = false,
   draggedPath = null,
   dragOverPath = null,
@@ -288,7 +306,7 @@ function Section({
           ) : (
             <>
               <div
-                className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}${drag?.id === itemPath && drag.active ? ' swipe-armed' : ''}`}
+                className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}${drag?.id === itemPath && drag.active ? ' swipe-armed' : ''}${highlightClasses(itemPath, userHighlights, agentHighlights)}`}
                 style={{
                   ...progressFillStyle(item.progress, item.checkpoints, 'var(--blue-medium)'),
                   ...(drag?.id === itemPath ? { transform: `translateX(${drag.offsetX}px)` } : {}),
@@ -302,17 +320,26 @@ function Section({
                   ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, itemPath, true) }
                   : {})}
                 {...(isMobile && rowEditable
-                  ? makeLongPressHandlers(() => onEditClick(itemPath, title, item), () => {})
+                  ? makeLongPressHandlers(() => onEditClick(itemPath, title, item), () => onToggleHighlight?.(itemPath))
                   : {})}
               >
                 <span
                   className="item-title"
-                  // Mobile: tap does nothing (swipe-left navigates into this
-                  // item, long-press opens its editor — see the gesture
-                  // handlers above). Desktop: click opens the editor, or
-                  // navigates for non-editable rows (e.g. the virtual
-                  // Overview item), same as before.
-                  onClick={isMobile ? undefined : () => rowEditable ? onEditClick(itemPath, title, item) : onItemClick(itemPath)}
+                  // Mobile: tap toggles this item's highlight (swipe-left
+                  // navigates into it, long-press opens its editor — see the
+                  // gesture handlers above). Desktop: the title span fills
+                  // the row edge-to-edge (flex: 1, no gap — there's no
+                  // separate "row background" to give highlight its own
+                  // click target), so a plain click keeps its existing job
+                  // and Ctrl/Cmd+click toggles highlight instead.
+                  title={!isMobile && rowEditable ? 'Ctrl/Cmd+click to highlight' : undefined}
+                  onClick={isMobile ? undefined : (e) => {
+                    if (rowEditable && (e.ctrlKey || e.metaKey)) {
+                      onToggleHighlight?.(itemPath)
+                    } else {
+                      rowEditable ? onEditClick(itemPath, title, item) : onItemClick(itemPath)
+                    }
+                  }}
                 >
                   {title}
                   {!minimal && formatProgressText(item.progress) && (
@@ -400,7 +427,7 @@ function Section({
                     ) : (
                       <>
                         <div
-                          className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}${drag?.id === childPath && drag.active ? ' swipe-armed' : ''}`}
+                          className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}${drag?.id === childPath && drag.active ? ' swipe-armed' : ''}${highlightClasses(childPath, userHighlights, agentHighlights)}`}
                           style={{
                             ...progressFillStyle((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints, 'currentColor'),
                             ...(drag?.id === childPath ? { transform: `translateX(${drag.offsetX}px)` } : {}),
@@ -414,10 +441,17 @@ function Section({
                             ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, childPath, depth >= 3) }
                             : {})}
                           {...(isMobile && childRowEditable
-                            ? makeLongPressHandlers(() => onEditClick(childPath, childTitle, childItem as StructureItem), () => {})
+                            ? makeLongPressHandlers(() => onEditClick(childPath, childTitle, childItem as StructureItem), () => onToggleHighlight?.(childPath))
                             : {})}
                         >
-                          <span className="item-title" onClick={isMobile ? undefined : () => onItemClick(childPath)}>
+                          <span
+                            className="item-title"
+                            title={!isMobile && childRowEditable ? 'Ctrl/Cmd+click to highlight' : undefined}
+                            onClick={isMobile ? undefined : (e) => {
+                              if (childRowEditable && (e.ctrlKey || e.metaKey)) onToggleHighlight?.(childPath)
+                              else onItemClick(childPath)
+                            }}
+                          >
                             {childTitle}
                             {!minimal && formatProgressText((childItem as StructureItem).progress) && (
                               <span className="item-progress-inline">{formatProgressText((childItem as StructureItem).progress)}</span>
@@ -499,7 +533,7 @@ function Section({
                             ) : (
                               <>
                                 <div
-                                  className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}${drag?.id === grandPath && drag.active ? ' swipe-armed' : ''}`}
+                                  className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}${drag?.id === grandPath && drag.active ? ' swipe-armed' : ''}${highlightClasses(grandPath, userHighlights, agentHighlights)}`}
                                   style={{
                                     ...progressFillStyle((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints, 'currentColor'),
                                     ...(drag?.id === grandPath ? { transform: `translateX(${drag.offsetX}px)` } : {}),
@@ -509,10 +543,17 @@ function Section({
                                     ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, grandPath, false) }
                                     : {})}
                                   {...(isMobile && grandRowEditable
-                                    ? makeLongPressHandlers(() => onEditClick(grandPath, grandTitle, grandItem as StructureItem), () => {})
+                                    ? makeLongPressHandlers(() => onEditClick(grandPath, grandTitle, grandItem as StructureItem), () => onToggleHighlight?.(grandPath))
                                     : {})}
                                 >
-                                  <span className="item-title" onClick={isMobile ? undefined : () => onItemClick(grandPath)}>
+                                  <span
+                                    className="item-title"
+                                    title={!isMobile && grandRowEditable ? 'Ctrl/Cmd+click to highlight' : undefined}
+                                    onClick={isMobile ? undefined : (e) => {
+                                      if (grandRowEditable && (e.ctrlKey || e.metaKey)) onToggleHighlight?.(grandPath)
+                                      else onItemClick(grandPath)
+                                    }}
+                                  >
                                     {grandTitle}
                                     {!minimal && formatProgressText((grandItem as StructureItem).progress) && (
                                       <span className="item-progress-inline">

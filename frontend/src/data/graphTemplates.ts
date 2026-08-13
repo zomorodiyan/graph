@@ -622,7 +622,10 @@ In-app instructions for connecting an AI agent to your graph data.
 Agents read and write the same Gist-backed structure the app itself uses.
 
 ## Conversational Agent (1/1)
-Bottom-anchored chat, Telegram-style — a toggle button on every view opens a panel with a message list and a textbox that shifts up above the on-screen keyboard when focused. Bring-your-own Anthropic API key, called directly from the browser (billed to the user, not this app). Reads out what's in the current view (the graph, or the item drilled into); editing the view by describing the change is still a later step.
+Bottom-anchored chat, Telegram-style — a toggle button on every view opens a panel with a message list and a textbox that shifts up above the on-screen keyboard when focused. Bring-your-own Anthropic API key, called directly from the browser (billed to the user, not this app). The agent has tools to look at, edit, and add items anywhere in the current graph — not just what's on screen — and edits show up live as it makes them. Deferred: fine-tuning how it talks about items (plain language vs. raw Markdown), voice input.
+
+## Item Highlighting (1/1)
+A two-way "point at an item" channel alongside editing. User highlights an item — tap on mobile, Ctrl/Cmd+click on desktop (the title fills the row edge to edge, so a plain click keeps opening the editor) — and it's included as context on the next message. The agent highlights back via its own tool, in a different color; both can apply to the same item at once. Ephemeral — not saved with the graph.
 
 # Platform
 ## PWA Install

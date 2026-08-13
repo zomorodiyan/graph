@@ -1,23 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAgentChat } from '../hooks/useAgentChat'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useVisualViewportRect } from '../hooks/useVisualViewportRect'
+import { useHighlights } from '../hooks/useHighlights'
 import { useGraphs, getItemByPath } from '../hooks/useGraph'
 import { fetchStructure, serializeItem, serializeStructure } from '../api/localClient'
 
 // Persistent, app-wide chat surface (mounted once in App.tsx, so it survives
 // navigation between the graphs list and any individual graph — "from
 // within any view" per the App Features template). Talks to the Claude API
-// directly from the browser with the user's own key (see agentClient.ts);
-// for now it can only read out the current view, not edit it.
+// directly from the browser with the user's own key (see agentClient.ts),
+// which can view, edit, and add items in the currently open graph via tools.
 function AgentChat() {
-  const { isOpen, setIsOpen, messages, isSending, error, apiKey, saveKey, sendMessage, stop } = useAgentChat()
+  const { isOpen, setIsOpen, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop } = useAgentChat()
   const [draft, setDraft] = useState('')
   const [keyInput, setKeyInput] = useState('')
   const messagesRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const queryClient = useQueryClient()
 
   const location = useLocation()
   // useParams() only sees params of the route it's nested inside — this
@@ -37,6 +39,7 @@ function AgentChat() {
     enabled: Boolean(graphName),
   })
   const { data: graphs } = useGraphs()
+  const { userHighlights, setAgentHighlights } = useHighlights(graphName)
 
   useModalBackButton(isOpen, () => setIsOpen(false))
 
@@ -55,9 +58,17 @@ function AgentChat() {
     const path = remaining === '' || remaining === '/' ? '' : remaining.slice(1).replace(/\//g, '.')
 
     const item = path ? getItemByPath(structure, path) : null
-    if (item) return `The user is viewing "${item.title}" inside the graph "${graphName}":\n${serializeItem('item', item)}`
-    return `The user is at the root of the graph "${graphName}":\n${serializeStructure(items)}`
-  }, [graphName, structure, graphs, location.pathname])
+    const base = item
+      ? `The user is viewing "${item.title}" inside the graph "${graphName}":\n${serializeItem('item', item)}`
+      : `The user is at the root of the graph "${graphName}":\n${serializeStructure(items)}`
+
+    if (!userHighlights.length) return base
+    const highlightLines = userHighlights.map(p => {
+      const h = getItemByPath(structure, p)
+      return `- ${p}${h ? ` ("${h.title}")` : ''}`
+    })
+    return `${base}\n\nThe user has highlighted these items themselves:\n${highlightLines.join('\n')}`
+  }, [graphName, structure, graphs, location.pathname, userHighlights])
 
   useEffect(() => {
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight })
@@ -78,7 +89,20 @@ function AgentChat() {
 
   const handleSend = () => {
     if (!draft.trim() || isSending) return
-    sendMessage(draft, viewContext)
+    sendMessage(
+      draft,
+      viewContext,
+      graphName,
+      () => {
+        queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
+        // GraphView keeps its own optimistic "localItems" snapshot that a
+        // plain invalidation above doesn't reach (see GraphView.tsx's
+        // agentMutationSignal) — bump it so an agent-driven edit/add actually
+        // shows up on screen instead of only landing in localStorage.
+        queryClient.setQueryData(['agent-mutation-signal', graphName], (n: number = 0) => n + 1)
+      },
+      setAgentHighlights,
+    )
     setDraft('')
   }
 
@@ -131,13 +155,19 @@ function AgentChat() {
               <>
                 <div className="agent-chat-messages" ref={messagesRef}>
                   {messages.length === 0 && !error && (
-                    <p className="agent-chat-empty">Ask about what's in view — this graph, or this item.</p>
+                    <p className="agent-chat-empty">Ask about what's in view, or tell it to edit or add items.</p>
                   )}
-                  {messages.map((m, i) => (
-                    <div key={i} className={`agent-chat-message ${m.role}`}>
-                      {m.content || (m.role === 'assistant' && isSending && i === messages.length - 1 ? '…' : '')}
-                    </div>
-                  ))}
+                  {messages.map((m, i) => {
+                    const isStreamingReply = m.role === 'assistant' && isSending && i === messages.length - 1
+                    return (
+                      <div key={i} className={`agent-chat-message ${m.role}`}>
+                        {m.content || (isStreamingReply ? '…' : '')}
+                        {isStreamingReply && activeTool && (
+                          <div className="agent-chat-tool-use">Using {activeTool}…</div>
+                        )}
+                      </div>
+                    )
+                  })}
                   {error && <div className="agent-chat-error">{error}</div>}
                 </div>
                 <div className="agent-chat-input-row">

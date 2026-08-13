@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
+import { useHighlights } from '../hooks/useHighlights'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useLongPress } from '../hooks/useLongPress'
 import { SWIPE_THRESHOLD, SWIPE_VERTICAL_LIMIT } from '../hooks/useItemSwipe'
@@ -191,6 +192,26 @@ function GraphView() {
   )
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
+  // Bumped by AgentChat.tsx after a tool-driven edit/add, which mutates the
+  // graph from outside every setLocalItems call site below (drag, inline
+  // edit, etc. all patch localItems explicitly — this is the one path that
+  // can't, since it happens in a sibling component). A plain query
+  // invalidation refreshes `structure` but leaves the already-populated
+  // localItems snapshot below untouched; watching this signal instead of
+  // trying to detect "did structure change externally" keeps every existing
+  // optimistic-update path (which also touches the query cache) unaffected.
+  const { data: agentMutationSignal } = useQuery({
+    queryKey: ['agent-mutation-signal', graphName],
+    queryFn: () => 0,
+    initialData: 0,
+    staleTime: Infinity,
+  })
+  // Two-way "point at an item" channel with the agent chat — see
+  // useHighlights.ts. Converted to Sets here (once per render) so every
+  // row's highlightClasses() lookup in Section.tsx is O(1).
+  const { userHighlights, agentHighlights, toggleUserHighlight } = useHighlights(graphName)
+  const userHighlightSet = useMemo(() => new Set(userHighlights), [userHighlights])
+  const agentHighlightSet = useMemo(() => new Set(agentHighlights), [agentHighlights])
   const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
   
   const updateItem = useUpdateItem(graphName)
@@ -459,11 +480,12 @@ function GraphView() {
     }
   }, [rawItemsKeyString, localItems])
   
-  // Reset local state when path changes (navigating to different view)
+  // Reset local state when path changes (navigating to different view), or
+  // when the agent has mutated this graph (see agentMutationSignal above)
   useEffect(() => {
     setLocalOrder(null)
     setLocalItems(null)
-  }, [path])
+  }, [path, agentMutationSignal])
 
   // The display items: always overlay the virtual overview from rawItems so it stays reactive
   const displayItems = useMemo(() => {
@@ -1309,6 +1331,9 @@ function GraphView() {
                 onSubCreateSave={handleSubCreateSave}
                 onSubCreateCancel={() => setSubCreate(null)}
                 onContextMenu={handleItemContextMenu}
+                onToggleHighlight={toggleUserHighlight}
+                userHighlights={userHighlightSet}
+                agentHighlights={agentHighlightSet}
                 isPending={isPending}
                 draggedPath={draggedItem}
                 dragOverPath={dragOverPath}
@@ -1378,6 +1403,9 @@ function GraphView() {
               onInlineCancel={() => setInlineEdit(null)}
               onInlineDelete={handleDelete}
               onCopyClick={handleCopyItem}
+              onToggleHighlight={toggleUserHighlight}
+              userHighlights={userHighlightSet}
+              agentHighlights={agentHighlightSet}
               isPending={false}
               isTimeView={true}
               showContext={viewMode === 'context' && !minimalView}

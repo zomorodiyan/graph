@@ -5,6 +5,7 @@ export function useAgentChat() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<AgentChatMessage[]>([])
   const [isSending, setIsSending] = useState(false)
+  const [activeTool, setActiveTool] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [apiKey, setApiKey] = useState(getApiKey)
   const abortRef = useRef<AbortController | null>(null)
@@ -14,13 +15,20 @@ export function useAgentChat() {
     setApiKey(getApiKey())
   }, [])
 
-  const sendMessage = useCallback(async (text: string, viewContext: string) => {
+  const sendMessage = useCallback(async (
+    text: string,
+    viewContext: string,
+    graphName: string | undefined,
+    onMutate: () => void,
+    onHighlight: (paths: string[]) => void,
+  ) => {
     const trimmed = text.trim()
     if (!trimmed || isSending) return
 
     const history = [...messages, { role: 'user' as const, content: trimmed }]
     setMessages(history)
     setError(null)
+    setActiveTool(null)
     setIsSending(true)
 
     // Placeholder assistant message that fills in as deltas stream — index
@@ -36,6 +44,9 @@ export function useAgentChat() {
       await streamAgentReply(
         history,
         viewContext,
+        graphName,
+        onMutate,
+        onHighlight,
         delta => {
           setMessages(m => {
             const next = [...m]
@@ -43,6 +54,7 @@ export function useAgentChat() {
             return next
           })
         },
+        toolName => setActiveTool(toolName),
         controller.signal,
       )
     } catch (err) {
@@ -59,6 +71,7 @@ export function useAgentChat() {
       setMessages(m => m.filter((_, i) => i !== assistantIndex || m[i].content))
     } finally {
       setIsSending(false)
+      setActiveTool(null)
       abortRef.current = null
     }
   }, [messages, isSending])
@@ -67,5 +80,5 @@ export function useAgentChat() {
     abortRef.current?.abort()
   }, [])
 
-  return { isOpen, setIsOpen, messages, isSending, error, apiKey, saveKey, sendMessage, stop }
+  return { isOpen, setIsOpen, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop }
 }
