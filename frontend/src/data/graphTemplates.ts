@@ -621,8 +621,8 @@ In-app instructions for connecting an AI agent to your graph data.
 ## Gist-Based API
 Agents read and write the same Gist-backed structure the app itself uses.
 
-## Conversational Agent (0/1)
-New: talk to one or two agents from within any view — first to get a read-out of what's going on there, later to edit the current view by describing the change. Text input to start, voice later.
+## Conversational Agent (1/1)
+Bottom-anchored chat, Telegram-style — a toggle button on every view opens a panel with a message list and a textbox that shifts up above the on-screen keyboard when focused. Bring-your-own Anthropic API key, called directly from the browser (billed to the user, not this app). Reads out what's in the current view (the graph, or the item drilled into); editing the view by describing the change is still a later step.
 
 # Platform
 ## PWA Install

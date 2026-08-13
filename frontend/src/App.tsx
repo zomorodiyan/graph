@@ -6,6 +6,7 @@ import { usePinchZoom } from './hooks/usePinchZoom'
 import GraphView from './pages/GraphView'
 import StructuresView from './pages/StructuresView'
 import IosInstallBanner from './components/IosInstallBanner'
+import AgentChat from './components/AgentChat'
 import './App.css'
 
 function AppContent() {
@@ -24,6 +25,9 @@ function AppContent() {
         {/* Unmatched routes go home */}
         <Route path="/*" element={<Navigate to="/" replace />} />
       </Routes>
+      {/* Mounted outside <Routes> (but still inside the Router from main.tsx)
+          so it persists across navigation instead of resetting per view. */}
+      <AgentChat />
     </div>
   )
 }
