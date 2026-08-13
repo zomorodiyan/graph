@@ -32,6 +32,22 @@ interface SectionProps {
   // paste-sub UI to open (there's no layer4 rendering to swap an editor into).
   onContextMenu?: (e: React.MouseEvent, path: string, canAddSub: boolean) => void
   isPending?: boolean
+  // Level-2/3 drag reordering — level-1 drag lives in GraphView's own
+  // section-wrapper, outside this component. draggedPath/dragOverPath are full
+  // paths (unlike level-1's index-based drag state) so a hover target is
+  // unambiguous across however many Section instances are on screen.
+  draggedPath?: string | null
+  dragOverPath?: string | null
+  // Which part of the hovered row the drag is over — 'before' reorders,
+  // 'nest' makes the dragged item a child of the hovered one (see
+  // getDropZone). Only meaningful together with dragOverPath.
+  dragOverZone?: 'before' | 'nest' | null
+  onItemDragStart?: (path: string) => void
+  onItemDragOver?: (path: string, zone: 'before' | 'nest') => void
+  onItemDragEnd?: () => void
+  onItemDrop?: (path: string, zone: 'before' | 'nest') => void
+  dragEnabled?: boolean
+  pendingPaths?: Set<string>
   isTimeView?: boolean
   showContext?: boolean
   // Long-press on the context toggle: hides progress/cost/due/delta badges too,
@@ -40,6 +56,15 @@ interface SectionProps {
   depth?: number
   showRaw?: boolean
   rawText?: string
+}
+
+// Which part of a row a drag is hovering over — mirrors GraphView's own
+// getDropZone (level-1 uses that one directly; this is the level-2/3 copy,
+// small enough not to be worth threading through props/exports for).
+function getDropZone(e: React.DragEvent): 'before' | 'nest' {
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const relativeY = e.clientY - rect.top
+  return relativeY < rect.height * 0.35 ? 'before' : 'nest'
 }
 
 // Helper to calculate due date category for CSS class
@@ -172,6 +197,15 @@ function Section({
   onSubCreateCancel,
   onContextMenu,
   isPending = false,
+  draggedPath = null,
+  dragOverPath = null,
+  dragOverZone = null,
+  onItemDragStart,
+  onItemDragOver,
+  onItemDragEnd,
+  onItemDrop,
+  dragEnabled = false,
+  pendingPaths,
   isTimeView = false,
   showContext = true,
   minimal = false,
@@ -295,14 +329,45 @@ function Section({
           const grandchildren = (childItem as StructureItem).children || {}
           // Check if this child item is editable
           const childRowEditable = rowEditable && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
+          const childCanDrag = dragEnabled && childRowEditable && !pendingPaths?.has(childPath)
           const layer2Delta = formatCheckpointDelta((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints)
           const layer2Value = formatValueTotals(sumValues(childItem as StructureItem))
 
           return (
-            <div key={childKey} className="layer2-container">
+            <div
+              key={childKey}
+              className={`layer2-container${draggedPath === childPath ? ' dragging' : ''}${dragOverPath === childPath && dragOverZone === 'before' ? ' drag-over-before' : ''}`}
+            >
               <div className="layer2-l3-frame">
                 <div className="layer2-content">
-                  <div className="layer2-wrapper">
+                  <div
+                    className={`layer2-wrapper${childCanDrag ? ' draggable' : ''}${dragOverPath === childPath && dragOverZone === 'nest' ? ' drag-over-nest' : ''}`}
+                    draggable={childCanDrag}
+                    onDragStart={(e) => {
+                      // Only allow drag from background, not from text or interactive elements
+                      const target = e.target as HTMLElement
+                      if (
+                        target.classList.contains('item-title') ||
+                        target.classList.contains('copy-handle') ||
+                        target.tagName === 'BUTTON' ||
+                        target.tagName === 'A' ||
+                        target.tagName === 'INPUT' ||
+                        target.tagName === 'TEXTAREA'
+                      ) {
+                        e.preventDefault()
+                        return
+                      }
+                      e.stopPropagation()
+                      onItemDragStart?.(childPath)
+                    }}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); onItemDragOver?.(childPath, getDropZone(e)) }}
+                    onDragEnd={() => onItemDragEnd?.()}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      onItemDrop?.(childPath, dragOverZone === 'nest' ? 'nest' : 'before')
+                    }}
+                  >
                     {editingPath === childPath && editInline ? (
                       <InlineItemEditor
                         itemKey={childKey}
@@ -361,11 +426,39 @@ function Section({
                       const grandTitle = (grandItem as StructureItem).title || grandKey
                       // Check if this grandchild item is editable
                       const grandRowEditable = rowEditable && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
+                      const grandCanDrag = dragEnabled && grandRowEditable && !pendingPaths?.has(grandPath)
                       const layer3Delta = formatCheckpointDelta((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints)
                       const layer3Value = formatValueTotals(sumValues(grandItem as StructureItem))
 
                       return (
-                        <div key={grandKey}>
+                        <div
+                          key={grandKey}
+                          className={`layer3-row${grandCanDrag ? ' draggable' : ''}${draggedPath === grandPath ? ' dragging' : ''}${dragOverPath === grandPath && dragOverZone === 'before' ? ' drag-over-before' : ''}${dragOverPath === grandPath && dragOverZone === 'nest' ? ' drag-over-nest' : ''}`}
+                          draggable={grandCanDrag}
+                          onDragStart={(e) => {
+                            // Only allow drag from background, not from text or interactive elements
+                            const target = e.target as HTMLElement
+                            if (
+                              target.classList.contains('item-title') ||
+                              target.tagName === 'BUTTON' ||
+                              target.tagName === 'A' ||
+                              target.tagName === 'INPUT' ||
+                              target.tagName === 'TEXTAREA'
+                            ) {
+                              e.preventDefault()
+                              return
+                            }
+                            e.stopPropagation()
+                            onItemDragStart?.(grandPath)
+                          }}
+                          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); onItemDragOver?.(grandPath, getDropZone(e)) }}
+                          onDragEnd={() => onItemDragEnd?.()}
+                          onDrop={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            onItemDrop?.(grandPath, dragOverZone === 'nest' ? 'nest' : 'before')
+                          }}
+                        >
                           <div className="layer3-wrapper">
                             {editingPath === grandPath && editInline ? (
                               <InlineItemEditor

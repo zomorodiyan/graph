@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useCreateItem, getItemByPath } from '../hooks/useGraph'
+import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useLongPress } from '../hooks/useLongPress'
 import { useTheme } from '../context/ThemeContext'
@@ -27,6 +27,96 @@ const COLORS = ['sky', 'indigo', 'fuchsia']
 // View depths cycled by tapping the depth button — 3 levels, 2 levels.
 // Raw (0) isn't part of the cycle; long-pressing the button jumps to it directly.
 const DEPTHS = [3, 2] as const
+
+// Reorder helper for level-2/3 drags — same in-place delete+reassign trick as
+// applyOptimisticReorder in useGraph.ts, but walks a local items snapshot by
+// path relative to the current view instead of the full structure.
+function reorderLocalItems(
+  items: Record<string, StructureItem>,
+  relativeParts: string[],
+  targetIndex: number,
+): Record<string, StructureItem> {
+  const newItems = JSON.parse(JSON.stringify(items))
+  const itemKey = relativeParts[relativeParts.length - 1]
+
+  let container: Record<string, StructureItem> = newItems
+  for (let i = 0; i < relativeParts.length - 1; i++) {
+    const key = relativeParts[i]
+    if (!container[key]) return items
+    container = (container[key].children || {}) as Record<string, StructureItem>
+  }
+
+  const orderedKeys = Object.keys(container)
+  const currentIndex = orderedKeys.indexOf(itemKey)
+  if (currentIndex === -1) return items
+
+  orderedKeys.splice(currentIndex, 1)
+  const safeTargetIndex = Math.min(targetIndex, orderedKeys.length)
+  orderedKeys.splice(safeTargetIndex, 0, itemKey)
+
+  const reordered: Record<string, StructureItem> = {}
+  for (const key of orderedKeys) reordered[key] = container[key]
+  Object.keys(container).forEach(k => delete container[k])
+  Object.assign(container, reordered)
+
+  return newItems
+}
+
+// Ordered sibling keys at `parentRelativeParts` (relative to the current view),
+// walking .children the same way applyEdit/handleDelete do below.
+function getSiblingOrder(items: Record<string, StructureItem>, parentRelativeParts: string[]): string[] {
+  let container = items
+  for (const key of parentRelativeParts) {
+    if (!container[key]) return []
+    container = (container[key].children || {}) as Record<string, StructureItem>
+  }
+  return Object.keys(container)
+}
+
+// Which part of a row a drag is hovering over — the top ~35% means "reorder
+// to before this item" (the original behavior), the rest means "nest as a
+// child of this item" (drag-to-nest, matches dropping "on top of" an item).
+function getDropZone(e: React.DragEvent): 'before' | 'nest' {
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const relativeY = e.clientY - rect.top
+  return relativeY < rect.height * 0.35 ? 'before' : 'nest'
+}
+
+// Local-items counterpart to applyOptimisticMove in useGraph.ts — removes the
+// item from its old parent's children (relative to the current view) and
+// appends it as the last child of the new parent, deduping the key the same
+// way moveItemToParent does server-side.
+function applyLocalMove(
+  items: Record<string, StructureItem>,
+  itemRelativeParts: string[],
+  newParentRelativeParts: string[],
+): Record<string, StructureItem> {
+  const newItems = JSON.parse(JSON.stringify(items))
+  const itemKey = itemRelativeParts[itemRelativeParts.length - 1]
+
+  let oldContainer: Record<string, StructureItem> = newItems
+  for (let i = 0; i < itemRelativeParts.length - 1; i++) {
+    const key = itemRelativeParts[i]
+    if (!oldContainer[key]) return items
+    oldContainer = (oldContainer[key].children || {}) as Record<string, StructureItem>
+  }
+  const item = oldContainer[itemKey]
+  if (!item) return items
+  delete oldContainer[itemKey]
+
+  let newContainer: Record<string, StructureItem> = newItems
+  for (const key of newParentRelativeParts) {
+    if (!newContainer[key]) return items
+    if (!newContainer[key].children) newContainer[key].children = {}
+    newContainer = newContainer[key].children as Record<string, StructureItem>
+  }
+
+  let newKey = itemKey, n = 2
+  while (newKey in newContainer) newKey = `${itemKey}_${n++}`
+  newContainer[newKey] = item
+
+  return newItems
+}
 
 function GraphView() {
   const location = useLocation()
@@ -105,6 +195,7 @@ function GraphView() {
   const updateItem = useUpdateItem(graphName)
   const deleteItemMutation = useDeleteItem(graphName)
   const reorderItem = useReorderItem(graphName)
+  const moveToParent = useMoveItemToParent(graphName)
   const createItem = useCreateItem(graphName)
   
   // Persist active depth so it's consistent across menu <-> graph navigation
@@ -120,6 +211,13 @@ function GraphView() {
   // Drag state
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  // Drag-over target for level-2/3 drags, tracked by path (unlike dragOverIndex,
+  // which is a level-1-only list position) — see handleDropAtPath.
+  const [dragOverPath, setDragOverPath] = useState<string | null>(null)
+  // Which part of the hovered row the drag is over — 'before' reorders (the
+  // original behavior), 'nest' makes the dragged item a child of the hovered
+  // one. Shared across all three levels; see getDropZone.
+  const [dragOverZone, setDragOverZone] = useState<'before' | 'nest' | null>(null)
   
   // LOCAL order state - this is what controls the visual display
   const [localOrder, setLocalOrder] = useState<string[] | null>(null)
@@ -840,22 +938,67 @@ function GraphView() {
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault()
     setDragOverIndex(index)
+    setDragOverZone(getDropZone(e))
   }
 
   const handleDragEnd = () => {
     setDraggedItem(null)
     setDragOverIndex(null)
+    setDragOverPath(null)
+    setDragOverZone(null)
+  }
+
+  // Shared "nest as a child of the drop target" handler for all three levels
+  // — unlike reordering, this allows moving across different parents (that's
+  // the whole point of drag-to-nest). Guards against nesting an item into
+  // itself or one of its own descendants, mirroring moveItemToParent's check.
+  const handleNestDrop = async (itemPath: string, newParentPath: string) => {
+    if (itemPath === newParentPath || newParentPath.startsWith(`${itemPath}.`)) return
+
+    // IMMEDIATELY update local state for instant visual feedback. Both ends
+    // are always within the current view's displayed subtree (they're both
+    // on screen at once), so this should always apply — the prefix check is
+    // just a defensive fallback.
+    const prefix = path ? `${path}.` : ''
+    if (localItems && itemPath.startsWith(prefix) && newParentPath.startsWith(prefix)) {
+      const itemRelative = itemPath.slice(prefix.length).split('.')
+      const parentRelative = newParentPath.slice(prefix.length).split('.')
+      setLocalItems(prev => prev ? applyLocalMove(prev, itemRelative, parentRelative) : prev)
+      if (itemRelative.length === 1) {
+        setLocalOrder(prev => prev ? prev.filter(k => k !== itemRelative[0]) : prev)
+      }
+    }
+
+    try {
+      await moveToParent.mutateAsync({ path: itemPath, newParentPath })
+      showNotification('Moved!')
+    } catch (err: any) {
+      setLocalItems(rawItems)
+      setLocalOrder(serverKeys)
+      const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to move'
+      showNotification(msg.substring(0, 60), 'error')
+    }
   }
 
   const handleDrop = async (targetIndex: number) => {
     if (!draggedItem) return
-    
+
     const itemToReorder = draggedItem
     const draggedKey = itemToReorder.split('.').pop()!
-    
+    const zone = dragOverZone
+
     setDraggedItem(null)
     setDragOverIndex(null)
-    
+    setDragOverZone(null)
+
+    if (zone === 'nest') {
+      const targetKey = displayOrder[targetIndex]
+      if (!targetKey || targetKey === 'overview') return
+      const targetPath = path ? `${path}.${targetKey}` : targetKey
+      await handleNestDrop(itemToReorder, targetPath)
+      return
+    }
+
     // Check if dropped in same position - do nothing
     const currentIndex = localOrder?.indexOf(draggedKey) ?? -1
     if (currentIndex === targetIndex || currentIndex === -1) {
@@ -881,6 +1024,53 @@ function GraphView() {
     } catch (err: any) {
       // Rollback on error - reset to server order
       setLocalOrder(serverKeys)
+      const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to reorder'
+      showNotification(msg.substring(0, 60), 'error')
+    }
+  }
+
+  // Drop handler for level-2/3 items. 'before' zone: reorders among siblings
+  // only (same parent as the dragged item) — a drop over a different
+  // parent's list is a no-op rather than reparenting. 'nest' zone: hands off
+  // to handleNestDrop, which allows crossing into a different parent since
+  // that's the point of drag-to-nest. Level-1 keeps using handleDrop above.
+  const handleDropAtPath = async (targetPath: string, zone: 'before' | 'nest') => {
+    if (!draggedItem) return
+    const itemToReorder = draggedItem
+    setDraggedItem(null)
+    setDragOverPath(null)
+    setDragOverZone(null)
+
+    if (zone === 'nest') {
+      await handleNestDrop(itemToReorder, targetPath)
+      return
+    }
+
+    const prefix = path ? `${path}.` : ''
+    if (!itemToReorder.startsWith(prefix) || !targetPath.startsWith(prefix)) return
+
+    const draggedRelative = itemToReorder.slice(prefix.length).split('.')
+    const targetRelative = targetPath.slice(prefix.length).split('.')
+    const draggedKey = draggedRelative[draggedRelative.length - 1]
+    const targetKey = targetRelative[targetRelative.length - 1]
+    const parentRelative = draggedRelative.slice(0, -1)
+    if (targetRelative.slice(0, -1).join('.') !== parentRelative.join('.')) return
+
+    const siblingKeys = getSiblingOrder(displayItems, parentRelative)
+    const currentIndex = siblingKeys.indexOf(draggedKey)
+    const targetIndex = siblingKeys.indexOf(targetKey)
+    if (currentIndex === -1 || targetIndex === -1 || currentIndex === targetIndex) return
+
+    // IMMEDIATELY update local state for instant visual feedback
+    setLocalItems(prev => prev ? reorderLocalItems(prev, draggedRelative, targetIndex) : prev)
+
+    // Then sync to server in background
+    try {
+      await reorderItem.mutateAsync({ path: itemToReorder, targetIndex })
+      showNotification('Reordered!')
+    } catch (err: any) {
+      // Rollback on error - reset to server order
+      setLocalItems(rawItems)
       const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to reorder'
       showNotification(msg.substring(0, 60), 'error')
     }
@@ -1048,7 +1238,7 @@ function GraphView() {
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
               onDrop={() => handleDrop(index)}
-              className={`section-wrapper ${draggedItem === itemPath ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''} ${isPending ? 'pending' : ''}`}
+              className={`section-wrapper ${draggedItem === itemPath ? 'dragging' : ''} ${dragOverIndex === index && dragOverZone === 'nest' ? 'drag-over-nest' : ''} ${dragOverIndex === index && dragOverZone !== 'nest' ? 'drag-over' : ''} ${isPending ? 'pending' : ''}`}
             >
               <Section
                 key={key}
@@ -1070,6 +1260,15 @@ function GraphView() {
                 onSubCreateCancel={() => setSubCreate(null)}
                 onContextMenu={handleItemContextMenu}
                 isPending={isPending}
+                draggedPath={draggedItem}
+                dragOverPath={dragOverPath}
+                dragOverZone={dragOverZone}
+                onItemDragStart={handleDragStart}
+                onItemDragOver={(p, z) => { setDragOverPath(p); setDragOverZone(z) }}
+                onItemDragEnd={handleDragEnd}
+                onItemDrop={handleDropAtPath}
+                dragEnabled={!isVirtualView && !inlineEdit && !subCreate}
+                pendingPaths={pendingItems}
                 isTimeView={isVirtualView}
                 showContext={viewMode === 'context' && !minimalView}
                 minimal={minimalView}

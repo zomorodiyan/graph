@@ -597,6 +597,13 @@ Right-click or long-press for Edit, New, Paste, Delete.
 Copy an item's subtree as markdown, paste it as a sibling or child.
 
 ## Drag Reorder
+Reorders an item among its siblings by dragging.
+
+### Multi-Level Drag (1/1)
+Level-2 and level-3 items can now be dragged among their own siblings too, each still carrying its own subitems along — including ones not currently visible at the active depth.
+
+### Drag to Nest (1/1)
+Dropping an item on the body of another item (any level, any parent) makes it that item's child instead of reordering it — the top edge of a row still means "insert before" like ordinary reordering.
 
 ## Swipe & Long-Press
 Touch shortcuts for common actions.
@@ -604,12 +611,18 @@ Touch shortcuts for common actions.
 ## Time (0/1)
 New: merge Progress and Checkpoints into one button called Time. Inside it, add progress and dates together, and remove any entry with an x.
 
+## Mobile Interaction Rework (0/1)
+New: rethink how the edit panel gets activated and how navigation between levels and views works, leaning toward more concrete, fixed sizing instead of fluid layout — mobile is the primary target.
+
 # Agent Access
 ## Access Guide
 In-app instructions for connecting an AI agent to your graph data.
 
 ## Gist-Based API
 Agents read and write the same Gist-backed structure the app itself uses.
+
+## Conversational Agent (0/1)
+New: talk to one or two agents from within any view — first to get a read-out of what's going on there, later to edit the current view by describing the change. Text input to start, voice later.
 
 # Platform
 ## PWA Install

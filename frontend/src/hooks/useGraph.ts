@@ -8,6 +8,7 @@ import {
   moveItemUp,
   moveItemDown,
   reorderItem,
+  moveItemToParent,
   syncToDrive,
   UpdatePayload,
   StructureItem,
@@ -234,6 +235,72 @@ export function useReorderItem(graphName?: string) {
       syncToDrive(graphName).catch(console.error)
     },
   })
+}
+
+// Hook for drag-to-nest — moves an item to become the last child of a
+// different parent, unlike useReorderItem which only repositions within the
+// same parent.
+export function useMoveItemToParent(graphName?: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ path, newParentPath }: { path: string; newParentPath: string }) =>
+      moveItemToParent(path, newParentPath, graphName),
+
+    onMutate: async ({ path, newParentPath }) => {
+      await queryClient.cancelQueries({ queryKey: ['structure', graphName] })
+      const previousStructure = queryClient.getQueryData(['structure', graphName])
+      queryClient.setQueryData(['structure', graphName], (old: any) => {
+        if (!old) return old
+        return applyOptimisticMove(old, path, newParentPath)
+      })
+      return { previousStructure }
+    },
+
+    onError: (_err, _vars, context) => {
+      console.error('Move error:', _err)
+      if (context?.previousStructure) {
+        queryClient.setQueryData(['structure', graphName], context.previousStructure)
+      }
+    },
+
+    onSettled: () => {
+      syncToDrive(graphName).catch(console.error)
+    },
+  })
+}
+
+// Helper function to apply optimistic move — remove from the old parent's
+// children, append as the last child of the new parent, deduping the key the
+// same way moveItemToParent does server-side.
+function applyOptimisticMove(structure: any, path: string, newParentPath: string): any {
+  const keys = path.split('.')
+  const newStructure = JSON.parse(JSON.stringify(structure))
+  const itemKey = keys[keys.length - 1]
+
+  let parentContainer = newStructure.structure
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (parentContainer[keys[i]]?.children) parentContainer = parentContainer[keys[i]].children
+    else if (parentContainer[keys[i]]) parentContainer = parentContainer[keys[i]]
+  }
+  const item = parentContainer[itemKey]
+  if (!item) return structure
+  delete parentContainer[itemKey]
+
+  let targetContainer = newStructure.structure
+  if (newParentPath) {
+    for (const key of newParentPath.split('.')) {
+      if (targetContainer[key]?.children) targetContainer = targetContainer[key].children
+      else if (targetContainer[key]) targetContainer = targetContainer[key]
+      else return structure // target vanished — bail, no-op
+    }
+  }
+
+  let newKey = itemKey, n = 2
+  while (newKey in targetContainer) newKey = `${itemKey}_${n++}`
+  targetContainer[newKey] = item
+
+  return newStructure
 }
 
 // Helper function to apply optimistic update

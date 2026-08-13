@@ -160,19 +160,34 @@ body {
   min-height: 100vh;
 }
 
-/* Drag and Drop styles */
-.section-wrapper {
+/* Drag and Drop styles — apply to level-1 (.section-wrapper), level-2
+   (.layer2-wrapper handle / .layer2-container indicator), and level-3
+   (.layer3-row, handle and indicator are the same element) alike. */
+.section-wrapper,
+.layer2-wrapper.draggable,
+.layer3-row.draggable {
   cursor: grab;
   transition: all 0.2s ease;
 }
 
-.section-wrapper:active {
+.section-wrapper:active,
+.layer2-wrapper.draggable:active,
+.layer3-row.draggable:active {
   cursor: grabbing;
 }
 
 .section-wrapper.dragging {
   opacity: 0.4;
   transform: scale(0.98);
+}
+
+/* Level-2/3 rows are small, text-only chips — opacity alone is too subtle to
+   read as "this is what's moving", so tint the background too. */
+.layer2-container.dragging,
+.layer3-row.dragging {
+  opacity: 0.5;
+  background-color: rgba(102, 126, 234, 0.18);
+  border-radius: 0.25rem;
 }
 
 .section-wrapper.drag-over {
@@ -189,6 +204,46 @@ body {
   background: linear-gradient(90deg, #4CAF50, #2196F3);
   border-radius: 2px;
   animation: pulse 0.5s ease-in-out infinite alternate;
+}
+
+/* Level-2/3 "insert before" indicator sits INSET (top: 0, not poking above
+   the box like level-1's) because .section has overflow: hidden and a
+   negative offset gets clipped there — see the L2/L3 drag investigation. */
+.layer2-container.drag-over-before,
+.layer3-row.drag-over-before {
+  position: relative;
+}
+
+.layer2-container.drag-over-before::before,
+.layer3-row.drag-over-before::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #4CAF50, #2196F3);
+  border-radius: 2px;
+  animation: pulse 0.5s ease-in-out infinite alternate;
+  z-index: 1;
+}
+
+/* "Drop to nest inside this item" — a dashed outline instead of an edge
+   line, since the row itself (not a position between rows) is the target.
+   Level-1's own drag state lives in .section-wrapper (GraphView renders it
+   outside <Section>), so the outline goes on the whole wrapper there; levels
+   2/3 apply it to just their own row since Section controls those directly. */
+.section-wrapper.drag-over-nest {
+  outline: 2px dashed #2196F3;
+  outline-offset: -2px;
+  background-color: rgba(33, 150, 243, 0.08);
+}
+
+.layer2-wrapper.drag-over-nest .layer2,
+.layer3-row.drag-over-nest .layer3-item {
+  outline: 2px dashed #2196F3;
+  outline-offset: -2px;
+  background-color: rgba(33, 150, 243, 0.12);
 }
 
 @keyframes pulse {

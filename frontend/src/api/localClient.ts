@@ -544,6 +544,33 @@ export async function reorderItem(path: string, targetIndex: number, graphName =
   return { success: true, message: 'Reordered' }
 }
 
+// Move an item to become the last child of a different parent (drag-to-nest).
+// Unlike reorderItem (same parent, position only) this changes which
+// container the item lives in — used when a drop lands on an item's body
+// rather than the gap between rows.
+export async function moveItemToParent(path: string, newParentPath: string, graphName = 'default'): Promise<{ success: boolean; message: string }> {
+  const s = loadStructure(graphName)
+  const pk = getParentAndKey(s.structure, path)
+  if (!pk) throw new Error(`Item not found: ${path}`)
+  if (path === newParentPath || newParentPath.startsWith(`${path}.`)) {
+    throw new Error('Cannot move an item into itself or its own descendant')
+  }
+
+  const container = getContainer(s.structure, newParentPath)
+  if (!container) throw new Error(`Parent not found: ${newParentPath}`)
+
+  const item = pk.parent[pk.key]
+  delete pk.parent[pk.key]
+
+  let key = pk.key, n = 2
+  while (key in container) key = `${pk.key}_${n++}`
+  container[key] = item
+
+  saveStructure(graphName, s)
+  touchMeta(graphName)
+  return { success: true, message: 'Moved' }
+}
+
 export async function syncToDrive(_graphName?: string): Promise<{ success: boolean; message: string }> {
   return { success: true, message: 'Offline mode — no sync' }
 }
