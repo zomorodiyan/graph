@@ -8,14 +8,23 @@
   gap: 0;
 }
 
-/* CSS columns — items flow top-to-bottom per column, no gaps. 30rem keeps
-   narrow/mobile screens at one column (below the 28rem --wide threshold)
-   while letting wide screens grow columns past it, so bubbles can actually
-   reach the width needed for the L1 | L2+L3 row layout. */
+/* CSS columns — items flow top-to-bottom per column, no gaps. 480px (the
+   pixel equivalent of the old 30rem at the default 16px root) keeps
+   narrow/mobile screens at one column while letting wide screens grow
+   columns past it, so bubbles can actually reach the width needed for the
+   L1 | L2+L3 row layout. Fixed px, not rem, so pinch-zoom (which rescales
+   the root font-size) changes text/spacing size but never *when* this
+   reflows — reflow stays purely viewport-width-driven. */
 .items-grid {
   flex: 0 0 100%;
-  columns: 30rem;
+  columns: 480px;
   column-gap: 0;
+}
+
+/* While the mobile bottom sheet is open, the row grid underneath can't
+   receive taps/swipes — see the items-grid-locked className in GraphView.tsx. */
+.items-grid.items-grid-locked {
+  pointer-events: none;
 }
 
 .items-grid .section-wrapper {
@@ -199,7 +208,18 @@
   align-items: stretch;
   background: transparent;
   color: var(--item-title);
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.15s ease;
+}
+
+/* Swipe drag feedback (translateX set inline, following the finger) — shared
+   shape across all three levels. "armed" means the current drag has crossed
+   the trigger threshold in a direction that's actually wired up for this
+   row (see useItemSwipe's `active` flag) — a stronger tint than a
+   not-yet-armed or not-available drag, so release timing is legible. */
+.layer1.swipe-armed,
+.layer2.swipe-armed,
+.layer3-item.swipe-armed {
+  background-color: rgba(33, 150, 243, 0.16);
 }
 
 .layer1 .item-title {
@@ -276,7 +296,7 @@
   align-items: stretch;
   background: transparent;
   color: #333333;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.15s ease;
 }
 [data-theme='dark'] .layer2 {
   color: #cccccc;
@@ -319,7 +339,7 @@
   display: flex;
   align-items: stretch;
   background: transparent;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.15s ease;
 }
 
 .layer3-item .item-title {
@@ -993,8 +1013,10 @@
 
 /* Once a bubble is wide enough, lay L1 beside the L2 column instead of
    above it. L2 items themselves always wrap into a row when they fit (see
-   .layer2-section), independent of this bubble-level L1/L2 swap. */
-@container (min-width: 28rem) {
+   .layer2-section), independent of this bubble-level L1/L2 swap. 448px is
+   the pixel equivalent of the old 28rem at the default 16px root — fixed,
+   not rem, for the same reason as .items-grid's threshold above. */
+@container (min-width: 448px) {
   .section-body {
     flex-direction: row;
   }

@@ -611,8 +611,8 @@ Touch shortcuts for common actions.
 ## Time (1/1)
 Progress and Checkpoints are now one button called Time. Inside it, add progress and dates together, and remove any entry with an x.
 
-## Mobile Interaction Rework (0/1)
-New: rethink how the edit panel gets activated and how navigation between levels and views works, leaning toward more concrete, fixed sizing instead of fluid layout — mobile is the primary target.
+## Mobile Interaction Rework (1/1)
+On mobile: tap does nothing now — swipe-left on an item navigates into it, swipe-right navigates up the tree (same action no matter where you swipe, item or empty background), long-press opens the editor directly (no menu step). The hardware back button also steps up one level instead of exiting the graph. Pinch-zoom still resizes text, but no longer shifts where the layout reflows. Desktop click/right-click are unchanged. Adding a sub-item to a specific existing item no longer has its own swipe shortcut — swipe into it, then use that page's own "+ New"/"Paste" card.
 
 # Agent Access
 ## Access Guide

@@ -2,6 +2,7 @@ import { useRef, useState, type CSSProperties } from 'react'
 import { StructureItem, UpdatePayload, getItemDueDate, sumValues, formatValueTotals } from '../api/localClient'
 import { parseLocalDate, daysUntil } from '../utils/dates'
 import { useItemSwipe } from '../hooks/useItemSwipe'
+import { useLongPressFactory } from '../hooks/useLongPress'
 import InlineItemEditor from './InlineItemEditor'
 
 interface SectionProps {
@@ -10,6 +11,14 @@ interface SectionProps {
   parentPath: string
   colorIndex: number
   onItemClick: (path: string) => void
+  // Mobile-only: swipe-left on a row navigates into it. Level-1 uses this
+  // (its own onItemClick target would be a same-page no-op — see GraphView's
+  // handleNavigateInto); level-2/3 reuse onItemClick itself for this, since
+  // that already goes to the right place.
+  onNavigateInto?: (path: string) => void
+  // Mobile-only: swipe-right always navigates up the tree, no matter which
+  // row (or the background) it starts on — see GraphView's handleNavigateBack.
+  onNavigateBack?: () => void
   onEditClick: (path: string, name: string, data: StructureItem) => void
   editingPath?: string | null
   // When false (mobile), an item being edited/added-to stays in place with just
@@ -184,6 +193,8 @@ function Section({
   parentPath,
   colorIndex: _colorIndex,
   onItemClick,
+  onNavigateInto,
+  onNavigateBack,
   onEditClick,
   editingPath = null,
   editInline = true,
@@ -219,11 +230,16 @@ function Section({
   const sectionRef = useRef<HTMLDivElement>(null)
 
   // Editable unless it's a virtual time-view item or explicitly non-editable —
-  // gates the right-click menu, swipe gestures, and the Delete button inside the editor.
+  // gates long-press/right-click, swipe-right, and the Delete button inside the editor.
   const rowEditable = !isTimeView && !item.nonEditable
   const showLoading = isPending
-  // Left swipe = edit, right swipe = add sub-item (mirrors the right-click menu).
-  const makeSwipeHandlers = useItemSwipe()
+  // Mobile gesture vocabulary: swipe-left navigates into a row, swipe-right
+  // adds a sub-item, long-press opens the editor directly, tap does nothing.
+  // Desktop is unchanged: click opens the editor (or navigates, for
+  // non-editable rows), right-click shows the context menu.
+  const isMobile = !editInline
+  const { makeSwipeHandlers, drag } = useItemSwipe()
+  const makeLongPressHandlers = useLongPressFactory()
 
   // Get child items for layer2
   const children = item.children || {}
@@ -272,26 +288,31 @@ function Section({
           ) : (
             <>
               <div
-                className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}`}
-                style={progressFillStyle(item.progress, item.checkpoints, 'var(--blue-medium)')}
-                onContextMenu={rowEditable ? (e) => onContextMenu?.(e, itemPath, true) : undefined}
-                {...(rowEditable
-                  ? makeSwipeHandlers(
-                      () => onEditClick(itemPath, title, item),
-                      () => onSubCreateStart?.(itemPath),
-                    )
+                className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}${drag?.id === itemPath && drag.active ? ' swipe-armed' : ''}`}
+                style={{
+                  ...progressFillStyle(item.progress, item.checkpoints, 'var(--blue-medium)'),
+                  ...(drag?.id === itemPath ? { transform: `translateX(${drag.offsetX}px)` } : {}),
+                }}
+                {...makeSwipeHandlers(
+                  itemPath,
+                  onNavigateInto ? () => onNavigateInto(itemPath) : null,
+                  onNavigateBack ?? null,
+                )}
+                {...(!isMobile && rowEditable
+                  ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, itemPath, true) }
+                  : {})}
+                {...(isMobile && rowEditable
+                  ? makeLongPressHandlers(() => onEditClick(itemPath, title, item), () => {})
                   : {})}
               >
                 <span
                   className="item-title"
-                  // Tapping a level-1 title never navigates (its parent IS the current
-                  // page, so onItemClick would be a same-page no-op — its children/
-                  // grandchildren are already visible inline as level 2/3 rows). Left-swipe
-                  // is also awkward here since level-1 rows sit flush against the screen
-                  // edge, leaving little room for a leftward drag — so a plain tap opens
-                  // edit too, same as left-swipe. Non-editable rows (e.g. the virtual
-                  // Overview item) keep the old click behavior.
-                  onClick={() => rowEditable ? onEditClick(itemPath, title, item) : onItemClick(itemPath)}
+                  // Mobile: tap does nothing (swipe-left navigates into this
+                  // item, long-press opens its editor — see the gesture
+                  // handlers above). Desktop: click opens the editor, or
+                  // navigates for non-editable rows (e.g. the virtual
+                  // Overview item), same as before.
+                  onClick={isMobile ? undefined : () => rowEditable ? onEditClick(itemPath, title, item) : onItemClick(itemPath)}
                 >
                   {title}
                   {!minimal && formatProgressText(item.progress) && (
@@ -379,17 +400,24 @@ function Section({
                     ) : (
                       <>
                         <div
-                          className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}`}
-                          style={progressFillStyle((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints, 'currentColor')}
-                          onContextMenu={childRowEditable ? (e) => onContextMenu?.(e, childPath, depth >= 3) : undefined}
-                          {...(childRowEditable
-                            ? makeSwipeHandlers(
-                                () => onEditClick(childPath, childTitle, childItem as StructureItem),
-                                () => { if (depth >= 3) onSubCreateStart?.(childPath) },
-                              )
+                          className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}${drag?.id === childPath && drag.active ? ' swipe-armed' : ''}`}
+                          style={{
+                            ...progressFillStyle((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints, 'currentColor'),
+                            ...(drag?.id === childPath ? { transform: `translateX(${drag.offsetX}px)` } : {}),
+                          }}
+                          {...makeSwipeHandlers(
+                            childPath,
+                            () => onItemClick(childPath),
+                            onNavigateBack ?? null,
+                          )}
+                          {...(!isMobile && childRowEditable
+                            ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, childPath, depth >= 3) }
+                            : {})}
+                          {...(isMobile && childRowEditable
+                            ? makeLongPressHandlers(() => onEditClick(childPath, childTitle, childItem as StructureItem), () => {})
                             : {})}
                         >
-                          <span className="item-title" onClick={() => onItemClick(childPath)}>
+                          <span className="item-title" onClick={isMobile ? undefined : () => onItemClick(childPath)}>
                             {childTitle}
                             {!minimal && formatProgressText((childItem as StructureItem).progress) && (
                               <span className="item-progress-inline">{formatProgressText((childItem as StructureItem).progress)}</span>
@@ -471,17 +499,20 @@ function Section({
                             ) : (
                               <>
                                 <div
-                                  className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}`}
-                                  style={progressFillStyle((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints, 'currentColor')}
-                                  onContextMenu={grandRowEditable ? (e) => onContextMenu?.(e, grandPath, false) : undefined}
-                                  {...(grandRowEditable
-                                    ? makeSwipeHandlers(
-                                        () => onEditClick(grandPath, grandTitle, grandItem as StructureItem),
-                                        () => {},
-                                      )
+                                  className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}${drag?.id === grandPath && drag.active ? ' swipe-armed' : ''}`}
+                                  style={{
+                                    ...progressFillStyle((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints, 'currentColor'),
+                                    ...(drag?.id === grandPath ? { transform: `translateX(${drag.offsetX}px)` } : {}),
+                                  }}
+                                  {...makeSwipeHandlers(grandPath, () => onItemClick(grandPath), onNavigateBack ?? null)}
+                                  {...(!isMobile && grandRowEditable
+                                    ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, grandPath, false) }
+                                    : {})}
+                                  {...(isMobile && grandRowEditable
+                                    ? makeLongPressHandlers(() => onEditClick(grandPath, grandTitle, grandItem as StructureItem), () => {})
                                     : {})}
                                 >
-                                  <span className="item-title" onClick={() => onItemClick(grandPath)}>
+                                  <span className="item-title" onClick={isMobile ? undefined : () => onItemClick(grandPath)}>
                                     {grandTitle}
                                     {!minimal && formatProgressText((grandItem as StructureItem).progress) && (
                                       <span className="item-progress-inline">

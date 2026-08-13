@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useLongPress } from '../hooks/useLongPress'
+import { SWIPE_THRESHOLD, SWIPE_VERTICAL_LIMIT } from '../hooks/useItemSwipe'
 import { useTheme } from '../context/ThemeContext'
 import { StructureItem, UpdatePayload, pasteItems, serializeItem, getItemDueDate } from '@api'
 import InlineItemEditor from '../components/InlineItemEditor'
@@ -522,30 +523,69 @@ function GraphView() {
     return crumbs
   }
 
-  // Handle item click - navigate to the item's PARENT page, so the clicked
-  // item shows up as a 1st-level item alongside its siblings (with its own
-  // children/grandchildren now visible as the 2nd/3rd levels below it).
-  const handleItemClick = (itemPath: string) => {
+  // Resolves a clicked/swiped item's real path (unwrapping virtual/Overview
+  // references back to where the item actually lives) — shared by
+  // handleItemClick and handleNavigateInto below.
+  const resolveRealPath = (itemPath: string): string => {
     const currentItems = getCurrentItems()
-
-    // Traverse the path to find the item (need this to resolve Overview/
-    // time-progress virtual items back to their real location)
     const pathParts = itemPath.split('.')
     const basePath = path ? path.split('.') : []
     const relativeParts = pathParts.slice(basePath.length)
 
     let targetItem: StructureItem | undefined = undefined
     let current: Record<string, StructureItem> | undefined = currentItems
-
     for (const part of relativeParts) {
       if (!current) break
       targetItem = current[part]
       current = targetItem?.children
     }
+    return (targetItem?.originalPath as string | undefined) ?? itemPath
+  }
 
-    const realPath = (targetItem?.originalPath as string | undefined) ?? itemPath
+  // Handle item click - navigate to the item's PARENT page, so the clicked
+  // item shows up as a 1st-level item alongside its siblings (with its own
+  // children/grandchildren now visible as the 2nd/3rd levels below it).
+  const handleItemClick = (itemPath: string) => {
+    const realPath = resolveRealPath(itemPath)
     const parentPath = realPath.split('.').slice(0, -1).join('.')
-    navigate(buildPath(parentPath), { replace: true })
+    // Push (not replace) so the hardware/OS back gesture — and the
+    // background swipe-left gesture, which just calls navigate(-1) — step
+    // back up through the levels actually visited, like normal browser back.
+    navigate(buildPath(parentPath))
+  }
+
+  // Swipe-left-to-navigate-into-it on a level-1 row (mobile gesture — see
+  // Section.tsx). Level-1 items have no "go to parent" navigation today
+  // because their own parent IS the current page (handleItemClick's trick
+  // would just reload the same page) — this goes straight to the item's own
+  // path instead, so its children become the new level-1 list.
+  const handleNavigateInto = (itemPath: string) => {
+    navigate(buildPath(resolveRealPath(itemPath)))
+  }
+
+  // Swipe-right always means "go up the tree", regardless of what it starts
+  // on — a row's own swipe-right (see Section.tsx) calls this same function,
+  // and this background handler covers empty space, so the gesture works
+  // the same everywhere rather than only off of items. Just triggers a real
+  // back navigation, identical to the hardware/OS back gesture. Per-row
+  // swipe handlers (useItemSwipe) call stopPropagation, so this background
+  // handler only ever sees touches that started on empty space.
+  const handleNavigateBack = () => navigate(-1)
+  const backSwipeStart = useRef<{ x: number; y: number } | null>(null)
+  const handleBackgroundTouchStart = (e: React.TouchEvent) => {
+    backSwipeStart.current = e.touches.length === 1
+      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      : null
+  }
+  const handleBackgroundTouchEnd = (e: React.TouchEvent) => {
+    const s = backSwipeStart.current
+    backSwipeStart.current = null
+    if (!s) return
+    const deltaX = e.changedTouches[0].clientX - s.x
+    const deltaY = Math.abs(e.changedTouches[0].clientY - s.y)
+    if (deltaX > SWIPE_THRESHOLD && deltaY < SWIPE_VERTICAL_LIMIT) {
+      handleNavigateBack()
+    }
   }
 
   // Handle edit click
@@ -1166,16 +1206,24 @@ function GraphView() {
               {i === breadcrumb.length - 1 ? (
                 <span>{crumb.label}</span>
               ) : (
-                <Link to={crumb.path} replace={!crumb.isRoot}>{crumb.label}</Link>
+                <Link to={crumb.path}>{crumb.label}</Link>
               )}
             </span>
           ))}
         </nav>
       )}
 
-      <div className="graph-container">
-        {/* Items grid — CSS columns for tight packing with no gaps */}
-        <div className="items-grid">
+      <div
+        className="graph-container"
+        onTouchStart={handleBackgroundTouchStart}
+        onTouchEnd={handleBackgroundTouchEnd}
+      >
+        {/* Items grid — CSS columns for tight packing with no gaps. Locked
+            while the mobile sheet is open so a tap/swipe on a background row
+            can't land at the same time as a tap inside the sheet — without
+            this, tapping a different row while editing could both commit the
+            current edit and immediately trigger that row's own action. */}
+        <div className={`items-grid${isMobile && mobileSheet ? ' items-grid-locked' : ''}`}>
         {/* New + Paste — top card (creates/pastes at the top of the list) */}
         {!isVirtualView && (
           <div className="section-wrapper new-paste-wrapper">
@@ -1247,6 +1295,8 @@ function GraphView() {
                 parentPath={path || ''}
                 colorIndex={index % COLORS.length}
                 onItemClick={handleItemClick}
+                onNavigateInto={handleNavigateInto}
+                onNavigateBack={handleNavigateBack}
                 onEditClick={handleEditClick}
                 editingPath={inlineEdit?.path || null}
                 editInline={!isMobile}
