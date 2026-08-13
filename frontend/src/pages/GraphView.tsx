@@ -1214,8 +1214,8 @@ function GraphView() {
             {...ctxLongPress}
             title={minimalView
               ? 'Minimal view — tap to return to normal'
-              : `${viewMode === 'context' ? 'Context on' : 'Context off'} — tap to toggle, long-press for minimal view`}
-          >C</button>
+              : `${viewMode === 'context' ? 'Note on' : 'Note off'} — tap to toggle, long-press for minimal view`}
+          >N</button>
         </div>
       )}
 

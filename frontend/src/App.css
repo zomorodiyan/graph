@@ -792,7 +792,10 @@
   z-index: 1000;
 }
 
-/* Theme / Depth / Context toggles */
+/* Theme / Depth / Context toggles — same solid-accent theme as the agent
+   button (.agent-chat-toggle): var(--blue-medium) background, white icon,
+   no dark-theme-specific override (blue reads fine against either app
+   background, same as the agent button). */
 .theme-toggle,
 .depth-toggle,
 .ctx-toggle {
@@ -804,59 +807,37 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s;
-  opacity: 0.5;
-}
-
-/* Filled buttons */
-.theme-toggle,
-.depth-toggle {
   border: none;
-  background: rgba(45, 45, 45, 0.45);
+  background: var(--blue-medium);
+  color: #fff;
+  opacity: 0.6;
 }
 
-[data-theme="dark"] .theme-toggle,
-[data-theme="dark"] .depth-toggle {
-  background: rgba(245, 245, 245, 0.45);
+.theme-toggle {
+  opacity: 1;
 }
 
-/* Context button — same filled style as sync/theme/depth */
+.depth-toggle,
 .ctx-toggle {
-  background: rgba(45, 45, 45, 0.45);
-  border: none;
-  color: #f5f5f5;
-  font-size: 22px;
-  font-weight: 400;
-  line-height: 1;
-  opacity: 0.3;
-}
-
-[data-theme="dark"] .ctx-toggle {
-  background: rgba(245, 245, 245, 0.45);
-  color: #2d2d2d;
-}
-
-.depth-toggle {
-  color: #f5f5f5;
   font-size: 20px;
   font-weight: 400;
   line-height: 1;
-  opacity: 0.3;
 }
 
-[data-theme="dark"] .depth-toggle {
-  color: #2d2d2d;
+.ctx-toggle {
+  font-size: 22px;
 }
 
 .depth-toggle.active,
 .ctx-toggle.active {
-  opacity: 0.5;
+  opacity: 1;
 }
 
 /* Long-press states — Raw view / minimal (titles-only) view */
 .depth-toggle.raw,
 .ctx-toggle.minimal {
-  opacity: 0.5;
-  box-shadow: 0 0 0 2px var(--blue-medium);
+  opacity: 1;
+  box-shadow: 0 0 0 2px #fff;
 }
 
 .copy-btn {
