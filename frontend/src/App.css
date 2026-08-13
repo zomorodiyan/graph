@@ -1330,10 +1330,16 @@
   color: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
   transition: transform 0.2s;
+  /* Forces its own compositor layer so it tracks smoothly during mobile
+     Chrome's own toolbar hide/show-on-scroll animation instead of lagging a
+     frame or more behind — this element has zero JS driving its position,
+     so the lag users see is Chrome's fixed-position-during-chrome-animation
+     rendering quirk, not anything computed here. */
+  transform: translateZ(0);
 }
 
 .agent-chat-toggle:hover {
-  transform: scale(1.08);
+  transform: scale(1.08) translateZ(0);
 }
 
 /* Sized/positioned to exactly match window.visualViewport, same technique as
@@ -1346,6 +1352,11 @@
   right: 0;
   z-index: 1600;
   pointer-events: none;
+  /* Same compositor-layer reasoning as .agent-chat-toggle — this wrapper's
+     top/height are updated on every visualViewport change, so it needs its
+     own layer even more than a static element does to keep up smoothly with
+     Chrome's toolbar animation instead of trailing it. */
+  transform: translateZ(0);
 }
 
 .agent-chat-panel {
@@ -1380,6 +1391,10 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   padding-bottom: 0;
   padding-top: env(safe-area-inset-top, 0px);
+  /* This mode escapes .agent-chat-viewport's own layer promotion (it's
+     position: fixed on itself, not absolute within the wrapper), so it
+     needs the same translateZ(0) treatment independently. */
+  transform: translateZ(0);
 }
 
 .agent-chat-panel.keyboard-compact .agent-chat-header,
