@@ -608,8 +608,8 @@ Dropping an item on the body of another item (any level, any parent) makes it th
 ## Swipe & Long-Press
 Touch shortcuts for common actions.
 
-## Time (0/1)
-New: merge Progress and Checkpoints into one button called Time. Inside it, add progress and dates together, and remove any entry with an x.
+## Time (1/1)
+Progress and Checkpoints are now one button called Time. Inside it, add progress and dates together, and remove any entry with an x.
 
 ## Mobile Interaction Rework (0/1)
 New: rethink how the edit panel gets activated and how navigation between levels and views works, leaning toward more concrete, fixed sizing instead of fluid layout — mobile is the primary target.

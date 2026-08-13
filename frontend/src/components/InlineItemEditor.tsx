@@ -56,10 +56,9 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
   const [checkpoints, setCheckpoints] = useState(initCheckpoints)
   const [costAmount, setCostAmount] = useState(initialCost ? String(initialCost.amount) : '')
   const [costUnit, setCostUnit] = useState(initialCost ? initialCost.unit : '$')
-  const [showProgressEditor, setShowProgressEditor] = useState(initialProgressStr !== '')
+  const [showTimeEditor, setShowTimeEditor] = useState(initialProgressStr !== '' || initCheckpoints.length > 0)
   const [showCostEditor, setShowCostEditor] = useState(initialCost !== null)
   const [showContextEditor, setShowContextEditor] = useState(false)
-  const [showCheckpointsEditor, setShowCheckpointsEditor] = useState(initCheckpoints.length > 0)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const progressDoneRef = useRef<HTMLInputElement>(null)
@@ -88,14 +87,14 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
   // New chips default to today's date and "done" equal to the current total —
   // i.e. "fully done as of today" (a due date) — since that's the common
   // case; both are still editable for a future date or a partial milestone.
-  // If nothing tracks progress yet, this starts it at 0/1 (same minimal
-  // total a plain due date used to create).
+  // If nothing tracks progress yet, this starts it at 0/100 (same default the
+  // Time button itself seeds on first open).
   const addCheckpoint = () => {
     if (progressDone === '' && progressTotal === '') {
       setProgressDone('0')
-      setProgressTotal('1')
+      setProgressTotal('100')
     }
-    const total = progressTotal || '1'
+    const total = progressTotal || '100'
     const today = new Date().toISOString().slice(0, 10)
     setCheckpoints(cps => {
       justAddedCheckpointRef.current = cps.length
@@ -136,7 +135,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
 
     // Checkpoints only make sense while progress is tracked; if the editor's
     // closed (or progress got cleared), fall back to "unchanged from the original"
-    const finalCheckpoints = showCheckpointsEditor && progressDone !== '' && progressTotal !== ''
+    const finalCheckpoints = showTimeEditor && progressDone !== '' && progressTotal !== ''
       ? checkpoints
           .filter(cp => cp.date && cp.done !== '')
           .map(cp => ({ date: cp.date, progress: `${cp.done}/${progressTotal}` }))
@@ -159,7 +158,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
     }
 
     return next
-  }, [name, progressDone, progressTotal, context, checkpoints, showCheckpointsEditor,
+  }, [name, progressDone, progressTotal, context, checkpoints, showTimeEditor,
       costAmount, costUnit, showCostEditor,
       initialName, initialProgressStr, initialContext, initialCost, item.checkpoints])
 
@@ -244,18 +243,21 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
         </button>
         <button
           type="button"
-          className={`inline-tool ${showProgressEditor || progressDone || progressTotal ? 'active' : ''}`}
+          className={`inline-tool ${showTimeEditor || progressDone || progressTotal || checkpoints.length > 0 ? 'active' : ''}`}
           onClick={() => {
-            if (!showProgressEditor) {
+            // Seed a fresh 0/100 progress on first open only — no auto-added
+            // checkpoint (unlike the old Plan button); the "+" inside the panel
+            // is the one consistent way to add a date, first one or fifth.
+            if (!showTimeEditor) {
               setProgressDone(d => d || '0')
               setProgressTotal(t => t || '100')
             }
-            setShowProgressEditor(true)
+            setShowTimeEditor(true)
             focusAndScroll(progressDoneRef)
           }}
-          title="Progress"
+          title="Time — progress and dates together, add or remove as needed"
         >
-          {extremeZoom ? 'Prog' : 'Progress'}
+          Time
         </button>
         <button
           type="button"
@@ -267,23 +269,6 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
           title="Value"
         >
           {extremeZoom ? 'Val' : 'Value'}
-        </button>
-        <button
-          type="button"
-          className={`inline-tool ${showCheckpointsEditor || checkpoints.length > 0 ? 'active' : ''}`}
-          onClick={() => {
-            // First tap: open the panel AND add a checkpoint immediately (defaults
-            // to "fully done" — i.e. a due date) so it behaves like the old
-            // dedicated Due button — pick a date, done. The "+" inside the panel
-            // is for adding further (optionally partial) checkpoints afterward.
-            if (!showCheckpointsEditor) {
-              setShowCheckpointsEditor(true)
-              addCheckpoint()
-            }
-          }}
-          title="Plan — includes due dates (a checkpoint fully done by its date)"
-        >
-          Plan
         </button>
         {onDelete && (
           <button
@@ -307,9 +292,9 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
         autoFocus
       />
 
-      {(showProgressEditor || showCostEditor) && (
+      {(showTimeEditor || showCostEditor) && (
         <div className="inline-edit-fields-row">
-          {showProgressEditor && (
+          {showTimeEditor && (
             <div className="inline-edit-progress">
               <input
                 ref={progressDoneRef}
@@ -359,7 +344,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
         </div>
       )}
 
-      {showCheckpointsEditor && (
+      {showTimeEditor && (
         <div className="inline-edit-checkpoints">
           {checkpoints.map((cp, i) => (
             <div className="checkpoint-chip" key={i}>
@@ -381,7 +366,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
                   onKeyDown={handleKeyDown}
                   placeholder="done"
                 />
-                <span className="checkpoint-total">/ {progressTotal || '1'}</span>
+                <span className="checkpoint-total">/ {progressTotal || '100'}</span>
               </div>
               <button
                 type="button"
