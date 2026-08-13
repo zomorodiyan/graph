@@ -38,6 +38,12 @@ export function useHighlights(graphName: string | undefined) {
       prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path])
   }
 
+  // Used after a bulk action (e.g. deleting the selection) consumes every
+  // currently-highlighted path at once — nothing left to individually toggle off.
+  function clearUserHighlights() {
+    queryClient.setQueryData(userHighlightsKey(graphName), [] as string[])
+  }
+
   // Agent's highlight tool replaces the whole set each call (see
   // agentClient.ts) rather than toggling one at a time — it's describing
   // "here's what I'm pointing at right now", not accumulating a selection.
@@ -45,5 +51,5 @@ export function useHighlights(graphName: string | undefined) {
     queryClient.setQueryData(agentHighlightsKey(graphName), paths)
   }
 
-  return { userHighlights, agentHighlights, toggleUserHighlight, setAgentHighlights }
+  return { userHighlights, agentHighlights, toggleUserHighlight, clearUserHighlights, setAgentHighlights }
 }

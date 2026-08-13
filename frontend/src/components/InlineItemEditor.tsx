@@ -11,13 +11,12 @@ interface InlineItemEditorProps {
   item: StructureItem
   onSave: (data: UpdatePayload) => void
   onCancel: () => void
-  onDelete?: () => void
   // Create mode: prefill the title (preselected so typing replaces it);
   // committing without edits saves an item with this name
   defaultName?: string
 }
 
-function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultName }: InlineItemEditorProps) {
+function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: InlineItemEditorProps) {
   const { zoom } = useZoom()
   const extremeZoom = zoom >= EXTREME_ZOOM_THRESHOLD
   const initialName = item.title || itemKey
@@ -270,16 +269,6 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, onDelete, defaultNa
         >
           {extremeZoom ? 'Val' : 'Value'}
         </button>
-        {onDelete && (
-          <button
-            type="button"
-            className="inline-tool delete"
-            onClick={onDelete}
-            title="Delete"
-          >
-              {extremeZoom ? 'Del' : 'Delete'}
-          </button>
-        )}
       </div>
 
       <input

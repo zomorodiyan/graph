@@ -1,4 +1,10 @@
 :root {
+  /* Height of the agent chat bar's collapsed (input-row-only) state —
+     shared between App.css/StructuresView.css so the bottom-left button
+     cluster and every page's scrollable content reserve exactly enough
+     room to clear it. */
+  --agent-bar-height: 4rem;
+
   /* Light theme colors */
   --bg-primary: #ffffff;
   --bg-secondary: #f5f5f5;

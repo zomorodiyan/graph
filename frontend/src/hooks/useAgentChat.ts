@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import { AgentChatMessage, getApiKey, saveApiKey, streamAgentReply } from '../api/agentClient'
 
 export function useAgentChat() {
-  const [isOpen, setIsOpen] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const [messages, setMessages] = useState<AgentChatMessage[]>([])
   const [isSending, setIsSending] = useState(false)
   const [activeTool, setActiveTool] = useState<string | null>(null)
@@ -80,5 +80,5 @@ export function useAgentChat() {
     abortRef.current?.abort()
   }, [])
 
-  return { isOpen, setIsOpen, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop }
+  return { expanded, setExpanded, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop }
 }

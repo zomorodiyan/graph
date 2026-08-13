@@ -55,7 +55,7 @@
 
 .breadcrumb {
   position: fixed;
-  bottom: 72px;
+  bottom: calc(72px + var(--agent-bar-height));
   left: 20px;
   display: flex;
   flex-wrap: wrap;
@@ -253,6 +253,16 @@
 }
 .layer1.add-item {
   border: 1px solid var(--border-color);
+}
+
+/* "D" (delete selection) — same bar, red text/border instead of the neutral
+   gray, flagging it as destructive (same red as .context-menu-item.danger). */
+.layer1.add-item.danger,
+.layer1.add-item.danger .item-title {
+  color: #c62828;
+}
+.layer1.add-item.danger {
+  border-color: #c62828;
 }
 
 .layer2-section {
@@ -785,7 +795,7 @@
 /* Top buttons container */
 .top-buttons {
   position: fixed;
-  bottom: 20px;
+  bottom: calc(20px + var(--agent-bar-height));
   left: 20px;
   display: flex;
   gap: 10px;
@@ -1078,16 +1088,6 @@
   border-color: var(--blue-medium);
 }
 
-.inline-tool.delete:hover {
-  color: #c62828;
-  border-color: #c62828;
-}
-
-.inline-tool.delete {
-  color: #c62828;
-  border-color: #c62828;
-}
-
 /* Add Item Split Button — lives inside .section now */
 .add-item-split {
   display: flex;
@@ -1287,56 +1287,23 @@
   margin-bottom: 0.5rem;
 }
 
-/* Agent chat — floating toggle + bottom-docked panel, mounted app-wide (see
-   App.tsx) so it's reachable from every view. Bottom-right, mirroring the
-   bottom-left .top-buttons/.breadcrumb cluster so it never collides with
-   per-page controls. The toggle only renders while closed and a close "x"
-   lives in the panel header instead, so the two never overlap. */
-.agent-chat-toggle {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: 600;
-  z-index: 1600;
-  background: var(--blue-medium);
-  color: #fff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
-  transition: transform 0.2s;
-  /* Forces its own compositor layer so it tracks smoothly during mobile
-     Chrome's own toolbar hide/show-on-scroll animation instead of lagging a
-     frame or more behind — this element has zero JS driving its position,
-     so the lag users see is Chrome's fixed-position-during-chrome-animation
-     rendering quirk, not anything computed here. */
-  transform: translateZ(0);
-}
-
-.agent-chat-toggle:hover {
-  transform: scale(1.08) translateZ(0);
-}
-
-/* Sized/positioned to exactly match window.visualViewport, same technique as
-   .mobile-edit-sheet-viewport — keeps the whole panel (messages + input)
-   above the on-screen keyboard together, not just the input row. Transparent
-   and click-through everywhere except the panel itself. */
+/* Agent chat — permanent, always-visible bottom bar, mounted app-wide (see
+   App.tsx) so it's reachable from every view, Telegram-style. Collapsed
+   (default): just the input row. Expanded (textarea focused): header +
+   history/key-setup become visible above it too. Bottom-anchored inside
+   .agent-chat-viewport in BOTH states — that's what makes it shift above
+   the on-screen keyboard automatically, no separate positioning mode
+   needed. */
 .agent-chat-viewport {
   position: fixed;
   left: 0;
   right: 0;
   z-index: 1600;
   pointer-events: none;
-  /* Same compositor-layer reasoning as .agent-chat-toggle — this wrapper's
-     top/height are updated on every visualViewport change, so it needs its
-     own layer even more than a static element does to keep up smoothly with
-     Chrome's toolbar animation instead of trailing it. */
+  /* Own compositor layer so it tracks smoothly during mobile Chrome's own
+     toolbar hide/show-on-scroll animation instead of lagging a frame or
+     more behind — top/height here are JS-updated on every visualViewport
+     change, so this matters even more than for a static element. */
   transform: translateZ(0);
 }
 
@@ -1357,34 +1324,21 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-.agent-chat-panel.keyboard-compact {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-  bottom: auto;
-  width: auto;
-  margin: 0;
-  max-height: none;
-  border: none;
-  border-bottom: 1.5px solid var(--border-color);
-  border-radius: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+/* While a keyboard is likely open, the safe-area inset exists to clear a
+   home indicator / gesture-nav bar that's now covered by the keyboard
+   anyway — keeping it just adds dead space below the input row. */
+.agent-chat-panel.keyboard-open {
   padding-bottom: 0;
-  padding-top: env(safe-area-inset-top, 0px);
-  /* This mode escapes .agent-chat-viewport's own layer promotion (it's
-     position: fixed on itself, not absolute within the wrapper), so it
-     needs the same translateZ(0) treatment independently. */
-  transform: translateZ(0);
 }
 
-.agent-chat-panel.keyboard-compact .agent-chat-header,
-.agent-chat-panel.keyboard-compact .agent-chat-messages {
+/* Collapsed (no .expanded class): only the always-rendered input row at the
+   bottom shows — header/history/key-setup are hidden via display:none, not
+   unmounted, so the textarea's DOM node (and its focus) is never disturbed
+   by expanding/collapsing. */
+.agent-chat-panel:not(.expanded) .agent-chat-header,
+.agent-chat-panel:not(.expanded) .agent-chat-messages,
+.agent-chat-panel:not(.expanded) .agent-chat-key-setup {
   display: none;
-}
-
-.agent-chat-panel.keyboard-compact .agent-chat-input-row {
-  border-top: none;
 }
 
 @media (min-width: 32rem) {
@@ -1392,7 +1346,7 @@
     left: auto;
     width: 22rem;
     border-radius: 1rem;
-    margin: 0 20px 76px 0;
+    margin: 0 20px 20px 0;
   }
 }
 
@@ -1481,6 +1435,12 @@
   padding: 0.6rem 0.75rem;
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
+}
+
+/* Collapsed: nothing above it, so the divider line would just be a stray
+   mark at the top of the bar. */
+.agent-chat-panel:not(.expanded) .agent-chat-input-row {
+  border-top: none;
 }
 
 .agent-chat-input-row textarea {

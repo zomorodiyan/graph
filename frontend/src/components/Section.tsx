@@ -28,7 +28,6 @@ interface SectionProps {
   editInline?: boolean
   onInlineSave?: (path: string, data: UpdatePayload) => void
   onInlineCancel?: () => void
-  onInlineDelete?: (path: string) => void
   onCopyClick?: (itemKey: string, item: StructureItem) => void
   // Sub-item creation (via the right-click menu or a right-swipe): parentPath
   // currently being created under, and its callbacks
@@ -215,7 +214,6 @@ function Section({
   editInline = true,
   onInlineSave,
   onInlineCancel,
-  onInlineDelete,
   onCopyClick,
   creatingPath = null,
   onSubCreateStart,
@@ -301,7 +299,6 @@ function Section({
               item={item}
               onSave={(data) => onInlineSave?.(itemPath, data)}
               onCancel={() => onInlineCancel?.()}
-              onDelete={rowEditable ? () => onInlineDelete?.(itemPath) : undefined}
             />
           ) : (
             <>
@@ -422,7 +419,6 @@ function Section({
                         item={childItem as StructureItem}
                         onSave={(data) => onInlineSave?.(childPath, data)}
                         onCancel={() => onInlineCancel?.()}
-                        onDelete={childRowEditable ? () => onInlineDelete?.(childPath) : undefined}
                       />
                     ) : (
                       <>
@@ -528,7 +524,6 @@ function Section({
                                 item={grandItem as StructureItem}
                                 onSave={(data) => onInlineSave?.(grandPath, data)}
                                 onCancel={() => onInlineCancel?.()}
-                                onDelete={grandRowEditable ? () => onInlineDelete?.(grandPath) : undefined}
                               />
                             ) : (
                               <>
@@ -597,7 +592,6 @@ function Section({
                           defaultName="new item"
                           onSave={(data) => onSubCreateSave?.(childPath, data)}
                           onCancel={() => onSubCreateCancel?.()}
-                          onDelete={() => onSubCreateCancel?.()}
                         />
                       </div>
                     )}
@@ -620,7 +614,6 @@ function Section({
                     defaultName="new item"
                     onSave={(data) => onSubCreateSave?.(itemPath, data)}
                     onCancel={() => onSubCreateCancel?.()}
-                    onDelete={() => onSubCreateCancel?.()}
                   />
                 </div>
               </div>

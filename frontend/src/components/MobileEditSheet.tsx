@@ -12,7 +12,6 @@ interface MobileEditSheetProps {
   defaultName?: string
   onSave: (data: UpdatePayload) => void
   onCancel: () => void
-  onDelete?: () => void
 }
 
 // Mobile-only: docks the item editor to the bottom of the viewport, above the
@@ -26,7 +25,7 @@ interface MobileEditSheetProps {
 // keyboard-height number to compute or get wrong, since the outer div's
 // bottom edge already IS the top of the keyboard whenever one is open, and
 // the true screen bottom whenever one isn't.
-function MobileEditSheet({ itemKey, item, parentLabel, defaultName, onSave, onCancel, onDelete }: MobileEditSheetProps) {
+function MobileEditSheet({ itemKey, item, parentLabel, defaultName, onSave, onCancel }: MobileEditSheetProps) {
   const { top, height } = useVisualViewportRect()
   const keyboardLikelyOpen = height < window.innerHeight - 80 // rough guess, only used to skip safe-area padding
 
@@ -40,7 +39,6 @@ function MobileEditSheet({ itemKey, item, parentLabel, defaultName, onSave, onCa
           defaultName={defaultName}
           onSave={onSave}
           onCancel={onCancel}
-          onDelete={onDelete}
         />
       </div>
     </div>

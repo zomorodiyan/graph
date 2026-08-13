@@ -7,7 +7,7 @@ import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useLongPress } from '../hooks/useLongPress'
 import { SWIPE_THRESHOLD, SWIPE_VERTICAL_LIMIT } from '../hooks/useItemSwipe'
 import { useTheme } from '../context/ThemeContext'
-import { StructureItem, UpdatePayload, pasteItems, serializeItem, getItemDueDate } from '@api'
+import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem, getItemDueDate } from '@api'
 import InlineItemEditor from '../components/InlineItemEditor'
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
@@ -73,6 +73,57 @@ function getSiblingOrder(items: Record<string, StructureItem>, parentRelativePar
     container = (container[key].children || {}) as Record<string, StructureItem>
   }
   return Object.keys(container)
+}
+
+// Given a set of absolute dot-paths, returns the subset that have no OTHER
+// selected path as an ancestor — the "top" of each selected branch. Deleting
+// just these (and nothing else) removes every selected path, since any
+// non-root selected path is already inside one of these subtrees.
+function selectionRoots(paths: string[]): string[] {
+  const set = new Set(paths)
+  return paths.filter(p => {
+    const parts = p.split('.')
+    for (let i = parts.length - 1; i >= 1; i--) {
+      if (set.has(parts.slice(0, i).join('.'))) return false
+    }
+    return true
+  })
+}
+
+// Rebuilds only the selected items into a forest for copying — each one
+// nested under its nearest SELECTED ancestor (skipping any unselected items
+// in between, so a selected grandchild under an unselected child re-roots
+// directly under its selected grandparent), with unselected children left
+// out entirely. "Preserve parenthood [between selected items] if possible."
+function buildSelectionForest(structure: Structure, selectedPaths: string[]): Record<string, StructureItem> {
+  const set = new Set(selectedPaths)
+  const childrenOf = new Map<string | null, string[]>()
+  for (const p of selectedPaths) {
+    const parts = p.split('.')
+    let parent: string | null = null
+    for (let i = parts.length - 1; i >= 1; i--) {
+      const candidate = parts.slice(0, i).join('.')
+      if (set.has(candidate)) { parent = candidate; break }
+    }
+    if (!childrenOf.has(parent)) childrenOf.set(parent, [])
+    childrenOf.get(parent)!.push(p)
+  }
+  function buildNode(p: string): StructureItem | null {
+    const item = getItemByPath(structure, p)
+    if (!item) return null
+    const node: StructureItem = { ...item, children: {} }
+    for (const childPath of childrenOf.get(p) || []) {
+      const built = buildNode(childPath)
+      if (built) node.children![childPath.split('.').pop()!] = built
+    }
+    return node
+  }
+  const forest: Record<string, StructureItem> = {}
+  for (const rootPath of childrenOf.get(null) || []) {
+    const built = buildNode(rootPath)
+    if (built) forest[rootPath.split('.').pop()!] = built
+  }
+  return forest
 }
 
 // Which part of a row a drag is hovering over — the top ~35% means "reorder
@@ -209,7 +260,7 @@ function GraphView() {
   // Two-way "point at an item" channel with the agent chat — see
   // useHighlights.ts. Converted to Sets here (once per render) so every
   // row's highlightClasses() lookup in Section.tsx is O(1).
-  const { userHighlights, agentHighlights, toggleUserHighlight } = useHighlights(graphName)
+  const { userHighlights, agentHighlights, toggleUserHighlight, clearUserHighlights } = useHighlights(graphName)
   const userHighlightSet = useMemo(() => new Set(userHighlights), [userHighlights])
   const agentHighlightSet = useMemo(() => new Set(agentHighlights), [agentHighlights])
   const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
@@ -1160,6 +1211,45 @@ function GraphView() {
     }
   }
 
+  // "C" — copies the current selection (highlighted items), reusing the
+  // same markdown-outline clipboard format Paste already reads.
+  const handleCopySelected = async () => {
+    if (!structure || !userHighlights.length) return
+    try {
+      const forest = buildSelectionForest(structure, userHighlights)
+      const text = serializeStructure(forest).trimEnd()
+      await navigator.clipboard.writeText(text)
+      showNotification(`Copied ${userHighlights.length} item${userHighlights.length > 1 ? 's' : ''}!`)
+    } catch (err) {
+      showNotification('Failed to copy', 'error')
+    }
+  }
+
+  // "D" — deletes the current selection, with confirmation (this is now the
+  // only way to delete an item; the inline editor's own Delete button was
+  // removed in favor of select-then-D). Only the selection's root paths need
+  // deleting — any non-root selected path is already inside one of those
+  // subtrees. Deletes sequentially (not Promise.all) since deleteItem does a
+  // synchronous read-modify-write of the whole graph in localStorage;
+  // running them concurrently could race and silently drop a delete.
+  const handleDeleteSelected = async () => {
+    const count = userHighlights.length
+    if (!count) return
+    if (!confirm(`Delete ${count} item${count > 1 ? 's' : ''}? This cannot be undone.`)) return
+    try {
+      for (const rootPath of selectionRoots(userHighlights)) {
+        await deleteItem(rootPath, graphName)
+      }
+      clearUserHighlights()
+      setLocalItems(null)
+      setLocalOrder(null)
+      await queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
+      showNotification(`Deleted ${count} item${count > 1 ? 's' : ''}!`)
+    } catch (err) {
+      showNotification('Failed to delete', 'error')
+    }
+  }
+
   // Mobile-only: whichever of edit / sub-create / top-level-create is active,
   // resolved into the props MobileEditSheet needs. The corresponding item (or
   // its parent, for sub-create) gets a border highlight in the list instead —
@@ -1174,7 +1264,6 @@ function GraphView() {
         item,
         onSave: (data: UpdatePayload) => handleInlineSave(inlineEdit.path, data),
         onCancel: () => setInlineEdit(null),
-        onDelete: () => handleDelete(inlineEdit.path),
       }
     }
     if (subCreate) {
@@ -1246,16 +1335,31 @@ function GraphView() {
             this, tapping a different row while editing could both commit the
             current edit and immediately trigger that row's own action. */}
         <div className={`items-grid${isMobile && mobileSheet ? ' items-grid-locked' : ''}`}>
-        {/* New + Paste — top card (creates/pastes at the top of the list) */}
+        {/* New + Paste — top card (creates/pastes at the top of the list).
+            Swaps to Copy + Delete for the current selection whenever
+            anything is highlighted, in the same two slots. */}
         {!isVirtualView && (
           <div className="section-wrapper new-paste-wrapper">
             <div className="section">
-              <div className="layer1 add-item" onClick={() => handleAddClick('top')} title="Add new item at top">
-                <span className="item-title">+ New</span>
-              </div>
-              <div className="layer1 add-item" onClick={() => handlePasteItem('top')} title="Paste from clipboard at top">
-                <span className="item-title">Paste</span>
-              </div>
+              {userHighlights.length > 0 ? (
+                <>
+                  <div className="layer1 add-item" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
+                    <span className="item-title">C</span>
+                  </div>
+                  <div className="layer1 add-item danger" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
+                    <span className="item-title">D</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="layer1 add-item" onClick={() => handleAddClick('top')} title="Add new item at top">
+                    <span className="item-title">+ New</span>
+                  </div>
+                  <div className="layer1 add-item" onClick={() => handlePasteItem('top')} title="Paste from clipboard at top">
+                    <span className="item-title">Paste</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -1324,7 +1428,6 @@ function GraphView() {
                 editInline={!isMobile}
                 onInlineSave={handleInlineSave}
                 onInlineCancel={() => setInlineEdit(null)}
-                onInlineDelete={handleDelete}
                 onCopyClick={handleCopyItem}
                 creatingPath={subCreate}
                 onSubCreateStart={handleSubCreateStart}
@@ -1373,16 +1476,30 @@ function GraphView() {
           </div>
         )}
 
-        {/* New + Paste — bottom card (creates/pastes at the bottom of the list) */}
+        {/* New + Paste — bottom card (creates/pastes at the bottom of the
+            list). Same Copy/Delete swap as the top card. */}
         {!isVirtualView && (
           <div className="section-wrapper new-paste-wrapper">
             <div className="section">
-              <div className="layer1 add-item" onClick={() => handleAddClick('bottom')} title="Add new item at bottom">
-                <span className="item-title">+ New</span>
-              </div>
-              <div className="layer1 add-item" onClick={() => handlePasteItem('bottom')} title="Paste from clipboard at bottom">
-                <span className="item-title">Paste</span>
-              </div>
+              {userHighlights.length > 0 ? (
+                <>
+                  <div className="layer1 add-item" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
+                    <span className="item-title">C</span>
+                  </div>
+                  <div className="layer1 add-item danger" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
+                    <span className="item-title">D</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="layer1 add-item" onClick={() => handleAddClick('bottom')} title="Add new item at bottom">
+                    <span className="item-title">+ New</span>
+                  </div>
+                  <div className="layer1 add-item" onClick={() => handlePasteItem('bottom')} title="Paste from clipboard at bottom">
+                    <span className="item-title">Paste</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -1401,7 +1518,6 @@ function GraphView() {
               editInline={!isMobile}
               onInlineSave={handleInlineSave}
               onInlineCancel={() => setInlineEdit(null)}
-              onInlineDelete={handleDelete}
               onCopyClick={handleCopyItem}
               onToggleHighlight={toggleUserHighlight}
               userHighlights={userHighlightSet}
