@@ -1365,8 +1365,30 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-.agent-chat-panel.keyboard-open {
+.agent-chat-panel.keyboard-compact {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: auto;
+  width: auto;
+  margin: 0;
+  max-height: none;
+  border: none;
+  border-bottom: 1.5px solid var(--border-color);
+  border-radius: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   padding-bottom: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.agent-chat-panel.keyboard-compact .agent-chat-header,
+.agent-chat-panel.keyboard-compact .agent-chat-messages {
+  display: none;
+}
+
+.agent-chat-panel.keyboard-compact .agent-chat-input-row {
+  border-top: none;
 }
 
 @media (min-width: 32rem) {

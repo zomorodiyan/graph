@@ -125,7 +125,7 @@ function AgentChat() {
 
       {isOpen && (
         <div className="agent-chat-viewport" style={{ top, height }}>
-          <div className={`agent-chat-panel${keyboardLikelyOpen ? ' keyboard-open' : ''}`}>
+          <div className={`agent-chat-panel${keyboardLikelyOpen ? ' keyboard-compact' : ''}`}>
             <div className="agent-chat-header">
               <span>Agent</span>
               <button className="agent-chat-close" onClick={() => setIsOpen(false)} title="Close">&times;</button>
