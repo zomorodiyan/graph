@@ -211,12 +211,7 @@ Coming target
 #### Run
 10 min
 
-### Lower Back (60/100)
-Recovering — nags after long desk days
-#### PT Checkup (0/1)
-Checkpoints:
-- +15d: 1/1
-
+### Mobility
 #### Bird Dog
 
 #### Dead Bug
@@ -293,35 +288,24 @@ Keep added sugar under 30g per day
 Checkpoints:
 - +144d: 1/1
 
-# Kitchen
-## Recipes
-### Weeknight
-#### Stir Fry
-20 minutes, one pan
+# Chores
+## Bedroom
+### Clean
 
-#### Pasta Primavera
+### Laundry
 
-### Breakfast
-#### Bread, Cheese, Walnuts or Vegetables
+## Bathroom
+### Clean
 
-#### Sweetened Tea
+### Bathe
 
-#### Boiled Eggs
+## Kitchen
+### Clean
 
-### Batch Meals
-#### Tomato Stew (0/4)
-Freeze the rest
+### Dishes
 
-#### Vegetable Stew (0/4)
-Freeze the rest
-
-#### Lasagna (0/4)
-Freeze the rest
-
-### To Try
-#### Thai Green Curry
-
-#### Shakshuka
+### Meal Prep
+Sundays, grains and roast veg
 
 ## Groceries
 ### Produce
@@ -363,27 +347,80 @@ Out — restock
 ### Proteins
 Tofu for stir fry
 
-## Meal Prep
-### Batch Cook
-Sundays, grains and roast veg
-
 ### Freezer Meals
 
-# Chores
-## Bedroom
-### Clean
+# Kitchen
+## Recipes
+### Weeknight
+#### Stir Fry
+20 minutes, one pan
 
-### Laundry
+#### Pasta Primavera
 
-## Bathroom
-### Clean
+### Breakfast
+#### Bread, Cheese, Walnuts or Vegetables
 
-### Bathe
+#### Sweetened Tea
 
-## Kitchen
-### Clean
+#### Boiled Eggs
 
-### Dishes
+### Batch Meals
+#### Tomato Stew (0/4)
+Freeze the rest
+
+#### Vegetable Stew (0/4)
+Freeze the rest
+
+#### Lasagna (0/4)
+Freeze the rest
+
+### To Try
+#### Thai Green Curry
+
+#### Shakshuka
+
+# Finances $2300
+## Fixed Costs $1035
+### Rent $950
+Paid, my share of total
+
+### Insurance $55
+Share of total
+
+### Subscriptions $30
+Share of total
+
+## Budgeted $965
+### Groceries $450
+
+### Dining Out $130
+
+### Transport $150
+
+### Clothes $0
+
+### Household Supplies $45
+Cleaning, bathroom
+
+### Office Supplies $20
+Pens, paper, small gear
+
+### Personal Care $70
+
+### Health/Medical $100
+Copays, prescriptions
+
+## Investments $300
+### Roth IRA $50
+Monthly contribution
+
+### Emergency Fund $250
+Monthly contribution — lawyer, income gaps, health, gifts
+
+## Goals
+### Pay Off Loan (0/12000)
+Checkpoints:
+- +1000d: 12000/12000
 
 # Leisure
 ## Reading
@@ -415,49 +452,6 @@ Recommended by Sam
 
 ### Documentaries
 #### Planet Earth
-
-# Finances $2300
-## Fixed Costs $1120
-### Rent $950
-Paid, my share of total
-
-### Insurance $55
-Share of total
-
-### Subscriptions $30
-Share of total
-
-## Budgeted $880
-### Groceries $200
-
-### Dining Out $60
-
-### Transport $65
-
-### Clothes $0
-
-### Household Supplies $20
-Cleaning, bathroom
-
-### Office Supplies $10
-Pens, paper, small gear
-
-### Personal Care $30
-
-### Health/Medical $40
-Copays, prescriptions
-
-## Investments $300
-### Roth IRA $50
-Monthly contribution
-
-### Emergency Fund $250
-Monthly contribution — lawyer, income gaps, health, gifts
-
-## Goals
-### Pay Off Loan (0/12000)
-Checkpoints:
-- +1000d: 12000/12000
 
 # Daily Rhythm
 ## Wake 6am
@@ -519,5 +513,115 @@ Checkpoints:
 ## Taxes (0/1)
 Checkpoints:
 - +279d: 1/1`,
+  },
+  {
+    name: 'app-features',
+    displayName: 'App Features',
+    description: 'This app, mapped as a graph',
+    structure: `# Graphs
+## New Graph
+Create one from scratch, or start from a template like this one.
+
+## Templates
+Starter samples — Career, Personal, and this App Features graph.
+
+## Rename & Describe
+Display name, description, and icon.
+
+## Copy & Paste
+Copy a graph's structure to the clipboard as markdown text, paste to create a new one.
+
+## Delete
+
+# Items
+## Title
+
+## Context
+Free-text note shown under the title.
+
+## Progress
+An X/Y fraction, shown as a percent when Y is 100.
+
+## Cost
+An amount plus a unit, $ by default.
+
+## Checkpoints
+Dated progress snapshots — one whose done equals total doubles as the due date.
+
+## Children
+Nested sub-items, no depth limit.
+
+# Navigation & Views
+## Drill Down
+Tap an item to make its children the new top level.
+
+## Depth Cycling
+Show 3 levels, 2 levels, or everything at once.
+
+## View Mode
+Default vs. Context — Context also shows each item's note.
+
+## Minimal View
+Hides progress, cost, due date, and notes — titles only.
+
+## Overview
+A filtered list across the whole graph, by due date or by progress.
+
+## Facet View (0/1)
+New: long-press the theme button to filter the current tree down to only items that have a chosen facet — keeps the same nested structure, unlike Overview's flat list.
+
+# Sync
+## GitHub Token
+A personal access token, gist scope only, connects the app to your data.
+
+## Private Gist
+Each graph is stored as its own private Gist.
+
+## Sync Status
+Per-graph indicator for up to date, syncing, or errored.
+
+## Sync All
+Push and pull every graph in one action.
+
+# Editing & Interaction
+## Inline Editors
+Edit a graph's or an item's fields without leaving the page.
+
+## Mobile Edit Sheet
+A bottom sheet used instead of inline editing on touch devices.
+
+## Context Menu
+Right-click or long-press for Edit, New, Paste, Delete.
+
+## Copy & Paste Items
+Copy an item's subtree as markdown, paste it as a sibling or child.
+
+## Drag Reorder
+
+## Swipe & Long-Press
+Touch shortcuts for common actions.
+
+## Time (0/1)
+New: merge Progress and Checkpoints into one button called Time. Inside it, add progress and dates together, and remove any entry with an x.
+
+# Agent Access
+## Access Guide
+In-app instructions for connecting an AI agent to your graph data.
+
+## Gist-Based API
+Agents read and write the same Gist-backed structure the app itself uses.
+
+# Platform
+## PWA Install
+Installable as a standalone app.
+
+## iOS Install Banner
+Walks iOS users through Add to Home Screen.
+
+## Theme
+Light / dark toggle.
+
+## Color Scheme
+Accent color options.`,
   },
 ]
