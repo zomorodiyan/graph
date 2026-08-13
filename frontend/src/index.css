@@ -5,6 +5,12 @@
      room to clear it. */
   --agent-bar-height: 4rem;
 
+  /* Manual downward correction for the agent chat panel while the on-screen
+     keyboard is open — see the .agent-chat-panel.keyboard-open comment in
+     App.css. Adjust this single value to close a gap above the keyboard, or
+     pull back if it starts overshooting under the keyboard instead. */
+  --keyboard-gap-fix: 24px;
+
   /* Light theme colors */
   --bg-primary: #ffffff;
   --bg-secondary: #f5f5f5;

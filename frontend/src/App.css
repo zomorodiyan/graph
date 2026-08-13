@@ -1326,9 +1326,20 @@
 
 /* While a keyboard is likely open, the safe-area inset exists to clear a
    home indicator / gesture-nav bar that's now covered by the keyboard
-   anyway — keeping it just adds dead space below the input row. */
+   anyway — keeping it just adds dead space below the input row.
+
+   The panel's box is bottom:0 inside .agent-chat-viewport, which is itself
+   sized to exactly match window.visualViewport (see useVisualViewportRect.ts)
+   — in theory that box's bottom edge already IS the top of the keyboard, no
+   gap possible. In practice, on-device testing found a real, persistent gap
+   there anyway (the keyboard-likely-open heuristic and/or visualViewport
+   itself isn't perfectly accurate on every device/browser). Since there's no
+   further geometry to compute our way out of, --keyboard-gap-fix manually
+   extends the panel past the computed bottom edge to close it. Tune this
+   value directly if it's under- or over-shooting on a real device. */
 .agent-chat-panel.keyboard-open {
   padding-bottom: 0;
+  bottom: calc(-1 * var(--keyboard-gap-fix));
 }
 
 /* Collapsed (no .expanded class): only the always-rendered input row at the
