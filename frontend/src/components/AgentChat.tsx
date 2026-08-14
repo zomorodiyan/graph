@@ -15,9 +15,13 @@ import { fetchStructure, serializeItem, serializeStructure } from '../api/localC
 // Raw (0) isn't part of the cycle; long-pressing the button jumps to it directly.
 const DEPTHS = [3, 2] as const
 
-// Smallest the expanded panel can be dragged down to — roughly one input row
-// plus the resize handle's own strip, so "just one line of input" stays true.
-const MIN_PANEL_HEIGHT = 72
+// Smallest the expanded panel can be dragged down to — one input row plus
+// the resize handle's own strip (measured: ~56px + ~16px), so "just one
+// line of input" stays true. A couple of px above the exact measured sum
+// so the handle never clips even by a hair (.agent-chat-messages shrinks
+// to true zero below this — see its comment in App.css — so nothing else
+// is competing for room).
+const MIN_PANEL_HEIGHT = 76
 
 // Persistent, app-wide chat surface (mounted once in App.tsx, so it survives
 // navigation between the graphs list and any individual graph — "from
@@ -235,22 +239,31 @@ function AgentChat() {
           </p>
         </div>
       ) : (
+        // The padding lives on the inner div, not this one — this outer
+        // element is the flex item that needs to shrink to true zero when
+        // the panel's dragged to MIN_PANEL_HEIGHT (see .agent-chat-messages
+        // in App.css), and fixed padding can't be shrunk away by
+        // min-height:0. Overflow from the (padded) inner content just
+        // scrolls within this outer element instead of pushing the input
+        // row/resize handle below it out of the panel.
         <div className="agent-chat-messages" ref={messagesRef}>
-          {messages.length === 0 && !error && (
-            <p className="agent-chat-empty">Ask about what's in view, or tell it to edit or add items.</p>
-          )}
-          {messages.map((m, i) => {
-            const isStreamingReply = m.role === 'assistant' && isSending && i === messages.length - 1
-            return (
-              <div key={i} className={`agent-chat-message ${m.role}`}>
-                {m.content || (isStreamingReply ? '…' : '')}
-                {isStreamingReply && activeTool && (
-                  <div className="agent-chat-tool-use">Using {activeTool}…</div>
-                )}
-              </div>
-            )
-          })}
-          {error && <div className="agent-chat-error">{error}</div>}
+          <div className="agent-chat-messages-inner">
+            {messages.length === 0 && !error && (
+              <p className="agent-chat-empty">Ask about what's in view, or tell it to edit or add items.</p>
+            )}
+            {messages.map((m, i) => {
+              const isStreamingReply = m.role === 'assistant' && isSending && i === messages.length - 1
+              return (
+                <div key={i} className={`agent-chat-message ${m.role}`}>
+                  {m.content || (isStreamingReply ? '…' : '')}
+                  {isStreamingReply && activeTool && (
+                    <div className="agent-chat-tool-use">Using {activeTool}…</div>
+                  )}
+                </div>
+              )
+            })}
+            {error && <div className="agent-chat-error">{error}</div>}
+          </div>
         </div>
       )}
 

@@ -1334,6 +1334,14 @@
   border-radius: 1rem 1rem 0 0;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Nothing in the collapsed bar is scrollable — without this, a swipe
+     starting on it (the buttons, the padding around them, anywhere but
+     inside the textarea's own text) falls through to the browser's
+     default touch handling, which scrolls the page underneath a fixed
+     element that isn't itself scrollable. Scoped to collapsed only —
+     .agent-chat-messages still needs real scrolling once expanded, and
+     touch-action on an ancestor can't be un-set by a descendant. */
+  touch-action: none;
 }
 
 /* Expanded: top-anchored instead of chasing the keyboard from the bottom.
@@ -1396,15 +1404,22 @@
 .agent-chat-messages {
   flex: 1 1 0%;
   overflow-y: auto;
+  /* No min-height, no padding — the panel's height is user-draggable now,
+     down to MIN_PANEL_HEIGHT (AgentChat.tsx), and this needs to be able to
+     shrink to true zero rather than force-clipping the input row/resize
+     handle below it when dragged small. Padding can't be shrunk away by
+     min-height:0 (it isn't part of what flex-shrink reduces), which is
+     exactly what was clipping them — see .agent-chat-messages-inner for
+     where the padding actually lives now. */
+  min-height: 0;
+}
+
+.agent-chat-messages-inner {
+  min-height: 100%;
   padding: 0.85rem 0.85rem 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  /* No min-height — the panel's height is user-draggable now, down to
-     MIN_PANEL_HEIGHT (AgentChat.tsx), and this needs to be able to shrink
-     to zero rather than force-clipping the input row/resize handle below
-     it when dragged small. */
-  min-height: 0;
 }
 
 .agent-chat-empty {
