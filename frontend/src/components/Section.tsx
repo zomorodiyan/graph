@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties } from 'react'
+import { useRef, type CSSProperties } from 'react'
 import { StructureItem, UpdatePayload, getItemDueDate, sumValues, formatValueTotals } from '../api/localClient'
 import { parseLocalDate, daysUntil } from '../utils/dates'
 import { useItemSwipe } from '../hooks/useItemSwipe'
@@ -28,7 +28,6 @@ interface SectionProps {
   editInline?: boolean
   onInlineSave?: (path: string, data: UpdatePayload) => void
   onInlineCancel?: () => void
-  onCopyClick?: (itemKey: string, item: StructureItem) => void
   // Sub-item creation (via the right-click menu or a right-swipe): parentPath
   // currently being created under, and its callbacks
   creatingPath?: string | null
@@ -214,7 +213,6 @@ function Section({
   editInline = true,
   onInlineSave,
   onInlineCancel,
-  onCopyClick,
   creatingPath = null,
   onSubCreateStart,
   onSubCreateSave,
@@ -261,24 +259,10 @@ function Section({
   const children = item.children || {}
   const childEntries = Object.entries(children)
 
-  const [copied, setCopied] = useState(false)
-  function handleCopy(e: React.MouseEvent) {
-    e.stopPropagation()
-    if (!onCopyClick) return
-    onCopyClick(itemKey, item)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
   if (showRaw && rawText !== undefined) {
     return (
       <div className="section" ref={sectionRef}>
         <pre className="section-raw">{rawText}</pre>
-        {!isTimeView && onCopyClick && (
-          <div className="section-copy-zone" title="Copy to clipboard" onClick={handleCopy}>
-            {copied ? <span className="copy-check">✔</span> : <span className="copy-handle" />}
-          </div>
-        )}
       </div>
     )
   }
@@ -393,7 +377,6 @@ function Section({
                       const target = e.target as HTMLElement
                       if (
                         target.classList.contains('item-title') ||
-                        target.classList.contains('copy-handle') ||
                         target.tagName === 'BUTTON' ||
                         target.tagName === 'A' ||
                         target.tagName === 'INPUT' ||
@@ -622,12 +605,6 @@ function Section({
         )}
       </div>}
       </div>
-      {/* Copy zone — full-height strip on the right */}
-      {!isTimeView && onCopyClick && (
-        <div className="section-copy-zone" title="Copy to clipboard" onClick={handleCopy}>
-          {copied ? <span className="copy-check">✔</span> : <span className="copy-handle" />}
-        </div>
-      )}
     </div>
   )
 }

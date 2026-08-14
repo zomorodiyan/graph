@@ -68,14 +68,10 @@
   pointer-events: none;
 }
 
-/* Virtual (time/progress) bubbles blend with page background */
-.virtual-section .section {
-  background: var(--bg-primary);
-}
-
-/* New / Paste — one combined bar with two halves, shaped like a real level-1
-   item but in neutral gray with an outline, marking it as an action rather
-   than content (see .layer1.add-item below) */
+/* Copy/Delete-selected bar (class name predates the "New"/"Paste" buttons'
+   removal — those used to share this same bar) — two halves, shaped like a
+   real level-1 item but in neutral gray with an outline, marking it as an
+   action rather than content (see .layer1.add-item below) */
 .new-paste-wrapper .layer1 {
   flex: 1;
   cursor: pointer;
@@ -151,30 +147,6 @@
   background: transparent;
 }
 
-/* Copy zone — full-height clickable strip on the right of a section bubble */
-.section-copy-zone {
-  flex-shrink: 0;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(102, 126, 234, 0.08);
-  border-left: 1.5px solid rgba(102, 126, 234, 0.2);
-  opacity: 0.4;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.section-copy-zone::before {
-  content: 'na';
-  visibility: hidden;
-  padding: 0 0.5rem;
-}
-
-.section-copy-zone:hover {
-  opacity: 0.8;
-}
-
 /* Copy handle icon — two overlapping rectangles sized to their own bounding box */
 .copy-handle {
   position: absolute;
@@ -206,7 +178,6 @@
 }
 
 /* Center the copy handle icon within any zone */
-.section-copy-zone .copy-handle,
 .card-action-zone .copy-handle,
 .agent-guide-copy-btn .copy-handle {
   top: 50%;

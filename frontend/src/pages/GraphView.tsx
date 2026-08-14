@@ -7,14 +7,11 @@ import { useViewOptions } from '../hooks/useViewOptions'
 import { useCircularScroll } from '../hooks/useCircularScroll'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { SWIPE_THRESHOLD, SWIPE_VERTICAL_LIMIT } from '../hooks/useItemSwipe'
-import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem, getItemDueDate } from '@api'
-import InlineItemEditor from '../components/InlineItemEditor'
+import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem } from '@api'
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
 import ContextMenu from '../components/ContextMenu'
-import { loadViewPreferences } from '../utils/viewPreferences'
-import { daysUntil } from '../utils/dates'
 
 // True on touch-primary devices (no on-screen keyboard problem on desktop,
 // so only mobile needs the item-stays-in-place + bottom-sheet editing pattern —
@@ -240,8 +237,7 @@ function GraphView() {
   const { userHighlights, agentHighlights, toggleUserHighlight, clearUserHighlights } = useHighlights(graphName)
   const userHighlightSet = useMemo(() => new Set(userHighlights), [userHighlights])
   const agentHighlightSet = useMemo(() => new Set(agentHighlights), [agentHighlights])
-  const viewPreferences = useMemo(() => loadViewPreferences(), [location.key])
-  
+
   const updateItem = useUpdateItem(graphName)
   const deleteItemMutation = useDeleteItem(graphName)
   const reorderItem = useReorderItem(graphName)
@@ -268,9 +264,6 @@ function GraphView() {
   // Track items that are being synced (pending) - these show loading and can't be dragged
   const [pendingItems, setPendingItems] = useState<Set<string>>(new Set())
   
-  // Inline create state - 'top' or 'bottom' determines where the editor appears and where the item lands
-  const [inlineCreate, setInlineCreate] = useState<'top' | 'bottom' | false>(false)
-
   // Sub-item create state — the parent path whose "+" chip is currently an editor
   const [subCreate, setSubCreate] = useState<string | null>(null)
 
@@ -285,10 +278,9 @@ function GraphView() {
     type: 'success' | 'error' | 'syncing'
   } | null>(null)
 
-  useModalBackButton(!!inlineCreate || Boolean(inlineEdit) || !!subCreate, () => {
+  useModalBackButton(Boolean(inlineEdit) || !!subCreate, () => {
     if (inlineEdit) { setInlineEdit(null); return }
-    if (subCreate) { setSubCreate(null); return }
-    setInlineCreate(false)
+    setSubCreate(null)
   })
 
   // Show notification helper
@@ -297,186 +289,12 @@ function GraphView() {
     setTimeout(() => setNotification(null), 3000)
   }
 
-  // Parse "X/Y" into {done, total, pct} — pct capped at 100 for bar width
-  const parseProgressValue = (p: string | undefined): { done: number; total: number; pct: number } | null => {
-    if (p === undefined || p === null) return null
-    const m = String(p).match(/^(\d+)\/(\d+)$/)
-    if (!m) return null
-    const done = Number(m[1]), total = Number(m[2])
-    return { done, total, pct: total > 0 ? Math.min((done / total) * 100, 100) : 0 }
-  }
-
-  // Due-date bucket
-  const getDueCategory = (dueDate: string): 'over' | 'day' | 'week' | 'month' | null => {
-    const diffDays = daysUntil(dueDate)
-    if (diffDays < 0) return 'over'
-    if (diffDays === 0) return 'day'
-    if (diffDays <= 7) return 'week'
-    if (diffDays <= 30) return 'month'
-    return null
-  }
-
-  // Progress bucket — 3 states
-  const getProgressCategory = (progress: string): 'not_started' | 'in_progress' | 'done' | null => {
-    const info = parseProgressValue(progress)
-    if (!info) return null
-    if (info.done <= 0) return 'not_started'
-    if (info.done >= info.total) return 'done'
-    return 'in_progress'
-  }
-
-  // Recursively collect items with due dates
-  const collectDueItems = (items: Record<string, StructureItem>, parentPath = ''): Array<{path: string, item: StructureItem, title: string}> => {
-    const result: Array<{path: string, item: StructureItem, title: string}> = []
-    for (const [key, item] of Object.entries(items)) {
-      const itemPath = parentPath ? `${parentPath}.${key}` : key
-      if (getItemDueDate(item)) result.push({ path: itemPath, item, title: item.title || key })
-      if (item.children) result.push(...collectDueItems(item.children, itemPath))
-    }
-    return result
-  }
-
-  // Recursively collect items with progress values
-  const collectProgressItems = (items: Record<string, StructureItem>, parentPath = ''): Array<{path: string, item: StructureItem, title: string}> => {
-    const result: Array<{path: string, item: StructureItem, title: string}> = []
-    for (const [key, item] of Object.entries(items)) {
-      const itemPath = parentPath ? `${parentPath}.${key}` : key
-      if (item.progress !== undefined && item.progress !== null) result.push({ path: itemPath, item, title: item.title || key })
-      if (item.children) result.push(...collectProgressItems(item.children, itemPath))
-    }
-    return result
-  }
-
-  // Subtree to scan — scoped to the current page path
-  const getScanRoot = (scopePath: string): Record<string, StructureItem> => {
-    if (!structure?.structure) return {}
-    if (!scopePath) {
-      const r = { ...structure.structure }
-      delete r.overview
-      return r
-    }
-    const item = getItemByPath(structure, scopePath)
-    return item?.children ? { ...item.children } : {}
-  }
-
-  // Virtual items for a time category with absolute paths
-  const getTimeChildrenFromRoot = (
-    category: 'over' | 'day' | 'week' | 'month',
-    rootItems: Record<string, StructureItem>,
-    contextPrefix: string
-  ): Record<string, StructureItem> => {
-    const filtered = collectDueItems(rootItems).filter(({ item }) => getDueCategory(getItemDueDate(item)!) === category)
-    const result: Record<string, StructureItem> = {}
-    for (const { path: relPath, item, title } of filtered) {
-      const key = relPath.replace(/\./g, '_')
-      const fullPath = contextPrefix ? `${contextPrefix}.${relPath}` : relPath
-      const parentLabel = fullPath.split('.').slice(0, -1)
-        .map(p => p.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(' › ')
-      result[key] = {
-        ...item, title,
-        context: viewMode === 'context' && parentLabel ? `📍 ${parentLabel}` : undefined,
-        originalPath: fullPath, nonEditable: true, children: undefined,
-      }
-    }
-    return result
-  }
-
-  // Virtual items for a progress category with absolute paths
-  const getProgressChildrenFromRoot = (
-    category: 'not_started' | 'in_progress' | 'done',
-    rootItems: Record<string, StructureItem>,
-    contextPrefix: string
-  ): Record<string, StructureItem> => {
-    const filtered = collectProgressItems(rootItems).filter(({ item }) =>
-      item.progress !== undefined && item.progress !== null &&
-      getProgressCategory(item.progress as string) === category
-    )
-    const result: Record<string, StructureItem> = {}
-    for (const { path: relPath, item, title } of filtered) {
-      const key = relPath.replace(/\./g, '_')
-      const fullPath = contextPrefix ? `${contextPrefix}.${relPath}` : relPath
-      const parentLabel = fullPath.split('.').slice(0, -1)
-        .map(p => p.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(' › ')
-      result[key] = {
-        ...item, title,
-        context: viewMode === 'context' && parentLabel ? `📍 ${parentLabel}` : undefined,
-        originalPath: fullPath, nonEditable: true, children: undefined,
-      }
-    }
-    return result
-  }
-
-  // Merged Overview section scoped to a path
-  const buildOverviewSection = (scopePath: string): StructureItem | null => {
-    if (!structure?.structure) return null
-    const rootItems = getScanRoot(scopePath)
-    const children: Record<string, StructureItem> = {}
-
-    if (viewPreferences.showTime) {
-      const timeCategories: Array<['over' | 'day' | 'week' | 'month', string]> = [
-        ['over', 'Overdue'], ['day', 'Today'], ['week', 'This Week'], ['month', 'This Month'],
-      ]
-      for (const [cat, label] of timeCategories) {
-        const items = getTimeChildrenFromRoot(cat, rootItems, scopePath)
-        const count = Object.keys(items).length
-        if (count > 0) children[cat] = { title: `${label} (${count})`, nonEditable: true, children: items }
-      }
-    }
-
-    if (viewPreferences.showProgress) {
-      const progressCategories: Array<['not_started' | 'in_progress' | 'done', string]> = [
-        ['done', 'Done'],
-      ]
-      for (const [cat, label] of progressCategories) {
-        const items = getProgressChildrenFromRoot(cat, rootItems, scopePath)
-        const count = Object.keys(items).length
-        if (count > 0) children[cat] = { title: `${label} (${count})`, nonEditable: true, children: items }
-      }
-    }
-
-    if (Object.keys(children).length === 0) return null
-    return { title: 'Overview', nonEditable: true, children }
-  }
-
   // Get current level items
   const getCurrentItems = () => {
     if (!structure?.structure) return {}
-
-    const pathParts = path ? path.split('.') : []
-    const overviewIdx = pathParts.indexOf('overview')
-
-    // Virtual overview path at any depth: "overview", "career.overview", "overview.day", etc.
-    if (overviewIdx >= 0) {
-      const scopePath = pathParts.slice(0, overviewIdx).join('.')
-      const categoryParts = pathParts.slice(overviewIdx + 1)
-      const rootItems = getScanRoot(scopePath)
-
-      if (categoryParts.length === 0) {
-        return buildOverviewSection(scopePath)?.children ?? {}
-      }
-      if (categoryParts.length === 1) {
-        const cat = categoryParts[0]
-        if (['over', 'day', 'week', 'month'].includes(cat))
-          return getTimeChildrenFromRoot(cat as 'over' | 'day' | 'week' | 'month', rootItems, scopePath)
-        if (['not_started', 'in_progress', 'done'].includes(cat))
-          return getProgressChildrenFromRoot(cat as 'not_started' | 'in_progress' | 'done', rootItems, scopePath)
-      }
-      return {}
-    }
-
-    // Regular path — build base items then append overview
-    let baseItems: Record<string, StructureItem>
-    if (!path) {
-      baseItems = { ...structure.structure }
-      delete baseItems.overview
-    } else {
-      const item = getItemByPath(structure, path)
-      baseItems = { ...(item?.children || {}) }
-    }
-
-    const overviewSection = buildOverviewSection(path || '')
-    if (overviewSection) baseItems.overview = overviewSection
-    return baseItems
+    if (!path) return { ...structure.structure }
+    const item = getItemByPath(structure, path)
+    return { ...(item?.children || {}) }
   }
 
   // Get the raw items from structure
@@ -505,32 +323,12 @@ function GraphView() {
     setLocalItems(null)
   }, [path, agentMutationSignal])
 
-  // The display items: always overlay the virtual overview from rawItems so it stays reactive
-  const displayItems = useMemo(() => {
-    if (localItems) {
-      const merged = { ...localItems }
-      delete merged.overview
-      if (rawItems.overview) merged.overview = rawItems.overview
-      return merged
-    }
-    return rawItems
-  }, [localItems, rawItems])
+  const displayItems = useMemo(() => localItems || rawItems, [localItems, rawItems])
 
-  // The display order: real items first (stable), overview always last
-  const displayOrder = useMemo(() => {
-    const order = localOrder || serverKeys
-    if (localItems) {
-      const result = order.filter(k => k !== 'overview')
-      if (rawItems.overview) result.push('overview')
-      return result
-    }
-    return order
-  }, [localOrder, serverKeys, localItems, rawItems])
+  const displayOrder = useMemo(() => localOrder || serverKeys, [localOrder, serverKeys])
 
-  // Level-1 keys actually rendered as items — displayOrder minus the
-  // synthetic 'overview' card, which (like New/Paste) stays pinned outside
-  // the circular scroll region rather than looping with the real items.
-  const levelOneKeys = useMemo(() => displayOrder.filter(k => k !== 'overview'), [displayOrder])
+  // Level-1 keys actually rendered as items.
+  const levelOneKeys = displayOrder
 
   // Circular ("revolving") scroll for the level-1 item list — see
   // useCircularScroll.ts. Resets on `path` change (a drill-in/out is
@@ -651,51 +449,6 @@ function GraphView() {
     setInlineEdit({ path: itemPath })
   }
 
-  // Handle add new item click
-  const handleAddClick = (position: 'top' | 'bottom') => {
-    setInlineCreate(position)
-  }
-
-  // Handle paste item from clipboard
-  const handlePasteItem = async (position: 'top' | 'bottom') => {
-    try {
-      const text = await navigator.clipboard.readText()
-      if (!text.trim()) {
-        showNotification('Clipboard is empty', 'error')
-        return
-      }
-
-      const parentPath = path || ''
-
-      const result = await pasteItems(parentPath, text, graphName)
-      if (result.success) {
-        await queryClient.refetchQueries({ queryKey: ['structure', graphName], exact: true })
-        if (position === 'top' && result.added.length > 0) {
-          // Read fresh items from cache and put newly pasted ones at the front
-          const fresh = queryClient.getQueryData<{ structure: Record<string, StructureItem> }>(['structure', graphName])
-          let freshItems: Record<string, StructureItem> = fresh?.structure || {}
-          if (path) {
-            for (const part of path.split('.')) {
-              freshItems = ((freshItems[part] as StructureItem)?.children || {}) as Record<string, StructureItem>
-            }
-          }
-          const addedKeys = result.added.filter((k: string) => k in freshItems)
-          const restKeys = Object.keys(freshItems).filter(k => !result.added.includes(k))
-          setLocalItems(freshItems)
-          setLocalOrder([...addedKeys, ...restKeys])
-        } else {
-          setLocalOrder(null)
-          setLocalItems(null)
-        }
-        showNotification(`Pasted ${result.added.length} item(s)!`)
-      }
-    } catch (err: any) {
-      console.error('Paste error:', err)
-      const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to paste'
-      showNotification(msg.substring(0, 60), 'error')
-    }
-  }
-
   // Handle paste as a specific item's sub-items (per-item paste trigger) — the only
   // way to paste under an item that has no children yet, since navigating "into" it
   // normally requires an existing child as a stepping stone (see handleItemClick)
@@ -721,71 +474,6 @@ function GraphView() {
     }
   }
 
-  // Handle create save from inline editor - uses local state for instant feedback
-  const handleCreateSave = (data: UpdatePayload) => {
-    const createPosition = inlineCreate  // capture before clearing
-    setInlineCreate(false)
-
-    const itemPath = path || ''
-
-    if (data.name) {
-      // Normalize name the same way the server does
-      const normalizedName = data.name.toLowerCase().replace(/ /g, '_')
-
-      const newItem: StructureItem = {
-        title: data.name,
-        ...(data.progress && { progress: data.progress }),
-        ...(data.context && { context: data.context }),
-        ...(data.cost && { cost: data.cost }),
-        ...(data.checkpoints && data.checkpoints.length > 0 && { checkpoints: data.checkpoints }),
-      }
-
-      // Use callback pattern to avoid stale closure
-      setLocalItems(prev => prev ? { ...prev, [normalizedName]: newItem } : { [normalizedName]: newItem })
-      setLocalOrder(prev => prev
-        ? (createPosition === 'top' ? [normalizedName, ...prev] : [...prev, normalizedName])
-        : [normalizedName]
-      )
-
-      // Mark as pending with normalized path
-      const newItemPath = itemPath ? `${itemPath}.${normalizedName}` : normalizedName
-      setPendingItems(prev => new Set(prev).add(newItemPath))
-
-      // Then sync to server in background
-      createItem.mutate(
-        { parentPath: itemPath, data },
-        {
-          onSuccess: async () => {
-            if (createPosition === 'top') {
-              // Server appends by default; reorder it to the front to persist the position
-              try { await reorderItem.mutateAsync({ path: newItemPath, targetIndex: 0 }) } catch { /* silent */ }
-            }
-            showNotification('Created!')
-          },
-          onError: () => {
-            showNotification('Failed to create', 'error')
-            // On error, remove from local state since it wasn't created
-            setLocalItems(prev => {
-              if (!prev) return prev
-              const newItems = { ...prev }
-              delete newItems[normalizedName]
-              return newItems
-            })
-            setLocalOrder(prev => prev ? prev.filter(k => k !== normalizedName) : prev)
-          },
-          onSettled: () => {
-            // Clear pending status - item can now be dragged
-            setPendingItems(prev => {
-              const next = new Set(prev)
-              next.delete(newItemPath)
-              return next
-            })
-          }
-        }
-      )
-    }
-  }
-
   // Handle right-click on an item row — open the Delete/New/Paste menu at the cursor
   const handleItemContextMenu = (e: React.MouseEvent, itemPath: string, canAddSub: boolean) => {
     e.preventDefault()
@@ -796,7 +484,6 @@ function GraphView() {
   // Handle "+" chip click — open the sub-create editor under this parent
   const handleSubCreateStart = (parentPath: string) => {
     setInlineEdit(null)
-    setInlineCreate(false)
     setSubCreate(parentPath)
   }
 
@@ -1091,7 +778,7 @@ function GraphView() {
 
     if (zone === 'nest') {
       const targetKey = displayOrder[targetIndex]
-      if (!targetKey || targetKey === 'overview') return
+      if (!targetKey) return
       const targetPath = path ? `${path}.${targetKey}` : targetKey
       await handleNestDrop(itemToReorder, targetPath)
       return
@@ -1183,18 +870,6 @@ function GraphView() {
   }
 
   const breadcrumb = getBreadcrumb()
-  
-  // Check if we're in a virtual view (time or progress - items can't be edited/reordered)
-  const isVirtualView = !!(path && path.split('.').includes('overview'))
-
-  const handleCopyItem = async (itemKey: string, item: StructureItem) => {
-    try {
-      const text = serializeItem(itemKey, item, 1)
-      await navigator.clipboard.writeText(text.trimEnd())
-    } catch (err) {
-      showNotification('Failed to copy', 'error')
-    }
-  }
 
   // "C" — copies the current selection (highlighted items), reusing the
   // same markdown-outline clipboard format Paste already reads.
@@ -1235,7 +910,7 @@ function GraphView() {
     }
   }
 
-  // Mobile-only: whichever of edit / sub-create / top-level-create is active,
+  // Mobile-only: whichever of edit / sub-create is active,
   // resolved into the props MobileEditSheet needs. The corresponding item (or
   // its parent, for sub-create) gets a border highlight in the list instead —
   // see Section.tsx's "editInline" prop and the ".item-editing" CSS class.
@@ -1260,14 +935,6 @@ function GraphView() {
         parentLabel: parentItem?.title || subCreate,
         onSave: (data: UpdatePayload) => handleSubCreateSave(subCreate, data),
         onCancel: () => setSubCreate(null),
-      }
-    }
-    if (inlineCreate) {
-      return {
-        itemKey: '',
-        item: {} as StructureItem,
-        onSave: handleCreateSave,
-        onCancel: () => setInlineCreate(false),
       }
     }
     return null
@@ -1297,7 +964,6 @@ function GraphView() {
         editInline={!isMobile}
         onInlineSave={noop}
         onInlineCancel={noop}
-        onCopyClick={noop}
         creatingPath={null}
         onSubCreateStart={noop}
         onSubCreateSave={noop}
@@ -1316,7 +982,6 @@ function GraphView() {
         onItemDrop={noop}
         dragEnabled={false}
         pendingPaths={pendingItems}
-        isTimeView={isVirtualView}
         showContext={viewMode === 'context' && !minimalView}
         minimal={minimalView}
         depth={depth}
@@ -1329,7 +994,7 @@ function GraphView() {
   return (
     <>
       {/* Breadcrumb — fixed below bottom buttons */}
-      {!inlineEdit && !inlineCreate && !subCreate && (
+      {!inlineEdit && !subCreate && (
         <nav className="breadcrumb">
           {breadcrumb.map((crumb, i) => (
             <span key={crumb.path}>
@@ -1355,44 +1020,19 @@ function GraphView() {
             this, tapping a different row while editing could both commit the
             current edit and immediately trigger that row's own action. */}
         <div className={`items-grid${isMobile && mobileSheet ? ' items-grid-locked' : ''}`}>
-        {/* New + Paste — top card (creates/pastes at the top of the list).
-            Swaps to Copy + Delete for the current selection whenever
-            anything is highlighted, in the same two slots. */}
-        {!isVirtualView && (
+        {/* Copy + Delete for the current selection — only shows once
+            something's highlighted (the "+New"/"Paste" default state this
+            bar used to have was removed; top-level item creation now goes
+            through the agent chat instead). */}
+        {userHighlights.length > 0 && (
           <div className="section-wrapper new-paste-wrapper">
             <div className="section">
-              {userHighlights.length > 0 ? (
-                <>
-                  <div className="layer1 add-item" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
-                    <span className="item-title">C</span>
-                  </div>
-                  <div className="layer1 add-item danger" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
-                    <span className="item-title">D</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="layer1 add-item" onClick={() => handleAddClick('top')} title="Add new item at top">
-                    <span className="item-title">+ New</span>
-                  </div>
-                  <div className="layer1 add-item" onClick={() => handlePasteItem('top')} title="Paste from clipboard at top">
-                    <span className="item-title">Paste</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-        {/* Inline create editor — top position */}
-        {!isVirtualView && inlineCreate === 'top' && !isMobile && (
-          <div className="section">
-            <div className="layer1-container">
-              <InlineItemEditor
-                itemKey=""
-                item={{} as StructureItem}
-                onSave={handleCreateSave}
-                onCancel={() => setInlineCreate(false)}
-              />
+              <div className="layer1 add-item" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
+                <span className="item-title">C</span>
+              </div>
+              <div className="layer1 add-item danger" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
+                <span className="item-title">D</span>
+              </div>
             </div>
           </div>
         )}
@@ -1427,7 +1067,7 @@ function GraphView() {
               if (!item) return null
               const itemPath = path ? `${path}.${key}` : key
               const isPending = pendingItems.has(itemPath)
-              const canDrag = !isPending && !isVirtualView && !inlineEdit && !subCreate
+              const canDrag = !isPending && !inlineEdit && !subCreate
 
               return (
                 <div
@@ -1473,7 +1113,6 @@ function GraphView() {
                     editInline={!isMobile}
                     onInlineSave={handleInlineSave}
                     onInlineCancel={() => setInlineEdit(null)}
-                    onCopyClick={handleCopyItem}
                     creatingPath={subCreate}
                     onSubCreateStart={handleSubCreateStart}
                     onSubCreateSave={handleSubCreateSave}
@@ -1490,9 +1129,8 @@ function GraphView() {
                     onItemDragOver={(p, z) => { setDragOverPath(p); setDragOverZone(z) }}
                     onItemDragEnd={handleDragEnd}
                     onItemDrop={handleDropAtPath}
-                    dragEnabled={!isVirtualView && !inlineEdit && !subCreate}
+                    dragEnabled={!inlineEdit && !subCreate}
                     pendingPaths={pendingItems}
-                    isTimeView={isVirtualView}
                     showContext={viewMode === 'context' && !minimalView}
                     minimal={minimalView}
                     depth={depth}
@@ -1514,74 +1152,17 @@ function GraphView() {
           <div className="empty-state">No items at this level</div>
         )}
 
-        {/* Inline create editor — bottom position */}
-        {!isVirtualView && inlineCreate === 'bottom' && !isMobile && (
-          <div className="section">
-            <div className="layer1-container">
-              <InlineItemEditor
-                itemKey=""
-                item={{} as StructureItem}
-                onSave={handleCreateSave}
-                onCancel={() => setInlineCreate(false)}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* New + Paste — bottom card (creates/pastes at the bottom of the
-            list). Same Copy/Delete swap as the top card. */}
-        {!isVirtualView && (
+        {/* Copy + Delete for the current selection — bottom copy, same as the top one. */}
+        {userHighlights.length > 0 && (
           <div className="section-wrapper new-paste-wrapper">
             <div className="section">
-              {userHighlights.length > 0 ? (
-                <>
-                  <div className="layer1 add-item" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
-                    <span className="item-title">C</span>
-                  </div>
-                  <div className="layer1 add-item danger" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
-                    <span className="item-title">D</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="layer1 add-item" onClick={() => handleAddClick('bottom')} title="Add new item at bottom">
-                    <span className="item-title">+ New</span>
-                  </div>
-                  <div className="layer1 add-item" onClick={() => handlePasteItem('bottom')} title="Paste from clipboard at bottom">
-                    <span className="item-title">Paste</span>
-                  </div>
-                </>
-              )}
+              <div className="layer1 add-item" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
+                <span className="item-title">C</span>
+              </div>
+              <div className="layer1 add-item danger" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
+                <span className="item-title">D</span>
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Overview card — always last */}
-        {displayItems['overview'] && (
-          <div key="overview" className="section-wrapper virtual-section">
-            <Section
-              itemKey="overview"
-              item={displayItems['overview'] as StructureItem}
-              parentPath={path || ''}
-              colorIndex={displayOrder.indexOf('overview') % COLORS.length}
-              onItemClick={handleItemClick}
-              onEditClick={handleEditClick}
-              editingPath={inlineEdit?.path || null}
-              editInline={!isMobile}
-              onInlineSave={handleInlineSave}
-              onInlineCancel={() => setInlineEdit(null)}
-              onCopyClick={handleCopyItem}
-              onToggleHighlight={toggleUserHighlight}
-              userHighlights={userHighlightSet}
-              agentHighlights={agentHighlightSet}
-              isPending={false}
-              isTimeView={true}
-              showContext={viewMode === 'context' && !minimalView}
-              minimal={minimalView}
-              depth={depth}
-              showRaw={depth === 0}
-              rawText={depth === 0 ? serializeItem('overview', displayItems['overview'] as StructureItem, 1).trimEnd() : undefined}
-            />
           </div>
         )}
         </div>{/* end items-grid */}

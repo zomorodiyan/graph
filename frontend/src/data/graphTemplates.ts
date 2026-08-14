@@ -564,11 +564,8 @@ Default vs. Context — Context also shows each item's note.
 ## Minimal View
 Hides progress, cost, due date, and notes — titles only.
 
-## Overview
-A filtered list across the whole graph, by due date or by progress.
-
 ## Facet View (0/1)
-New: long-press the theme button to filter the current tree down to only items that have a chosen facet — keeps the same nested structure, unlike Overview's flat list.
+New: long-press the theme button to filter the current tree down to only items that have a chosen facet — keeps the same nested structure.
 
 # Sync
 ## GitHub Token
@@ -594,7 +591,7 @@ A bottom sheet used instead of inline editing on touch devices.
 Right-click or long-press for Edit, New, Paste, Delete.
 
 ## Copy & Paste Items
-Copy an item's subtree as markdown, paste it as a sibling or child.
+Select an item (or several) to copy or delete via the bar that appears; paste under a specific item via its right-click menu.
 
 ## Drag Reorder
 Reorders an item among its siblings by dragging.
@@ -612,7 +609,7 @@ Touch shortcuts for common actions.
 Progress and Checkpoints are now one button called Time. Inside it, add progress and dates together, and remove any entry with an x.
 
 ## Mobile Interaction Rework (1/1)
-On mobile: tap does nothing now — swipe-left on an item navigates into it, swipe-right navigates up the tree (same action no matter where you swipe, item or empty background), long-press opens the editor directly (no menu step). The hardware back button also steps up one level instead of exiting the graph. Pinch-zoom still resizes text, but no longer shifts where the layout reflows. Desktop click/right-click are unchanged. Adding a sub-item to a specific existing item no longer has its own swipe shortcut — swipe into it, then use that page's own "+ New"/"Paste" card.
+On mobile: tap does nothing now — swipe-left on an item navigates into it, swipe-right navigates up the tree (same action no matter where you swipe, item or empty background), long-press opens the editor directly (no menu step). The hardware back button also steps up one level instead of exiting the graph. Pinch-zoom still resizes text, but no longer shifts where the layout reflows. Desktop click/right-click are unchanged. Adding a sub-item to a specific existing item no longer has its own swipe shortcut — right-click it (or long-press on mobile) from its parent's list and choose New.
 
 # Agent Access
 ## Access Guide
