@@ -8,17 +8,15 @@
   gap: 0;
 }
 
-/* CSS columns — items flow top-to-bottom per column, no gaps. 480px (the
-   pixel equivalent of the old 30rem at the default 16px root) keeps
-   narrow/mobile screens at one column while letting wide screens grow
-   columns past it, so bubbles can actually reach the width needed for the
-   L1 | L2+L3 row layout. Fixed px, not rem, so pinch-zoom (which rescales
-   the root font-size) changes text/spacing size but never *when* this
-   reflows — reflow stays purely viewport-width-driven. */
+/* Single vertical column, always — level-1 items no longer pack into
+   side-by-side CSS columns (removed in favor of this) because circular
+   scrolling needs scrollTop to correspond 1:1 with "next item in list
+   order," which multi-column masonry can't guarantee (you'd scroll all the
+   way down column 1 before column 2, visually to the right, even starts).
+   Kept uniform for every graph, not just ones large enough to loop, so
+   there's no reflow the moment a graph's item count crosses that threshold. */
 .items-grid {
   flex: 0 0 100%;
-  columns: 480px;
-  column-gap: 0;
 }
 
 /* While the mobile bottom sheet is open, the row grid underneath can't
@@ -28,13 +26,46 @@
 }
 
 .items-grid .section-wrapper {
-  break-inside: avoid;
   min-width: 0;
   margin: 1px;
 }
 
 .items-grid .section {
   width: 100%;
+}
+
+/* Wraps the level-1 item list (+ the two circular-loop boundary clones, when
+   active) — see useCircularScroll.ts. Stays mounted across plain/circular
+   transitions; only this class toggles, so the real items underneath never
+   unmount just because the mode flipped. Plain (no `.circular`): natural
+   height, no scrolling, nothing rendered beyond the real items — this is
+   what keeps a short list "no repeating mess." */
+.circular-scroll-container {
+  width: 100%;
+}
+
+/* Circular: capped height + its own scroll region, so scrollTop can be
+   teleported precisely at the clone boundaries without fighting whole-page
+   scroll. The budget mirrors CIRCULAR_SCROLL_CHROME_RESERVE_PX in
+   GraphView.tsx — keep the two numbers in sync. Tune the 3rem term visually
+   against the real breadcrumb rendering (watch for a double-scrollbar,
+   which means the budget is too generous). */
+.circular-scroll-container.circular {
+  max-height: calc(100dvh - (20px + var(--agent-bar-height)) - 3rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Chrome's native scroll anchoring auto-adjusts scrollTop when content
+     changes off-screen (e.g. the clone group growing by another item) —
+     the exact same kind of compensation useCircularScroll.ts already does
+     manually. Left enabled, both fire for the same DOM change and the
+     scrollTop correction gets double-applied. This hook owns scrollTop
+     entirely; the browser must not also weigh in. */
+  overflow-anchor: none;
+}
+
+/* Purely visual scroll padding — never a real interaction target. */
+.circular-clone {
+  pointer-events: none;
 }
 
 /* Virtual (time/progress) bubbles blend with page background */

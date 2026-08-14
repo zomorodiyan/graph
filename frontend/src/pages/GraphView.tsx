@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useHighlights } from '../hooks/useHighlights'
 import { useViewOptions } from '../hooks/useViewOptions'
+import { useCircularScroll } from '../hooks/useCircularScroll'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { SWIPE_THRESHOLD, SWIPE_VERTICAL_LIMIT } from '../hooks/useItemSwipe'
 import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem, getItemDueDate } from '@api'
@@ -24,6 +25,20 @@ function isTouchDevice(): boolean {
 
 // Color assignment based on index
 const COLORS = ['sky', 'indigo', 'fuchsia']
+
+// Wired into the two circular-loop boundary clones in place of every real
+// interactive callback (not just left as pointer-events:none + inert state
+// props) — defense in depth, so a clone can't trigger a real side effect
+// (opening an editor, starting a drag, navigating) even if some future code
+// path or automation dispatches an event straight at it, bypassing the CSS
+// hit-testing block a real user gesture would be subject to.
+const noop = () => {}
+
+// Reserve, in px, subtracted from the viewport height to get the circular
+// scroll container's height budget — mirrors `.circular-scroll-container
+// .circular`'s max-height calc in App.css (breadcrumb offset + agent bar +
+// breadcrumb's own height/margin). Keep the two numbers in sync.
+const CIRCULAR_SCROLL_CHROME_RESERVE_PX = 20 + 64 + 48
 
 // Reorder helper for level-2/3 drags — same in-place delete+reassign trick as
 // applyOptimisticReorder in useGraph.ts, but walks a local items snapshot by
@@ -189,6 +204,14 @@ function GraphView() {
     const handler = () => setIsMobile(mq.matches)
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
+  }, [])
+  // Tracked reactively (not read inline at render time) so rotating a device
+  // or resizing the window updates the circular-scroll height budget below.
+  const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight)
+  useEffect(() => {
+    const handler = () => setViewportHeight(window.innerHeight)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
   }, [])
   // Depth / note-view state and its buttons now live in AgentChat.tsx's
   // unified compose bar (see useViewOptions.ts) — GraphView still owns what
@@ -503,6 +526,24 @@ function GraphView() {
     }
     return order
   }, [localOrder, serverKeys, localItems, rawItems])
+
+  // Level-1 keys actually rendered as items — displayOrder minus the
+  // synthetic 'overview' card, which (like New/Paste) stays pinned outside
+  // the circular scroll region rather than looping with the real items.
+  const levelOneKeys = useMemo(() => displayOrder.filter(k => k !== 'overview'), [displayOrder])
+
+  // Circular ("revolving") scroll for the level-1 item list — see
+  // useCircularScroll.ts. Resets on `path` change (a drill-in/out is
+  // conceptually a brand-new list) and pauses while a level-1 drag is live
+  // (some browsers auto-scroll a scrollable container near its edges during
+  // dragover, which would otherwise fight the drag).
+  const circularBudgetPx = Math.max(200, viewportHeight - CIRCULAR_SCROLL_CHROME_RESERVE_PX)
+  const { circular, cloneCount, containerRef: circularContainerRef, topCloneRef, bottomCloneRef, realListRef } = useCircularScroll({
+    count: levelOneKeys.length,
+    resetKey: path,
+    paused: !!draggedItem,
+    budgetPx: circularBudgetPx,
+  })
 
   // Helper to build URL paths with optional graph prefix
   const buildPath = (itemPath: string) => {
@@ -1232,6 +1273,59 @@ function GraphView() {
     return null
   })()
 
+  // One item inside a circular-loop boundary clone group — see
+  // useCircularScroll.ts. Every interactive callback is a no-op and every
+  // "this item is mid-interaction" state prop is forced off (defense in
+  // depth on top of the wrapper's pointer-events:none), so a clone can never
+  // cause a real side effect; visual-only props (colorIndex, highlights,
+  // depth/minimal/showRaw) mirror the real item so it's pixel-identical.
+  const renderCloneSection = (key: string, reactKeyPrefix: string, colorIndex: number) => {
+    const item = displayItems[key]
+    if (!item) return null
+    return (
+      <Section
+        key={`${reactKeyPrefix}${key}`}
+        itemKey={key}
+        item={item as StructureItem}
+        parentPath={path || ''}
+        colorIndex={colorIndex % COLORS.length}
+        onItemClick={noop}
+        onNavigateInto={noop}
+        onNavigateBack={noop}
+        onEditClick={noop}
+        editingPath={null}
+        editInline={!isMobile}
+        onInlineSave={noop}
+        onInlineCancel={noop}
+        onCopyClick={noop}
+        creatingPath={null}
+        onSubCreateStart={noop}
+        onSubCreateSave={noop}
+        onSubCreateCancel={noop}
+        onContextMenu={noop}
+        onToggleHighlight={noop}
+        userHighlights={userHighlightSet}
+        agentHighlights={agentHighlightSet}
+        isPending={false}
+        draggedPath={null}
+        dragOverPath={null}
+        dragOverZone={null}
+        onItemDragStart={noop}
+        onItemDragOver={noop}
+        onItemDragEnd={noop}
+        onItemDrop={noop}
+        dragEnabled={false}
+        pendingPaths={pendingItems}
+        isTimeView={isVirtualView}
+        showContext={viewMode === 'context' && !minimalView}
+        minimal={minimalView}
+        depth={depth}
+        showRaw={depth === 0}
+        rawText={depth === 0 ? serializeItem(key, item as StructureItem, 1).trimEnd() : undefined}
+      />
+    )
+  }
+
   return (
     <>
       {/* Breadcrumb — fixed below bottom buttons */}
@@ -1302,89 +1396,121 @@ function GraphView() {
             </div>
           </div>
         )}
-        {/* Sections - rendered in local order for instant drag feedback */}
-        {displayOrder.filter(k => k !== 'overview').map((key, index) => {
-          const item = displayItems[key]
-          if (!item) return null
-          const itemPath = path ? `${path}.${key}` : key
-          const isPending = pendingItems.has(itemPath)
-          const canDrag = !isPending && !isVirtualView && !inlineEdit && !subCreate
-          
-          return (
-            <div
-              key={key}
-              draggable={canDrag}
-              onDragStart={(e) => {
-                // Only allow drag from background, not from text or interactive elements
-                const target = e.target as HTMLElement
-                if (
-                  target.classList.contains('item-title') ||
-                  target.classList.contains('layer2-item') ||
-                  target.classList.contains('layer3-item') ||
-                  target.classList.contains('layer2-title') ||
-                  target.classList.contains('layer3-title') ||
-                  target.classList.contains('copy-handle') ||
-                  target.classList.contains('item-edit-zone') ||
-                  target.tagName === 'BUTTON' ||
-                  target.tagName === 'A' ||
-                  target.tagName === 'INPUT' ||
-                  target.tagName === 'TEXTAREA'
-                ) {
-                  e.preventDefault()
-                  return
-                }
-                handleDragStart(itemPath)
-              }}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
-              onDrop={() => handleDrop(index)}
-              className={`section-wrapper ${draggedItem === itemPath ? 'dragging' : ''} ${dragOverIndex === index && dragOverZone === 'nest' ? 'drag-over-nest' : ''} ${dragOverIndex === index && dragOverZone !== 'nest' ? 'drag-over' : ''} ${isPending ? 'pending' : ''}`}
-            >
-              <Section
-                key={key}
-                itemKey={key}
-                item={item as StructureItem}
-                parentPath={path || ''}
-                colorIndex={index % COLORS.length}
-                onItemClick={handleItemClick}
-                onNavigateInto={handleNavigateInto}
-                onNavigateBack={handleNavigateBack}
-                onEditClick={handleEditClick}
-                editingPath={inlineEdit?.path || null}
-                editInline={!isMobile}
-                onInlineSave={handleInlineSave}
-                onInlineCancel={() => setInlineEdit(null)}
-                onCopyClick={handleCopyItem}
-                creatingPath={subCreate}
-                onSubCreateStart={handleSubCreateStart}
-                onSubCreateSave={handleSubCreateSave}
-                onSubCreateCancel={() => setSubCreate(null)}
-                onContextMenu={handleItemContextMenu}
-                onToggleHighlight={toggleUserHighlight}
-                userHighlights={userHighlightSet}
-                agentHighlights={agentHighlightSet}
-                isPending={isPending}
-                draggedPath={draggedItem}
-                dragOverPath={dragOverPath}
-                dragOverZone={dragOverZone}
-                onItemDragStart={handleDragStart}
-                onItemDragOver={(p, z) => { setDragOverPath(p); setDragOverZone(z) }}
-                onItemDragEnd={handleDragEnd}
-                onItemDrop={handleDropAtPath}
-                dragEnabled={!isVirtualView && !inlineEdit && !subCreate}
-                pendingPaths={pendingItems}
-                isTimeView={isVirtualView}
-                showContext={viewMode === 'context' && !minimalView}
-                minimal={minimalView}
-                depth={depth}
-                showRaw={depth === 0}
-                rawText={depth === 0 ? serializeItem(key, item as StructureItem, 1).trimEnd() : undefined}
-              />
+        {/* Sections - rendered in local order for instant drag feedback.
+            Wrapped in a persistent container so useCircularScroll can manage
+            scrollTop across mode changes without unmounting the real items —
+            only the container's CLASS toggles between plain (natural height)
+            and circular (capped + scrollable), never its identity. The two
+            boundary clones only mount in circular mode and are fully inert
+            (pointer-events:none + aria-hidden, plus their own edit/drag/drop
+            state forced off) so no interaction — and no stray "this item is
+            mid-edit" render — can ever come from a clone; see
+            useCircularScroll.ts for why this is needed at all. */}
+        <div
+          ref={circularContainerRef}
+          className={`circular-scroll-container${circular ? ' circular' : ''}`}
+          tabIndex={0}
+          role="region"
+          aria-label="Items"
+        >
+          {circular && cloneCount > 0 && (
+            <div ref={topCloneRef} className="circular-clone circular-clone-top" aria-hidden="true" tabIndex={-1}>
+              {levelOneKeys.slice(-cloneCount).map((key, i) => {
+                const index = levelOneKeys.length - cloneCount + i
+                return renderCloneSection(key, '__circular_clone_top__', index)
+              })}
             </div>
-          )
-        })}
+          )}
+          <div ref={realListRef} className="real-items">
+            {levelOneKeys.map((key, index) => {
+              const item = displayItems[key]
+              if (!item) return null
+              const itemPath = path ? `${path}.${key}` : key
+              const isPending = pendingItems.has(itemPath)
+              const canDrag = !isPending && !isVirtualView && !inlineEdit && !subCreate
 
-        {displayOrder.filter(k => k !== 'overview').length === 0 && (
+              return (
+                <div
+                  key={key}
+                  draggable={canDrag}
+                  onDragStart={(e) => {
+                    // Only allow drag from background, not from text or interactive elements
+                    const target = e.target as HTMLElement
+                    if (
+                      target.classList.contains('item-title') ||
+                      target.classList.contains('layer2-item') ||
+                      target.classList.contains('layer3-item') ||
+                      target.classList.contains('layer2-title') ||
+                      target.classList.contains('layer3-title') ||
+                      target.classList.contains('copy-handle') ||
+                      target.classList.contains('item-edit-zone') ||
+                      target.tagName === 'BUTTON' ||
+                      target.tagName === 'A' ||
+                      target.tagName === 'INPUT' ||
+                      target.tagName === 'TEXTAREA'
+                    ) {
+                      e.preventDefault()
+                      return
+                    }
+                    handleDragStart(itemPath)
+                  }}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onDrop={() => handleDrop(index)}
+                  className={`section-wrapper ${draggedItem === itemPath ? 'dragging' : ''} ${dragOverIndex === index && dragOverZone === 'nest' ? 'drag-over-nest' : ''} ${dragOverIndex === index && dragOverZone !== 'nest' ? 'drag-over' : ''} ${isPending ? 'pending' : ''}`}
+                >
+                  <Section
+                    key={key}
+                    itemKey={key}
+                    item={item as StructureItem}
+                    parentPath={path || ''}
+                    colorIndex={index % COLORS.length}
+                    onItemClick={handleItemClick}
+                    onNavigateInto={handleNavigateInto}
+                    onNavigateBack={handleNavigateBack}
+                    onEditClick={handleEditClick}
+                    editingPath={inlineEdit?.path || null}
+                    editInline={!isMobile}
+                    onInlineSave={handleInlineSave}
+                    onInlineCancel={() => setInlineEdit(null)}
+                    onCopyClick={handleCopyItem}
+                    creatingPath={subCreate}
+                    onSubCreateStart={handleSubCreateStart}
+                    onSubCreateSave={handleSubCreateSave}
+                    onSubCreateCancel={() => setSubCreate(null)}
+                    onContextMenu={handleItemContextMenu}
+                    onToggleHighlight={toggleUserHighlight}
+                    userHighlights={userHighlightSet}
+                    agentHighlights={agentHighlightSet}
+                    isPending={isPending}
+                    draggedPath={draggedItem}
+                    dragOverPath={dragOverPath}
+                    dragOverZone={dragOverZone}
+                    onItemDragStart={handleDragStart}
+                    onItemDragOver={(p, z) => { setDragOverPath(p); setDragOverZone(z) }}
+                    onItemDragEnd={handleDragEnd}
+                    onItemDrop={handleDropAtPath}
+                    dragEnabled={!isVirtualView && !inlineEdit && !subCreate}
+                    pendingPaths={pendingItems}
+                    isTimeView={isVirtualView}
+                    showContext={viewMode === 'context' && !minimalView}
+                    minimal={minimalView}
+                    depth={depth}
+                    showRaw={depth === 0}
+                    rawText={depth === 0 ? serializeItem(key, item as StructureItem, 1).trimEnd() : undefined}
+                  />
+                </div>
+              )
+            })}
+          </div>
+          {circular && cloneCount > 0 && (
+            <div ref={bottomCloneRef} className="circular-clone circular-clone-bottom" aria-hidden="true" tabIndex={-1}>
+              {levelOneKeys.slice(0, cloneCount).map((key, index) => renderCloneSection(key, '__circular_clone_bottom__', index))}
+            </div>
+          )}
+        </div>
+
+        {levelOneKeys.length === 0 && (
           <div className="empty-state">No items at this level</div>
         )}
 
