@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useNavigationType, Link, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useHighlights } from '../hooks/useHighlights'
@@ -246,6 +246,17 @@ function GraphView() {
   const userHighlightSet = useMemo(() => new Set(userHighlights), [userHighlights])
   const agentHighlightSet = useMemo(() => new Set(agentHighlights), [agentHighlights])
 
+  // The literal hardware/browser back button (a real history POP) is a
+  // separate code path from handleNavigateBack below, which clears
+  // highlights itself but navigates via PUSH (an explicit target path, not
+  // browser-history back — see its own comment for why). Covers it here so
+  // highlighting stays temporary regardless of which "back" the user uses.
+  const navigationType = useNavigationType()
+  useEffect(() => {
+    if (navigationType === 'POP') clearUserHighlights()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path, navigationType])
+
   const updateItem = useUpdateItem(graphName)
   const deleteItemMutation = useDeleteItem(graphName)
   const reorderItem = useReorderItem(graphName)
@@ -441,8 +452,13 @@ function GraphView() {
   // wherever the URL says we are now, or at the graphs list from the graph
   // root. Per-row swipe handlers (useItemSwipe) call stopPropagation, so
   // this background handler only ever sees touches that started on empty
-  // space.
+  // space. Also clears the highlight selection — highlighting is meant to
+  // be a temporary "point at this" gesture, not a selection that silently
+  // follows you around as you navigate away (see the POP-navigation effect
+  // below for the literal hardware/browser back button, a separate code
+  // path since this is a PUSH, not a POP).
   const handleNavigateBack = () => {
+    clearUserHighlights()
     if (!path) {
       navigate('/')
       return
