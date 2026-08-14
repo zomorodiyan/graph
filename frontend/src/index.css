@@ -173,9 +173,13 @@ body {
   overscroll-behavior-y: none;
 }
 
-.app {
-  min-height: 100vh;
-}
+/* No min-height here on purpose — body's own background-color (above)
+   already covers the full viewport via the CSS canvas-background
+   propagation rule (the root element has no background of its own, so the
+   body's background paints the canvas), regardless of .app's actual
+   content height. Forcing .app itself to 100vh just left a large empty
+   gap under short pages (GraphView with few items) for no visual benefit.
+   StructuresView sets its own min-height + background and is unaffected. */
 
 /* Drag and Drop styles — apply to level-1 (.section-wrapper), level-2
    (.layer2-wrapper handle / .layer2-container indicator), and level-3

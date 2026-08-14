@@ -33,9 +33,10 @@ const noop = () => {}
 
 // Reserve, in px, subtracted from the viewport height to get the circular
 // scroll container's height budget — mirrors `.circular-scroll-container
-// .circular`'s max-height calc in App.css (breadcrumb offset + agent bar +
-// breadcrumb's own height/margin). Keep the two numbers in sync.
-const CIRCULAR_SCROLL_CHROME_RESERVE_PX = 20 + 64 + 48
+// .circular`'s max-height calc in App.css. Only clears the agent bar
+// itself; the breadcrumb (which sits at this same offset) is allowed to
+// overlap the list's last bit of content, since it has its own background.
+const CIRCULAR_SCROLL_CHROME_RESERVE_PX = 20 + 64
 
 // Reorder helper for level-2/3 drags — same in-place delete+reassign trick as
 // applyOptimisticReorder in useGraph.ts, but walks a local items snapshot by

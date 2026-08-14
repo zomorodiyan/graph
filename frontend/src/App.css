@@ -1,7 +1,6 @@
 .graph-container {
   max-width: 75rem;
   margin: 0 auto;
-  padding: 0 0 12rem;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -47,11 +46,12 @@
 /* Circular: capped height + its own scroll region, so scrollTop can be
    teleported precisely at the clone boundaries without fighting whole-page
    scroll. The budget mirrors CIRCULAR_SCROLL_CHROME_RESERVE_PX in
-   GraphView.tsx — keep the two numbers in sync. Tune the 3rem term visually
-   against the real breadcrumb rendering (watch for a double-scrollbar,
-   which means the budget is too generous). */
+   GraphView.tsx — keep the two numbers in sync. Only clears the agent bar
+   itself (an interactive control, so items under it would be hard to tap)
+   — the breadcrumb is allowed to sit over the list's last bit of content,
+   since it paints its own background and stays legible either way. */
 .circular-scroll-container.circular {
-  max-height: calc(100dvh - (20px + var(--agent-bar-height)) - 3rem);
+  max-height: calc(100dvh - (20px + var(--agent-bar-height)));
   overflow-y: auto;
   overscroll-behavior: contain;
   /* Chrome's native scroll anchoring auto-adjusts scrollTop when content
