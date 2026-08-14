@@ -962,6 +962,21 @@ function GraphView() {
     return null
   })()
 
+  // Builds a `cloneCount`-long array of indices into levelOneKeys for one
+  // clone group — cycling through the real list more than once if
+  // cloneCount > count (see useCircularScroll.ts's doc comment on why a
+  // short list's clone group needs to wrap/repeat to fill the viewport
+  // budget, rather than stopping at one pass through the real items).
+  // 'before': the top clone, read top-to-bottom, must end with the item
+  // immediately preceding real item 1 — i.e. items at "steps back" from
+  // index 0, walking further back as cloneCount grows. 'after': the bottom
+  // clone must start with the item immediately following the last real
+  // item, walking forward.
+  const wrappedCloneIndices = (cloneCount: number, count: number, direction: 'before' | 'after'): number[] =>
+    count === 0 ? [] : Array.from({ length: cloneCount }, (_, j) =>
+      direction === 'before' ? (((j - cloneCount) % count) + count) % count : j % count
+    )
+
   // One item inside a circular-loop boundary clone group — see
   // useCircularScroll.ts. Every interactive callback is a no-op and every
   // "this item is mid-interaction" state prop is forced off (defense in
@@ -1079,10 +1094,9 @@ function GraphView() {
           {circular && cloneCount > 0 && (
             <>
             <div ref={topCloneRef} className="circular-clone circular-clone-top" aria-hidden="true" tabIndex={-1}>
-              {levelOneKeys.slice(-cloneCount).map((key, i) => {
-                const index = levelOneKeys.length - cloneCount + i
-                return renderCloneSection(key, '__circular_clone_top__', index)
-              })}
+              {wrappedCloneIndices(cloneCount, levelOneKeys.length, 'before').map((srcIndex, j) =>
+                renderCloneSection(levelOneKeys[srcIndex], `__circular_clone_top__${j}_`, srcIndex)
+              )}
             </div>
             {/* Marks the loop seam — scrolling past the last real item lands
                 here (blank) before the top clone's first item, rather than
@@ -1179,7 +1193,9 @@ function GraphView() {
                 item. */}
             <div className="circular-loop-spacer" style={{ height: LOOP_SPACER_PX }} aria-hidden="true" />
             <div ref={bottomCloneRef} className="circular-clone circular-clone-bottom" aria-hidden="true" tabIndex={-1}>
-              {levelOneKeys.slice(0, cloneCount).map((key, index) => renderCloneSection(key, '__circular_clone_bottom__', index))}
+              {wrappedCloneIndices(cloneCount, levelOneKeys.length, 'after').map((srcIndex, j) =>
+                renderCloneSection(levelOneKeys[srcIndex], `__circular_clone_bottom__${j}_`, srcIndex)
+              )}
             </div>
             </>
           )}

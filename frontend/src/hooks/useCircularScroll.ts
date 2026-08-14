@@ -8,6 +8,14 @@ import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 're
 // teleport math never has to wait on an extra measurement round-trip.
 export const LOOP_SPACER_PX = 32
 
+// Safety ceiling on cloneCount growth (see the hook doc comment's "why a
+// clone GROUP" section) — not a normal operating limit. Real items always
+// have positive rendered height, so growth naturally stops once the clone
+// group reaches budgetPx, in well under 100 steps for any viewport this app
+// will realistically render at. This just guards against runaway growth if
+// that assumption were ever violated (e.g. a hypothetical zero-height row).
+const MAX_CLONE_COUNT = 500
+
 interface UseCircularScrollOptions {
   /** Number of real (non-clone) level-1 items currently in the list. */
   count: number
@@ -32,18 +40,24 @@ interface UseCircularScrollResult {
       comment for why). Render the boundary clones and the loop-seam
       spacers, and let this hook manage scrollTop, while true. */
   circular: boolean
-  /** How many trailing/leading real items to render in the top/bottom
-      clone, respectively (see "why more than one item" below). 0 while not
-      circular. */
+  /** How many clone items to render in the top/bottom clone group (see "why
+      a clone GROUP" below). Can exceed `count` — a short list's clone group
+      wraps around and repeats the list as many times as needed to clear
+      `budgetPx`, since there aren't enough distinct items otherwise. 0
+      while not circular; the caller is expected to build each group's item
+      list by cycling through the real items with `% count`. */
   cloneCount: number
   /** Attach to the single persistent wrapper around clone-top + real-items +
       clone-bottom. Stays mounted across circular/plain transitions. */
   containerRef: RefObject<HTMLDivElement>
-  /** Attach to the top clone group (clones of the LAST `cloneCount` real
-      items). Only exists in the DOM while `circular` is true. */
+  /** Attach to the top clone group (clones of the `cloneCount` items
+      immediately preceding real item 1, wrapping/repeating if cloneCount >
+      count). Only exists in the DOM while `circular` is true. */
   topCloneRef: RefObject<HTMLDivElement>
-  /** Attach to the bottom clone group (clones of the FIRST `cloneCount`
-      real items). Only exists in the DOM while `circular` is true. */
+  /** Attach to the bottom clone group (clones of the `cloneCount` items
+      immediately following the last real item, wrapping/repeating if
+      cloneCount > count). Only exists in the DOM while `circular` is
+      true. */
   bottomCloneRef: RefObject<HTMLDivElement>
   /** Attach to the wrapper around the real (unwindowed) item list. Always
       mounted, in both modes, so its height can always be measured. */
@@ -77,10 +91,15 @@ interface UseCircularScrollResult {
  * whole visible window to be pixel-identical to real content after the
  * teleport shift, the bottom clone must itself be at least a full viewport
  * tall — a single short item's clone isn't enough once the viewport is
- * taller than one item (the common case, whenever a list's content DOES
- * exceed budgetPx). So `cloneCount` grows (bounded at `count - 1`, never
- * cloning every real item) until both clone groups are at least `budgetPx`
- * tall.
+ * taller than one item (the common case). So `cloneCount` grows until both
+ * clone groups are at least `budgetPx` tall, wrapping around to repeat the
+ * list more than once if `count` items alone don't reach that height (a
+ * short list of 2-4 short rows, for instance, needs several repeats to fill
+ * a full-screen budget) — the alternative, capping at `count` items and
+ * accepting a clone group shorter than the viewport, would mean the visible
+ * window at the scroll boundary ISN'T pixel-identical to what's revealed
+ * after the teleport (part of the spacer or real list bleeds into the same
+ * screen as the clone), producing a visible snap right at the loop seam.
  */
 export function useCircularScroll({ count, resetKey, paused = false, budgetPx }: UseCircularScrollOptions): UseCircularScrollResult {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -139,8 +158,8 @@ export function useCircularScroll({ count, resetKey, paused = false, budgetPx }:
       if (delta !== 0 && prevTopHeight !== 0) container.scrollTop += delta
       topCloneHeightRef.current = topHeight
 
-      if ((topHeight < budgetPx || bottomHeight < budgetPx) && cloneCount < count - 1) {
-        setCloneCount(c => Math.min(count - 1, c + 1))
+      if ((topHeight < budgetPx || bottomHeight < budgetPx) && cloneCount < MAX_CLONE_COUNT) {
+        setCloneCount(c => c + 1)
       }
     }
 
@@ -151,7 +170,7 @@ export function useCircularScroll({ count, resetKey, paused = false, budgetPx }:
     if (topCloneRef.current) observer.observe(topCloneRef.current)
     if (bottomCloneRef.current) observer.observe(bottomCloneRef.current)
     return () => observer.disconnect()
-  }, [resetKey, budgetPx, circular, cloneCount, count])
+  }, [resetKey, budgetPx, circular, cloneCount])
 
   // Land exactly at the top of real item 1 (past the top clone AND its
   // trailing spacer) whenever circular mode (re)activates. Not re-run on
