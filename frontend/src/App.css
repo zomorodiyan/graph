@@ -55,7 +55,11 @@
 
 .breadcrumb {
   position: fixed;
-  bottom: calc(72px + var(--agent-bar-height));
+  /* GraphView no longer renders its own .top-buttons (theme/depth/note moved
+     into the agent chat bar) — this only needs to clear the bar itself now,
+     not a separate stacked row above it, so it moves down to roughly where
+     .top-buttons used to sit. */
+  bottom: calc(20px + var(--agent-bar-height));
   left: 20px;
   display: flex;
   flex-wrap: wrap;
@@ -1287,115 +1291,107 @@
   margin-bottom: 0.5rem;
 }
 
-/* Agent chat — permanent, always-visible bottom bar, mounted app-wide (see
-   App.tsx) so it's reachable from every view, Telegram-style. Collapsed
-   (default): just the input row. Expanded (textarea focused): header +
-   history/key-setup become visible above it too. Bottom-anchored inside
-   .agent-chat-viewport in BOTH states — that's what makes it shift above
-   the on-screen keyboard automatically, no separate positioning mode
-   needed. */
-.agent-chat-viewport {
+/* Agent chat — permanent, always-visible compose bar, mounted app-wide (see
+   App.tsx) so it's reachable from every view, Telegram/WhatsApp-style:
+   theme/depth/note buttons live inside the SAME bar as the textbox (see
+   .agent-chat-input-row below), not as a separate floating cluster.
+   No wrapper element needed anymore (unlike the old .agent-chat-viewport) —
+   collapsed and expanded are each a simple rectangle, neither needs an
+   invisible click-through bounding box around it. */
+.agent-chat-shell {
   position: fixed;
   left: 0;
   right: 0;
   z-index: 1600;
-  pointer-events: none;
-  /* Own compositor layer so it tracks smoothly during mobile Chrome's own
-     toolbar hide/show-on-scroll animation instead of lagging a frame or
-     more behind — top/height here are JS-updated on every visualViewport
-     change, so this matters even more than for a static element. */
-  transform: translateZ(0);
-}
-
-.agent-chat-panel {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  left: 0;
-  pointer-events: auto;
   display: flex;
   flex-direction: column;
   background: var(--bg-secondary);
   border: 1.5px solid var(--border-color);
+  overflow: hidden;
+}
+
+/* Collapsed: plain bottom bar, no keyboard tracking of any kind — there's
+   no dynamic content here to chase a moving keyboard for. If a keyboard
+   happens to stay open after collapsing (uncommon — most close on blur),
+   the bar can sit behind it briefly; that known, rare edge case is a
+   trade worth making for dropping the fragile JS-position-tracking that
+   caused this session's actual bugs. */
+.agent-chat-shell:not(.expanded) {
+  bottom: 0;
   border-radius: 1rem 1rem 0 0;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
-  max-height: min(75vh, 32rem);
-  overflow: hidden;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* While a keyboard is likely open, the safe-area inset exists to clear a
-   home indicator / gesture-nav bar that's now covered by the keyboard
-   anyway — keeping it just adds dead space below the input row.
-
-   The panel's box is bottom:0 inside .agent-chat-viewport, which is itself
-   sized to exactly match window.visualViewport (see useVisualViewportRect.ts)
-   — in theory that box's bottom edge already IS the top of the keyboard, no
-   gap possible. In practice, on-device testing found a real, persistent gap
-   there anyway (the keyboard-likely-open heuristic and/or visualViewport
-   itself isn't perfectly accurate on every device/browser). --keyboard-gap-fix
-   manually closes it — but as EXTRA HEIGHT ADDED TO THE WRAPPER itself
-   (AgentChat.tsx adds it to .agent-chat-viewport's inline `height` while
-   keyboardLikelyOpen), not as a negative offset that pushes this panel past
-   the wrapper's own box. The wrapper has its own compositor layer
-   (transform: translateZ(0), for the toolbar-scroll-lag fix) — content that
-   visually escapes past a transformed ancestor's box risks being clipped by
-   the compositor on some mobile browsers instead of rendering, which is
-   exactly what a negative-bottom version of this fix ran into. Keeping the
-   panel fully WITHIN the (now taller) wrapper avoids that entirely. */
-.agent-chat-panel.keyboard-open {
-  padding-bottom: 0;
+/* Expanded: top-anchored instead of chasing the keyboard from the bottom.
+   top:0 needs no keyboard awareness at all — it's always the true top of
+   the screen. `height` is set inline by AgentChat.tsx (the user-draggable
+   panelHeight state); visualViewport height is only consulted there as the
+   drag handle's max bound, not continuously raced against scroll. */
+.agent-chat-shell.expanded {
+  top: 0;
+  border-radius: 0 0 1rem 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* Collapsed (no .expanded class): only the always-rendered input row at the
-   bottom shows — header/history/key-setup are hidden via display:none, not
-   unmounted, so the textarea's DOM node (and its focus) is never disturbed
-   by expanding/collapsing. */
-.agent-chat-panel:not(.expanded) .agent-chat-header,
-.agent-chat-panel:not(.expanded) .agent-chat-messages,
-.agent-chat-panel:not(.expanded) .agent-chat-key-setup {
+/* Collapsed: only the always-rendered input row shows — history/key-setup/
+   resize-handle are hidden via display:none, not unmounted, so the
+   textarea's DOM node (and its focus) is never disturbed by
+   expanding/collapsing. There's no header — dismissing the expanded panel
+   is via tapping outside, Escape, dragging to the minimum, or (on Android)
+   the hardware/gesture back button (see useModalBackButton above). */
+.agent-chat-shell:not(.expanded) .agent-chat-messages,
+.agent-chat-shell:not(.expanded) .agent-chat-key-setup,
+.agent-chat-shell:not(.expanded) .agent-chat-resize-handle {
+  display: none;
+}
+
+/* Expanded: the theme/depth/note buttons don't apply mid-chat, hidden the
+   same way. */
+.agent-chat-shell.expanded .agent-chat-input-row .theme-toggle,
+.agent-chat-shell.expanded .agent-chat-input-row .depth-toggle,
+.agent-chat-shell.expanded .agent-chat-input-row .ctx-toggle {
   display: none;
 }
 
 @media (min-width: 32rem) {
-  .agent-chat-panel {
+  .agent-chat-shell:not(.expanded) {
     left: auto;
     width: 22rem;
     border-radius: 1rem;
     margin: 0 20px 20px 0;
   }
-}
 
-.agent-chat-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.6rem 0.85rem;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  flex-shrink: 0;
-}
-
-.agent-chat-close {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  line-height: 1;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0.1rem 0.35rem;
+  /* Desktop keeps the existing floating-card look for the expanded state
+     too — no keyboard to avoid, so no need for top-anchoring or a drag
+     handle (hidden below). `height` needs !important since it's overriding
+     the inline style AgentChat.tsx sets while expanded — inline styles
+     otherwise always win over a plain media-query rule. */
+  .agent-chat-shell.expanded {
+    top: auto;
+    bottom: 0;
+    left: auto;
+    width: 22rem;
+    height: auto !important;
+    border-radius: 1rem;
+    margin: 0 20px 20px 0;
+    padding-top: 0;
+  }
 }
 
 .agent-chat-messages {
-  flex: 1;
+  flex: 1 1 0%;
   overflow-y: auto;
   padding: 0.85rem 0.85rem 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  min-height: 8rem;
+  /* No min-height — the panel's height is user-draggable now, down to
+     MIN_PANEL_HEIGHT (AgentChat.tsx), and this needs to be able to shrink
+     to zero rather than force-clipping the input row/resize handle below
+     it when dragged small. */
+  min-height: 0;
 }
 
 .agent-chat-empty {
@@ -1447,7 +1443,7 @@
 .agent-chat-input-row {
   display: flex;
   align-items: flex-end;
-  gap: 0.5rem;
+  gap: 0.4rem;
   padding: 0.6rem 0.75rem;
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
@@ -1455,8 +1451,20 @@
 
 /* Collapsed: nothing above it, so the divider line would just be a stray
    mark at the top of the bar. */
-.agent-chat-panel:not(.expanded) .agent-chat-input-row {
+.agent-chat-shell:not(.expanded) .agent-chat-input-row {
   border-top: none;
+}
+
+/* Theme/depth/note buttons sit inline in the row now (Telegram/WhatsApp-
+   style), not floating on their own — shrink slightly from their old
+   floating-button size so they don't crowd out the textarea. */
+.agent-chat-input-row .theme-toggle,
+.agent-chat-input-row .depth-toggle,
+.agent-chat-input-row .ctx-toggle {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .agent-chat-input-row textarea {
@@ -1555,4 +1563,35 @@
 .agent-chat-save-key:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* Drag handle on the expanded panel's bottom edge (see AgentChat.tsx's
+   handleResizeStart/Move/End) — touch-action:none hands the gesture fully
+   to our own pointer handlers instead of letting the browser also try to
+   scroll/pan the page underneath the drag at the same time. */
+.agent-chat-resize-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0;
+  flex-shrink: 0;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.agent-chat-resize-grip {
+  width: 2.5rem;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: var(--border-color);
+}
+
+/* Desktop keeps the existing floating-card look for the expanded state —
+   no keyboard to avoid, so no drag handle needed. Placed after the base
+   rule above (not inside the earlier positioning media query) so it
+   actually wins the cascade at equal specificity. */
+@media (min-width: 32rem) {
+  .agent-chat-resize-handle {
+    display: none;
+  }
 }

@@ -5,17 +5,33 @@ import { useAgentChat } from '../hooks/useAgentChat'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useVisualViewportRect } from '../hooks/useVisualViewportRect'
 import { useHighlights } from '../hooks/useHighlights'
+import { useViewOptions } from '../hooks/useViewOptions'
+import { useLongPress } from '../hooks/useLongPress'
+import { useTheme } from '../context/ThemeContext'
 import { useGraphs, getItemByPath } from '../hooks/useGraph'
 import { fetchStructure, serializeItem, serializeStructure } from '../api/localClient'
 
+// View depths cycled by tapping the depth button — 3 levels, 2 levels.
+// Raw (0) isn't part of the cycle; long-pressing the button jumps to it directly.
+const DEPTHS = [3, 2] as const
+
+// Smallest the expanded panel can be dragged down to — roughly one input row
+// plus the resize handle's own strip, so "just one line of input" stays true.
+const MIN_PANEL_HEIGHT = 72
+
 // Persistent, app-wide chat surface (mounted once in App.tsx, so it survives
 // navigation between the graphs list and any individual graph — "from
-// within any view" per the App Features template). Telegram-style: the
-// input row is always visible at the bottom of every screen (no toggle to
-// open/close), and focusing it expands the panel to show history/key-setup
-// above it. Talks to the Claude API directly from the browser with the
-// user's own key (see agentClient.ts), which can view, edit, and add items
-// in the currently open graph via tools.
+// within any view" per the App Features template). Telegram-style: a single
+// compose bar (theme/depth/note buttons + textbox + send) is always visible
+// at the bottom of every screen. Focusing the textbox expands it into a
+// TOP-anchored, user-resizable panel instead of trying to keep a
+// bottom-anchored panel pinned above the on-screen keyboard via JS — the
+// top edge needs no keyboard tracking at all (it's always 0), and
+// visualViewport height is only consulted as a max-drag clamp, not raced
+// against scroll on every frame (see useViewOptions.ts / the drag handlers
+// below). Talks to the Claude API directly from the browser with the user's
+// own key (see agentClient.ts), which can view, edit, and add items in the
+// currently open graph via tools.
 function AgentChat() {
   const { expanded, setExpanded, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop } = useAgentChat()
   const [draft, setDraft] = useState('')
@@ -44,6 +60,25 @@ function AgentChat() {
   const { data: graphs } = useGraphs()
   const { userHighlights, setAgentHighlights } = useHighlights(graphName)
 
+  // Theme is a global toggle, relevant everywhere. Depth/note only make
+  // sense with a graph open, so their buttons are gated on graphName below.
+  const { toggleTheme } = useTheme()
+  const { depth, viewMode, minimalView, setDepth, setViewMode, setMinimalView } = useViewOptions()
+  const depthLongPress = useLongPress(
+    () => setDepth(0),
+    () => setDepth(d => {
+      const idx = (DEPTHS as readonly number[]).indexOf(d)
+      return DEPTHS[(idx + 1) % DEPTHS.length]
+    }),
+  )
+  const ctxLongPress = useLongPress(
+    () => setMinimalView(v => !v),
+    () => {
+      if (minimalView) { setMinimalView(false); return }
+      setViewMode(m => m === 'context' ? 'default' : 'context')
+    },
+  )
+
   // Blurs the input (if focused) and collapses back to the bar-only state.
   // Used by the close button, Escape, and losing focus entirely.
   const collapse = () => {
@@ -53,15 +88,52 @@ function AgentChat() {
 
   useModalBackButton(expanded, collapse)
 
-  const { top, height } = useVisualViewportRect()
-  const keyboardLikelyOpen = height < window.innerHeight - 80 // same heuristic as MobileEditSheet.tsx
-  // Single source of truth with the CSS var of the same name (App.css) — read
-  // once, since it's a tuning constant, not something that changes mid-session.
-  const [keyboardGapFixPx] = useState(() => {
-    if (typeof window === 'undefined') return 0
-    const raw = getComputedStyle(document.documentElement).getPropertyValue('--keyboard-gap-fix')
-    return parseFloat(raw) || 0
-  })
+  // Only `height` is used — the visible area's height above any on-screen
+  // keyboard, consulted purely as the drag handle's max bound (see below).
+  // `top` isn't needed: the expanded panel is always position:fixed; top:0,
+  // no keyboard-relative positioning left to compute.
+  const { height } = useVisualViewportRect()
+
+  // Draggable height of the expanded panel. Defaults to a third of the
+  // visible height and keeps tracking it live (in case the keyboard is
+  // still animating open when this first sets) until the user actually
+  // drags, after which only a downward clamp applies if the visible height
+  // shrinks further. Resets on every collapse->expand transition.
+  const [panelHeight, setPanelHeight] = useState(0)
+  const hasDraggedRef = useRef(false)
+  useEffect(() => {
+    if (!expanded) {
+      hasDraggedRef.current = false
+      return
+    }
+    if (!hasDraggedRef.current) {
+      setPanelHeight(Math.round(height / 3))
+    } else {
+      setPanelHeight(h => Math.min(h, height))
+    }
+  }, [expanded, height])
+
+  const dragStateRef = useRef<{ startY: number; startHeight: number } | null>(null)
+  const handleResizeStart = (e: React.PointerEvent) => {
+    // The handle itself isn't focusable, so without this the browser's
+    // default mousedown-on-non-focusable-element behavior blurs the
+    // textarea right as the drag starts — which fires handleContainerBlur
+    // and collapses the panel out from under the drag before it can do
+    // anything. preventDefault keeps focus (and expanded) exactly as-is.
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    hasDraggedRef.current = true
+    dragStateRef.current = { startY: e.clientY, startHeight: panelHeight }
+  }
+  const handleResizeMove = (e: React.PointerEvent) => {
+    const drag = dragStateRef.current
+    if (!drag) return
+    const next = drag.startHeight + (e.clientY - drag.startY)
+    setPanelHeight(Math.min(Math.max(next, MIN_PANEL_HEIGHT), height))
+  }
+  const handleResizeEnd = () => {
+    dragStateRef.current = null
+  }
 
   const viewContext = useMemo(() => {
     if (!graphName) {
@@ -91,31 +163,6 @@ function AgentChat() {
   useEffect(() => {
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight })
   }, [messages])
-
-  // Locks the underlying page's scroll while the keyboard is covering part
-  // of the screen and the chat is expanded. .agent-chat-viewport's top/height
-  // are recomputed reactively from visualViewport (see useVisualViewportRect.ts)
-  // — if the page is ALSO scrolling at the same time the keyboard is
-  // resizing that viewport, our JS-driven positioning can lag a frame behind
-  // the browser's own scroll-direction-dependent chrome/layout adjustments
-  // (the same category of lag .agent-chat-viewport's translateZ(0) addresses
-  // for Chrome's toolbar animation, just not fully covered here — the input
-  // value we're compositing was itself stale). Locking the page removes the
-  // race entirely instead of chasing it further: there's nothing to type
-  // into the chat's history/graph list behind it at the same time anyway.
-  useEffect(() => {
-    if (!expanded || !keyboardLikelyOpen) return
-    const scrollY = window.scrollY
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${scrollY}px`
-    document.body.style.width = '100%'
-    return () => {
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.width = ''
-      window.scrollTo(0, scrollY)
-    }
-  }, [expanded, keyboardLikelyOpen])
 
   // Focus the message box once a key gets connected while expanded (e.g.
   // right after saving it in the key-setup form) — expanding otherwise
@@ -170,87 +217,109 @@ function AgentChat() {
   }
 
   return (
-    <div className="agent-chat-viewport" style={{ top, height: height + (keyboardLikelyOpen ? keyboardGapFixPx : 0) }}>
-      <div
-        className={`agent-chat-panel${expanded ? ' expanded' : ''}${keyboardLikelyOpen ? ' keyboard-open' : ''}`}
-        onBlur={handleContainerBlur}
-      >
-        <div className="agent-chat-header">
-          <span>Agent</span>
-          <button className="agent-chat-close" onClick={collapse} title="Close">&times;</button>
-        </div>
-
-        {!apiKey ? (
-          <div className="agent-chat-key-setup">
-            <p className="agent-chat-key-title">Connect your Anthropic API key</p>
-            <p className="agent-chat-key-hint">
-              Chat calls the Claude API directly from your browser with your own key —
-              usage is billed to your Anthropic account, not to this app. Get one at{' '}
-              <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">
-                console.anthropic.com
-              </a>.
-            </p>
-            <input
-              type="password"
-              placeholder="sk-ant-..."
-              value={keyInput}
-              onChange={e => setKeyInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleSaveKey() }}
-            />
-            <button className="agent-chat-save-key" onClick={handleSaveKey} disabled={!keyInput.trim()}>
-              Save key
-            </button>
-          </div>
-        ) : (
-          <div className="agent-chat-messages" ref={messagesRef}>
-            {messages.length === 0 && !error && (
-              <p className="agent-chat-empty">Ask about what's in view, or tell it to edit or add items.</p>
-            )}
-            {messages.map((m, i) => {
-              const isStreamingReply = m.role === 'assistant' && isSending && i === messages.length - 1
-              return (
-                <div key={i} className={`agent-chat-message ${m.role}`}>
-                  {m.content || (isStreamingReply ? '…' : '')}
-                  {isStreamingReply && activeTool && (
-                    <div className="agent-chat-tool-use">Using {activeTool}…</div>
-                  )}
-                </div>
-              )
-            })}
-            {error && <div className="agent-chat-error">{error}</div>}
-          </div>
-        )}
-
-        {/* Always rendered — collapsed state IS this row, so the textarea's
-            DOM node must never unmount (would drop focus / close the
-            keyboard mid-transition). See useVisualViewportRect.ts's own
-            comment for why the *positioning* half of this already works
-            regardless of expanded/collapsed state. */}
-        <div className="agent-chat-input-row">
-          <textarea
-            ref={inputRef}
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onFocus={() => setExpanded(true)}
-            onKeyDown={e => {
-              if (e.key === 'Escape') {
-                e.preventDefault()
-                collapse()
-              }
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleSend()
-              }
-            }}
-            placeholder={apiKey ? 'Message the agent…' : 'Tap to connect your API key…'}
-            rows={1}
+    <div
+      className={`agent-chat-shell${expanded ? ' expanded' : ''}`}
+      style={expanded ? { height: panelHeight } : undefined}
+      onBlur={handleContainerBlur}
+    >
+      {!apiKey ? (
+        <div className="agent-chat-key-setup">
+          <p className="agent-chat-key-title">Connect your Anthropic API key</p>
+          <p className="agent-chat-key-hint">
+            Chat calls the Claude API directly from your browser with your own key —
+            usage is billed to your Anthropic account, not to this app. Get one at{' '}
+            <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">
+              console.anthropic.com
+            </a>.
+          </p>
+          <input
+            type="password"
+            placeholder="sk-ant-..."
+            value={keyInput}
+            onChange={e => setKeyInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleSaveKey() }}
           />
-          {isSending ? (
-            <button className="agent-chat-send stop" onClick={stop} title="Stop">&#9632;</button>
-          ) : (
-            <button className="agent-chat-send" onClick={handleSend} disabled={!draft.trim() || !apiKey} title="Send">&#10148;</button>
-          )}
+          <button className="agent-chat-save-key" onClick={handleSaveKey} disabled={!keyInput.trim()}>
+            Save key
+          </button>
         </div>
+      ) : (
+        <div className="agent-chat-messages" ref={messagesRef}>
+          {messages.length === 0 && !error && (
+            <p className="agent-chat-empty">Ask about what's in view, or tell it to edit or add items.</p>
+          )}
+          {messages.map((m, i) => {
+            const isStreamingReply = m.role === 'assistant' && isSending && i === messages.length - 1
+            return (
+              <div key={i} className={`agent-chat-message ${m.role}`}>
+                {m.content || (isStreamingReply ? '…' : '')}
+                {isStreamingReply && activeTool && (
+                  <div className="agent-chat-tool-use">Using {activeTool}…</div>
+                )}
+              </div>
+            )
+          })}
+          {error && <div className="agent-chat-error">{error}</div>}
+        </div>
+      )}
+
+      {/* Always rendered — collapsed state IS this row, so the textarea's
+          DOM node must never unmount (would drop focus / close the
+          keyboard mid-transition). Theme/depth/note buttons live here too,
+          Telegram/WhatsApp-style, hidden via CSS (not unmounted) once
+          expanded. */}
+      <div className="agent-chat-input-row">
+        <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
+        {graphName && (
+          <button
+            className={`depth-toggle active${depth === 0 ? ' raw' : ''}`}
+            {...depthLongPress}
+            title={depth === 0 ? 'Raw view — tap to return, long-press elsewhere for Raw' : `Showing ${depth} levels — tap to cycle, long-press for Raw`}
+          >{depth === 0 ? 'R' : depth}</button>
+        )}
+        {graphName && (
+          <button
+            className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}${minimalView ? ' minimal' : ''}`}
+            {...ctxLongPress}
+            title={minimalView
+              ? 'Minimal view — tap to return to normal'
+              : `${viewMode === 'context' ? 'Note on' : 'Note off'} — tap to toggle, long-press for minimal view`}
+          >N</button>
+        )}
+        <textarea
+          ref={inputRef}
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onFocus={() => setExpanded(true)}
+          onKeyDown={e => {
+            if (e.key === 'Escape') {
+              e.preventDefault()
+              collapse()
+            }
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              handleSend()
+            }
+          }}
+          placeholder={apiKey ? 'Message the agent…' : 'Tap to connect your API key…'}
+          rows={1}
+        />
+        {isSending ? (
+          <button className="agent-chat-send stop" onClick={stop} title="Stop">&#9632;</button>
+        ) : (
+          <button className="agent-chat-send" onClick={handleSend} disabled={!draft.trim() || !apiKey} title="Send">&#10148;</button>
+        )}
+      </div>
+
+      <div
+        className="agent-chat-resize-handle"
+        onPointerDown={handleResizeStart}
+        onPointerMove={handleResizeMove}
+        onPointerUp={handleResizeEnd}
+        onPointerCancel={handleResizeEnd}
+        title="Drag to resize"
+      >
+        <div className="agent-chat-resize-grip" />
       </div>
     </div>
   )

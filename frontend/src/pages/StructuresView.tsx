@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { useTheme } from '../context/ThemeContext'
 import { useColorScheme } from '../context/ColorSchemeContext'
 import { createGraph, fetchStructureText, updateGraph, deleteGraph, GraphInfo } from '@api'
 import { useGraphs } from '../hooks/useGraph'
@@ -25,7 +24,6 @@ function getIconForGraph(name: string): string {
 function StructuresView() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { toggleTheme } = useTheme()
   const { toggleColorScheme } = useColorScheme()
   const { data: graphs = [], isLoading, error } = useGraphs()
 
@@ -270,7 +268,6 @@ function StructuresView() {
             </>
           )}
         </div>
-        <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
       </div>}
 
       {/* Header */}

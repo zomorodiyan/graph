@@ -3,10 +3,9 @@ import { useLocation, useNavigate, Link, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useHighlights } from '../hooks/useHighlights'
+import { useViewOptions } from '../hooks/useViewOptions'
 import { useModalBackButton } from '../hooks/useModalBackButton'
-import { useLongPress } from '../hooks/useLongPress'
 import { SWIPE_THRESHOLD, SWIPE_VERTICAL_LIMIT } from '../hooks/useItemSwipe'
-import { useTheme } from '../context/ThemeContext'
 import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem, getItemDueDate } from '@api'
 import InlineItemEditor from '../components/InlineItemEditor'
 import MobileEditSheet from '../components/MobileEditSheet'
@@ -25,10 +24,6 @@ function isTouchDevice(): boolean {
 
 // Color assignment based on index
 const COLORS = ['sky', 'indigo', 'fuchsia']
-
-// View depths cycled by tapping the depth button — 3 levels, 2 levels.
-// Raw (0) isn't part of the cycle; long-pressing the button jumps to it directly.
-const DEPTHS = [3, 2] as const
 
 // Reorder helper for level-2/3 drags — same in-place delete+reassign trick as
 // applyOptimisticReorder in useGraph.ts, but walks a local items snapshot by
@@ -186,8 +181,7 @@ function GraphView() {
   const path = getPathFromLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  
-  const { toggleTheme } = useTheme()
+
   const [isMobile, setIsMobile] = useState(isTouchDevice)
   useEffect(() => {
     const mq = window.matchMedia?.('(hover: none) and (pointer: coarse)')
@@ -196,51 +190,11 @@ function GraphView() {
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
   }, [])
-  const [depth, setDepth] = useState<0 | 2 | 3>(() => {
-    try {
-      const saved = localStorage.getItem('active-depth')
-      if (saved !== null) {
-        const parsed = Number(saved)
-        if ([0, 2, 3].includes(parsed)) return parsed as 0 | 2 | 3
-      }
-    } catch {}
-    return 3
-  })
-  const [viewMode, setViewMode] = useState<'default' | 'context'>(() => {
-    try {
-      const saved = localStorage.getItem('active-view-mode')
-      if (saved === 'default' || saved === 'context') return saved
-    } catch {}
-    return 'context'
-  })
-  // Long-press on the context button — hides progress/cost/due/notes too,
-  // leaving just item titles. Independent of viewMode (which only toggles notes).
-  const [minimalView, setMinimalView] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('active-minimal-view') === 'true'
-    } catch { return false }
-  })
-  useEffect(() => {
-    localStorage.setItem('active-minimal-view', String(minimalView))
-  }, [minimalView])
-  // Depth button: tap cycles 3/2, long-press jumps straight to Raw (0).
-  const depthLongPress = useLongPress(
-    () => setDepth(0),
-    () => setDepth(d => {
-      const idx = (DEPTHS as readonly number[]).indexOf(d)
-      return DEPTHS[(idx + 1) % DEPTHS.length]
-    }),
-  )
-  // Context button: long-press enters minimal (titles-only) view; tap exits it if
-  // active, otherwise tap toggles notes. So the same tap gesture that got a user
-  // into minimal view (via a follow-up press) also gets them back out.
-  const ctxLongPress = useLongPress(
-    () => setMinimalView(v => !v),
-    () => {
-      if (minimalView) { setMinimalView(false); return }
-      setViewMode(m => m === 'context' ? 'default' : 'context')
-    },
-  )
+  // Depth / note-view state and its buttons now live in AgentChat.tsx's
+  // unified compose bar (see useViewOptions.ts) — GraphView still owns what
+  // these values DRIVE (Section props, context-injection closures below),
+  // just no longer the buttons or the persistence effects.
+  const { depth, viewMode, minimalView } = useViewOptions()
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
   // Bumped by AgentChat.tsx after a tool-driven edit/add, which mutates the
@@ -270,16 +224,6 @@ function GraphView() {
   const reorderItem = useReorderItem(graphName)
   const moveToParent = useMoveItemToParent(graphName)
   const createItem = useCreateItem(graphName)
-  
-  // Persist active depth so it's consistent across menu <-> graph navigation
-  useEffect(() => {
-    localStorage.setItem('active-depth', String(depth))
-  }, [depth])
-
-  // Persist context toggle so it's consistent across menu <-> graph navigation
-  useEffect(() => {
-    localStorage.setItem('active-view-mode', viewMode)
-  }, [viewMode])
 
   // Drag state
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
@@ -1290,24 +1234,6 @@ function GraphView() {
 
   return (
     <>
-      {!inlineEdit && !inlineCreate && !subCreate && (
-        <div className="top-buttons">
-          <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
-          <button
-            className={`depth-toggle active${depth === 0 ? ' raw' : ''}`}
-            {...depthLongPress}
-            title={depth === 0 ? 'Raw view — tap to return, long-press elsewhere for Raw' : `Showing ${depth} levels — tap to cycle, long-press for Raw`}
-          >{depth === 0 ? 'R' : depth}</button>
-          <button
-            className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}${minimalView ? ' minimal' : ''}`}
-            {...ctxLongPress}
-            title={minimalView
-              ? 'Minimal view — tap to return to normal'
-              : `${viewMode === 'context' ? 'Note on' : 'Note off'} — tap to toggle, long-press for minimal view`}
-          >N</button>
-        </div>
-      )}
-
       {/* Breadcrumb — fixed below bottom buttons */}
       {!inlineEdit && !inlineCreate && !subCreate && (
         <nav className="breadcrumb">
