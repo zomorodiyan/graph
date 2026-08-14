@@ -18,13 +18,20 @@ import Notification from './Notification'
 // Raw (0) isn't part of the cycle; long-pressing the button jumps to it directly.
 const DEPTHS = [3, 2] as const
 
-// Smallest the permanent bubble can be dragged down to. Idle, the bubble
-// holds no input row at all (just messages + the resize handle), so this
-// only really binds while composing — the input row (~56px) + handle
+// Smallest the permanent bubble can be dragged down to — two different
+// floors depending on whether the input row is part of the bubble's own
+// layout right now (see .agent-chat-input-row's position:fixed/static
+// toggle in App.css). Composing (.expanded): input row (~56px) + handle
 // (~16px) + one line of an actual message (~34px, plus the messages-inner
-// wrapper's own ~22px padding) ≈ 128px; rounded up a bit for safety so a
-// single reply line is never clipped even at the floor.
-const MIN_PANEL_HEIGHT = 132
+// wrapper's own ~22px padding) ≈ 128px, rounded up a bit for safety so a
+// single reply line is never clipped even at the floor. Idle: the bubble
+// holds no input row at all (it lives in its own fixed bar at the bottom of
+// the screen instead), so the same sum minus the input row's ~56px — just
+// handle + one message line + padding ≈ 72px, +4 for the same safety
+// margin — is enough, letting the bubble collapse noticeably smaller
+// whenever there's nothing being composed.
+const MIN_PANEL_HEIGHT_EXPANDED = 132
+const MIN_PANEL_HEIGHT_IDLE = 76
 
 // Persistent, app-wide chat surface (mounted once in App.tsx, so it survives
 // navigation between the graphs list and any individual graph — "from
@@ -238,11 +245,22 @@ function AgentChat() {
     const drag = dragStateRef.current
     if (!drag) return
     const next = drag.startHeight + (e.clientY - drag.startY)
-    setPanelHeight(Math.min(Math.max(next, MIN_PANEL_HEIGHT), height))
+    const floor = expanded ? MIN_PANEL_HEIGHT_EXPANDED : MIN_PANEL_HEIGHT_IDLE
+    setPanelHeight(Math.min(Math.max(next, floor), height))
   }
   const handleResizeEnd = () => {
     dragStateRef.current = null
   }
+
+  // Composing needs more room than idle (the input row joins the bubble's
+  // own layout — see MIN_PANEL_HEIGHT_EXPANDED above), so a height the user
+  // dragged down to while idle could be too short once they start typing.
+  // Bump it up to the composing floor right when that happens; never
+  // shrinks it back down on blur — a height the user deliberately set stays
+  // put, exactly like normal (see hasDraggedRef's own comment above).
+  useEffect(() => {
+    if (expanded) setPanelHeight(h => Math.max(h, MIN_PANEL_HEIGHT_EXPANDED))
+  }, [expanded])
 
   const viewContext = useMemo(() => {
     if (!graphName) {
