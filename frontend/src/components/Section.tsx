@@ -255,7 +255,11 @@ function Section({
   // editor (or navigates, for non-editable rows), right-click shows the
   // context menu.
   const isMobile = !editInline
-  const { makeSwipeHandlers, drag } = useItemSwipe()
+  const { ref: swipeRef, drag } = useItemSwipe(
+    itemPath,
+    onNavigateInto ? () => onNavigateInto(itemPath) : null,
+    onNavigateBack ?? null,
+  )
   const makeLongPressHandlers = useLongPressFactory()
 
   // Get child items for layer2
@@ -276,13 +280,9 @@ function Section({
   return (
     <div className="section" ref={sectionRef}>
       <div
+        ref={swipeRef}
         className={`section-body${drag?.id === itemPath && drag.active ? ' swipe-armed' : ''}`}
         style={drag?.id === itemPath ? { transform: `translateX(${drag.offsetX}px)` } : undefined}
-        {...makeSwipeHandlers(
-          itemPath,
-          onNavigateInto ? () => onNavigateInto(itemPath) : null,
-          onNavigateBack ?? null,
-        )}
       >
       {/* Layer 1 - Main category */}
       <div className="layer1-container">
