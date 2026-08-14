@@ -11,13 +11,14 @@ interface SectionProps {
   parentPath: string
   colorIndex: number
   onItemClick: (path: string) => void
-  // Mobile-only: swipe-left on a row navigates into it. Level-1 uses this
-  // (its own onItemClick target would be a same-page no-op — see GraphView's
-  // handleNavigateInto); level-2/3 reuse onItemClick itself for this, since
-  // that already goes to the right place.
+  // Mobile-only: swipe-left anywhere in this item's whole bubble (title,
+  // subs, subsubs — the swipe handlers live on .section-body, not any
+  // individual row) navigates into THIS level-1 item, regardless of which
+  // row the gesture started on. Its own onItemClick target would be a
+  // same-page no-op — see GraphView's handleNavigateInto.
   onNavigateInto?: (path: string) => void
-  // Mobile-only: swipe-right always navigates up the tree, no matter which
-  // row (or the background) it starts on — see GraphView's handleNavigateBack.
+  // Mobile-only: swipe-right anywhere in the bubble (or the background)
+  // always navigates up the tree — see GraphView's handleNavigateBack.
   onNavigateBack?: () => void
   onEditClick: (path: string, name: string, data: StructureItem) => void
   editingPath?: string | null
@@ -247,10 +248,12 @@ function Section({
   // gates long-press/right-click, swipe-right, and the Delete button inside the editor.
   const rowEditable = !isTimeView && !item.nonEditable
   const showLoading = isPending
-  // Mobile gesture vocabulary: swipe-left navigates into a row, swipe-right
-  // adds a sub-item, long-press opens the editor directly, tap does nothing.
-  // Desktop is unchanged: click opens the editor (or navigates, for
-  // non-editable rows), right-click shows the context menu.
+  // Mobile gesture vocabulary: swipe-left anywhere in this item's bubble
+  // navigates into it, swipe-right navigates back up the tree, long-press
+  // opens the editor directly, a plain tap toggles highlight (see
+  // makeLongPressHandlers below). Desktop is unchanged: click opens the
+  // editor (or navigates, for non-editable rows), right-click shows the
+  // context menu.
   const isMobile = !editInline
   const { makeSwipeHandlers, drag } = useItemSwipe()
   const makeLongPressHandlers = useLongPressFactory()
@@ -272,7 +275,15 @@ function Section({
 
   return (
     <div className="section" ref={sectionRef}>
-      <div className="section-body">
+      <div
+        className={`section-body${drag?.id === itemPath && drag.active ? ' swipe-armed' : ''}`}
+        style={drag?.id === itemPath ? { transform: `translateX(${drag.offsetX}px)` } : undefined}
+        {...makeSwipeHandlers(
+          itemPath,
+          onNavigateInto ? () => onNavigateInto(itemPath) : null,
+          onNavigateBack ?? null,
+        )}
+      >
       {/* Layer 1 - Main category */}
       <div className="layer1-container">
         <div className="layer1-wrapper" style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
@@ -287,16 +298,8 @@ function Section({
           ) : (
             <>
               <div
-                className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}${drag?.id === itemPath && drag.active ? ' swipe-armed' : ''}${highlightClasses(itemPath, userHighlights, agentHighlights)}`}
-                style={{
-                  ...progressFillStyle(item.progress, item.checkpoints, 'var(--blue-medium)'),
-                  ...(drag?.id === itemPath ? { transform: `translateX(${drag.offsetX}px)` } : {}),
-                }}
-                {...makeSwipeHandlers(
-                  itemPath,
-                  onNavigateInto ? () => onNavigateInto(itemPath) : null,
-                  onNavigateBack ?? null,
-                )}
+                className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}${highlightClasses(itemPath, userHighlights, agentHighlights)}`}
+                style={progressFillStyle(item.progress, item.checkpoints, 'var(--blue-medium)')}
                 {...(!isMobile && rowEditable
                   ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, itemPath, true) }
                   : {})}
@@ -406,16 +409,8 @@ function Section({
                     ) : (
                       <>
                         <div
-                          className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}${drag?.id === childPath && drag.active ? ' swipe-armed' : ''}${highlightClasses(childPath, userHighlights, agentHighlights)}`}
-                          style={{
-                            ...progressFillStyle((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints, 'currentColor'),
-                            ...(drag?.id === childPath ? { transform: `translateX(${drag.offsetX}px)` } : {}),
-                          }}
-                          {...makeSwipeHandlers(
-                            childPath,
-                            () => onItemClick(childPath),
-                            onNavigateBack ?? null,
-                          )}
+                          className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}${highlightClasses(childPath, userHighlights, agentHighlights)}`}
+                          style={progressFillStyle((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints, 'currentColor')}
                           {...(!isMobile && childRowEditable
                             ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, childPath, depth >= 3) }
                             : {})}
@@ -511,12 +506,8 @@ function Section({
                             ) : (
                               <>
                                 <div
-                                  className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}${drag?.id === grandPath && drag.active ? ' swipe-armed' : ''}${highlightClasses(grandPath, userHighlights, agentHighlights)}`}
-                                  style={{
-                                    ...progressFillStyle((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints, 'currentColor'),
-                                    ...(drag?.id === grandPath ? { transform: `translateX(${drag.offsetX}px)` } : {}),
-                                  }}
-                                  {...makeSwipeHandlers(grandPath, () => onItemClick(grandPath), onNavigateBack ?? null)}
+                                  className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}${highlightClasses(grandPath, userHighlights, agentHighlights)}`}
+                                  style={progressFillStyle((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints, 'currentColor')}
                                   {...(!isMobile && grandRowEditable
                                     ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, grandPath, false) }
                                     : {})}

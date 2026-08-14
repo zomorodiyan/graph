@@ -156,6 +156,7 @@
   flex-direction: column;
   flex: 1;
   padding: 0;
+  transition: background-color 0.2s, transform 0.15s ease;
 }
 
 /* Raw text view inside section bubble */
@@ -243,14 +244,14 @@
   cursor: pointer;
 }
 
-/* Swipe drag feedback (translateX set inline, following the finger) — shared
-   shape across all three levels. "armed" means the current drag has crossed
-   the trigger threshold in a direction that's actually wired up for this
-   row (see useItemSwipe's `active` flag) — a stronger tint than a
-   not-yet-armed or not-available drag, so release timing is legible. */
-.layer1.swipe-armed,
-.layer2.swipe-armed,
-.layer3-item.swipe-armed {
+/* Swipe drag feedback (translateX set inline, following the finger) — the
+   whole bubble (.section-body, title + all its subs/subsubs) slides as one
+   block, since a swipe starting anywhere in it now targets the level-1 item
+   itself (see useItemSwipe's `active` flag / Section.tsx's swipe handlers).
+   "armed" means the drag has crossed the trigger threshold in a wired-up
+   direction — a stronger tint than a not-yet-armed drag, so release timing
+   is legible. */
+.section-body.swipe-armed {
   background-color: rgba(33, 150, 243, 0.16);
 }
 

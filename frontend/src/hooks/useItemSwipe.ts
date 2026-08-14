@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 
 // Exported so GraphView's background swipe-to-go-back (a separate, single-
-// instance gesture, not per-row) uses the exact same feel as row swipes.
+// instance gesture, not per-item) uses the exact same feel as item swipes.
 export const SWIPE_THRESHOLD = 50
 export const SWIPE_VERTICAL_LIMIT = 75
 // How far a row visually follows the finger before clamping — purely
@@ -13,28 +13,31 @@ export interface SwipeDrag {
   id: string
   offsetX: number
   // Whether the direction currently being dragged toward is a wired-up
-  // action for this row — lets the row show "this will do something" vs.
-  // "this is disabled" (e.g. swipe-right where sub-items aren't allowed)
-  // instead of dragging just as far either way with no distinction.
+  // action — lets the bubble show "this will do something" vs. "this is
+  // disabled" instead of dragging just as far either way with no distinction.
   active: boolean
 }
 
-// Per-item horizontal swipe: left = navigate into it, right = navigate up
-// the tree (same action everywhere — items and background alike, see
-// GraphView's handleNavigateBack; this hook only knows left/right).
-// Call once per list (not per row — a component rendering N item rows in a
-// loop can't call a hook N times) to get a factory that builds touch
-// handlers for each row, sharing one in-progress-touch ref so only one row
-// reacts to any given gesture, plus the current drag (for visual feedback)
-// so the dragged row can follow the finger and others stay still.
+// Whole-bubble horizontal swipe: left = navigate into the level-1 item,
+// right = navigate up the tree (same action everywhere — items and
+// background alike, see GraphView's handleNavigateBack; this hook only
+// knows left/right). One level-1 item (Section.tsx) calls this once and
+// wires the resulting handlers to its own `.section-body` — the wrapper
+// around the item's title AND all of its rendered layer2/layer3 subs, so a
+// swipe starting anywhere in that bubble targets the level-1 item itself,
+// not whichever sub-row happened to be under the finger. Returned as a
+// factory (not raw handlers) since a component could in principle render
+// more than one swipeable bubble and a hook can't be called N times in a
+// loop; the current drag (for visual feedback) lets the bubble being
+// dragged follow the finger.
 export function useItemSwipe() {
   const start = useRef<{ x: number; y: number; id: string } | null>(null)
   const [drag, setDrag] = useState<SwipeDrag | null>(null)
 
-  // onSwipeLeft/onSwipeRight are null when that direction isn't wired up for
-  // this row (e.g. layer3 never allows adding a sub-item) — passing null
-  // instead of a callback that silently no-ops lets the drag feedback show
-  // the difference, and removeDrag/onTouchEnd naturally do nothing for it.
+  // onSwipeLeft/onSwipeRight are null when that direction isn't wired up —
+  // passing null instead of a callback that silently no-ops lets the drag
+  // feedback show the difference, and removeDrag/onTouchEnd naturally do
+  // nothing for it.
   function makeSwipeHandlers(id: string, onSwipeLeft: (() => void) | null, onSwipeRight: (() => void) | null) {
     return {
       onTouchStart(e: React.TouchEvent) {

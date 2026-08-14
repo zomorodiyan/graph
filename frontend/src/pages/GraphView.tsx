@@ -409,9 +409,10 @@ function GraphView() {
   const handleItemClick = (itemPath: string) => {
     const realPath = resolveRealPath(itemPath)
     const parentPath = realPath.split('.').slice(0, -1).join('.')
-    // Push (not replace) so the hardware/OS back gesture — and the
-    // background swipe-left gesture, which just calls navigate(-1) — step
-    // back up through the levels actually visited, like normal browser back.
+    // Push (not replace) so the hardware/OS back gesture still steps back up
+    // through the levels actually visited, like normal browser back — swipe-
+    // right (handleNavigateBack below) doesn't rely on this at all, it
+    // computes its target from the current URL directly.
     navigate(buildPath(parentPath))
   }
 
@@ -424,14 +425,27 @@ function GraphView() {
     navigate(buildPath(resolveRealPath(itemPath)))
   }
 
-  // Swipe-right always means "go up the tree", regardless of what it starts
-  // on — a row's own swipe-right (see Section.tsx) calls this same function,
-  // and this background handler covers empty space, so the gesture works
-  // the same everywhere rather than only off of items. Just triggers a real
-  // back navigation, identical to the hardware/OS back gesture. Per-row
-  // swipe handlers (useItemSwipe) call stopPropagation, so this background
-  // handler only ever sees touches that started on empty space.
-  const handleNavigateBack = () => navigate(-1)
+  // Swipe-right always means "go up the tree" — one level shallower, and
+  // eventually out to the graphs list — regardless of what it starts on (a
+  // row's own swipe-right, see Section.tsx, calls this same function; this
+  // background handler covers empty space so the gesture works the same
+  // everywhere rather than only off of items). Computes the target
+  // explicitly, like handleItemClick/handleNavigateInto above, instead of
+  // calling browser-history back: navigate(-1) only steps up through levels
+  // actually *visited* in this tab, so landing on a deep path directly (a
+  // fresh page load, a link, an agent-driven navigation) had nowhere
+  // reliable to go back to — this always lands exactly one level up from
+  // wherever the URL says we are now, or at the graphs list from the graph
+  // root. Per-row swipe handlers (useItemSwipe) call stopPropagation, so
+  // this background handler only ever sees touches that started on empty
+  // space.
+  const handleNavigateBack = () => {
+    if (!path) {
+      navigate('/')
+      return
+    }
+    navigate(buildPath(path.split('.').slice(0, -1).join('.')))
+  }
   const backSwipeStart = useRef<{ x: number; y: number } | null>(null)
   const handleBackgroundTouchStart = (e: React.TouchEvent) => {
     backSwipeStart.current = e.touches.length === 1
