@@ -1492,6 +1492,18 @@
   background: var(--bg-primary);
   color: var(--text-primary);
   outline: none;
+  /* Long unbroken text (an API key has no spaces to wrap at) wraps within
+     the box instead of overflowing it sideways. */
+  overflow-wrap: break-word;
+  overflow-x: hidden;
+  /* Still scrolls once content passes max-height (see the JS auto-grow
+     cap) — just without a visible scrollbar track/thumb on either axis. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.agent-chat-input-row textarea::-webkit-scrollbar {
+  display: none;
 }
 
 .agent-chat-input-row textarea:focus {
@@ -1545,37 +1557,6 @@
 
 .agent-chat-key-hint a {
   color: var(--blue-medium);
-}
-
-.agent-chat-key-setup input {
-  padding: 0.5rem 0.7rem;
-  font-size: 0.85rem;
-  border: 1.5px solid var(--border-color);
-  border-radius: 0.5rem;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  outline: none;
-}
-
-.agent-chat-key-setup input:focus {
-  border-color: var(--blue-medium);
-}
-
-.agent-chat-save-key {
-  padding: 0.45rem 0.7rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  background: var(--blue-medium);
-  color: #fff;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  align-self: flex-start;
-}
-
-.agent-chat-save-key:disabled {
-  opacity: 0.4;
-  cursor: default;
 }
 
 /* Drag handle on the expanded panel's bottom edge (see AgentChat.tsx's

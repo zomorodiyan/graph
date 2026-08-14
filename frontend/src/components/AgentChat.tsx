@@ -35,7 +35,6 @@ const MIN_PANEL_HEIGHT = 72
 function AgentChat() {
   const { expanded, setExpanded, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop } = useAgentChat()
   const [draft, setDraft] = useState('')
-  const [keyInput, setKeyInput] = useState('')
   const messagesRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const queryClient = useQueryClient()
@@ -181,8 +180,16 @@ function AgentChat() {
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`
   }, [draft])
 
+  // Same box, two meanings depending on connection state: with no key
+  // saved yet, whatever's typed here IS the key (submitting routes to
+  // saveKey instead of sendMessage) — no separate key-entry form anymore.
   const handleSend = () => {
     if (!draft.trim() || isSending) return
+    if (!apiKey) {
+      saveKey(draft)
+      setDraft('')
+      return
+    }
     sendMessage(
       draft,
       viewContext,
@@ -198,12 +205,6 @@ function AgentChat() {
       setAgentHighlights,
     )
     setDraft('')
-  }
-
-  const handleSaveKey = () => {
-    if (!keyInput.trim()) return
-    saveKey(keyInput)
-    setKeyInput('')
   }
 
   // Collapse when focus leaves the whole panel (not just the textarea) —
@@ -230,18 +231,8 @@ function AgentChat() {
             usage is billed to your Anthropic account, not to this app. Get one at{' '}
             <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">
               console.anthropic.com
-            </a>.
+            </a>, then paste it below.
           </p>
-          <input
-            type="password"
-            placeholder="sk-ant-..."
-            value={keyInput}
-            onChange={e => setKeyInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleSaveKey() }}
-          />
-          <button className="agent-chat-save-key" onClick={handleSaveKey} disabled={!keyInput.trim()}>
-            Save key
-          </button>
         </div>
       ) : (
         <div className="agent-chat-messages" ref={messagesRef}>
@@ -307,7 +298,7 @@ function AgentChat() {
         {isSending ? (
           <button className="agent-chat-send stop" onClick={stop} title="Stop">&#9632;</button>
         ) : (
-          <button className="agent-chat-send" onClick={handleSend} disabled={!draft.trim() || !apiKey} title="Send">&#10148;</button>
+          <button className="agent-chat-send" onClick={handleSend} disabled={!draft.trim()} title={apiKey ? 'Send' : 'Save key'}>&#10148;</button>
         )}
       </div>
 
