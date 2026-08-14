@@ -823,23 +823,14 @@
   color: #c62828;
 }
 
-/* Top buttons container */
-.top-buttons {
-  position: fixed;
-  bottom: calc(20px + var(--agent-bar-height));
-  left: 20px;
-  display: flex;
-  gap: 10px;
-  z-index: 1000;
-}
-
-/* Theme / Depth / Context toggles — same solid-accent theme as the agent
-   button (.agent-chat-toggle): var(--blue-medium) background, white icon,
-   no dark-theme-specific override (blue reads fine against either app
-   background, same as the agent button). */
+/* Theme / Depth / Context / Sync toggles — same solid-accent theme as the
+   agent button (.agent-chat-toggle): var(--blue-medium) background, white
+   icon, no dark-theme-specific override (blue reads fine against either
+   app background, same as the agent button). */
 .theme-toggle,
 .depth-toggle,
-.ctx-toggle {
+.ctx-toggle,
+.sync-toggle {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -869,8 +860,15 @@
   font-size: 22px;
 }
 
+.sync-toggle {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .depth-toggle.active,
-.ctx-toggle.active {
+.ctx-toggle.active,
+.sync-toggle.active {
   opacity: 1;
 }
 
@@ -879,6 +877,14 @@
 .ctx-toggle.minimal {
   opacity: 1;
   box-shadow: 0 0 0 2px #fff;
+}
+
+@keyframes sync-spin {
+  to { transform: rotate(360deg); }
+}
+
+.sync-toggle.spinning {
+  animation: sync-spin 1s linear infinite;
 }
 
 .copy-btn {
@@ -1392,13 +1398,6 @@
   .agent-chat-shell:not(.expanded) .agent-chat-input-row {
     border-top: none;
   }
-
-  /* Expanded: the theme/depth/note buttons don't apply mid-chat, hidden
-     the same way (.agent-chat-view-buttons is display:contents on desktop
-     — see below — so this reaches the actual buttons through it). */
-  .agent-chat-shell.expanded .agent-chat-input-row .agent-chat-view-buttons {
-    display: none;
-  }
 }
 
 .agent-chat-messages {
@@ -1476,68 +1475,77 @@
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
   /* Nothing here is scrollable — without this, a swipe on it (the padding
-     around the textarea, anywhere but the text itself) falls through to
-     the browser's default touch handling, which scrolls the page
-     underneath a fixed element that isn't itself scrollable.
+     around the textarea/buttons, anywhere but the text itself) falls
+     through to the browser's default touch handling, which scrolls the
+     page underneath a fixed element that isn't itself scrollable.
      .agent-chat-messages needs real scrolling so doesn't get this. */
   touch-action: none;
 }
 
-/* Theme/depth/note buttons sit inline in the row now (Telegram/WhatsApp-
-   style), not floating on their own — shrink slightly from their old
-   floating-button size so they don't crowd out the textarea. Applies to
-   .agent-chat-view-buttons's own children regardless of whether that
-   wrapper is display:contents (desktop) or its own fixed row (mobile) —
-   this selector matches on DOM ancestry, unaffected by either. */
+/* Mobile, idle (not composing): the WHOLE row — buttons, textbox, send —
+   is its own fixed bar at the true bottom of the screen, since the
+   permanent top bubble shows no input row until you actually focus it
+   (see .agent-chat-shell in AgentChat.tsx's own comment). Matches the old
+   pre-permanent-bubble compose-bar look. */
+.agent-chat-shell:not(.expanded) .agent-chat-input-row {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1600;
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+  padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Mobile, composing (.expanded): the row rejoins the bubble's own flex
+   flow at its bottom instead — the bubble's own bounds (position, height)
+   never move, only this internal reflow happens, so nothing jumps just
+   because you tapped the textbox. */
+.agent-chat-shell.expanded .agent-chat-input-row {
+  position: static;
+}
+
+/* Composing: the view-toggle buttons don't apply mid-chat and there's no
+   room for them once the row is inside the compact bubble — hide them
+   (not the textarea/send). Desktop's collapsed<->expanded card toggle
+   hides them the same way, since it's driven by the same .expanded class. */
+.agent-chat-shell.expanded .agent-chat-input-row .agent-chat-view-buttons {
+  display: none;
+}
+
+@media (min-width: 32rem) {
+  /* Desktop: the input row is always part of the collapsed-bar/expanded-
+     card's own layout — never pulled out to a separate fixed bar. */
+  .agent-chat-shell:not(.expanded) .agent-chat-input-row,
+  .agent-chat-shell.expanded .agent-chat-input-row {
+    position: static;
+    border-radius: 0;
+    box-shadow: none;
+    padding-bottom: 0.6rem;
+  }
+  .agent-chat-input-row {
+    touch-action: auto;
+  }
+}
+
+/* Theme/depth/note/sync buttons sit inline in the row (Telegram/WhatsApp-
+   style) — shrink slightly from their standalone floating-button size so
+   they don't crowd out the textarea. */
 .agent-chat-input-row .theme-toggle,
 .agent-chat-input-row .depth-toggle,
-.agent-chat-input-row .ctx-toggle {
+.agent-chat-input-row .ctx-toggle,
+.agent-chat-input-row .sync-toggle {
   width: 2.25rem;
   height: 2.25rem;
   font-size: 16px;
   flex-shrink: 0;
 }
 
-/* Mobile: theme/depth/note buttons live in the input row's DOM (so there's
-   only ever one copy of them to keep in sync — see AgentChat.tsx) but are
-   pulled out of its visual flow into their own fixed row at the bottom of
-   the screen, since the input row itself now lives at the bottom of the
-   permanent top bubble instead of at the bottom of the screen.
-   position:fixed escapes the input row's layout regardless of DOM nesting,
-   so this doesn't leave a gap behind in the input row. Hidden while
-   composing (focus is on the textarea) — see .hidden below and
-   AgentChat.tsx's `expanded` — so it doesn't sit uselessly under the
-   keyboard; the hardware/gesture back button brings it back (also via
-   `expanded`, see useModalBackButton in AgentChat.tsx). */
 .agent-chat-view-buttons {
   display: flex;
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1600;
   align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  padding: 0.6rem 0.75rem;
-  padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
-  background: var(--bg-secondary);
-  border-top: 1.5px solid var(--border-color);
-  transition: transform 0.2s ease, opacity 0.2s ease;
-}
-
-.agent-chat-view-buttons.hidden {
-  transform: translateY(100%);
-  opacity: 0;
-  pointer-events: none;
-}
-
-@media (min-width: 32rem) {
-  /* Desktop: back to exactly how it was — inline in the same bar as the
-     textbox, no separate fixed row, no hide-while-composing. */
-  .agent-chat-view-buttons {
-    display: contents;
-  }
+  gap: 0.4rem;
 }
 
 .agent-chat-input-row textarea {

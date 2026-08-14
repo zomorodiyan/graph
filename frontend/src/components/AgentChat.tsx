@@ -9,32 +9,41 @@ import { useViewOptions } from '../hooks/useViewOptions'
 import { useLongPress } from '../hooks/useLongPress'
 import { useTheme } from '../context/ThemeContext'
 import { useGraphs, getItemByPath } from '../hooks/useGraph'
+import { useSyncManager, SyncAllResult } from '../hooks/useSyncManager'
 import { fetchStructure, serializeItem, serializeStructure } from '../api/localClient'
+import AgentAccessGuide from './AgentAccessGuide'
+import Notification from './Notification'
 
 // View depths cycled by tapping the depth button — 3 levels, 2 levels.
 // Raw (0) isn't part of the cycle; long-pressing the button jumps to it directly.
 const DEPTHS = [3, 2] as const
 
-// Smallest the permanent bubble can be dragged down to — enough to still
-// show a line or two of actual conversation above the input row, not just
-// the input row itself (a bare-minimum floor felt too easy to shrink down
-// to something useless). Purely a UX floor, easy to retune.
-const MIN_PANEL_HEIGHT = 180
+// Smallest the permanent bubble can be dragged down to. Idle, the bubble
+// holds no input row at all (just messages + the resize handle), so this
+// only really binds while composing — the input row (~56px) + handle
+// (~16px) + one line of an actual message (~34px, plus the messages-inner
+// wrapper's own ~22px padding) ≈ 128px; rounded up a bit for safety so a
+// single reply line is never clipped even at the floor.
+const MIN_PANEL_HEIGHT = 132
 
 // Persistent, app-wide chat surface (mounted once in App.tsx, so it survives
 // navigation between the graphs list and any individual graph — "from
 // within any view" per the App Features template). On mobile this is a
-// PERMANENT top-anchored bubble (see .agent-chat-shell in App.css) —
-// scrollable conversation history above a fixed input row, always visible,
-// user-resizable via the drag handle. Focusing the textarea doesn't move or
-// resize anything; it only (a) makes the theme/depth/note buttons — now a
-// separate fixed row at the bottom of the screen, see .agent-chat-view-
-// buttons — hide temporarily so the keyboard doesn't cover them uselessly,
-// and (b) wires up the hardware/gesture back button to blur the textarea
-// (dismissing the keyboard) and bring that row back, via useModalBackButton
-// below. Desktop keeps the original collapsed-bar / expanded-card toggle
-// behavior, unaffected by any of this — see the `min-width: 32rem` overrides
-// in App.css. Talks to the Claude API directly from the browser with the
+// PERMANENT top-anchored bubble (see .agent-chat-shell in App.css) whose
+// outer bounds (position + height) never move. Idle (not composing), the
+// bubble shows only messages + the resize handle — the whole input row
+// (theme/depth/ctx/sync buttons + textarea + send), a single line tall,
+// lives in its own `position: fixed` bar at the true bottom of the screen
+// instead, via a CSS toggle on `.agent-chat-input-row` keyed off `.expanded`
+// (see App.css) — it stays a child of this component's JSX/DOM the whole
+// time, never unmounted. Focusing the textarea flips that class: the row
+// rejoins the bubble's own flex flow at its bottom (`position: static`) and
+// the view-buttons hide (no room once composing), while the bubble itself
+// doesn't move or resize. The hardware/gesture back button (and Escape)
+// blur the textarea and undo both, via useModalBackButton below. Desktop
+// keeps the original collapsed-bar / expanded-card toggle behavior,
+// unaffected by any of this — see the `min-width: 32rem` overrides in
+// App.css. Talks to the Claude API directly from the browser with the
 // user's own key (see agentClient.ts), which can view, edit, and add items
 // in the currently open graph via tools.
 function AgentChat() {
@@ -82,6 +91,75 @@ function AgentChat() {
       setViewMode(m => m === 'context' ? 'default' : 'context')
     },
   )
+
+  // GitHub Gist sync — moved here from StructuresView.tsx so its button (and
+  // the "Connect GitHub Gist" guide/PAT form it opens when there's no token
+  // yet) can live alongside the theme/depth/note buttons (see the graphs-
+  // list-only gating below). StructuresView still shows the per-graph sync
+  // status badges, reading them via loadSyncStatus() rather than holding
+  // its own copy of this hook's state — useSyncManager's internal state is
+  // plain useState (not shared across separate call sites), so this is now
+  // the one and only place that calls it.
+  const { isSyncing, pat, configure, syncAll } = useSyncManager(queryClient)
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'syncing' } | null>(null)
+  const [showGistConfig, setShowGistConfig] = useState(false)
+  const [showAgentGuide, setShowAgentGuide] = useState(false)
+  const [patInput, setPatInput] = useState('')
+  const patInputRef = useRef<HTMLInputElement>(null)
+
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotification({ message, type })
+    setTimeout(() => setNotification(null), type === 'error' ? 8000 : 3000)
+  }
+
+  // Same favicon-reflects-sync-state effect StructuresView used to own.
+  useEffect(() => {
+    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+    if (!link) return
+    link.href = pat ? '/icon-colored.svg' : '/icon.svg'
+  }, [pat])
+
+  useModalBackButton(showAgentGuide, () => setShowAgentGuide(false))
+
+  const handleSyncClick = async () => {
+    if (!pat) {
+      setPatInput('')
+      setShowGistConfig(true)
+      setTimeout(() => patInputRef.current?.focus(), 50)
+      return
+    }
+    const { error, pushed, pulled }: SyncAllResult = await syncAll()
+    if (error) {
+      showNotification(error, 'error')
+    } else if (pushed === 0 && pulled === 0) {
+      showNotification('Everything up to date')
+    } else {
+      const parts = []
+      if (pushed) parts.push(`${pushed} pushed`)
+      if (pulled) parts.push(`${pulled} pulled`)
+      showNotification(`Synced — ${parts.join(', ')}`)
+    }
+  }
+
+  // Tap runs handleSyncClick as before; long-press opens the agent-access
+  // guide instead (independent of connection state).
+  const syncLongPress = useLongPress(() => setShowAgentGuide(true), handleSyncClick)
+
+  const handleSaveGistConfig = async () => {
+    configure(patInput, '')
+    setShowGistConfig(false)
+    const { error, pushed, pulled } = await syncAll()
+    if (error) {
+      showNotification(error, 'error')
+    } else if (pushed === 0 && pulled === 0) {
+      showNotification('Connected — nothing to sync yet')
+    } else {
+      const parts = []
+      if (pushed) parts.push(`${pushed} pushed`)
+      if (pulled) parts.push(`${pulled} pulled`)
+      showNotification(`Connected — ${parts.join(', ')}`)
+    }
+  }
 
   // Blurs the input (dismissing the keyboard on mobile) and marks composing
   // as done — on mobile that just brings the view-buttons row back, on
@@ -250,6 +328,7 @@ function AgentChat() {
   }
 
   return (
+    <>
     <div
       className={`agent-chat-shell${expanded ? ' expanded' : ''}`}
       style={{ height: panelHeight }}
@@ -277,7 +356,7 @@ function AgentChat() {
         <div className="agent-chat-messages" ref={messagesRef}>
           <div className="agent-chat-messages-inner">
             {messages.length === 0 && !error && (
-              <p className="agent-chat-empty">Ask about what's in view, or tell it to edit or add items.</p>
+              <p className="agent-chat-empty">Ask, or tell it to edit or add items.</p>
             )}
             {messages.map((m, i) => {
               const isStreamingReply = m.role === 'assistant' && isSending && i === messages.length - 1
@@ -296,16 +375,20 @@ function AgentChat() {
       )}
 
       {/* Never unmounted — the textarea's DOM node (and its focus) must
-          never be disturbed. Theme/depth/note buttons wrap in their own
-          group: on mobile that group is pulled out via position:fixed into
-          its own row at the bottom of the screen (see .agent-chat-view-
-          buttons in App.css) — a separate, hideable-while-composing row,
-          not part of this bar — while on desktop it stays inline right
-          here (display:contents), unchanged from before. Living in this
-          same DOM position either way means no extra state to keep two
-          copies of these buttons in sync. */}
+          never be disturbed. Idle (not composing): the WHOLE row — buttons
+          + textbox + send — is pulled out via position:fixed into its own
+          bar at the true bottom of the screen (see .agent-chat-input-row
+          in App.css), since the permanent bubble itself shows no input
+          until you actually focus it. Composing (.expanded): the row
+          rejoins the bubble's own flex flow at its bottom instead — the
+          bubble's own bounds never move, only this internal reflow happens
+          — and the view-buttons group hides (CSS descendant selector, no
+          class toggle needed) since there's no room for it there and it
+          doesn't apply mid-chat anyway. Desktop ignores all of this — the
+          row is always part of the collapsed-bar/expanded-card's own
+          layout, unchanged from before. */}
       <div className="agent-chat-input-row">
-        <div className={`agent-chat-view-buttons${expanded ? ' hidden' : ''}`}>
+        <div className="agent-chat-view-buttons">
           <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
           {graphName && (
             <button
@@ -322,6 +405,14 @@ function AgentChat() {
                 ? 'Minimal view — tap to return to normal'
                 : `${viewMode === 'context' ? 'Note on' : 'Note off'} — tap to toggle, long-press for minimal view`}
             >N</button>
+          )}
+          {!graphName && (
+            <button
+              className={`sync-toggle${isSyncing ? ' spinning' : ''}${pat ? ' active' : ''}`}
+              {...syncLongPress}
+              title={pat ? 'Sync with GitHub Gist — long-press for agent access' : 'Connect GitHub to enable sync — long-press for agent access'}
+              disabled={isSyncing}
+            >↻</button>
           )}
         </div>
         <textarea
@@ -360,6 +451,38 @@ function AgentChat() {
         <div className="agent-chat-resize-grip" />
       </div>
     </div>
+
+    {notification && <Notification message={notification.message} type={notification.type} />}
+
+    {showGistConfig && (
+      <div className="gist-config-panel">
+        <div className="gist-config-guide">
+          <p className="gist-guide-title">Connect GitHub Gist for sync</p>
+          <ol className="gist-guide-steps">
+            <li>Go to <a href="https://github.com/settings/tokens/new?scopes=gist&description=Knowledge+Graph+Sync" target="_blank" rel="noreferrer">github.com → Settings → Tokens</a></li>
+            <li>Check only <strong>gist</strong> scope, generate &amp; copy the token</li>
+            <li>Paste it below — your graphs sync to a private Gist only you can see</li>
+          </ol>
+        </div>
+        <div className="gist-config-inputs">
+          <input
+            ref={patInputRef}
+            type="password"
+            placeholder="Paste GitHub token here"
+            value={patInput}
+            onChange={e => setPatInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleSaveGistConfig(); if (e.key === 'Escape') setShowGistConfig(false) }}
+          />
+          <div className="gist-config-actions">
+            <button className="btn-save-url" onClick={handleSaveGistConfig} disabled={!patInput.trim()}>Connect</button>
+            <button className="btn-cancel-url" onClick={() => setShowGistConfig(false)}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {showAgentGuide && <AgentAccessGuide onClose={() => setShowAgentGuide(false)} />}
+    </>
   )
 }
 

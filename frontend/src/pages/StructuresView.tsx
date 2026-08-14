@@ -1,15 +1,14 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useColorScheme } from '../context/ColorSchemeContext'
 import { createGraph, fetchStructureText, updateGraph, deleteGraph, GraphInfo } from '@api'
 import { useGraphs } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
-import { useLongPress } from '../hooks/useLongPress'
-import { useSyncManager, loadSyncStatus, GraphSyncStatus, SyncAllResult } from '../hooks/useSyncManager'
+import { loadSyncStatus } from '../hooks/useSyncManager'
+import { getPAT } from '../api/gistClient'
 import Notification from '../components/Notification'
 import InlineGraphEditor from '../components/InlineGraphEditor'
-import AgentAccessGuide from '../components/AgentAccessGuide'
 import { GRAPH_TEMPLATES, GraphTemplate, resolveTemplateDates } from '../data/graphTemplates'
 import './StructuresView.css'
 
@@ -34,80 +33,15 @@ function StructuresView() {
     message: string
     type: 'success' | 'error'
   } | null>(null)
-  const [showGistConfig, setShowGistConfig] = useState(false)
-  const [showAgentGuide, setShowAgentGuide] = useState(false)
-  const [patInput, setPatInput] = useState('')
   const [copiedGraph, setCopiedGraph] = useState<string | null>(null)
-  const [flashDirections, setFlashDirections] = useState<Record<string, string>>({})
-  const patInputRef = useRef<HTMLInputElement>(null)
-
-  const { isSyncing, pat, gistId, syncStatuses, configure, syncAll } =
-    useSyncManager(queryClient)
-
-  useEffect(() => {
-    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
-    if (!link) return
-    const statuses = Object.values(syncStatuses)
-    const synced = !!pat && statuses.length > 0 && statuses.every(s => !s.error)
-    link.href = synced ? '/icon-colored.svg' : '/icon.svg'
-  }, [pat, syncStatuses])
 
   useModalBackButton(inlineCreate, () => setInlineCreate(false))
   useModalBackButton(showTemplates, () => setShowTemplates(false))
   useModalBackButton(Boolean(inlineEditGraph), () => setInlineEditGraph(null))
-  useModalBackButton(showAgentGuide, () => setShowAgentGuide(false))
 
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type })
     setTimeout(() => setNotification(null), type === 'error' ? 8000 : 3000)
-  }
-
-  const handleSyncClick = async () => {
-    if (!pat) {
-      setPatInput('')
-      setShowGistConfig(true)
-      setTimeout(() => patInputRef.current?.focus(), 50)
-      return
-    }
-    const { error, pushed, pulled, statuses }: SyncAllResult = await syncAll()
-    if (error) {
-      showNotification(error, 'error')
-    } else if (pushed === 0 && pulled === 0) {
-      showNotification('Everything up to date')
-    } else {
-      const parts = []
-      if (pushed) parts.push(`${pushed} pushed`)
-      if (pulled) parts.push(`${pulled} pulled`)
-      showNotification(`Synced — ${parts.join(', ')}`)
-      const flash: Record<string, string> = {}
-      for (const [name, s] of Object.entries(statuses) as [string, GraphSyncStatus][]) {
-        if (s.direction === 'push' || s.direction === 'pull') flash[name] = s.direction
-      }
-      if (Object.keys(flash).length > 0) {
-        setFlashDirections(flash)
-        setTimeout(() => setFlashDirections({}), 5000)
-      }
-    }
-  }
-
-  // Sync button: tap runs handleSyncClick as before; long-press opens the
-  // agent-access guide instead (independent of connection state).
-  const syncLongPress = useLongPress(() => setShowAgentGuide(true), handleSyncClick)
-
-  const handleSaveGistConfig = async () => {
-    configure(patInput, '')
-    setShowGistConfig(false)
-    const { error, pushed, pulled } = await syncAll()
-    if (error) {
-      showNotification(error, 'error')
-    } else if (pushed === 0 && pulled === 0) {
-      showNotification('Connected — nothing to sync yet')
-    } else {
-      const parts = []
-      if (pushed) parts.push(`${pushed} pushed`)
-      if (pulled) parts.push(`${pulled} pulled`)
-      showNotification(`Connected — ${parts.join(', ')}`)
-    }
   }
 
   const handleGraphClick = (graphName: string) => {
@@ -227,49 +161,6 @@ function StructuresView() {
 
   return (
     <div className="structures-view" onClick={showTemplates ? () => setShowTemplates(false) : undefined}>
-      {/* Top buttons — hidden while editing a graph or creating a new one */}
-      {!inlineEditGraph && !inlineCreate && <div className="top-buttons">
-        <div className="sync-area">
-          {showGistConfig ? (
-            <div className="gist-config-panel">
-              <div className="gist-config-guide">
-                <p className="gist-guide-title">Connect GitHub Gist for sync</p>
-                <ol className="gist-guide-steps">
-                  <li>Go to <a href="https://github.com/settings/tokens/new?scopes=gist&description=Knowledge+Graph+Sync" target="_blank" rel="noreferrer">github.com → Settings → Tokens</a></li>
-                  <li>Check only <strong>gist</strong> scope, generate &amp; copy the token</li>
-                  <li>Paste it below — your graphs sync to a private Gist only you can see</li>
-                </ol>
-              </div>
-              <div className="gist-config-inputs">
-                <input
-                  ref={patInputRef}
-                  type="password"
-                  placeholder="Paste GitHub token here"
-                  value={patInput}
-                  onChange={e => setPatInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleSaveGistConfig(); if (e.key === 'Escape') setShowGistConfig(false) }}
-                />
-                <div className="gist-config-actions">
-                  <button className="btn-save-url" onClick={handleSaveGistConfig} disabled={!patInput.trim()}>Connect</button>
-                  <button className="btn-cancel-url" onClick={() => setShowGistConfig(false)}>Cancel</button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              <button
-                className={`sync-btn${isSyncing ? ' sync-btn--spinning' : ''}${pat ? ' sync-btn--connected' : ''}`}
-                {...syncLongPress}
-                title={pat ? `Sync with GitHub Gist${gistId ? ` (${gistId.slice(0, 8)}…)` : ''} — long-press for agent access` : 'Connect GitHub to enable sync — long-press for agent access'}
-                disabled={isSyncing}
-              >
-                ↻
-              </button>
-            </>
-          )}
-        </div>
-      </div>}
-
       {/* Header */}
       <header className="structures-header">
         <div className="title-row">
@@ -360,19 +251,18 @@ function StructuresView() {
             )
           }
 
-          const syncStatus: GraphSyncStatus | null =
-            syncStatuses[graph.name] ?? loadSyncStatus(graph.name)
-
-          const flashDir = flashDirections[graph.name]
+          // Read straight from localStorage rather than through useSyncManager
+          // (the sync button — and the only call to that hook — now lives in
+          // AgentChat.tsx; see its own comment). A sync there invalidates the
+          // ['graphs'] query, which re-renders this component and re-reads
+          // fresh values here, so badges still stay current.
+          const syncStatus = loadSyncStatus(graph.name)
           const hasLocalChanges = syncStatus && new Date(graph.modified_at) > new Date(syncStatus.lastSync)
           const badgeSymbol = syncStatus?.error ? '✕'
-            : flashDir === 'push' ? '↑'
-            : flashDir === 'pull' ? '↓'
             : hasLocalChanges ? '•'
             : syncStatus ? '✓'
             : null
           const badgeClass = syncStatus?.error ? 'error'
-            : flashDir ? flashDir
             : hasLocalChanges ? 'pending'
             : 'none'
 
@@ -391,7 +281,7 @@ function StructuresView() {
               </div>
               <div className="card-content">
                 <h3 className={`graph-name ${colorClass}`}>
-                  {badgeSymbol && pat && (
+                  {badgeSymbol && getPAT() && (
                     <span
                       className={`sync-badge sync-badge--${badgeClass}`}
                       title={syncStatus?.error ?? (syncStatus ? `Last sync: ${new Date(syncStatus.lastSync).toLocaleString()}` : '')}
@@ -426,8 +316,6 @@ function StructuresView() {
       {notification && (
         <Notification message={notification.message} type={notification.type} />
       )}
-
-      {showAgentGuide && <AgentAccessGuide onClose={() => setShowAgentGuide(false)} />}
     </div>
   )
 }

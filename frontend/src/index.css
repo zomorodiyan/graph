@@ -1,8 +1,8 @@
 :root {
   /* Height of the agent chat bar's collapsed (input-row-only) state — used
-     by App.css's .top-buttons/.breadcrumb/.circular-scroll-container
-     offsets so they clear the bar rather than overlap it (or leave a gap
-     above it). Measured from the actual rendered bar (57.1875px with the
+     by App.css's .breadcrumb/.circular-scroll-container offsets so they
+     clear the bar rather than overlap it (or leave a gap above it).
+     Measured from the actual rendered bar (57.1875px with the
      single-line "Enter key" placeholder — before it was 75px+ because the
      old, longer "Tap to connect your API key…" placeholder wrapped to two
      lines and the auto-growing textarea sized itself to fit). Desktop's
