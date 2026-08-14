@@ -1333,13 +1333,18 @@
    — in theory that box's bottom edge already IS the top of the keyboard, no
    gap possible. In practice, on-device testing found a real, persistent gap
    there anyway (the keyboard-likely-open heuristic and/or visualViewport
-   itself isn't perfectly accurate on every device/browser). Since there's no
-   further geometry to compute our way out of, --keyboard-gap-fix manually
-   extends the panel past the computed bottom edge to close it. Tune this
-   value directly if it's under- or over-shooting on a real device. */
+   itself isn't perfectly accurate on every device/browser). --keyboard-gap-fix
+   manually closes it — but as EXTRA HEIGHT ADDED TO THE WRAPPER itself
+   (AgentChat.tsx adds it to .agent-chat-viewport's inline `height` while
+   keyboardLikelyOpen), not as a negative offset that pushes this panel past
+   the wrapper's own box. The wrapper has its own compositor layer
+   (transform: translateZ(0), for the toolbar-scroll-lag fix) — content that
+   visually escapes past a transformed ancestor's box risks being clipped by
+   the compositor on some mobile browsers instead of rendering, which is
+   exactly what a negative-bottom version of this fix ran into. Keeping the
+   panel fully WITHIN the (now taller) wrapper avoids that entirely. */
 .agent-chat-panel.keyboard-open {
   padding-bottom: 0;
-  bottom: calc(-1 * var(--keyboard-gap-fix));
 }
 
 /* Collapsed (no .expanded class): only the always-rendered input row at the

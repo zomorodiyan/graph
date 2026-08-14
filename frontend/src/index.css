@@ -9,7 +9,7 @@
      keyboard is open — see the .agent-chat-panel.keyboard-open comment in
      App.css. Adjust this single value to close a gap above the keyboard, or
      pull back if it starts overshooting under the keyboard instead. */
-  --keyboard-gap-fix: 48px;
+  --keyboard-gap-fix: 54px;
 
   /* Light theme colors */
   --bg-primary: #ffffff;

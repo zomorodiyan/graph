@@ -55,6 +55,13 @@ function AgentChat() {
 
   const { top, height } = useVisualViewportRect()
   const keyboardLikelyOpen = height < window.innerHeight - 80 // same heuristic as MobileEditSheet.tsx
+  // Single source of truth with the CSS var of the same name (App.css) — read
+  // once, since it's a tuning constant, not something that changes mid-session.
+  const [keyboardGapFixPx] = useState(() => {
+    if (typeof window === 'undefined') return 0
+    const raw = getComputedStyle(document.documentElement).getPropertyValue('--keyboard-gap-fix')
+    return parseFloat(raw) || 0
+  })
 
   const viewContext = useMemo(() => {
     if (!graphName) {
@@ -84,6 +91,31 @@ function AgentChat() {
   useEffect(() => {
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight })
   }, [messages])
+
+  // Locks the underlying page's scroll while the keyboard is covering part
+  // of the screen and the chat is expanded. .agent-chat-viewport's top/height
+  // are recomputed reactively from visualViewport (see useVisualViewportRect.ts)
+  // — if the page is ALSO scrolling at the same time the keyboard is
+  // resizing that viewport, our JS-driven positioning can lag a frame behind
+  // the browser's own scroll-direction-dependent chrome/layout adjustments
+  // (the same category of lag .agent-chat-viewport's translateZ(0) addresses
+  // for Chrome's toolbar animation, just not fully covered here — the input
+  // value we're compositing was itself stale). Locking the page removes the
+  // race entirely instead of chasing it further: there's nothing to type
+  // into the chat's history/graph list behind it at the same time anyway.
+  useEffect(() => {
+    if (!expanded || !keyboardLikelyOpen) return
+    const scrollY = window.scrollY
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = '100%'
+    return () => {
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
+      window.scrollTo(0, scrollY)
+    }
+  }, [expanded, keyboardLikelyOpen])
 
   // Focus the message box once a key gets connected while expanded (e.g.
   // right after saving it in the key-setup form) — expanding otherwise
@@ -138,7 +170,7 @@ function AgentChat() {
   }
 
   return (
-    <div className="agent-chat-viewport" style={{ top, height }}>
+    <div className="agent-chat-viewport" style={{ top, height: height + (keyboardLikelyOpen ? keyboardGapFixPx : 0) }}>
       <div
         className={`agent-chat-panel${expanded ? ' expanded' : ''}${keyboardLikelyOpen ? ' keyboard-open' : ''}`}
         onBlur={handleContainerBlur}
