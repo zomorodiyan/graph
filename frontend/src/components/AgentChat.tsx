@@ -301,7 +301,7 @@ function AgentChat() {
               handleSend()
             }
           }}
-          placeholder={apiKey ? 'Message the agent…' : 'Tap to connect your API key…'}
+          placeholder={apiKey ? 'Message the agent…' : 'Enter key'}
           rows={1}
         />
         {isSending ? (
