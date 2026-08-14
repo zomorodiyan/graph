@@ -1,8 +1,15 @@
 :root {
   /* Height of the agent chat bar's collapsed (input-row-only) state — used
-     by App.css's .top-buttons/.breadcrumb offsets so they clear the bar
-     rather than overlap it. */
-  --agent-bar-height: 4rem;
+     by App.css's .top-buttons/.breadcrumb/.circular-scroll-container
+     offsets so they clear the bar rather than overlap it (or leave a gap
+     above it). Measured from the actual rendered bar, not guessed — it
+     grew taller than the old 4rem once the theme/depth/note buttons moved
+     inline into this same row. Desktop's floating-card layout adds its own
+     20px bottom margin on top of this (see the @media override below),
+     so needs a taller value too — env(safe-area-inset-bottom) covers the
+     device-specific home-indicator/notch part separately, added directly
+     in the consuming rules. */
+  --agent-bar-height: 4.75rem;
 
   /* Light theme colors */
   --bg-primary: #ffffff;
@@ -93,6 +100,15 @@
   /* Checkpoint status colors — actual vs. expected-by-date progress */
   --status-good: #388E3C;
   --status-bad:  #E65100;
+}
+
+/* Same breakpoint App.css's .agent-chat-shell switches to the floating-card
+   desktop layout at, which adds its own 20px bottom margin — bump the
+   reserve by exactly that so nothing that clears "the bar" undershoots. */
+@media (min-width: 32rem) {
+  :root {
+    --agent-bar-height: 6rem;
+  }
 }
 
 [data-theme='dark'] {

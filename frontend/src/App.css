@@ -46,12 +46,19 @@
 /* Circular: capped height + its own scroll region, so scrollTop can be
    teleported precisely at the clone boundaries without fighting whole-page
    scroll. The budget mirrors CIRCULAR_SCROLL_CHROME_RESERVE_PX in
-   GraphView.tsx — keep the two numbers in sync. Only clears the agent bar
-   itself (an interactive control, so items under it would be hard to tap)
-   — the breadcrumb is allowed to sit over the list's last bit of content,
-   since it paints its own background and stays legible either way. */
+   GraphView.tsx — keep the two numbers in sync. No "20px" term here on
+   purpose, unlike .breadcrumb below — that 20px is a deliberate visual
+   buffer for the breadcrumb pill specifically, not a general "clear the
+   bar" margin, so this goes all the way to the agent bar's own top edge
+   with nothing wasted. Only clears the agent bar itself (an interactive
+   control, so items under it would be hard to tap) — the breadcrumb is
+   allowed to sit over the list's last bit of content, since it paints its
+   own background and stays legible either way. Adds
+   env(safe-area-inset-bottom) for the same reason as .breadcrumb — without
+   it this undershoots the bar's real height on devices with a
+   home-indicator/notch, leaving a gap the size of that inset. */
 .circular-scroll-container.circular {
-  max-height: calc(100dvh - (20px + var(--agent-bar-height)));
+  max-height: calc(100dvh - (var(--agent-bar-height) + env(safe-area-inset-bottom, 0px)));
   overflow-y: auto;
   overscroll-behavior: contain;
   /* Chrome's native scroll anchoring auto-adjusts scrollTop when content
@@ -85,8 +92,12 @@
   /* GraphView no longer renders its own .top-buttons (theme/depth/note moved
      into the agent chat bar) — this only needs to clear the bar itself now,
      not a separate stacked row above it, so it moves down to roughly where
-     .top-buttons used to sit. */
-  bottom: calc(20px + var(--agent-bar-height));
+     .top-buttons used to sit. --agent-bar-height is a static estimate of the
+     bar's own height; the collapsed bar also grows by
+     env(safe-area-inset-bottom) on devices with a home-indicator/notch (see
+     .agent-chat-shell:not(.expanded)), so that has to be added here too or
+     this sits too high, leaving a gap above the bar on those devices. */
+  bottom: calc(20px + var(--agent-bar-height) + env(safe-area-inset-bottom, 0px));
   left: 20px;
   display: flex;
   flex-wrap: wrap;
