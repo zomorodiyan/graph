@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useHighlights } from '../hooks/useHighlights'
 import { useViewOptions } from '../hooks/useViewOptions'
-import { useCircularScroll } from '../hooks/useCircularScroll'
+import { useCircularScroll, LOOP_SPACER_PX } from '../hooks/useCircularScroll'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { SWIPE_THRESHOLD, SWIPE_VERTICAL_LIMIT } from '../hooks/useItemSwipe'
 import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem } from '@api'
@@ -35,11 +35,14 @@ const noop = () => {}
 // scroll container's height budget — mirrors `.circular-scroll-container
 // .circular`'s max-height calc in App.css (just the agent bar's own
 // height, nothing extra — the breadcrumb is allowed to overlap the list's
-// last bit of content, since it has its own background). Uses the mobile
-// --agent-bar-height (58px); this only affects the coarse plain/circular
-// threshold decision, not the actual rendered max-height (pure CSS, and
-// responsive to the real var), so being off by the desktop bump doesn't
-// materially matter here.
+// last bit of content, since it has its own background). Looping itself is
+// always on once a list has 2+ items (see useCircularScroll.ts) — this
+// budget only bounds how tall the container is allowed to render and how
+// big the clone groups need to grow to keep scrolling seamless at that
+// height. Uses the mobile --agent-bar-height (58px); being off by the
+// desktop bump doesn't materially matter here since it only feeds that
+// clone-sizing math, not the actual rendered max-height (pure CSS, and
+// responsive to the real var).
 const CIRCULAR_SCROLL_CHROME_RESERVE_PX = 58
 
 // Reorder helper for level-2/3 drags — same in-place delete+reassign trick as
@@ -1058,12 +1061,13 @@ function GraphView() {
         {/* Sections - rendered in local order for instant drag feedback.
             Wrapped in a persistent container so useCircularScroll can manage
             scrollTop across mode changes without unmounting the real items —
-            only the container's CLASS toggles between plain (natural height)
-            and circular (capped + scrollable), never its identity. The two
-            boundary clones only mount in circular mode and are fully inert
-            (pointer-events:none + aria-hidden, plus their own edit/drag/drop
-            state forced off) so no interaction — and no stray "this item is
-            mid-edit" render — can ever come from a clone; see
+            only the container's CLASS toggles between plain (single item,
+            nothing to loop) and circular (2+ items — always on, capped +
+            scrollable), never its identity. The two boundary clones only
+            mount in circular mode and are fully inert (pointer-events:none +
+            aria-hidden, plus their own edit/drag/drop state forced off) so
+            no interaction — and no stray "this item is mid-edit" render —
+            can ever come from a clone; see
             useCircularScroll.ts for why this is needed at all. */}
         <div
           ref={circularContainerRef}
@@ -1073,12 +1077,20 @@ function GraphView() {
           aria-label="Items"
         >
           {circular && cloneCount > 0 && (
+            <>
             <div ref={topCloneRef} className="circular-clone circular-clone-top" aria-hidden="true" tabIndex={-1}>
               {levelOneKeys.slice(-cloneCount).map((key, i) => {
                 const index = levelOneKeys.length - cloneCount + i
                 return renderCloneSection(key, '__circular_clone_top__', index)
               })}
             </div>
+            {/* Marks the loop seam — scrolling past the last real item lands
+                here (blank) before the top clone's first item, rather than
+                jumping straight into what would otherwise read as a repeat
+                with no warning. Height must match LOOP_SPACER_PX exactly;
+                see useCircularScroll.ts's teleport math. */}
+            <div className="circular-loop-spacer" style={{ height: LOOP_SPACER_PX }} aria-hidden="true" />
+            </>
           )}
           <div ref={realListRef} className="real-items">
             {levelOneKeys.map((key, index) => {
@@ -1161,9 +1173,15 @@ function GraphView() {
             })}
           </div>
           {circular && cloneCount > 0 && (
+            <>
+            {/* Symmetric spacer for the other seam — scrolling up past the
+                first real item lands here before the bottom clone's last
+                item. */}
+            <div className="circular-loop-spacer" style={{ height: LOOP_SPACER_PX }} aria-hidden="true" />
             <div ref={bottomCloneRef} className="circular-clone circular-clone-bottom" aria-hidden="true" tabIndex={-1}>
               {levelOneKeys.slice(0, cloneCount).map((key, index) => renderCloneSection(key, '__circular_clone_bottom__', index))}
             </div>
+            </>
           )}
         </div>
 

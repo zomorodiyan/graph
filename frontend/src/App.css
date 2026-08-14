@@ -47,12 +47,12 @@
   width: 100%;
 }
 
-/* Wraps the level-1 item list (+ the two circular-loop boundary clones, when
-   active) — see useCircularScroll.ts. Stays mounted across plain/circular
-   transitions; only this class toggles, so the real items underneath never
-   unmount just because the mode flipped. Plain (no `.circular`): natural
-   height, no scrolling, nothing rendered beyond the real items — this is
-   what keeps a short list "no repeating mess." */
+/* Wraps the level-1 item list (+ the two circular-loop boundary clones and
+   their spacers, when active) — see useCircularScroll.ts. Stays mounted
+   across plain/circular transitions; only this class toggles, so the real
+   items underneath never unmount just because the mode flipped. Plain (no
+   `.circular`, a single item — nothing to loop): natural height, no
+   scrolling, nothing rendered beyond the real item. */
 .circular-scroll-container {
   width: 100%;
 }
@@ -82,11 +82,43 @@
      scrollTop correction gets double-applied. This hook owns scrollTop
      entirely; the browser must not also weigh in. */
   overflow-anchor: none;
+  /* Looping is now always on (see useCircularScroll.ts), so this container
+     is a scrollable ancestor of every item — including 2-3 item lists that
+     used to render in plain page flow with no scrollable ancestor nearby at
+     all. Per-item swipe-left/right (useItemSwipe.ts) never called
+     preventDefault — it never needed to, since there was nothing this close
+     claiming the gesture. Now the browser's own touch-scroll recognizer can
+     grab a swipe before the item's touchmove handler sees it, since default
+     touch-action lets it claim any pannable direction. pan-y declares
+     "only vertical panning is native here" so horizontal item swipes are
+     always left for JS, regardless of whether this container actually has
+     anything to scroll. */
+  touch-action: pan-y;
 }
 
 /* Purely visual scroll padding — never a real interaction target. */
 .circular-clone {
   pointer-events: none;
+}
+
+/* Blank marker at each loop seam (see useCircularScroll.ts's LOOP_SPACER_PX
+   and GraphView.tsx's JSX) — height is set inline from that same constant,
+   this rule is just the look. A centered dotted rule rather than truly
+   empty space, so scrolling past the last item reads as "the list ends and
+   loops here" instead of a glitchy blank gap. */
+.circular-loop-spacer {
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  opacity: 0.4;
+}
+
+.circular-loop-spacer::before {
+  content: '· · ·';
+  font-size: 0.875rem;
+  letter-spacing: 0.25rem;
 }
 
 /* Copy/Delete-selected bar (class name predates the "New"/"Paste" buttons'

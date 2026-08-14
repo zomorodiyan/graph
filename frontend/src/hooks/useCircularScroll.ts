@@ -1,5 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 
+// Fixed height (not measured) of the blank marker rendered at each loop seam
+// (top-clone/real-list, real-list/bottom-clone) — see the "why a spacer"
+// note on the hook doc comment below. Exported so GraphView.tsx can size the
+// actual spacer elements to the exact same number the scroll math below
+// uses; keeping it a constant (not a ResizeObserver target) means the
+// teleport math never has to wait on an extra measurement round-trip.
+export const LOOP_SPACER_PX = 32
+
 interface UseCircularScrollOptions {
   /** Number of real (non-clone) level-1 items currently in the list. */
   count: number
@@ -10,16 +18,19 @@ interface UseCircularScrollOptions {
       progress — some browsers auto-scroll a scrollable container near its
       edges during dragover, which would otherwise fight the drag). */
   paused?: boolean
-  /** Available viewport height, in px, for the scrollable region. Real
-      content taller than this activates circular mode; shorter content
-      renders naturally with no clones/scrolling ("no repeating mess" for
-      small graphs). */
+  /** Available viewport height, in px, for the scrollable region — caps how
+      tall the container is allowed to render (CSS max-height, see App.css)
+      and how big the clone groups need to grow to keep scrolling seamless
+      at that height. Does NOT gate whether looping is active at all — see
+      `circular` below. */
   budgetPx: number
 }
 
 interface UseCircularScrollResult {
-  /** True once real content exceeds budgetPx — render the boundary clones
-      and let this hook manage scrollTop while true. */
+  /** True whenever there are 2+ real items — looping is always available,
+      not just when content overflows the viewport (see the hook doc
+      comment for why). Render the boundary clones and the loop-seam
+      spacers, and let this hook manage scrollTop, while true. */
   circular: boolean
   /** How many trailing/leading real items to render in the top/bottom
       clone, respectively (see "why more than one item" below). 0 while not
@@ -43,23 +54,33 @@ interface UseCircularScrollResult {
  * Makes a vertical list of items scroll circularly: past the last item loops
  * to the first, past the first loops to the last. Renders the full list once
  * (no windowing) plus a clone of the last `cloneCount` items above it and a
- * clone of the first `cloneCount` items below it, and teleports scrollTop by
- * the real content's height whenever the user scrolls into a clone —
- * imperceptible since the clone is pixel-identical to what it replaces.
+ * clone of the first `cloneCount` items below it, separated from the real
+ * list by a blank LOOP_SPACER_PX-tall marker at each seam, and teleports
+ * scrollTop by one full loop cycle (real content + both spacers) whenever
+ * the user scrolls into a clone — imperceptible since the clone is
+ * pixel-identical to what it replaces.
+ *
+ * Always active once there are 2+ real items, regardless of whether content
+ * overflows the viewport — an earlier version only looped once real content
+ * was taller than the screen, specifically to avoid a short list ever
+ * visibly showing the same item twice with nothing to scroll. The spacer is
+ * what replaces that guard now: it marks "the list wraps here" clearly
+ * enough that seeing item 1 again — even on one screen, with no scrolling
+ * involved for a short list — reads as an intentional loop boundary rather
+ * than a glitchy duplicate.
  *
  * Why a clone GROUP, not just one item: the browser can only clamp scrollTop
  * at its true native min (0) and max (scrollHeight - clientHeight) — there's
  * no way to intercept "the user scrolled past the seam" earlier than that.
  * At the native max, the entire viewport-height's worth of content is
  * showing, ending flush with the bottom clone's own bottom edge. For that
- * whole visible window to be pixel-identical to real content after a `-=
- * realHeight` shift, the bottom clone must itself be at least a full
- * viewport tall — a single short item's clone isn't enough once the
- * viewport is taller than one item (the common case). So `cloneCount` grows
- * (bounded at `count - 1`, never cloning every real item) until both clone
- * groups are at least `budgetPx` tall. Only activates at all once real
- * content exceeds the viewport ("circular" mode), so short lists that fit
- * on screen still render with zero clones.
+ * whole visible window to be pixel-identical to real content after the
+ * teleport shift, the bottom clone must itself be at least a full viewport
+ * tall — a single short item's clone isn't enough once the viewport is
+ * taller than one item (the common case, whenever a list's content DOES
+ * exceed budgetPx). So `cloneCount` grows (bounded at `count - 1`, never
+ * cloning every real item) until both clone groups are at least `budgetPx`
+ * tall.
  */
 export function useCircularScroll({ count, resetKey, paused = false, budgetPx }: UseCircularScrollOptions): UseCircularScrollResult {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -67,7 +88,10 @@ export function useCircularScroll({ count, resetKey, paused = false, budgetPx }:
   const bottomCloneRef = useRef<HTMLDivElement>(null)
   const realListRef = useRef<HTMLDivElement>(null)
 
-  const [circular, setCircular] = useState(false)
+  // A single self-clone would be pointless (and there's nothing to mark a
+  // "loop" between an item and itself), so looping never activates below 2
+  // real items — otherwise always on, independent of content height.
+  const circular = count >= 2
   const [cloneCount, setCloneCount] = useState(1)
 
   const realListHeightRef = useRef(0)
@@ -78,35 +102,26 @@ export function useCircularScroll({ count, resetKey, paused = false, budgetPx }:
   const pausedRef = useRef(paused)
   pausedRef.current = paused
 
-  // A single self-clone would be pointless (and would reintroduce the
-  // visible-duplicate problem for a 1-item list), so circular mode never
-  // activates below 2 real items.
-  const eligible = count >= 2
-
   useEffect(() => {
     setCloneCount(1)
     topCloneHeightRef.current = 0
-    if (!eligible) setCircular(false)
-  }, [eligible, resetKey])
+  }, [circular, resetKey])
 
-  // Measure real content + both clone groups on every relevant change,
-  // decide plain vs. circular, grow cloneCount until both clone groups clear
-  // the viewport budget, and compensate scrollTop if the top clone group
-  // resized while already circular (a growing/shrinking last item, or the
-  // clone group itself growing by one more item, shouldn't visually shift
-  // the current view).
+  // Measure real content + both clone groups on every relevant change, grow
+  // cloneCount until both clone groups clear the viewport budget (so
+  // scrolling a genuinely tall list stays seamless — see the hook doc
+  // comment), and compensate scrollTop if the top clone group resized while
+  // already circular (a growing/shrinking last item, or the clone group
+  // itself growing by one more item, shouldn't visually shift the current
+  // view).
   useEffect(() => {
-    if (!eligible) return
+    if (!circular) return
     const realEl = realListRef.current
     if (!realEl) return
 
     const measure = () => {
       const realHeight = realEl.scrollHeight
       realListHeightRef.current = realHeight
-
-      const shouldBeCircular = realHeight > budgetPx
-      setCircular(prev => (prev === shouldBeCircular ? prev : shouldBeCircular))
-      if (!shouldBeCircular) return
 
       const topEl = topCloneRef.current
       const bottomEl = bottomCloneRef.current
@@ -136,23 +151,25 @@ export function useCircularScroll({ count, resetKey, paused = false, budgetPx }:
     if (topCloneRef.current) observer.observe(topCloneRef.current)
     if (bottomCloneRef.current) observer.observe(bottomCloneRef.current)
     return () => observer.disconnect()
-  }, [eligible, resetKey, budgetPx, circular, cloneCount, count])
+  }, [resetKey, budgetPx, circular, cloneCount, count])
 
-  // Land exactly at the top of real item 1 whenever circular mode
-  // (re)activates. Not re-run on cloneCount changes — the measure effect's
-  // delta-compensation above already keeps the view stable as the clone
-  // group grows from its initial 1-item size.
+  // Land exactly at the top of real item 1 (past the top clone AND its
+  // trailing spacer) whenever circular mode (re)activates. Not re-run on
+  // cloneCount changes — the measure effect's delta-compensation above
+  // already keeps the view stable as the clone group grows from its initial
+  // 1-item size.
   useLayoutEffect(() => {
     if (!circular) return
     const container = containerRef.current
     const topEl = topCloneRef.current
     if (!container || !topEl) return
-    container.scrollTop = topEl.getBoundingClientRect().height
+    container.scrollTop = topEl.getBoundingClientRect().height + LOOP_SPACER_PX
   }, [circular, resetKey])
 
-  // Boundary crossing -> teleport by exactly the real content's height.
-  // scrollTop clamps at the true DOM limits regardless of fling speed, so
-  // this is a reliable, un-missable trigger even on a fast flick.
+  // Boundary crossing -> teleport by exactly one loop cycle (real content +
+  // the spacer on each side of it). scrollTop clamps at the true DOM limits
+  // regardless of fling speed, so this is a reliable, un-missable trigger
+  // even on a fast flick.
   useEffect(() => {
     if (!circular) return
     const container = containerRef.current
@@ -168,10 +185,11 @@ export function useCircularScroll({ count, resetKey, paused = false, budgetPx }:
         const el = containerRef.current
         const realHeight = realListHeightRef.current
         if (!el || realHeight <= 0) return
+        const cycleHeight = realHeight + 2 * LOOP_SPACER_PX
         if (el.scrollTop <= 0) {
-          el.scrollTop += realHeight
+          el.scrollTop += cycleHeight
         } else if (el.scrollTop >= el.scrollHeight - el.clientHeight - 1) {
-          el.scrollTop -= realHeight
+          el.scrollTop -= cycleHeight
         }
       })
     }
