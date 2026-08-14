@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAgentChat } from '../hooks/useAgentChat'
@@ -15,27 +15,28 @@ import { fetchStructure, serializeItem, serializeStructure } from '../api/localC
 // Raw (0) isn't part of the cycle; long-pressing the button jumps to it directly.
 const DEPTHS = [3, 2] as const
 
-// Smallest the expanded panel can be dragged down to — one input row plus
-// the resize handle's own strip (measured: ~56px + ~16px), so "just one
-// line of input" stays true. A couple of px above the exact measured sum
-// so the handle never clips even by a hair (.agent-chat-messages shrinks
-// to true zero below this — see its comment in App.css — so nothing else
-// is competing for room).
-const MIN_PANEL_HEIGHT = 76
+// Smallest the permanent bubble can be dragged down to — enough to still
+// show a line or two of actual conversation above the input row, not just
+// the input row itself (a bare-minimum floor felt too easy to shrink down
+// to something useless). Purely a UX floor, easy to retune.
+const MIN_PANEL_HEIGHT = 180
 
 // Persistent, app-wide chat surface (mounted once in App.tsx, so it survives
 // navigation between the graphs list and any individual graph — "from
-// within any view" per the App Features template). Telegram-style: a single
-// compose bar (theme/depth/note buttons + textbox + send) is always visible
-// at the bottom of every screen. Focusing the textbox expands it into a
-// TOP-anchored, user-resizable panel instead of trying to keep a
-// bottom-anchored panel pinned above the on-screen keyboard via JS — the
-// top edge needs no keyboard tracking at all (it's always 0), and
-// visualViewport height is only consulted as a max-drag clamp, not raced
-// against scroll on every frame (see useViewOptions.ts / the drag handlers
-// below). Talks to the Claude API directly from the browser with the user's
-// own key (see agentClient.ts), which can view, edit, and add items in the
-// currently open graph via tools.
+// within any view" per the App Features template). On mobile this is a
+// PERMANENT top-anchored bubble (see .agent-chat-shell in App.css) —
+// scrollable conversation history above a fixed input row, always visible,
+// user-resizable via the drag handle. Focusing the textarea doesn't move or
+// resize anything; it only (a) makes the theme/depth/note buttons — now a
+// separate fixed row at the bottom of the screen, see .agent-chat-view-
+// buttons — hide temporarily so the keyboard doesn't cover them uselessly,
+// and (b) wires up the hardware/gesture back button to blur the textarea
+// (dismissing the keyboard) and bring that row back, via useModalBackButton
+// below. Desktop keeps the original collapsed-bar / expanded-card toggle
+// behavior, unaffected by any of this — see the `min-width: 32rem` overrides
+// in App.css. Talks to the Claude API directly from the browser with the
+// user's own key (see agentClient.ts), which can view, edit, and add items
+// in the currently open graph via tools.
 function AgentChat() {
   const { expanded, setExpanded, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop } = useAgentChat()
   const [draft, setDraft] = useState('')
@@ -82,8 +83,12 @@ function AgentChat() {
     },
   )
 
-  // Blurs the input (if focused) and collapses back to the bar-only state.
-  // Used by the close button, Escape, and losing focus entirely.
+  // Blurs the input (dismissing the keyboard on mobile) and marks composing
+  // as done — on mobile that just brings the view-buttons row back, on
+  // desktop it also collapses the card. Used by Escape, losing focus
+  // entirely, and (via useModalBackButton) the hardware/gesture back button
+  // — which is what makes "press back to dismiss the keyboard" also bring
+  // the row back, since both go through this same path.
   const collapse = () => {
     inputRef.current?.blur()
     setExpanded(false)
@@ -92,29 +97,52 @@ function AgentChat() {
   useModalBackButton(expanded, collapse)
 
   // Only `height` is used — the visible area's height above any on-screen
-  // keyboard, consulted purely as the drag handle's max bound (see below).
-  // `top` isn't needed: the expanded panel is always position:fixed; top:0,
-  // no keyboard-relative positioning left to compute.
+  // keyboard, consulted for the permanent bubble's default size and as the
+  // drag handle's max bound (see below). `top` isn't needed: the mobile
+  // bubble is always position:fixed; top:0, no keyboard-relative
+  // positioning left to compute.
   const { height } = useVisualViewportRect()
 
-  // Draggable height of the expanded panel. Defaults to a third of the
-  // visible height and keeps tracking it live (in case the keyboard is
-  // still animating open when this first sets) until the user actually
-  // drags, after which only a downward clamp applies if the visible height
-  // shrinks further. Resets on every collapse->expand transition.
-  const [panelHeight, setPanelHeight] = useState(0)
+  // Draggable height of the permanent mobile bubble (desktop ignores this —
+  // its CSS forces height:auto regardless, see App.css). Defaults to a
+  // third of the visible height and keeps tracking it live (in case the
+  // keyboard is still animating open when this first sets, or opens/closes
+  // later) until the user actually drags, after which it's remembered for
+  // the rest of the session — composing/blurring no longer resets it, since
+  // the bubble isn't collapsing/expanding anymore, just staying put like
+  // the user set it.
+  // Lazy-initialized from the real viewport (not 0) so there's no flash of
+  // a collapsed-to-nothing bubble before the effect below corrects it —
+  // the height style is now applied unconditionally (see the JSX), unlike
+  // before when it only applied while expanded.
+  const [panelHeight, setPanelHeight] = useState(() =>
+    Math.round((typeof window !== 'undefined' ? (window.visualViewport?.height ?? window.innerHeight) : 0) / 3)
+  )
   const hasDraggedRef = useRef(false)
   useEffect(() => {
-    if (!expanded) {
-      hasDraggedRef.current = false
-      return
-    }
     if (!hasDraggedRef.current) {
       setPanelHeight(Math.round(height / 3))
     } else {
       setPanelHeight(h => Math.min(h, height))
     }
-  }, [expanded, height])
+  }, [height])
+
+  // The permanent mobile bubble is position:fixed, so it doesn't reserve
+  // any space in normal page flow — GraphView/StructuresView's own content
+  // still starts at the true top of the page and would render right
+  // underneath it (covered) without this. Publishing the live height as a
+  // CSS var (read via a mobile-only padding-top in App.css/StructuresView
+  // .css) lets those pages push their own content down by exactly this
+  // much, live, as the user drags the bubble bigger/smaller — rather than
+  // wiring up cross-component React state for something purely presentational.
+  // Desktop's CSS never references this var, so setting it unconditionally
+  // (not gated on viewport width) is harmless there. useLayoutEffect (not
+  // useEffect) so this is set before paint — otherwise there'd be a
+  // one-frame flash of page content under the bubble before it gets
+  // pushed down.
+  useLayoutEffect(() => {
+    document.documentElement.style.setProperty('--agent-bubble-height', `${panelHeight}px`)
+  }, [panelHeight])
 
   const dragStateRef = useRef<{ startY: number; startHeight: number } | null>(null)
   const handleResizeStart = (e: React.PointerEvent) => {
@@ -224,7 +252,7 @@ function AgentChat() {
   return (
     <div
       className={`agent-chat-shell${expanded ? ' expanded' : ''}`}
-      style={expanded ? { height: panelHeight } : undefined}
+      style={{ height: panelHeight }}
       onBlur={handleContainerBlur}
     >
       {!apiKey ? (
@@ -267,29 +295,35 @@ function AgentChat() {
         </div>
       )}
 
-      {/* Always rendered — collapsed state IS this row, so the textarea's
-          DOM node must never unmount (would drop focus / close the
-          keyboard mid-transition). Theme/depth/note buttons live here too,
-          Telegram/WhatsApp-style, hidden via CSS (not unmounted) once
-          expanded. */}
+      {/* Never unmounted — the textarea's DOM node (and its focus) must
+          never be disturbed. Theme/depth/note buttons wrap in their own
+          group: on mobile that group is pulled out via position:fixed into
+          its own row at the bottom of the screen (see .agent-chat-view-
+          buttons in App.css) — a separate, hideable-while-composing row,
+          not part of this bar — while on desktop it stays inline right
+          here (display:contents), unchanged from before. Living in this
+          same DOM position either way means no extra state to keep two
+          copies of these buttons in sync. */}
       <div className="agent-chat-input-row">
-        <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
-        {graphName && (
-          <button
-            className={`depth-toggle active${depth === 0 ? ' raw' : ''}`}
-            {...depthLongPress}
-            title={depth === 0 ? 'Raw view — tap to return, long-press elsewhere for Raw' : `Showing ${depth} levels — tap to cycle, long-press for Raw`}
-          >{depth === 0 ? 'R' : depth}</button>
-        )}
-        {graphName && (
-          <button
-            className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}${minimalView ? ' minimal' : ''}`}
-            {...ctxLongPress}
-            title={minimalView
-              ? 'Minimal view — tap to return to normal'
-              : `${viewMode === 'context' ? 'Note on' : 'Note off'} — tap to toggle, long-press for minimal view`}
-          >N</button>
-        )}
+        <div className={`agent-chat-view-buttons${expanded ? ' hidden' : ''}`}>
+          <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
+          {graphName && (
+            <button
+              className={`depth-toggle active${depth === 0 ? ' raw' : ''}`}
+              {...depthLongPress}
+              title={depth === 0 ? 'Raw view — tap to return, long-press elsewhere for Raw' : `Showing ${depth} levels — tap to cycle, long-press for Raw`}
+            >{depth === 0 ? 'R' : depth}</button>
+          )}
+          {graphName && (
+            <button
+              className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}${minimalView ? ' minimal' : ''}`}
+              {...ctxLongPress}
+              title={minimalView
+                ? 'Minimal view — tap to return to normal'
+                : `${viewMode === 'context' ? 'Note on' : 'Note off'} — tap to toggle, long-press for minimal view`}
+            >N</button>
+          )}
+        </div>
         <textarea
           ref={inputRef}
           value={draft}

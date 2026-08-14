@@ -5,6 +5,20 @@
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 0;
+  /* Mobile only — the agent bubble is a permanent position:fixed overlay
+     at the true top of the page (see .agent-chat-shell), so it reserves no
+     space in normal flow on its own; without this, level-1 items would
+     render right underneath it, covered. --agent-bubble-height is kept
+     live by AgentChat.tsx as the user drags the bubble bigger/smaller.
+     Desktop's agent card floats bottom-right instead, so doesn't need this
+     at all. */
+  padding-top: var(--agent-bubble-height, 0px);
+}
+
+@media (min-width: 32rem) {
+  .graph-container {
+    padding-top: 0;
+  }
 }
 
 /* Single vertical column, always — level-1 items no longer pack into
@@ -1304,100 +1318,86 @@
   margin-bottom: 0.5rem;
 }
 
-/* Agent chat — permanent, always-visible compose bar, mounted app-wide (see
-   App.tsx) so it's reachable from every view, Telegram/WhatsApp-style:
-   theme/depth/note buttons live inside the SAME bar as the textbox (see
-   .agent-chat-input-row below), not as a separate floating cluster.
-   No wrapper element needed anymore (unlike the old .agent-chat-viewport) —
-   collapsed and expanded are each a simple rectangle, neither needs an
-   invisible click-through bounding box around it. */
+/* Agent chat. Mobile: a PERMANENT top-anchored bubble — always this shape,
+   always showing the scrollable conversation above a fixed input row
+   (never a separate collapsed bottom bar to switch to/from; composing no
+   longer moves or resizes it). Desktop (min-width: 32rem, below) keeps the
+   original collapsed-bar / expanded-card toggle instead — no keyboard to
+   avoid there, so no reason to give up the compact idle state.
+   No wrapper element needed around this — collapsed and expanded (desktop)
+   or the one permanent shape (mobile) are each a simple rectangle, none of
+   them need an invisible click-through bounding box around it. */
 .agent-chat-shell {
   position: fixed;
   left: 0;
   right: 0;
+  top: 0;
   z-index: 1600;
   display: flex;
   flex-direction: column;
   background: var(--bg-secondary);
   border: 1.5px solid var(--border-color);
-  overflow: hidden;
-}
-
-/* Collapsed: plain bottom bar, no keyboard tracking of any kind — there's
-   no dynamic content here to chase a moving keyboard for. If a keyboard
-   happens to stay open after collapsing (uncommon — most close on blur),
-   the bar can sit behind it briefly; that known, rare edge case is a
-   trade worth making for dropping the fragile JS-position-tracking that
-   caused this session's actual bugs. */
-.agent-chat-shell:not(.expanded) {
-  bottom: 0;
-  border-radius: 1rem 1rem 0 0;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  /* Nothing in the collapsed bar is scrollable — without this, a swipe
-     starting on it (the buttons, the padding around them, anywhere but
-     inside the textarea's own text) falls through to the browser's
-     default touch handling, which scrolls the page underneath a fixed
-     element that isn't itself scrollable. Scoped to collapsed only —
-     .agent-chat-messages still needs real scrolling once expanded, and
-     touch-action on an ancestor can't be un-set by a descendant. */
-  touch-action: none;
-}
-
-/* Expanded: top-anchored instead of chasing the keyboard from the bottom.
-   top:0 needs no keyboard awareness at all — it's always the true top of
-   the screen. `height` is set inline by AgentChat.tsx (the user-draggable
-   panelHeight state); visualViewport height is only consulted there as the
-   drag handle's max bound, not continuously raced against scroll. */
-.agent-chat-shell.expanded {
-  top: 0;
   border-radius: 0 0 1rem 1rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   padding-top: env(safe-area-inset-top, 0px);
-}
-
-/* Collapsed: only the always-rendered input row shows — history/key-setup/
-   resize-handle are hidden via display:none, not unmounted, so the
-   textarea's DOM node (and its focus) is never disturbed by
-   expanding/collapsing. There's no header — dismissing the expanded panel
-   is via tapping outside, Escape, dragging to the minimum, or (on Android)
-   the hardware/gesture back button (see useModalBackButton above). */
-.agent-chat-shell:not(.expanded) .agent-chat-messages,
-.agent-chat-shell:not(.expanded) .agent-chat-key-setup,
-.agent-chat-shell:not(.expanded) .agent-chat-resize-handle {
-  display: none;
-}
-
-/* Expanded: the theme/depth/note buttons don't apply mid-chat, hidden the
-   same way. */
-.agent-chat-shell.expanded .agent-chat-input-row .theme-toggle,
-.agent-chat-shell.expanded .agent-chat-input-row .depth-toggle,
-.agent-chat-shell.expanded .agent-chat-input-row .ctx-toggle {
-  display: none;
+  overflow: hidden;
 }
 
 @media (min-width: 32rem) {
+  /* Desktop never uses the draggable inline height (AgentChat.tsx's
+     panelHeight only matters on mobile) — always its own content-driven
+     auto height, both collapsed and expanded below. !important is needed
+     to win over the inline style, which otherwise always beats a plain
+     media-query rule. */
+  .agent-chat-shell {
+    height: auto !important;
+  }
+
+  /* Collapsed: plain floating bar, bottom-right. */
   .agent-chat-shell:not(.expanded) {
+    top: auto;
+    bottom: 0;
     left: auto;
     width: 22rem;
     border-radius: 1rem;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
     margin: 0 20px 20px 0;
+    padding-top: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Desktop keeps the existing floating-card look for the expanded state
-     too — no keyboard to avoid, so no need for top-anchoring or a drag
-     handle (hidden below). `height` needs !important since it's overriding
-     the inline style AgentChat.tsx sets while expanded — inline styles
-     otherwise always win over a plain media-query rule. */
+  /* Expanded: floating card, same corner, taller (content-driven). */
   .agent-chat-shell.expanded {
     top: auto;
     bottom: 0;
     left: auto;
     width: 22rem;
-    height: auto !important;
     border-radius: 1rem;
     margin: 0 20px 20px 0;
     padding-top: 0;
+  }
+
+  /* Collapsed: only the input row shows — history/key-setup/resize-handle
+     are hidden via display:none, not unmounted, so the textarea's DOM node
+     (and its focus) is never disturbed by expanding/collapsing. There's no
+     header — dismissing the expanded card is via tapping outside, Escape,
+     or losing focus. */
+  .agent-chat-shell:not(.expanded) .agent-chat-messages,
+  .agent-chat-shell:not(.expanded) .agent-chat-key-setup {
+    display: none;
+  }
+
+  /* Collapsed: nothing above it, so the input row's divider would just be
+     a stray mark at the top of the bar. */
+  .agent-chat-shell:not(.expanded) .agent-chat-input-row {
+    border-top: none;
+  }
+
+  /* Expanded: the theme/depth/note buttons don't apply mid-chat, hidden
+     the same way (.agent-chat-view-buttons is display:contents on desktop
+     — see below — so this reaches the actual buttons through it). */
+  .agent-chat-shell.expanded .agent-chat-input-row .agent-chat-view-buttons {
+    display: none;
   }
 }
 
@@ -1475,17 +1475,20 @@
   padding: 0.6rem 0.75rem;
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
-}
-
-/* Collapsed: nothing above it, so the divider line would just be a stray
-   mark at the top of the bar. */
-.agent-chat-shell:not(.expanded) .agent-chat-input-row {
-  border-top: none;
+  /* Nothing here is scrollable — without this, a swipe on it (the padding
+     around the textarea, anywhere but the text itself) falls through to
+     the browser's default touch handling, which scrolls the page
+     underneath a fixed element that isn't itself scrollable.
+     .agent-chat-messages needs real scrolling so doesn't get this. */
+  touch-action: none;
 }
 
 /* Theme/depth/note buttons sit inline in the row now (Telegram/WhatsApp-
    style), not floating on their own — shrink slightly from their old
-   floating-button size so they don't crowd out the textarea. */
+   floating-button size so they don't crowd out the textarea. Applies to
+   .agent-chat-view-buttons's own children regardless of whether that
+   wrapper is display:contents (desktop) or its own fixed row (mobile) —
+   this selector matches on DOM ancestry, unaffected by either. */
 .agent-chat-input-row .theme-toggle,
 .agent-chat-input-row .depth-toggle,
 .agent-chat-input-row .ctx-toggle {
@@ -1493,6 +1496,48 @@
   height: 2.25rem;
   font-size: 16px;
   flex-shrink: 0;
+}
+
+/* Mobile: theme/depth/note buttons live in the input row's DOM (so there's
+   only ever one copy of them to keep in sync — see AgentChat.tsx) but are
+   pulled out of its visual flow into their own fixed row at the bottom of
+   the screen, since the input row itself now lives at the bottom of the
+   permanent top bubble instead of at the bottom of the screen.
+   position:fixed escapes the input row's layout regardless of DOM nesting,
+   so this doesn't leave a gap behind in the input row. Hidden while
+   composing (focus is on the textarea) — see .hidden below and
+   AgentChat.tsx's `expanded` — so it doesn't sit uselessly under the
+   keyboard; the hardware/gesture back button brings it back (also via
+   `expanded`, see useModalBackButton in AgentChat.tsx). */
+.agent-chat-view-buttons {
+  display: flex;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1600;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+  background: var(--bg-secondary);
+  border-top: 1.5px solid var(--border-color);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.agent-chat-view-buttons.hidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (min-width: 32rem) {
+  /* Desktop: back to exactly how it was — inline in the same bar as the
+     textbox, no separate fixed row, no hide-while-composing. */
+  .agent-chat-view-buttons {
+    display: contents;
+  }
 }
 
 .agent-chat-input-row textarea {

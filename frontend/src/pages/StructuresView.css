@@ -13,6 +13,22 @@
   color: var(--text-primary);
 }
 
+/* Mobile only — the agent bubble is a permanent position:fixed overlay at
+   the true top of the page (see .agent-chat-shell in App.css), so without
+   this the graph cards up top would render right underneath it, covered.
+   --agent-bubble-height is kept live by AgentChat.tsx as the user drags the
+   bubble bigger/smaller. Desktop's agent card floats bottom-right instead,
+   so doesn't need this. */
+.structures-view {
+  padding-top: calc(2.5rem + var(--agent-bubble-height, 0px));
+}
+
+@media (min-width: 32rem) {
+  .structures-view {
+    padding-top: 2.5rem;
+  }
+}
+
 /* Header */
 .structures-header {
   text-align: center;
