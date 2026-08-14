@@ -158,8 +158,23 @@ export function useCircularScroll({ count, resetKey, paused = false, budgetPx }:
       if (delta !== 0 && prevTopHeight !== 0) container.scrollTop += delta
       topCloneHeightRef.current = topHeight
 
-      if ((topHeight < budgetPx || bottomHeight < budgetPx) && cloneCount < MAX_CLONE_COUNT) {
-        setCloneCount(c => c + 1)
+      const shortfallHeight = Math.max(topHeight, bottomHeight)
+      if (shortfallHeight < budgetPx && cloneCount < MAX_CLONE_COUNT) {
+        // Jump straight to an estimate of the total count needed, using the
+        // current group's own average per-item height, instead of growing
+        // by 1 and re-measuring each time — a short list that needs many
+        // repeats to fill budgetPx (see the hook doc comment on wrapping)
+        // would otherwise take that many sequential render/measure/commit
+        // cycles just to settle on mount. Estimate can undershoot a bit for
+        // a non-uniform list (top/bottom clones can be built from
+        // different, differently-tall items) — the surrounding `if` just
+        // runs this again next pass in that case, still far fewer passes
+        // than growing by 1.
+        const avgItemHeight = shortfallHeight / cloneCount
+        const estimate = avgItemHeight > 0
+          ? Math.ceil(budgetPx / avgItemHeight) + 1
+          : cloneCount + 1
+        setCloneCount(c => Math.min(MAX_CLONE_COUNT, Math.max(c + 1, estimate)))
       }
     }
 
