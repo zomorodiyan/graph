@@ -189,27 +189,23 @@ function AgentChat() {
   const { height } = useVisualViewportRect()
 
   // Draggable height of the permanent mobile bubble (desktop ignores this —
-  // its CSS forces height:auto regardless, see App.css). Defaults to a
-  // third of the visible height and keeps tracking it live (in case the
-  // keyboard is still animating open when this first sets, or opens/closes
-  // later) until the user actually drags, after which it's remembered for
+  // its CSS forces height:auto regardless, see App.css). Starts at the idle
+  // floor (expanded is always false on mount, see useAgentChat) and stays
+  // there until the user actually drags, after which it's remembered for
   // the rest of the session — composing/blurring no longer resets it, since
   // the bubble isn't collapsing/expanding anymore, just staying put like
-  // the user set it.
-  // Lazy-initialized from the real viewport (not 0) so there's no flash of
-  // a collapsed-to-nothing bubble before the effect below corrects it —
-  // the height style is now applied unconditionally (see the JSX), unlike
-  // before when it only applied while expanded.
-  const [panelHeight, setPanelHeight] = useState(() =>
-    Math.round((typeof window !== 'undefined' ? (window.visualViewport?.height ?? window.innerHeight) : 0) / 3)
-  )
+  // the user set it. A fixed floor needs no viewport measurement to be
+  // correct, unlike an earlier version of this that defaulted to a third of
+  // the visible height and had to keep re-deriving that fraction as the
+  // keyboard animated open/closed.
+  const [panelHeight, setPanelHeight] = useState(MIN_PANEL_HEIGHT_IDLE)
   const hasDraggedRef = useRef(false)
+  // Once the user has dragged, a shrinking viewport (keyboard opening,
+  // rotation) can't leave the panel taller than the new visible area —
+  // before any drag the panel just sits at its fixed floor, nothing to
+  // reclamp.
   useEffect(() => {
-    if (!hasDraggedRef.current) {
-      setPanelHeight(Math.round(height / 3))
-    } else {
-      setPanelHeight(h => Math.min(h, height))
-    }
+    if (hasDraggedRef.current) setPanelHeight(h => Math.min(h, height))
   }, [height])
 
   // The permanent mobile bubble is position:fixed, so it doesn't reserve
