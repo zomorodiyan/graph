@@ -185,11 +185,13 @@
   text-decoration: underline;
 }
 
-/* Passive radial schematic of the whole graph — see GraphMinimap.tsx /
-   graphMinimapLayout.ts. No background of its own — it floats directly over
-   the item list, same as the dots/lines it's made of. Mobile-only: hidden
-   past the same 32rem breakpoint the rest of the bottom chrome (agent bar
-   height bump, .agent-chat-shell) already switches to desktop layout at. */
+/* Passive schematic of the current path as a chain of arcs — see
+   GraphMinimap.tsx / graphMinimapLayout.ts. No background of its own — it
+   floats directly over the item list, same as the dots/lines it's made of.
+   Mobile-only: hidden past the same 32rem breakpoint the rest of the bottom
+   chrome (agent bar height bump, .agent-chat-shell) already switches to
+   desktop layout at. Height is set inline per-render (it grows with path
+   depth), not here. */
 .graph-minimap {
   align-self: flex-end;
 }
@@ -200,13 +202,26 @@
   }
 }
 
-.minimap-edge {
+/* Faint dashed trace of each level's arc — same "this marks a boundary,
+   not real content" role as .circular-loop-spacer's dotted rule elsewhere
+   in this file, at a similar low opacity. Without it the dots on a level
+   don't read as belonging to one arc together. */
+.minimap-arc-guide {
+  fill: none;
   stroke: var(--text-secondary);
-  stroke-width: 1;
+  stroke-width: 0.6;
+  stroke-dasharray: 1.5 1.5;
+  opacity: 0.4;
   vector-effect: non-scaling-stroke;
 }
-.minimap-edge.current {
+
+/* The chain of selected points connected into one line — "the path you
+   actually took," distinct from the individual per-level arcs. */
+.minimap-spine {
+  fill: none;
   stroke: var(--item-title);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
 }
 
 .minimap-node {
