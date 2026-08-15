@@ -60,10 +60,16 @@ export function usePageSwipe(onSwipeLeft: (path: string) => void, onSwipeRight: 
 
   const cleanupRef = useRef<(() => void) | null>(null)
 
-  const ref = useCallback((el: HTMLDivElement | null) => {
+  const ref = useCallback((maybeEl: HTMLDivElement | null) => {
     cleanupRef.current?.()
     cleanupRef.current = null
-    if (!el) return
+    if (!maybeEl) return
+    // A fresh const, not the parameter itself — TS doesn't carry a
+    // parameter's null-narrowing into nested function declarations (they
+    // could in principle be invoked later, after further reassignment), so
+    // the touch handlers below would otherwise still see `HTMLDivElement |
+    // null`. A separately-bound const's narrowing does persist into them.
+    const el = maybeEl
 
     function onTouchStart(e: TouchEvent) {
       if (e.touches.length !== 1) {
