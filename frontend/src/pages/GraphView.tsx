@@ -1050,7 +1050,6 @@ function GraphView() {
       {/* Breadcrumb + mini-map — fixed below bottom buttons */}
       {!inlineEdit && !subCreate && (
         <div className="bottom-overlay">
-          <GraphMinimap structure={structure} currentPath={path} />
           <nav className="breadcrumb">
             {breadcrumb.map((crumb, i) => (
               <span key={crumb.path}>
@@ -1063,6 +1062,7 @@ function GraphView() {
               </span>
             ))}
           </nav>
+          <GraphMinimap structure={structure} currentPath={path} />
         </div>
       )}
 

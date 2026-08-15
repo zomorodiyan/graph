@@ -1,13 +1,13 @@
 import { useMemo } from 'react'
 import { Structure } from '@api'
-import { buildMiniMapLayout, MINIMAP_WIDTH, MINIMAP_HEIGHT, MINIMAP_NODE_RADIUS } from '../utils/graphMinimapLayout'
+import { buildMiniMapLayout, MINIMAP_SIZE, MINIMAP_NODE_RADIUS, MINIMAP_HALO_RADIUS } from '../utils/graphMinimapLayout'
 
 interface GraphMinimapProps {
   structure?: Structure
   currentPath: string
 }
 
-// Passive schematic of the whole current graph, sitting above the
+// Passive radial schematic of the whole current graph, sitting beside the
 // breadcrumb (see .bottom-overlay in App.css) — no click/tap handling, no
 // hit-testing. Mobile-only via a CSS @media rule on .graph-minimap, not a JS
 // isMobile check: there's no behavioral difference between mobile/desktop
@@ -22,33 +22,39 @@ export default function GraphMinimap({ structure, currentPath }: GraphMinimapPro
 
   if (!layout || layout.points.length === 0) return null
 
+  const current = layout.points.find(p => p.isCurrent)
+
   return (
     <svg
       className="graph-minimap"
-      width={MINIMAP_WIDTH}
-      height={MINIMAP_HEIGHT}
-      viewBox={`0 0 ${MINIMAP_WIDTH} ${MINIMAP_HEIGHT}`}
+      width={MINIMAP_SIZE}
+      height={MINIMAP_SIZE}
+      viewBox={`0 0 ${MINIMAP_SIZE} ${MINIMAP_SIZE}`}
       aria-hidden="true"
     >
       {layout.points.map(p => {
-        if (!p.parentPath) return null
-        const parent = layout.byPath.get(p.parentPath)
-        if (!parent) return null
+        // Depth-0 items have no real parent — they connect to the hub instead.
+        const from = p.parentPath ? layout.byPath.get(p.parentPath) : layout.hub
+        if (!from) return null
         return (
           <line
             key={`e-${p.path}`}
             className={`minimap-edge${p.onPath ? ' current' : ''}`}
-            x1={parent.px} y1={parent.py} x2={p.px} y2={p.py}
+            x1={from.cx} y1={from.cy} x2={p.cx} y2={p.cy}
           />
         )
       })}
+      <circle className="minimap-hub" cx={layout.hub.cx} cy={layout.hub.cy} r={MINIMAP_NODE_RADIUS} />
       {layout.points.map(p => (
         <circle
           key={`n-${p.path}`}
           className={`minimap-node${p.onPath ? ' current' : ''}`}
-          cx={p.px} cy={p.py} r={MINIMAP_NODE_RADIUS}
+          cx={p.cx} cy={p.cy} r={MINIMAP_NODE_RADIUS}
         />
       ))}
+      {current && (
+        <circle className="minimap-halo" cx={current.cx} cy={current.cy} r={MINIMAP_HALO_RADIUS} />
+      )}
     </svg>
   )
 }
