@@ -82,14 +82,13 @@
   /* Looping is now always on (see useCircularScroll.ts), so this container
      is a scrollable ancestor of every item — including 2-3 item lists that
      used to render in plain page flow with no scrollable ancestor nearby at
-     all. Per-item swipe-left/right (useItemSwipe.ts) never called
-     preventDefault — it never needed to, since there was nothing this close
-     claiming the gesture. Now the browser's own touch-scroll recognizer can
-     grab a swipe before the item's touchmove handler sees it, since default
-     touch-action lets it claim any pannable direction. pan-y declares
-     "only vertical panning is native here" so horizontal item swipes are
-     always left for JS, regardless of whether this container actually has
-     anything to scroll. */
+     all. The page-level swipe gesture (usePageSwipe.ts) needs to win
+     horizontal drags back from the browser's own touch-scroll recognizer,
+     which can otherwise grab a swipe before the gesture's own touchmove
+     handler sees it, since default touch-action lets it claim any pannable
+     direction. pan-y declares "only vertical panning is native here" so
+     horizontal swipes are always left for JS, regardless of whether this
+     container actually has anything to scroll. */
   touch-action: pan-y;
 }
 
@@ -313,8 +312,9 @@
 
 /* Swipe drag feedback (translateX set inline, following the finger) — the
    whole bubble (.section-body, title + all its subs/subsubs) slides as one
-   block, since a swipe starting anywhere in it now targets the level-1 item
-   itself (see useItemSwipe's `active` flag / Section.tsx's swipe handlers).
+   block, driven by GraphView's single page-level swipe gesture (see
+   usePageSwipe.ts) rather than anything local to this item — Section.tsx
+   just renders whatever swipeOffsetX/swipeActive it's handed.
    "armed" means the drag has crossed the trigger threshold in a wired-up
    direction — a stronger tint than a not-yet-armed drag, so release timing
    is legible. */

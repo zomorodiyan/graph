@@ -1,7 +1,6 @@
 import { useRef, type CSSProperties } from 'react'
 import { StructureItem, UpdatePayload, getItemDueDate, sumValues, formatValueTotals } from '../api/localClient'
 import { parseLocalDate, daysUntil } from '../utils/dates'
-import { useItemSwipe } from '../hooks/useItemSwipe'
 import { useLongPressFactory } from '../hooks/useLongPress'
 import InlineItemEditor from './InlineItemEditor'
 
@@ -11,15 +10,16 @@ interface SectionProps {
   parentPath: string
   colorIndex: number
   onItemClick: (path: string) => void
-  // Mobile-only: swipe-left anywhere in this item's whole bubble (title,
-  // subs, subsubs — the swipe handlers live on .section-body, not any
-  // individual row) navigates into THIS level-1 item, regardless of which
-  // row the gesture started on. Its own onItemClick target would be a
-  // same-page no-op — see GraphView's handleNavigateInto.
-  onNavigateInto?: (path: string) => void
-  // Mobile-only: swipe-right anywhere in the bubble (or the background)
-  // always navigates up the tree — see GraphView's handleNavigateBack.
-  onNavigateBack?: () => void
+  // Mobile-only: live visual feedback for GraphView's single page-level
+  // swipe gesture (see usePageSwipe) — this item is being dragged toward
+  // swipe-left (navigate into it) or swipe-right (navigate up the tree),
+  // set only on whichever item (real row or circular-scroll clone) is
+  // currently under the finger. The gesture itself, and which item it
+  // targets, is decided entirely in GraphView; this component only needs to
+  // know how to draw its own dragged/armed state and carry data-item-path
+  // so GraphView's hit-test can find it in the first place.
+  swipeOffsetX?: number
+  swipeActive?: boolean
   onEditClick: (path: string, name: string, data: StructureItem) => void
   editingPath?: string | null
   // When false (mobile), an item being edited/added-to stays in place with just
@@ -207,8 +207,8 @@ function Section({
   parentPath,
   colorIndex: _colorIndex,
   onItemClick,
-  onNavigateInto,
-  onNavigateBack,
+  swipeOffsetX,
+  swipeActive = false,
   onEditClick,
   editingPath = null,
   editInline = true,
@@ -248,18 +248,13 @@ function Section({
   // gates long-press/right-click, swipe-right, and the Delete button inside the editor.
   const rowEditable = !isTimeView && !item.nonEditable
   const showLoading = isPending
-  // Mobile gesture vocabulary: swipe-left anywhere in this item's bubble
-  // navigates into it, swipe-right navigates back up the tree, long-press
-  // opens the editor directly, a plain tap toggles highlight (see
-  // makeLongPressHandlers below). Desktop is unchanged: click opens the
-  // editor (or navigates, for non-editable rows), right-click shows the
-  // context menu.
+  // Mobile gesture vocabulary: swipe-left anywhere on the page navigates
+  // into whichever item is at that height (see GraphView's usePageSwipe),
+  // swipe-right navigates back up the tree, long-press opens the editor
+  // directly, a plain tap toggles highlight (see makeLongPressHandlers
+  // below). Desktop is unchanged: click opens the editor (or navigates, for
+  // non-editable rows), right-click shows the context menu.
   const isMobile = !editInline
-  const { ref: swipeRef, drag } = useItemSwipe(
-    itemPath,
-    onNavigateInto ? () => onNavigateInto(itemPath) : null,
-    onNavigateBack ?? null,
-  )
   const makeLongPressHandlers = useLongPressFactory()
 
   // Get child items for layer2
@@ -269,7 +264,7 @@ function Section({
   if (showRaw && rawText !== undefined) {
     return (
       <div className="section" ref={sectionRef}>
-        <pre className="section-raw">{rawText}</pre>
+        <pre className="section-raw" data-item-path={itemPath}>{rawText}</pre>
       </div>
     )
   }
@@ -280,9 +275,9 @@ function Section({
   return (
     <div className="section" ref={sectionRef}>
       <div
-        ref={swipeRef}
-        className={`section-body${drag?.id === itemPath && drag.active ? ' swipe-armed' : ''}`}
-        style={drag?.id === itemPath ? { transform: `translateX(${drag.offsetX}px)` } : undefined}
+        data-item-path={itemPath}
+        className={`section-body${swipeActive ? ' swipe-armed' : ''}`}
+        style={swipeOffsetX ? { transform: `translateX(${swipeOffsetX}px)` } : undefined}
       >
       {/* Layer 1 - Main category */}
       <div className="layer1-container">

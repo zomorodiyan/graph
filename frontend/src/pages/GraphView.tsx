@@ -6,7 +6,7 @@ import { useHighlights } from '../hooks/useHighlights'
 import { useViewOptions } from '../hooks/useViewOptions'
 import { useCircularScroll, LOOP_SPACER_PX } from '../hooks/useCircularScroll'
 import { useModalBackButton } from '../hooks/useModalBackButton'
-import { SWIPE_THRESHOLD, SWIPE_VERTICAL_LIMIT } from '../hooks/useItemSwipe'
+import { usePageSwipe } from '../hooks/usePageSwipe'
 import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem } from '@api'
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
@@ -458,30 +458,29 @@ function GraphView() {
     navigate(buildPath(parentPath))
   }
 
-  // Swipe-left-to-navigate-into-it on a level-1 row (mobile gesture — see
-  // Section.tsx). Level-1 items have no "go to parent" navigation today
-  // because their own parent IS the current page (handleItemClick's trick
-  // would just reload the same page) — this goes straight to the item's own
-  // path instead, so its children become the new level-1 list.
+  // Swipe-left-to-navigate-into-it, anywhere on the page at that item's
+  // height (mobile gesture — see usePageSwipe, wired to .graph-container via
+  // pageSwipeRef below). Level-1 items have no "go to parent" navigation
+  // today because their own parent IS the current page (handleItemClick's
+  // trick would just reload the same page) — this goes straight to the
+  // item's own path instead, so its children become the new level-1 list.
   const handleNavigateInto = (itemPath: string) => {
     navigate(buildPath(resolveRealPath(itemPath)))
   }
 
   // Swipe-right always means "go up the tree" — one level shallower, and
-  // eventually out to the graphs list — regardless of what it starts on (a
-  // row's own swipe-right, see Section.tsx, calls this same function; this
-  // background handler covers empty space so the gesture works the same
-  // everywhere rather than only off of items). Computes the target
+  // eventually out to the graphs list — regardless of where on the page it
+  // starts (see usePageSwipe: one page-level gesture, not a per-item one,
+  // so this fires the same whether the finger started on a real row, a
+  // circular-scroll clone, or empty background space). Computes the target
   // explicitly, like handleItemClick/handleNavigateInto above, instead of
   // calling browser-history back: navigate(-1) only steps up through levels
   // actually *visited* in this tab, so landing on a deep path directly (a
   // fresh page load, a link, an agent-driven navigation) had nowhere
   // reliable to go back to — this always lands exactly one level up from
   // wherever the URL says we are now, or at the graphs list from the graph
-  // root. Per-row swipe handlers (useItemSwipe) call stopPropagation, so
-  // this background handler only ever sees touches that started on empty
-  // space. Also clears the highlight selection — highlighting is meant to
-  // be a temporary "point at this" gesture, not a selection that silently
+  // root. Also clears the highlight selection — highlighting is meant to be
+  // a temporary "point at this" gesture, not a selection that silently
   // follows you around as you navigate away (see the POP-navigation effect
   // below for the literal hardware/browser back button, a separate code
   // path since this is a PUSH, not a POP).
@@ -493,22 +492,7 @@ function GraphView() {
     }
     navigate(buildPath(path.split('.').slice(0, -1).join('.')))
   }
-  const backSwipeStart = useRef<{ x: number; y: number } | null>(null)
-  const handleBackgroundTouchStart = (e: React.TouchEvent) => {
-    backSwipeStart.current = e.touches.length === 1
-      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      : null
-  }
-  const handleBackgroundTouchEnd = (e: React.TouchEvent) => {
-    const s = backSwipeStart.current
-    backSwipeStart.current = null
-    if (!s) return
-    const deltaX = e.changedTouches[0].clientX - s.x
-    const deltaY = Math.abs(e.changedTouches[0].clientY - s.y)
-    if (deltaX > SWIPE_THRESHOLD && deltaY < SWIPE_VERTICAL_LIMIT) {
-      handleNavigateBack()
-    }
-  }
+  const { ref: pageSwipeRef, drag: pageSwipeDrag } = usePageSwipe(handleNavigateInto, handleNavigateBack)
 
   // Handle edit click
   const handleEditClick = (itemPath: string, _name: string, _data: StructureItem) => {
@@ -1030,6 +1014,13 @@ function GraphView() {
   const renderCloneSection = (key: string, reactKeyPrefix: string, colorIndex: number) => {
     const item = displayItems[key]
     if (!item) return null
+    // A clone can be exactly what's under the finger (clones are
+    // pointer-events: none, so the page-level swipe hit-test resolves by
+    // position, not by which DOM node the browser would normally target —
+    // see usePageSwipe's itemPathAtY) — it needs the same live drag visual
+    // as the real row so the item being swiped actually looks like it's
+    // moving under the finger.
+    const clonePath = path ? `${path}.${key}` : key
     return (
       <Section
         key={`${reactKeyPrefix}${key}`}
@@ -1038,8 +1029,8 @@ function GraphView() {
         parentPath={path || ''}
         colorIndex={colorIndex % COLORS.length}
         onItemClick={noop}
-        onNavigateInto={noop}
-        onNavigateBack={noop}
+        swipeOffsetX={pageSwipeDrag?.path === clonePath ? pageSwipeDrag.offsetX : undefined}
+        swipeActive={pageSwipeDrag?.path === clonePath && pageSwipeDrag.active}
         onEditClick={noop}
         editingPath={null}
         editInline={!isMobile}
@@ -1097,8 +1088,7 @@ function GraphView() {
 
       <div
         className="graph-container"
-        onTouchStart={handleBackgroundTouchStart}
-        onTouchEnd={handleBackgroundTouchEnd}
+        ref={pageSwipeRef}
       >
         {/* Items grid — CSS columns for tight packing with no gaps. Locked
             while the mobile sheet is open so a tap/swipe on a background row
@@ -1200,8 +1190,8 @@ function GraphView() {
                     parentPath={path || ''}
                     colorIndex={index % COLORS.length}
                     onItemClick={handleItemClick}
-                    onNavigateInto={handleNavigateInto}
-                    onNavigateBack={handleNavigateBack}
+                    swipeOffsetX={pageSwipeDrag?.path === itemPath ? pageSwipeDrag.offsetX : undefined}
+                    swipeActive={pageSwipeDrag?.path === itemPath && pageSwipeDrag.active}
                     onEditClick={handleEditClick}
                     editingPath={inlineEdit?.path || null}
                     editInline={!isMobile}

@@ -57,9 +57,8 @@ export function useLongPress(onLongPress: () => void, onClick: () => void) {
 
 // Factory version of the same gesture, for rows rendered in a .map() loop —
 // call once per list to get a `makeLongPressHandlers` that builds handlers
-// per row, sharing one timer (only one row can be mid-press at a time).
-// Mirrors useItemSwipe's factory pattern for the same reason (a component
-// rendering N rows can't call a hook N times).
+// per row, sharing one timer (only one row can be mid-press at a time) —
+// rules-of-hooks rules out calling useLongPress itself once per row.
 export function useLongPressFactory() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const firedRef = useRef(false)
