@@ -130,14 +130,15 @@
   text-align: center;
 }
 
-/* Shared fixed wrapper for the breadcrumb + (mobile) mini-map — a row, not a
-   column: the radial mini-map needs roughly equal width and height (see
-   GraphMinimap.tsx), so it sits beside the breadcrumb at the same bottom
-   band rather than stacked above it. pointer-events: none here (re-enabled
-   per real child below) — a `left:0; right:0` fixed box spans the full
-   width so the mini-map can sit flush right while the breadcrumb stays
-   flush left, and without this the empty gap between them would swallow
-   taps on the item list under it. */
+/* Shared fixed wrapper for the breadcrumb + (mobile) mini-map — one normal-
+   flow flex column instead of two independently `position: fixed` siblings,
+   because .breadcrumb has no fixed height (it wraps to 2+ lines on a long
+   path) so there's no way to compute "directly above the breadcrumb"
+   without either measuring it in JS or letting layout stack them for free
+   like this. pointer-events: none here (re-enabled per real child below) —
+   a `left:0; right:0` fixed box spans the full width so the mini-map can
+   sit flush right while the breadcrumb stays flush left, and without this
+   the empty gap between them would swallow taps on the item list under it. */
 .bottom-overlay {
   position: fixed;
   /* Sits flush against the bottom bar's own top edge — no deliberate buffer.
@@ -152,20 +153,14 @@
   right: 0;
   z-index: 999;
   display: flex;
-  flex-direction: row;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   pointer-events: none;
 }
 
 .bottom-overlay > .breadcrumb {
   pointer-events: auto;
-  /* Lets the breadcrumb shrink/wrap instead of pushing the fixed-size
-     mini-map off screen when a long path fills the row (see .graph-minimap's
-     flex-shrink: 0 below). */
-  flex: 1 1 auto;
-  min-width: 0;
 }
 
 .breadcrumb {
@@ -196,7 +191,7 @@
    past the same 32rem breakpoint the rest of the bottom chrome (agent bar
    height bump, .agent-chat-shell) already switches to desktop layout at. */
 .graph-minimap {
-  flex-shrink: 0;
+  align-self: flex-end;
 }
 
 @media (min-width: 32rem) {
@@ -219,13 +214,6 @@
 }
 .minimap-node.current {
   fill: var(--item-title);
-}
-
-/* The graph itself, not a real item — same muted tone as an off-path node
-   rather than a distinct color, since it's never part of the highlighted
-   "current path" (there's nothing to navigate to at the hub). */
-.minimap-hub {
-  fill: var(--text-secondary);
 }
 
 /* Marks the exact current item, distinct from the rest of its own

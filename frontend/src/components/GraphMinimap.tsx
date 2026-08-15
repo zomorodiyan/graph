@@ -33,18 +33,19 @@ export default function GraphMinimap({ structure, currentPath }: GraphMinimapPro
       aria-hidden="true"
     >
       {layout.points.map(p => {
-        // Depth-0 items have no real parent — they connect to the hub instead.
-        const from = p.parentPath ? layout.byPath.get(p.parentPath) : layout.hub
-        if (!from) return null
+        // Depth-0 items have no real parent — the graph's own root isn't
+        // rendered, so there's nothing to draw an edge to.
+        if (!p.parentPath) return null
+        const parent = layout.byPath.get(p.parentPath)
+        if (!parent) return null
         return (
           <line
             key={`e-${p.path}`}
             className={`minimap-edge${p.onPath ? ' current' : ''}`}
-            x1={from.cx} y1={from.cy} x2={p.cx} y2={p.cy}
+            x1={parent.cx} y1={parent.cy} x2={p.cx} y2={p.cy}
           />
         )
       })}
-      <circle className="minimap-hub" cx={layout.hub.cx} cy={layout.hub.cy} r={MINIMAP_NODE_RADIUS} />
       {layout.points.map(p => (
         <circle
           key={`n-${p.path}`}
