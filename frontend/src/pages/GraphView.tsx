@@ -12,6 +12,7 @@ import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
 import ContextMenu from '../components/ContextMenu'
+import GraphMinimap from '../components/GraphMinimap'
 
 // True on touch-primary devices (no on-screen keyboard problem on desktop,
 // so only mobile needs the item-stays-in-place + bottom-sheet editing pattern —
@@ -1046,20 +1047,23 @@ function GraphView() {
 
   return (
     <>
-      {/* Breadcrumb — fixed below bottom buttons */}
+      {/* Breadcrumb + mini-map — fixed below bottom buttons */}
       {!inlineEdit && !subCreate && (
-        <nav className="breadcrumb">
-          {breadcrumb.map((crumb, i) => (
-            <span key={crumb.path}>
-              {i > 0 && ' / '}
-              {i === breadcrumb.length - 1 ? (
-                <span>{crumb.label}</span>
-              ) : (
-                <Link to={crumb.path}>{crumb.label}</Link>
-              )}
-            </span>
-          ))}
-        </nav>
+        <div className="bottom-overlay">
+          <GraphMinimap structure={structure} currentPath={path} />
+          <nav className="breadcrumb">
+            {breadcrumb.map((crumb, i) => (
+              <span key={crumb.path}>
+                {i > 0 && ' / '}
+                {i === breadcrumb.length - 1 ? (
+                  <span>{crumb.label}</span>
+                ) : (
+                  <Link to={crumb.path}>{crumb.label}</Link>
+                )}
+              </span>
+            ))}
+          </nav>
+        </div>
       )}
 
       <div

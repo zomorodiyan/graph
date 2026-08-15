@@ -60,14 +60,14 @@
 /* Circular: capped height + its own scroll region, so scrollTop can be
    teleported precisely at the clone boundaries without fighting whole-page
    scroll. The budget mirrors CIRCULAR_SCROLL_CHROME_RESERVE_PX in
-   GraphView.tsx and .breadcrumb's own `bottom` below — keep all three in
-   sync. Only clears the agent bar itself (an interactive control, so items
-   under it would be hard to tap) — the breadcrumb is allowed to sit over
-   the list's last bit of content, since it paints its own background and
-   stays legible either way. Adds env(safe-area-inset-bottom) for the same
-   reason as .breadcrumb — without it this undershoots the bar's real
-   height on devices with a home-indicator/notch, leaving a gap the size of
-   that inset. */
+   GraphView.tsx and .bottom-overlay's own `bottom` below — keep all three
+   in sync. Only clears the agent bar itself (an interactive control, so
+   items under it would be hard to tap) — the breadcrumb/mini-map are
+   allowed to sit over the list's last bit of content, since they paint
+   their own background and stay legible either way. Adds
+   env(safe-area-inset-bottom) for the same reason as .bottom-overlay —
+   without it this undershoots the bar's real height on devices with a
+   home-indicator/notch, leaving a gap the size of that inset. */
 .circular-scroll-container.circular {
   max-height: calc(100dvh - (var(--agent-bar-height) + env(safe-area-inset-bottom, 0px)));
   overflow-y: auto;
@@ -130,23 +130,45 @@
   text-align: center;
 }
 
-.breadcrumb {
+/* Shared fixed wrapper for the breadcrumb + (mobile) mini-map — one normal-
+   flow flex column instead of two independently `position: fixed` siblings,
+   because .breadcrumb has no fixed height (it wraps to 2+ lines on a long
+   path) so there's no way to compute "directly above the breadcrumb"
+   without either measuring it in JS or letting layout stack them for free
+   like this. pointer-events: none here (re-enabled per real child below) —
+   a `left:0; right:0` fixed box spans the full width so the mini-map can
+   sit flush right while the breadcrumb stays flush left, and without this
+   the empty gap between them would swallow taps on the item list under it. */
+.bottom-overlay {
   position: fixed;
-  /* Sits flush against the bottom bar's own top edge and the screen's left
-     edge — no deliberate buffer on either side. --agent-bar-height is a
-     static estimate of the bar's own height; the collapsed bar also grows
-     by env(safe-area-inset-bottom) on devices with a home-indicator/notch
-     (see .agent-chat-shell:not(.expanded)), so that has to be added here
-     too or this sits too high, leaving a gap above the bar on those
-     devices — that's the bar's real footprint, not extra spacing. */
+  /* Sits flush against the bottom bar's own top edge — no deliberate buffer.
+     --agent-bar-height is a static estimate of the bar's own height; the
+     collapsed bar also grows by env(safe-area-inset-bottom) on devices with
+     a home-indicator/notch (see .agent-chat-shell:not(.expanded)), so that
+     has to be added here too or this sits too high, leaving a gap above the
+     bar on those devices — that's the bar's real footprint, not extra
+     spacing. */
   bottom: calc(var(--agent-bar-height) + env(safe-area-inset-bottom, 0px));
   left: 0;
+  right: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.bottom-overlay > .breadcrumb {
+  pointer-events: auto;
+}
+
+.breadcrumb {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   font-size: 18px;
   color: var(--text-secondary);
-  z-index: 999;
   background: var(--bg-primary);
   opacity: 0.85;
   padding: 0.25rem 0.6rem;
@@ -161,6 +183,39 @@
 
 .breadcrumb a:hover {
   text-decoration: underline;
+}
+
+/* Passive whole-graph schematic — see GraphMinimap.tsx /
+   graphMinimapLayout.ts. Mobile-only: hidden past the same 32rem breakpoint
+   the rest of the bottom chrome (agent bar height bump, .agent-chat-shell)
+   already switches to desktop layout at. */
+.graph-minimap {
+  align-self: flex-end;
+  background: var(--bg-primary);
+  opacity: 0.85;
+  border-radius: 0.5rem;
+}
+
+@media (min-width: 32rem) {
+  .graph-minimap {
+    display: none;
+  }
+}
+
+.minimap-edge {
+  stroke: var(--text-secondary);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.minimap-edge.current {
+  stroke: var(--item-title);
+}
+
+.minimap-node {
+  fill: var(--text-secondary);
+}
+.minimap-node.current {
+  fill: var(--item-title);
 }
 
 .section {
