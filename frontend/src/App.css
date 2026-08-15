@@ -60,14 +60,14 @@
 /* Circular: capped height + its own scroll region, so scrollTop can be
    teleported precisely at the clone boundaries without fighting whole-page
    scroll. The budget mirrors CIRCULAR_SCROLL_CHROME_RESERVE_PX in
-   GraphView.tsx and .bottom-overlay's own `bottom` below — keep all three
-   in sync. Only clears the agent bar itself (an interactive control, so
-   items under it would be hard to tap) — the breadcrumb/mini-map are
-   allowed to sit over the list's last bit of content, since they paint
-   their own background and stay legible either way. Adds
-   env(safe-area-inset-bottom) for the same reason as .bottom-overlay —
-   without it this undershoots the bar's real height on devices with a
-   home-indicator/notch, leaving a gap the size of that inset. */
+   GraphView.tsx and .breadcrumb's own `bottom` below — keep all three in
+   sync. Only clears the agent bar itself (an interactive control, so items
+   under it would be hard to tap) — the breadcrumb is allowed to sit over
+   the list's last bit of content, since it paints its own background and
+   stays legible either way. Adds env(safe-area-inset-bottom) for the same
+   reason as .breadcrumb — without it this undershoots the bar's real
+   height on devices with a home-indicator/notch, leaving a gap the size of
+   that inset. */
 .circular-scroll-container.circular {
   max-height: calc(100dvh - (var(--agent-bar-height) + env(safe-area-inset-bottom, 0px)));
   overflow-y: auto;
@@ -130,45 +130,24 @@
   text-align: center;
 }
 
-/* Shared fixed wrapper for the breadcrumb + (mobile) mini-map — one normal-
-   flow flex column instead of two independently `position: fixed` siblings,
-   because .breadcrumb has no fixed height (it wraps to 2+ lines on a long
-   path) so there's no way to compute "directly above the breadcrumb"
-   without either measuring it in JS or letting layout stack them for free
-   like this. pointer-events: none here (re-enabled per real child below) —
-   a `left:0; right:0` fixed box spans the full width so the mini-map can
-   sit flush right while the breadcrumb stays flush left, and without this
-   the empty gap between them would swallow taps on the item list under it. */
-.bottom-overlay {
+.breadcrumb {
   position: fixed;
-  /* Sits flush against the bottom bar's own top edge — no deliberate buffer.
-     --agent-bar-height is a static estimate of the bar's own height; the
-     collapsed bar also grows by env(safe-area-inset-bottom) on devices with
-     a home-indicator/notch (see .agent-chat-shell:not(.expanded)), so that
-     has to be added here too or this sits too high, leaving a gap above the
-     bar on those devices — that's the bar's real footprint, not extra
-     spacing. */
+  /* Sits flush against the bottom bar's own top edge and the screen's left
+     edge — no deliberate buffer on either side. --agent-bar-height is a
+     static estimate of the bar's own height; the collapsed bar also grows
+     by env(safe-area-inset-bottom) on devices with a home-indicator/notch
+     (see .agent-chat-shell:not(.expanded)), so that has to be added here
+     too or this sits too high, leaving a gap above the bar on those
+     devices — that's the bar's real footprint, not extra spacing. */
   bottom: calc(var(--agent-bar-height) + env(safe-area-inset-bottom, 0px));
   left: 0;
-  right: 0;
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  pointer-events: none;
-}
-
-.bottom-overlay > .breadcrumb {
-  pointer-events: auto;
-}
-
-.breadcrumb {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 8px;
   font-size: 18px;
   color: var(--text-secondary);
+  z-index: 999;
   background: var(--bg-primary);
   opacity: 0.85;
   padding: 0.25rem 0.6rem;
@@ -185,58 +164,42 @@
   text-decoration: underline;
 }
 
-/* Passive schematic of the current path as a chain of arcs — see
-   GraphMinimap.tsx / graphMinimapLayout.ts. No background of its own — it
-   floats directly over the item list, same as the dots/lines it's made of.
-   Mobile-only: hidden past the same 32rem breakpoint the rest of the bottom
-   chrome (agent bar height bump, .agent-chat-shell) already switches to
-   desktop layout at. Height is set inline per-render (it grows with path
-   depth), not here. */
-.graph-minimap {
-  align-self: flex-end;
+.breadcrumb .sep {
+  opacity: 0.6;
 }
 
-@media (min-width: 32rem) {
-  .graph-minimap {
-    display: none;
-  }
+/* Word + sibling dots stacked as one unit, so the dot row travels with its
+   word across a flex-wrap line break instead of staying behind. */
+.crumb-col {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
-/* Faint dashed trace of each level's arc — same "this marks a boundary,
-   not real content" role as .circular-loop-spacer's dotted rule elsewhere
-   in this file, at a similar low opacity. Without it the dots on a level
-   don't read as belonging to one arc together. */
-.minimap-arc-guide {
-  fill: none;
-  stroke: var(--text-secondary);
-  stroke-width: 0.6;
-  stroke-dasharray: 1.5 1.5;
+/* How many siblings this crumb had at its level and roughly where among
+   them — see renderSiblingDots in GraphView.tsx. Replaces the old separate
+   mini-map widget; this carries the same "how deep, how crowded" context
+   without a second element above the breadcrumb. */
+.dot-cluster {
+  display: flex;
+  gap: 1.5px;
+  align-items: center;
+  height: 4px;
+}
+.dot-cluster span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--text-secondary);
   opacity: 0.4;
-  vector-effect: non-scaling-stroke;
+  display: block;
 }
-
-/* The chain of selected points connected into one line — "the path you
-   actually took," distinct from the individual per-level arcs. */
-.minimap-spine {
-  fill: none;
-  stroke: var(--item-title);
-  stroke-width: 1.2;
-  vector-effect: non-scaling-stroke;
-}
-
-.minimap-node {
-  fill: var(--text-secondary);
-}
-.minimap-node.current {
-  fill: var(--item-title);
-}
-
-/* Marks the exact current item, distinct from the rest of its own
-   highlighted ancestor chain (all in the same accent color otherwise). */
-.minimap-halo {
-  fill: none;
-  stroke: var(--item-title);
-  stroke-width: 1;
+.dot-cluster span.on {
+  background: var(--item-title);
+  opacity: 1;
+  width: 3.5px;
+  height: 3.5px;
 }
 
 .section {

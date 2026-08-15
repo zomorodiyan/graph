@@ -12,7 +12,6 @@ import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
 import ContextMenu from '../components/ContextMenu'
-import GraphMinimap from '../components/GraphMinimap'
 
 // True on touch-primary devices (no on-screen keyboard problem on desktop,
 // so only mobile needs the item-stays-in-place + bottom-sheet editing pattern —
@@ -23,6 +22,27 @@ function isTouchDevice(): boolean {
 
 // Color assignment based on index
 const COLORS = ['sky', 'indigo', 'fuchsia']
+
+// Small dot row under a breadcrumb crumb — how many siblings it had at that
+// level and roughly where among them, without needing a separate mini-map
+// widget. Caps at MAX_CRUMB_DOTS so a level with dozens of items still
+// renders as a compact strip rather than one dot per sibling; the current
+// item's relative position is re-projected onto that capped strip rather
+// than shown exactly, since exact position stops being legible past a
+// handful of dots anyway.
+const MAX_CRUMB_DOTS = 5
+function renderSiblingDots(siblingCount?: number, siblingIndex?: number) {
+  if (siblingCount == null || siblingCount <= 1 || siblingIndex == null || siblingIndex < 0) return null
+  const shown = Math.min(siblingCount, MAX_CRUMB_DOTS)
+  const onIndex = Math.round((siblingIndex / Math.max(1, siblingCount - 1)) * (shown - 1))
+  return (
+    <span className="dot-cluster">
+      {Array.from({ length: shown }, (_, k) => (
+        <span key={k} className={k === onIndex ? 'on' : undefined} />
+      ))}
+    </span>
+  )
+}
 
 // Wired into the two circular-loop boundary clones in place of every real
 // interactive callback (not just left as pointer-events:none + inert state
@@ -384,18 +404,25 @@ function GraphView() {
     }
     
     if (!path) return crumbs
-    
+
     const parts = path.split('.')
     let currentPath = ''
+    // Siblings at each level, for the dot cluster under each crumb — the
+    // container this part was chosen FROM, not what it contains.
+    let siblingContainer = structure?.structure ?? {}
     for (const part of parts) {
+      const siblingKeys = Object.keys(siblingContainer)
       currentPath = currentPath ? `${currentPath}.${part}` : part
       const item = getItemByPath(structure, currentPath)
       crumbs.push({
         label: item?.title || part,
-        path: buildPath(currentPath)
+        path: buildPath(currentPath),
+        siblingCount: siblingKeys.length,
+        siblingIndex: siblingKeys.indexOf(part),
       })
+      siblingContainer = item?.children ?? {}
     }
-    
+
     return crumbs
   }
 
@@ -1047,23 +1074,25 @@ function GraphView() {
 
   return (
     <>
-      {/* Breadcrumb + mini-map — fixed below bottom buttons */}
+      {/* Breadcrumb — fixed below bottom buttons */}
       {!inlineEdit && !subCreate && (
-        <div className="bottom-overlay">
-          <GraphMinimap structure={structure} currentPath={path} />
-          <nav className="breadcrumb">
-            {breadcrumb.map((crumb, i) => (
-              <span key={crumb.path}>
-                {i > 0 && ' / '}
+        <nav className="breadcrumb">
+          {breadcrumb.flatMap((crumb, i) => {
+            const els = []
+            if (i > 0) els.push(<span key={`${crumb.path}-sep`} className="sep">/</span>)
+            els.push(
+              <span key={crumb.path} className="crumb-col">
                 {i === breadcrumb.length - 1 ? (
                   <span>{crumb.label}</span>
                 ) : (
                   <Link to={crumb.path}>{crumb.label}</Link>
                 )}
-              </span>
-            ))}
-          </nav>
-        </div>
+                {renderSiblingDots(crumb.siblingCount, crumb.siblingIndex)}
+              </span>,
+            )
+            return els
+          })}
+        </nav>
       )}
 
       <div
