@@ -310,18 +310,6 @@
   cursor: pointer;
 }
 
-/* Swipe drag feedback (translateX set inline, following the finger) — the
-   whole bubble (.section-body, title + all its subs/subsubs) slides as one
-   block, driven by GraphView's single page-level swipe gesture (see
-   usePageSwipe.ts) rather than anything local to this item — Section.tsx
-   just renders whatever swipeOffsetX/swipeActive it's handed.
-   "armed" means the drag has crossed the trigger threshold in a wired-up
-   direction — a stronger tint than a not-yet-armed drag, so release timing
-   is legible. */
-.section-body.swipe-armed {
-  background-color: rgba(33, 150, 243, 0.16);
-}
-
 .layer1 .item-title {
   flex: 1;
   min-width: 0;

@@ -10,16 +10,6 @@ interface SectionProps {
   parentPath: string
   colorIndex: number
   onItemClick: (path: string) => void
-  // Mobile-only: live visual feedback for GraphView's single page-level
-  // swipe gesture (see usePageSwipe) — this item is being dragged toward
-  // swipe-left (navigate into it) or swipe-right (navigate up the tree),
-  // set only on whichever item (real row or circular-scroll clone) is
-  // currently under the finger. The gesture itself, and which item it
-  // targets, is decided entirely in GraphView; this component only needs to
-  // know how to draw its own dragged/armed state and carry data-item-path
-  // so GraphView's hit-test can find it in the first place.
-  swipeOffsetX?: number
-  swipeActive?: boolean
   onEditClick: (path: string, name: string, data: StructureItem) => void
   editingPath?: string | null
   // When false (mobile), an item being edited/added-to stays in place with just
@@ -207,8 +197,6 @@ function Section({
   parentPath,
   colorIndex: _colorIndex,
   onItemClick,
-  swipeOffsetX,
-  swipeActive = false,
   onEditClick,
   editingPath = null,
   editInline = true,
@@ -276,8 +264,7 @@ function Section({
     <div className="section" ref={sectionRef}>
       <div
         data-item-path={itemPath}
-        className={`section-body${swipeActive ? ' swipe-armed' : ''}`}
-        style={swipeOffsetX ? { transform: `translateX(${swipeOffsetX}px)` } : undefined}
+        className="section-body"
       >
       {/* Layer 1 - Main category */}
       <div className="layer1-container">

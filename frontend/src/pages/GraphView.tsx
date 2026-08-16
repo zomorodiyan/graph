@@ -492,7 +492,7 @@ function GraphView() {
     }
     navigate(buildPath(path.split('.').slice(0, -1).join('.')))
   }
-  const { ref: pageSwipeRef, drag: pageSwipeDrag } = usePageSwipe(handleNavigateInto, handleNavigateBack)
+  const { ref: pageSwipeRef } = usePageSwipe(handleNavigateInto, handleNavigateBack)
 
   // Handle edit click
   const handleEditClick = (itemPath: string, _name: string, _data: StructureItem) => {
@@ -1014,13 +1014,10 @@ function GraphView() {
   const renderCloneSection = (key: string, reactKeyPrefix: string, colorIndex: number) => {
     const item = displayItems[key]
     if (!item) return null
-    // A clone can be exactly what's under the finger (clones are
-    // pointer-events: none, so the page-level swipe hit-test resolves by
-    // position, not by which DOM node the browser would normally target —
-    // see usePageSwipe's itemPathAtY) — it needs the same live drag visual
-    // as the real row so the item being swiped actually looks like it's
-    // moving under the finger.
-    const clonePath = path ? `${path}.${key}` : key
+    // A clone can be exactly what's under the finger during a swipe — clones
+    // are pointer-events: none, so the page-level swipe hit-test resolves by
+    // position (data-item-path), not by which DOM node the browser would
+    // normally target — see usePageSwipe's itemPathAtY.
     return (
       <Section
         key={`${reactKeyPrefix}${key}`}
@@ -1029,8 +1026,6 @@ function GraphView() {
         parentPath={path || ''}
         colorIndex={colorIndex % COLORS.length}
         onItemClick={noop}
-        swipeOffsetX={pageSwipeDrag?.path === clonePath ? pageSwipeDrag.offsetX : undefined}
-        swipeActive={pageSwipeDrag?.path === clonePath && pageSwipeDrag.active}
         onEditClick={noop}
         editingPath={null}
         editInline={!isMobile}
@@ -1190,8 +1185,6 @@ function GraphView() {
                     parentPath={path || ''}
                     colorIndex={index % COLORS.length}
                     onItemClick={handleItemClick}
-                    swipeOffsetX={pageSwipeDrag?.path === itemPath ? pageSwipeDrag.offsetX : undefined}
-                    swipeActive={pageSwipeDrag?.path === itemPath && pageSwipeDrag.active}
                     onEditClick={handleEditClick}
                     editingPath={inlineEdit?.path || null}
                     editInline={!isMobile}

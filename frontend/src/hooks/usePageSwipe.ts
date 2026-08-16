@@ -1,20 +1,7 @@
-import { useCallback, useRef, useState } from 'react'
+import { useRef, useCallback } from 'react'
 
 export const SWIPE_THRESHOLD = 50
 export const SWIPE_VERTICAL_LIMIT = 75
-// How far a row visually follows the finger before clamping — purely
-// cosmetic, independent of SWIPE_THRESHOLD (which still governs whether the
-// gesture actually fires on release).
-const MAX_VISUAL_OFFSET = 72
-
-export interface PageSwipeDrag {
-  path: string
-  offsetX: number
-  // Whether the direction currently being dragged toward is a wired-up
-  // action — lets the bubble show "this will do something" vs. "this is
-  // disabled" instead of dragging just as far either way with no distinction.
-  active: boolean
-}
 
 // Finds whichever rendered level-1 item — real OR a circular-scroll clone,
 // both carry the same data-item-path (see Section.tsx) — currently occupies
@@ -44,17 +31,30 @@ function itemPathAtY(container: HTMLElement, y: number): string | null {
 // touchstart for the whole gesture (not re-resolved as the finger drifts
 // vertically), so a little wobble mid-swipe can't retarget it.
 //
+// Deliberately no live visual feedback (no translateX-follows-the-finger,
+// no "armed" tint) — the bubbles stay put for the whole gesture and the
+// action just fires on release past the threshold. Besides being the
+// requested feel, this also means touchmove never calls setState: a swipe
+// attempt used to re-render on every reported pixel of movement just to
+// animate the slide, which is real work competing with the browser's own
+// scroll handling on every frame of a normal vertical scroll too, since
+// every touchmove on the page ran through this same handler.
+//
 // Attaches touchmove as a raw, non-passive native listener (via a callback
 // `ref`) instead of React's onTouchMove prop, for the same reason the old
 // per-item version did: React's delegated touchmove is passive, so
 // preventDefault() inside it silently no-ops, and .circular-scroll-container
 // (touch-action: pan-y) needs that preventDefault to keep the browser's own
-// direction-lock heuristic from grabbing a horizontal swipe with any
-// vertical wobble before this ever sees the full gesture.
+// direction-lock heuristic from grabbing a horizontal swipe before this ever
+// sees the full gesture. preventDefault only fires once the gesture is
+// actually trending horizontal (|deltaX| > deltaY) — calling it purely
+// because deltaY hasn't yet crossed SWIPE_VERTICAL_LIMIT would also swallow
+// the first ~75px of every ordinary vertical scroll, native momentum
+// scrolling included, which is what was actually making list scrolling feel
+// rough: every scroll attempt anywhere in the list used to fight the
+// browser for its first several frames before finally being let through.
 export function usePageSwipe(onSwipeLeft: (path: string) => void, onSwipeRight: () => void) {
   const start = useRef<{ x: number; y: number; path: string | null } | null>(null)
-  const [drag, setDrag] = useState<PageSwipeDrag | null>(null)
-
   const callbacksRef = useRef({ onSwipeLeft, onSwipeRight })
   callbacksRef.current = { onSwipeLeft, onSwipeRight }
 
@@ -74,13 +74,10 @@ export function usePageSwipe(onSwipeLeft: (path: string) => void, onSwipeRight: 
     function onTouchStart(e: TouchEvent) {
       if (e.touches.length !== 1) {
         start.current = null
-        setDrag(null)
         return
       }
       const t = e.touches[0]
-      const path = itemPathAtY(el, t.clientY)
-      start.current = { x: t.clientX, y: t.clientY, path }
-      if (path) setDrag({ path, offsetX: 0, active: false })
+      start.current = { x: t.clientX, y: t.clientY, path: itemPathAtY(el, t.clientY) }
     }
     function onTouchMove(e: TouchEvent) {
       const s = start.current
@@ -88,18 +85,13 @@ export function usePageSwipe(onSwipeLeft: (path: string) => void, onSwipeRight: 
       const t = e.touches[0]
       const deltaX = t.clientX - s.x
       const deltaY = Math.abs(t.clientY - s.y)
-      if (deltaY > SWIPE_VERTICAL_LIMIT) return // vertical scroll — don't react, let native pan-y handle it
+      if (deltaY > SWIPE_VERTICAL_LIMIT) return // definitely a vertical scroll — let native pan-y handle it
+      if (Math.abs(deltaX) <= deltaY) return // not (yet) trending horizontal — don't fight native scroll for an ordinary vertical drag
       if (e.cancelable) e.preventDefault()
-      const clamped = Math.max(-MAX_VISUAL_OFFSET, Math.min(MAX_VISUAL_OFFSET, deltaX))
-      // Right is always wired (goes up the tree from anywhere); left only
-      // when a real item was under the finger at touchstart.
-      const wired = clamped < 0 ? !!s.path : true
-      if (s.path) setDrag({ path: s.path, offsetX: clamped, active: wired && Math.abs(deltaX) > SWIPE_THRESHOLD })
     }
     function onTouchEnd(e: TouchEvent) {
       const s = start.current
       start.current = null
-      setDrag(null)
       if (!s) return
       const t = e.changedTouches[0]
       const deltaX = t.clientX - s.x
@@ -112,7 +104,6 @@ export function usePageSwipe(onSwipeLeft: (path: string) => void, onSwipeRight: 
     }
     function onTouchCancel() {
       start.current = null
-      setDrag(null)
     }
 
     // touchmove is the only one that needs { cancelable } respected via
@@ -130,5 +121,5 @@ export function usePageSwipe(onSwipeLeft: (path: string) => void, onSwipeRight: 
     }
   }, [])
 
-  return { ref, drag }
+  return { ref }
 }
