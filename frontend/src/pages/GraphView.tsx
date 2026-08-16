@@ -29,10 +29,13 @@ const COLORS = ['sky', 'indigo', 'fuchsia']
 // renders as a compact strip rather than one dot per sibling; the current
 // item's relative position is re-projected onto that capped strip rather
 // than shown exactly, since exact position stops being legible past a
-// handful of dots anyway.
+// handful of dots anyway. Still renders (one accent dot) even when there
+// were no real siblings (siblingCount === 1) — "this level had exactly one
+// choice, and it's the one you're on" is worth showing, not collapsing to
+// nothing.
 const MAX_CRUMB_DOTS = 5
 function renderSiblingDots(siblingCount?: number, siblingIndex?: number) {
-  if (siblingCount == null || siblingCount <= 1 || siblingIndex == null || siblingIndex < 0) return null
+  if (siblingCount == null || siblingCount < 1 || siblingIndex == null || siblingIndex < 0) return null
   const shown = Math.min(siblingCount, MAX_CRUMB_DOTS)
   const onIndex = Math.round((siblingIndex / Math.max(1, siblingCount - 1)) * (shown - 1))
   return (
@@ -53,20 +56,13 @@ interface BreadcrumbCrumb {
 }
 
 // Dot row under the LAST breadcrumb crumb (the current item/list) — one dot
-// per level-1 item actually in view here, current scroll position picked
-// out live. Deliberately uncapped (unlike renderSiblingDots above): this is
-// standing in for the mini-map widget that used to show this same "how big
-// is this list, where am I in it" information, so the count itself is part
-// of what it's showing, not just the position. activeIndex comes straight
-// from useCircularScroll's own cheap scroll-position tracking — no new
-// measurement here.
-function renderViewPositionDots(count: number, activeIndex: number) {
+// per level-1 item actually in view here. Static (plain gray, no accent) —
+// deliberately not tracking/highlighting scroll position; just a count.
+function renderViewPositionDots(count: number) {
   if (count <= 1) return null
   return (
     <span className="dot-cluster">
-      {Array.from({ length: count }, (_, k) => (
-        <span key={k} className={k === activeIndex ? 'on' : undefined} />
-      ))}
+      {Array.from({ length: count }, (_, k) => <span key={k} />)}
     </span>
   )
 }
@@ -420,7 +416,7 @@ function GraphView() {
   // (some browsers auto-scroll a scrollable container near its edges during
   // dragover, which would otherwise fight the drag).
   const circularBudgetPx = Math.max(200, viewportHeight - CIRCULAR_SCROLL_CHROME_RESERVE_PX)
-  const { circular, cloneCount, activeIndex: circularActiveIndex, containerRef: circularContainerRef, topCloneRef, bottomCloneRef, realListRef } = useCircularScroll({
+  const { circular, cloneCount, containerRef: circularContainerRef, topCloneRef, bottomCloneRef, realListRef } = useCircularScroll({
     count: levelOneKeys.length,
     resetKey: path,
     paused: !!draggedItem,
@@ -1123,7 +1119,7 @@ function GraphView() {
                   <Link to={crumb.path}>{crumb.label}</Link>
                 )}
                 {renderSiblingDots(crumb.siblingCount, crumb.siblingIndex)}
-                {i === breadcrumb.length - 1 && renderViewPositionDots(levelOneKeys.length, circularActiveIndex)}
+                {i === breadcrumb.length - 1 && renderViewPositionDots(levelOneKeys.length)}
               </span>,
             )
             return els
