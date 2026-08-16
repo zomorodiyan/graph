@@ -179,6 +179,15 @@ html {
      which is what was dragging the agent chat bar's input row out from
      under that empty space. */
   overscroll-behavior-y: none;
+  /* Stops mobile browsers from auto-inflating text size ("font boosting")
+     independent of the rest of the layout when the page is zoomed out —
+     without this, a text-bearing element like the agent chat textarea can
+     render its font (and, via the JS auto-grow effect that measures
+     scrollHeight, its own box height) larger than the fixed-size buttons
+     beside it at low zoom, even though both are sized off the same rem
+     value. */
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
