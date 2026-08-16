@@ -1607,6 +1607,7 @@
 .agent-chat-input-row textarea {
   flex: 1;
   resize: none;
+  min-height: 2.25rem;
   max-height: 7.5rem;
   padding: 0.5rem 0.7rem;
   font: inherit;
