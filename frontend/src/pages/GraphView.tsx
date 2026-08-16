@@ -509,8 +509,13 @@ function GraphView() {
   // today because their own parent IS the current page (handleItemClick's
   // trick would just reload the same page) — this goes straight to the
   // item's own path instead, so its children become the new level-1 list.
+  // No-ops on a leaf item (no children) — there's nowhere for the swipe to
+  // go, so it's better ignored than navigating to an empty page.
   const handleNavigateInto = (itemPath: string) => {
-    navigate(buildPath(resolveRealPath(itemPath)))
+    const realPath = resolveRealPath(itemPath)
+    const item = getItemByPath(structure, realPath)
+    if (!item?.children || Object.keys(item.children).length === 0) return
+    navigate(buildPath(realPath))
   }
 
   // Swipe-right always means "go up the tree" — one level shallower, and
