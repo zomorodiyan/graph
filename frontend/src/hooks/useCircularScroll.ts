@@ -47,6 +47,11 @@ interface UseCircularScrollResult {
       while not circular; the caller is expected to build each group's item
       list by cycling through the real items with `% count`. */
   cloneCount: number
+  /** Index (into the real item list) the view is currently scrolled over —
+      a cheap live "page position" indicator, not tied to which item is
+      exactly at the top vs. centered vs. anything more precise than a
+      linear estimate. Always 0 while not circular. */
+  activeIndex: number
   /** Attach to the single persistent wrapper around clone-top + real-items +
       clone-bottom. Stays mounted across circular/plain transitions. */
   containerRef: RefObject<HTMLDivElement>
@@ -120,10 +125,21 @@ export function useCircularScroll({ count, resetKey, paused = false, budgetPx }:
   const topCloneHeightRef = useRef(0)
   const pausedRef = useRef(paused)
   pausedRef.current = paused
+  const countRef = useRef(count)
+  countRef.current = count
+
+  // Which real item the view is currently scrolled over — a cheap "page
+  // dots" indicator (see GraphView's renderViewPositionDots), computed from
+  // values the teleport effect below already tracks, not from any new
+  // measurement.
+  const [activeIndex, setActiveIndex] = useState(0)
+  const activeIndexRef = useRef(0)
 
   useEffect(() => {
     setCloneCount(1)
     topCloneHeightRef.current = 0
+    activeIndexRef.current = 0
+    setActiveIndex(0)
   }, [circular, resetKey])
 
   // Measure real content + both clone groups on every relevant change, grow
@@ -215,10 +231,27 @@ export function useCircularScroll({ count, resetKey, paused = false, budgetPx }:
       ticking = true
       requestAnimationFrame(() => {
         ticking = false
-        if (pausedRef.current) return
         const el = containerRef.current
         const realHeight = realListHeightRef.current
         if (!el || realHeight <= 0) return
+
+        // Cheap scroll-position indicator: which real item the view is
+        // currently over, from arithmetic on values already tracked for the
+        // teleport math below — no extra DOM reads, no per-item
+        // measurement. Clamped rather than wrapped, so the brief moments
+        // actually spent over a boundary clone just read as "still at the
+        // first/last item" instead of needing real modulo math against the
+        // loop cycle.
+        const posInReal = el.scrollTop - topCloneHeightRef.current - LOOP_SPACER_PX
+        const progress = Math.min(1, Math.max(0, posInReal / realHeight))
+        const count = countRef.current
+        const idx = Math.min(count - 1, Math.max(0, Math.floor(progress * count)))
+        if (idx !== activeIndexRef.current) {
+          activeIndexRef.current = idx
+          setActiveIndex(idx)
+        }
+
+        if (pausedRef.current) return
         const cycleHeight = realHeight + 2 * LOOP_SPACER_PX
         if (el.scrollTop <= 0) {
           el.scrollTop += cycleHeight
@@ -232,5 +265,5 @@ export function useCircularScroll({ count, resetKey, paused = false, budgetPx }:
     return () => container.removeEventListener('scroll', onScroll)
   }, [circular, resetKey])
 
-  return { circular, cloneCount: circular ? cloneCount : 0, containerRef, topCloneRef, bottomCloneRef, realListRef }
+  return { circular, cloneCount: circular ? cloneCount : 0, activeIndex, containerRef, topCloneRef, bottomCloneRef, realListRef }
 }

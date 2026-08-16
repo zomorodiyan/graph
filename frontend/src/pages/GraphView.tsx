@@ -44,6 +44,33 @@ function renderSiblingDots(siblingCount?: number, siblingIndex?: number) {
   )
 }
 
+interface BreadcrumbCrumb {
+  label: string
+  path: string
+  isRoot?: boolean
+  siblingCount?: number
+  siblingIndex?: number
+}
+
+// Dot row under the LAST breadcrumb crumb (the current item/list) — one dot
+// per level-1 item actually in view here, current scroll position picked
+// out live. Deliberately uncapped (unlike renderSiblingDots above): this is
+// standing in for the mini-map widget that used to show this same "how big
+// is this list, where am I in it" information, so the count itself is part
+// of what it's showing, not just the position. activeIndex comes straight
+// from useCircularScroll's own cheap scroll-position tracking — no new
+// measurement here.
+function renderViewPositionDots(count: number, activeIndex: number) {
+  if (count <= 1) return null
+  return (
+    <span className="dot-cluster">
+      {Array.from({ length: count }, (_, k) => (
+        <span key={k} className={k === activeIndex ? 'on' : undefined} />
+      ))}
+    </span>
+  )
+}
+
 // Wired into the two circular-loop boundary clones in place of every real
 // interactive callback (not just left as pointer-events:none + inert state
 // props) — defense in depth, so a clone can't trigger a real side effect
@@ -233,11 +260,28 @@ function GraphView() {
   }, [])
   // Tracked reactively (not read inline at render time) so rotating a device
   // or resizing the window updates the circular-scroll height budget below.
+  // Debounced (only commits after 250ms of no further resize events) —
+  // mobile browsers fire `resize` mid-scroll as their own address bar
+  // collapses/expands, which on an un-debounced setter fed a live-changing
+  // circularBudgetPx straight into useCircularScroll's clone-growth effect,
+  // regrowing the clone group and correcting scrollTop to compensate WHILE
+  // the user's own scroll gesture was still in flight — felt like the list
+  // "refreshing" to a different spot mid-scroll instead of just scrolling.
+  // A real rotation/window-resize still lands within 250ms of settling, so
+  // that case isn't meaningfully slower, just no longer fires constantly
+  // during ordinary scrolling.
   const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight)
   useEffect(() => {
-    const handler = () => setViewportHeight(window.innerHeight)
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const handler = () => {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => setViewportHeight(window.innerHeight), 250)
+    }
     window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
+    return () => {
+      window.removeEventListener('resize', handler)
+      if (timer) clearTimeout(timer)
+    }
   }, [])
   // Depth / note-view state and its buttons now live in AgentChat.tsx's
   // unified compose bar (see useViewOptions.ts) — GraphView still owns what
@@ -376,7 +420,7 @@ function GraphView() {
   // (some browsers auto-scroll a scrollable container near its edges during
   // dragover, which would otherwise fight the drag).
   const circularBudgetPx = Math.max(200, viewportHeight - CIRCULAR_SCROLL_CHROME_RESERVE_PX)
-  const { circular, cloneCount, containerRef: circularContainerRef, topCloneRef, bottomCloneRef, realListRef } = useCircularScroll({
+  const { circular, cloneCount, activeIndex: circularActiveIndex, containerRef: circularContainerRef, topCloneRef, bottomCloneRef, realListRef } = useCircularScroll({
     count: levelOneKeys.length,
     resetKey: path,
     paused: !!draggedItem,
@@ -390,9 +434,9 @@ function GraphView() {
   }
 
   // Build breadcrumb
-  const getBreadcrumb = () => {
-    const crumbs = []
-    
+  const getBreadcrumb = (): BreadcrumbCrumb[] => {
+    const crumbs: BreadcrumbCrumb[] = []
+
     // Add "Graphs" link if we're in a specific graph
     if (graphName) {
       crumbs.push({ label: '⛩', path: '/', isRoot: true })
@@ -402,24 +446,29 @@ function GraphView() {
     } else {
       crumbs.push({ label: 'Home', path: '/' })
     }
-    
+
     if (!path) return crumbs
 
     const parts = path.split('.')
     let currentPath = ''
-    // Siblings at each level, for the dot cluster under each crumb — the
-    // container this part was chosen FROM, not what it contains.
+    // Siblings at each level, attached to the PREVIOUS crumb (one level
+    // higher) rather than the crumb it's actually about — e.g. the graph
+    // name's dots show where the first path segment sits among the graph's
+    // own top-level items, not a (meaningless) sibling count for the graph
+    // name itself. This leaves the LAST crumb — the current item — with no
+    // sibling dots via this mechanism; it gets renderViewPositionDots
+    // instead (see the breadcrumb JSX below), a different kind of dot row
+    // entirely: how many level-1 items are in the CURRENT list, with live
+    // scroll position instead of tree position.
     let siblingContainer = structure?.structure ?? {}
     for (const part of parts) {
       const siblingKeys = Object.keys(siblingContainer)
+      const prev = crumbs[crumbs.length - 1]
+      prev.siblingCount = siblingKeys.length
+      prev.siblingIndex = siblingKeys.indexOf(part)
       currentPath = currentPath ? `${currentPath}.${part}` : part
       const item = getItemByPath(structure, currentPath)
-      crumbs.push({
-        label: item?.title || part,
-        path: buildPath(currentPath),
-        siblingCount: siblingKeys.length,
-        siblingIndex: siblingKeys.indexOf(part),
-      })
+      crumbs.push({ label: item?.title || part, path: buildPath(currentPath) })
       siblingContainer = item?.children ?? {}
     }
 
@@ -1074,6 +1123,7 @@ function GraphView() {
                   <Link to={crumb.path}>{crumb.label}</Link>
                 )}
                 {renderSiblingDots(crumb.siblingCount, crumb.siblingIndex)}
+                {i === breadcrumb.length - 1 && renderViewPositionDots(levelOneKeys.length, circularActiveIndex)}
               </span>,
             )
             return els
