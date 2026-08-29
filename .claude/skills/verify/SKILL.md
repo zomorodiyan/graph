@@ -24,7 +24,7 @@ No Playwright in the repo. `playwright-core` + system Chrome works:
 
 Seed data before app load with `context.addInitScript`:
 - `offline_graphs` = `'["testg"]'`
-- `offline_graph_testg` = `{"metadata":{...},"structure":{...}}` (items: `{title, children: {}, context?, progress?, checkpoints?}`)
+- `offline_graph_testg` = `{"metadata":{...},"structure":{...}}` (items: `{title, children: {}, context?, date?, tags?}`)
 
 Then drive `http://localhost:5173/g/testg`.
 

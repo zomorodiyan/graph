@@ -8,7 +8,7 @@ A personal knowledge graph editor that runs entirely in your browser — no serv
 
 ## What it does
 
-Organize anything as a hierarchy of named nodes. Each node can have a description, a progress value, and a due date. Navigate by drilling down through levels, or jump straight to an Overview filtered by due date (Overdue / Today / This Week / This Month) or by progress (Not Started / In Progress / Done).
+Organize anything as a hierarchy of named nodes. Each node can have a note, a date, and tags. Navigate by drilling down through levels.
 
 ## Sync (optional)
 

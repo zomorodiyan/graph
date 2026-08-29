@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
-import { useZoom } from '../context/ZoomContext'
-
-// Above this, the toolbar's longer labels get abbreviated so 5 buttons
-// still have a fighting chance of fitting a phone-width row before wrapping.
-const EXTREME_ZOOM_THRESHOLD = 1.3
 
 interface InlineItemEditorProps {
   itemKey: string
@@ -17,57 +12,26 @@ interface InlineItemEditorProps {
 }
 
 function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: InlineItemEditorProps) {
-  const { zoom } = useZoom()
-  const extremeZoom = zoom >= EXTREME_ZOOM_THRESHOLD
   const initialName = item.title || itemKey
   const initialContext = item.context || ''
-  const initialCost = item.cost ?? null
-
-  // Parse initial progress into done/total strings
-  const { initDone, initTotal, initialProgressStr } = (() => {
-    const p = item.progress
-    if (p === undefined || p === null || p === '') return { initDone: '', initTotal: '', initialProgressStr: '' }
-    const s = String(p)
-    const m = s.match(/^(\d+)\/(\d+)$/)
-    if (m) return { initDone: m[1], initTotal: m[2], initialProgressStr: s }
-    const n = Number(s)
-    if (!isNaN(n)) return { initDone: String(n), initTotal: '100', initialProgressStr: `${n}/100` }
-    return { initDone: '', initTotal: '', initialProgressStr: '' }
-  })()
-
-  // Parse initial checkpoints into {date, done} pairs for chip display — total is
-  // never edited per-checkpoint, it always tracks the live progress total instead.
-  // A checkpoint whose done===total IS a due date — there's no separate control
-  // for it; it's just a chip like any other (see addCheckpoint).
-  const initCheckpoints = (() => {
-    const cps = item.checkpoints
-    if (!Array.isArray(cps)) return []
-    return cps.map(cp => {
-      const m = typeof cp.progress === 'string' ? cp.progress.match(/^(\d+)\/(\d+)$/) : null
-      return { date: cp.date ?? '', done: m ? m[1] : '' }
-    })
-  })()
+  const initialDate = item.date || ''
+  const initialTags = item.tags ?? []
 
   const [name, setName] = useState(defaultName ?? initialName)
-  const [progressDone, setProgressDone] = useState(initDone)
-  const [progressTotal, setProgressTotal] = useState(initTotal)
   const [context, setContext] = useState(initialContext)
-  const [checkpoints, setCheckpoints] = useState(initCheckpoints)
-  const [costAmount, setCostAmount] = useState(initialCost ? String(initialCost.amount) : '')
-  const [costUnit, setCostUnit] = useState(initialCost ? initialCost.unit : '$')
-  const [showTimeEditor, setShowTimeEditor] = useState(initialProgressStr !== '' || initCheckpoints.length > 0)
-  const [showCostEditor, setShowCostEditor] = useState(initialCost !== null)
+  const [date, setDate] = useState(initialDate)
+  const [tags, setTags] = useState(initialTags)
+  const [tagDraft, setTagDraft] = useState('')
+  const [showDateEditor, setShowDateEditor] = useState(initialDate !== '')
+  const [showTagsEditor, setShowTagsEditor] = useState(initialTags.length > 0)
   const [showContextEditor, setShowContextEditor] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
-  const progressDoneRef = useRef<HTMLInputElement>(null)
-  const progressTotalRef = useRef<HTMLInputElement>(null)
-  const costAmountRef = useRef<HTMLInputElement>(null)
+  const dateRef = useRef<HTMLInputElement>(null)
+  const tagDraftRef = useRef<HTMLInputElement>(null)
   const contextRef = useRef<HTMLInputElement>(null)
-  const checkpointDateRefs = useRef<(HTMLInputElement | null)[]>([])
   const rootRef = useRef<HTMLDivElement>(null)
   const didCommitRef = useRef(false)
-  const justAddedCheckpointRef = useRef<number | null>(null)
 
   // Focus only — no manual scrollIntoView. The browser already scrolls a
   // focused input above the mobile keyboard on its own; driving scroll
@@ -83,36 +47,13 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
     })
   }
 
-  // New chips default to today's date and "done" equal to the current total —
-  // i.e. "fully done as of today" (a due date) — since that's the common
-  // case; both are still editable for a future date or a partial milestone.
-  // If nothing tracks progress yet, this starts it at 0/100 (same default the
-  // Time button itself seeds on first open).
-  const addCheckpoint = () => {
-    if (progressDone === '' && progressTotal === '') {
-      setProgressDone('0')
-      setProgressTotal('100')
-    }
-    const total = progressTotal || '100'
-    const today = new Date().toISOString().slice(0, 10)
-    setCheckpoints(cps => {
-      justAddedCheckpointRef.current = cps.length
-      return [...cps, { date: today, done: total }]
-    })
+  const addTag = () => {
+    const t = tagDraft.trim().replace(/^#/, '').replace(/\s+/g, '-')
+    if (!t || tags.includes(t)) { setTagDraft(''); return }
+    setTags(ts => [...ts, t])
+    setTagDraft('')
   }
-  const removeCheckpoint = (idx: number) => setCheckpoints(cps => cps.filter((_, i) => i !== idx))
-  const updateCheckpoint = (idx: number, field: 'date' | 'done', value: string) =>
-    setCheckpoints(cps => cps.map((cp, i) => i === idx ? { ...cp, [field]: value } : cp))
-
-  // Focus the date field of a freshly-added checkpoint. Both fields are
-  // pre-filled now (today's date + the total), so blank-field detection no
-  // longer works — addCheckpoint marks its own index instead.
-  useEffect(() => {
-    if (justAddedCheckpointRef.current === null) return
-    const idx = justAddedCheckpointRef.current
-    justAddedCheckpointRef.current = null
-    requestAnimationFrame(() => checkpointDateRefs.current[idx]?.focus())
-  }, [checkpoints.length])
+  const removeTag = (idx: number) => setTags(ts => ts.filter((_, i) => i !== idx))
 
   const payload = useMemo<UpdatePayload>(() => {
     const next: UpdatePayload = {}
@@ -122,44 +63,23 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
       next.name = trimmed
     }
 
-    const currentProgressStr = progressDone !== '' && progressTotal !== ''
-      ? `${progressDone}/${progressTotal}` : ''
-    if (currentProgressStr !== initialProgressStr) {
-      next.progress = currentProgressStr || ''
+    const currentDate = showDateEditor ? date : ''
+    if (currentDate !== initialDate) {
+      next.date = currentDate
     }
 
     if (context !== initialContext) {
       next.context = context || ''
     }
 
-    // Checkpoints only make sense while progress is tracked; if the editor's
-    // closed (or progress got cleared), fall back to "unchanged from the original"
-    const finalCheckpoints = showTimeEditor && progressDone !== '' && progressTotal !== ''
-      ? checkpoints
-          .filter(cp => cp.date && cp.done !== '')
-          .map(cp => ({ date: cp.date, progress: `${cp.done}/${progressTotal}` }))
-          .sort((a, b) => a.date.localeCompare(b.date))
-      : (item.checkpoints ?? [])
-    const initialCheckpoints = item.checkpoints ?? []
-    if (JSON.stringify(finalCheckpoints) !== JSON.stringify(initialCheckpoints)) {
-      next.checkpoints = finalCheckpoints
-    }
-    // Clearing progress makes any checkpoints meaningless — clear them too
-    if (next.progress === '' && finalCheckpoints.length > 0) {
-      next.checkpoints = []
-    }
-
-    const currentCost = showCostEditor && costAmount !== ''
-      ? { amount: Number(costAmount), unit: costUnit.trim() || '$' }
-      : null
-    if (JSON.stringify(currentCost) !== JSON.stringify(initialCost)) {
-      next.cost = currentCost
+    const currentTags = showTagsEditor ? tags : []
+    if (JSON.stringify(currentTags) !== JSON.stringify(initialTags)) {
+      next.tags = currentTags
     }
 
     return next
-  }, [name, progressDone, progressTotal, context, checkpoints, showTimeEditor,
-      costAmount, costUnit, showCostEditor,
-      initialName, initialProgressStr, initialContext, initialCost, item.checkpoints])
+  }, [name, date, showDateEditor, context, tags, showTagsEditor,
+      initialName, initialDate, initialContext, initialTags])
 
   const commit = () => {
     if (didCommitRef.current) return
@@ -191,6 +111,20 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
       commit()
     }
     if (e.key === 'Escape') {
+      e.preventDefault()
+      cancel()
+    }
+  }
+
+  // Enter/comma adds the tag instead of committing the whole editor —
+  // handleKeyDown's Enter=commit doesn't apply here.
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      addTag()
+    } else if (e.key === 'Backspace' && tagDraft === '' && tags.length > 0) {
+      removeTag(tags.length - 1)
+    } else if (e.key === 'Escape') {
       e.preventDefault()
       cancel()
     }
@@ -242,32 +176,25 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
         </button>
         <button
           type="button"
-          className={`inline-tool ${showTimeEditor || progressDone || progressTotal || checkpoints.length > 0 ? 'active' : ''}`}
+          className={`inline-tool ${showDateEditor || date ? 'active' : ''}`}
           onClick={() => {
-            // Seed a fresh 0/100 progress on first open only — no auto-added
-            // checkpoint (unlike the old Plan button); the "+" inside the panel
-            // is the one consistent way to add a date, first one or fifth.
-            if (!showTimeEditor) {
-              setProgressDone(d => d || '0')
-              setProgressTotal(t => t || '100')
-            }
-            setShowTimeEditor(true)
-            focusAndScroll(progressDoneRef)
+            setShowDateEditor(true)
+            focusAndScroll(dateRef)
           }}
-          title="Time — progress and dates together, add or remove as needed"
+          title="Date"
         >
-          Time
+          Date
         </button>
         <button
           type="button"
-          className={`inline-tool ${showCostEditor || costAmount ? 'active' : ''}`}
+          className={`inline-tool ${showTagsEditor || tags.length > 0 ? 'active' : ''}`}
           onClick={() => {
-            setShowCostEditor(true)
-            focusAndScroll(costAmountRef)
+            setShowTagsEditor(true)
+            focusAndScroll(tagDraftRef)
           }}
-          title="Value"
+          title="Tags"
         >
-          {extremeZoom ? 'Val' : 'Value'}
+          Tags
         </button>
       </div>
 
@@ -281,100 +208,43 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
         autoFocus
       />
 
-      {(showTimeEditor || showCostEditor) && (
+      {showDateEditor && (
         <div className="inline-edit-fields-row">
-          {showTimeEditor && (
-            <div className="inline-edit-progress">
-              <input
-                ref={progressDoneRef}
-                className="inline-edit-small"
-                type="number"
-                min={0}
-                value={progressDone}
-                onChange={(e) => setProgressDone(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="done"
-              />
-              <span className="progress-sep">/</span>
-              <input
-                ref={progressTotalRef}
-                className="inline-edit-small"
-                type="number"
-                min={1}
-                value={progressTotal}
-                onChange={(e) => setProgressTotal(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="total"
-              />
-            </div>
-          )}
-          {showCostEditor && (
-            <div className="inline-edit-cost">
-              <input
-                className="inline-edit-small inline-edit-cost-unit"
-                type="text"
-                value={costUnit}
-                onChange={(e) => setCostUnit(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="unit"
-              />
-              <input
-                ref={costAmountRef}
-                className="inline-edit-small"
-                type="number"
-                min={0}
-                value={costAmount}
-                onChange={(e) => setCostAmount(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="amount"
-              />
-            </div>
-          )}
+          <input
+            ref={dateRef}
+            type="date"
+            className="inline-edit-small"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
         </div>
       )}
 
-      {showTimeEditor && (
-        <div className="inline-edit-checkpoints">
-          {checkpoints.map((cp, i) => (
-            <div className="checkpoint-chip" key={i}>
-              <input
-                ref={el => { checkpointDateRefs.current[i] = el }}
-                type="date"
-                className="inline-edit-small"
-                value={cp.date}
-                onChange={(e) => updateCheckpoint(i, 'date', e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-              <div className="checkpoint-amount">
-                <input
-                  type="number"
-                  min={0}
-                  className="inline-edit-small"
-                  value={cp.done}
-                  onChange={(e) => updateCheckpoint(i, 'done', e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="done"
-                />
-                <span className="checkpoint-total">/ {progressTotal || '100'}</span>
-              </div>
+      {showTagsEditor && (
+        <div className="inline-edit-tags">
+          {tags.map((tag, i) => (
+            <div className="tag-chip" key={i}>
+              <span>{tag}</span>
               <button
                 type="button"
-                className="checkpoint-remove"
-                onClick={() => removeCheckpoint(i)}
-                title="Remove checkpoint"
+                className="tag-chip-remove"
+                onClick={() => removeTag(i)}
+                title="Remove tag"
               >
                 ×
               </button>
             </div>
           ))}
-          <button
-            type="button"
-            className="checkpoint-chip checkpoint-add"
-            title="Add checkpoint"
-            onClick={addCheckpoint}
-          >
-            +
-          </button>
+          <input
+            ref={tagDraftRef}
+            className="tag-draft-input"
+            value={tagDraft}
+            onChange={(e) => setTagDraft(e.target.value)}
+            onKeyDown={handleTagKeyDown}
+            onBlur={addTag}
+            placeholder="add tag…"
+          />
         </div>
       )}
 

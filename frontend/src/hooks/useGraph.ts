@@ -347,28 +347,22 @@ function applyOptimisticUpdate(structure: any, path: string, data: UpdatePayload
     }
     
     if (item) {
-      if (data.progress !== undefined && data.progress !== '') {
-        item.progress = data.progress
-      } else if (data.progress === '') {
-        delete item.progress
+      if (data.date !== undefined && data.date !== '') {
+        item.date = data.date
+      } else if (data.date === '') {
+        delete item.date
       }
-      
+
       if (data.context !== undefined && data.context !== '') {
         item.context = data.context
       } else if (data.context === '') {
         delete item.context
       }
-      
-      if (data.cost !== undefined && data.cost !== null) {
-        item.cost = data.cost
-      } else if (data.cost === null) {
-        delete item.cost
-      }
 
-      if (data.checkpoints !== undefined && data.checkpoints.length > 0) {
-        item.checkpoints = data.checkpoints
-      } else if (data.checkpoints !== undefined && data.checkpoints.length === 0) {
-        delete item.checkpoints
+      if (data.tags !== undefined && data.tags.length > 0) {
+        item.tags = data.tags
+      } else if (data.tags !== undefined && data.tags.length === 0) {
+        delete item.tags
       }
     }
   }
@@ -396,17 +390,14 @@ function applyOptimisticCreate(structure: any, parentPath: string, data: UpdateP
   // Add new item
   if (data.name) {
     const newItem: Record<string, any> = {}
-    if (data.progress !== undefined && data.progress !== '') {
-      newItem.progress = data.progress
+    if (data.date !== undefined && data.date !== '') {
+      newItem.date = data.date
     }
     if (data.context !== undefined && data.context !== '') {
       newItem.context = data.context
     }
-    if (data.cost !== undefined && data.cost !== null) {
-      newItem.cost = data.cost
-    }
-    if (data.checkpoints !== undefined && data.checkpoints.length > 0) {
-      newItem.checkpoints = data.checkpoints
+    if (data.tags !== undefined && data.tags.length > 0) {
+      newItem.tags = data.tags
     }
     parentContainer[data.name] = newItem
   }

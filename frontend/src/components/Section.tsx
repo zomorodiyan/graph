@@ -1,5 +1,5 @@
-import { useRef, type CSSProperties } from 'react'
-import { StructureItem, UpdatePayload, getItemDueDate, sumValues, formatValueTotals } from '../api/localClient'
+import { useRef } from 'react'
+import { StructureItem, UpdatePayload } from '../api/localClient'
 import { parseLocalDate, daysUntil } from '../utils/dates'
 import { useLongPressFactory } from '../hooks/useLongPress'
 import InlineItemEditor from './InlineItemEditor'
@@ -62,7 +62,7 @@ interface SectionProps {
   pendingPaths?: Set<string>
   isTimeView?: boolean
   showContext?: boolean
-  // Long-press on the context toggle: hides progress/cost/due/delta badges too,
+  // Long-press on the context toggle: hides date/tags badges too,
   // leaving just the title (showContext is expected to be forced off alongside this)
   minimal?: boolean
   depth?: number
@@ -96,7 +96,7 @@ function getDueCategory(dueDate: string | undefined): string | null {
   return 'later'
 }
 
-// Helper to format due date display — today shows "Today", tomorrow "2d", etc.
+// Helper to format date display — today shows "Today", tomorrow "2d", etc.
 function formatDueDate(dueDate: string): string {
   const diffDays = daysUntil(dueDate)
   if (diffDays < 0) return `${Math.abs(diffDays)}d overdue`
@@ -105,96 +105,32 @@ function formatDueDate(dueDate: string): string {
   return parseLocalDate(dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-// Helper to parse "X/Y" progress — pct capped at 100 for bar width
-function parseProgress(p: string | undefined): { done: number; total: number; pct: number } | null {
-  if (p === undefined || p === null) return null
-  const m = String(p).match(/^(\d+)\/(\d+)$/)
-  if (!m) return null
-  const done = Number(m[1]), total = Number(m[2])
-  return { done, total, pct: total > 0 ? Math.min((done / total) * 100, 100) : 0 }
+// Stable hash → one of 6 fixed tag palette slots (see .tag-0..5 in App.css) —
+// same tag text always lands on the same color, independent of item/render order.
+const TAG_PALETTE_SIZE = 6
+function tagColorIndex(tag: string): number {
+  let hash = 0
+  for (let i = 0; i < tag.length; i++) hash = (hash * 31 + tag.charCodeAt(i)) >>> 0
+  return hash % TAG_PALETTE_SIZE
 }
 
-// Interpolate expected % between the checkpoint pair straddling `today`. Each
-// checkpoint is normalized by its OWN embedded total (not the item's current
-// total), so old checkpoints stay correct even if the item's total changes later.
-// Before the first checkpoint: null (no claim yet). Past the last: held flat.
-function getExpectedPct(
-  checkpoints: { date: string; progress: string }[] | undefined,
-  today: Date = new Date(),
-): number | null {
-  if (!checkpoints || checkpoints.length < 1) return null
-  const points = checkpoints
-    .map(cp => ({ date: cp.date, pct: parseProgress(cp.progress)?.pct }))
-    .filter((p): p is { date: string; pct: number } => p.pct !== undefined && !isNaN(parseLocalDate(p.date).getTime()))
-    .sort((a, b) => a.date.localeCompare(b.date))
-  if (points.length < 1) return null
-
-  const t0 = new Date(today); t0.setHours(0, 0, 0, 0)
-  const t = t0.getTime()
-  if (t < parseLocalDate(points[0].date).getTime()) return null
-
-  for (let i = 0; i < points.length - 1; i++) {
-    const d0 = parseLocalDate(points[i].date).getTime()
-    const d1 = parseLocalDate(points[i + 1].date).getTime()
-    if (t <= d1) {
-      const frac = d1 === d0 ? 1 : (t - d0) / (d1 - d0)
-      return points[i].pct + frac * (points[i + 1].pct - points[i].pct)
-    }
-  }
-  return points[points.length - 1].pct  // past all checkpoints — hold flat, no extrapolation
-}
-
-// Signed delta badge ("+8%"/"−8%") plus which status color to use. Null when
-// there's no computable expected value, or actual already matches it exactly.
-function formatCheckpointDelta(
-  progress: string | undefined,
-  checkpoints: { date: string; progress: string }[] | undefined,
-): { text: string; varName: '--status-good' | '--status-bad' } | null {
-  const pi = parseProgress(progress)
-  if (!pi) return null
-  const expectedPct = getExpectedPct(checkpoints)
-  if (expectedPct === null || Math.round(pi.pct) === Math.round(expectedPct)) return null
-  const delta = Math.round(pi.pct - expectedPct)
-  if (delta === 0) return null
-  return { text: `${delta > 0 ? '+' : '−'}${Math.abs(delta)}%`, varName: delta > 0 ? '--status-good' : '--status-bad' }
-}
-
-// Progress as a background fill: tint the chip's background up to pct%. When
-// checkpoints give a computable "expected by today" value that differs from
-// actual, a second gradient layer shows the gap as a good/bad-colored sliver.
-function progressFillStyle(
-  progress: string | undefined,
-  checkpoints: { date: string; progress: string }[] | undefined,
-  color: string,
-): CSSProperties | undefined {
-  const pi = parseProgress(progress)
-  if (!pi) return undefined
-
-  const expectedPct = getExpectedPct(checkpoints)
-  if (expectedPct === null || pi.pct === expectedPct) {
-    return {
-      backgroundImage: `linear-gradient(90deg, color-mix(in srgb, ${color} 11%, transparent) ${pi.pct}%, transparent ${pi.pct}%)`,
-    }
-  }
-
-  const lo = Math.min(pi.pct, expectedPct)
-  const hi = Math.max(pi.pct, expectedPct)
-  const statusVar = pi.pct > expectedPct ? '--status-good' : '--status-bad'
-  return {
-    backgroundImage: [
-      `linear-gradient(90deg, color-mix(in srgb, ${color} 11%, transparent) ${lo}%, transparent ${lo}%)`,
-      `linear-gradient(90deg, transparent ${lo}%, color-mix(in srgb, var(${statusVar}) 22%, transparent) ${lo}%, color-mix(in srgb, var(${statusVar}) 22%, transparent) ${hi}%, transparent ${hi}%)`,
-    ].join(', '),
-  }
-}
-
-// Format progress for display: "42%" when total is 100, otherwise raw "3/10"
-function formatProgressText(p: string | undefined): string | null {
-  if (p === undefined || p === null) return null
-  const m = String(p).match(/^(\d+)\/(\d+)$/)
-  if (!m) return null
-  const [, done, total] = m
-  return total === '100' ? `${done}%` : `${done}/${total}`
+// Date + tags badges, shared by all three layers — hidden entirely in minimal view.
+function DateAndTagBadges({ item, minimal }: { item: StructureItem; minimal: boolean }) {
+  if (minimal) return null
+  return (
+    <>
+      {item.date && (
+        <span className={`item-due due-${getDueCategory(item.date)}`}>{formatDueDate(item.date)}</span>
+      )}
+      {item.tags && item.tags.length > 0 && (
+        <span className="item-tags">
+          {item.tags.map(tag => (
+            <span key={tag} className={`tag-pill tag-${tagColorIndex(tag)}`}>{tag}</span>
+          ))}
+        </span>
+      )}
+    </>
+  )
 }
 
 function Section({
@@ -267,9 +203,6 @@ function Section({
     )
   }
 
-  const layer1Delta = formatCheckpointDelta(item.progress, item.checkpoints)
-  const layer1Value = formatValueTotals(sumValues(item))
-
   return (
     <div className="section" ref={sectionRef}>
       <div
@@ -291,7 +224,6 @@ function Section({
             <>
               <div
                 className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}${highlightClasses(itemPath, userHighlights, agentHighlights)}`}
-                style={progressFillStyle(item.progress, item.checkpoints, 'var(--blue-medium)')}
                 {...(!isMobile && rowEditable
                   ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, itemPath, true) }
                   : {})}
@@ -319,22 +251,7 @@ function Section({
                   }}
                 >
                   {title}
-                  {!minimal && formatProgressText(item.progress) && (
-                    <span className="item-progress-inline">{formatProgressText(item.progress)}</span>
-                  )}
-                  {!minimal && layer1Delta && (
-                    <span className="item-checkpoint-delta" style={{ color: `var(${layer1Delta.varName})` }}>
-                      {layer1Delta.text}
-                    </span>
-                  )}
-                  {!minimal && layer1Value && (
-                    <span className="item-cost">{layer1Value}</span>
-                  )}
-                  {!minimal && getItemDueDate(item) && (
-                    <span className={`item-due due-${getDueCategory(getItemDueDate(item))}`}>
-                      {formatDueDate(getItemDueDate(item)!)}
-                    </span>
-                  )}
+                  <DateAndTagBadges item={item} minimal={minimal} />
                 </span>
               </div>
             </>
@@ -355,8 +272,6 @@ function Section({
           // Check if this child item is editable
           const childRowEditable = rowEditable && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
           const childCanDrag = dragEnabled && childRowEditable && !pendingPaths?.has(childPath)
-          const layer2Delta = formatCheckpointDelta((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints)
-          const layer2Value = formatValueTotals(sumValues(childItem as StructureItem))
 
           return (
             <div
@@ -403,7 +318,6 @@ function Section({
                       <>
                         <div
                           className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}${highlightClasses(childPath, userHighlights, agentHighlights)}`}
-                          style={progressFillStyle((childItem as StructureItem).progress, (childItem as StructureItem).checkpoints, 'currentColor')}
                           {...(!isMobile && childRowEditable
                             ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, childPath, depth >= 3) }
                             : {})}
@@ -421,22 +335,7 @@ function Section({
                             }}
                           >
                             {childTitle}
-                            {!minimal && formatProgressText((childItem as StructureItem).progress) && (
-                              <span className="item-progress-inline">{formatProgressText((childItem as StructureItem).progress)}</span>
-                            )}
-                            {!minimal && layer2Delta && (
-                              <span className="item-checkpoint-delta" style={{ color: `var(${layer2Delta.varName})` }}>
-                                {layer2Delta.text}
-                              </span>
-                            )}
-                            {!minimal && layer2Value && (
-                              <span className="item-cost">{layer2Value}</span>
-                            )}
-                            {!minimal && getItemDueDate(childItem as StructureItem) && (
-                              <span className={`item-due due-${getDueCategory(getItemDueDate(childItem as StructureItem))}`}>
-                                {formatDueDate(getItemDueDate(childItem as StructureItem)!)}
-                              </span>
-                            )}
+                            <DateAndTagBadges item={childItem as StructureItem} minimal={minimal} />
                           </span>
                         </div>
                       </>
@@ -457,8 +356,6 @@ function Section({
                       // Check if this grandchild item is editable
                       const grandRowEditable = rowEditable && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
                       const grandCanDrag = dragEnabled && grandRowEditable && !pendingPaths?.has(grandPath)
-                      const layer3Delta = formatCheckpointDelta((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints)
-                      const layer3Value = formatValueTotals(sumValues(grandItem as StructureItem))
 
                       return (
                         <div
@@ -501,7 +398,6 @@ function Section({
                               <>
                                 <div
                                   className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}${highlightClasses(grandPath, userHighlights, agentHighlights)}`}
-                                  style={progressFillStyle((grandItem as StructureItem).progress, (grandItem as StructureItem).checkpoints, 'currentColor')}
                                   {...(!isMobile && grandRowEditable
                                     ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, grandPath, false) }
                                     : {})}
@@ -519,24 +415,7 @@ function Section({
                                     }}
                                   >
                                     {grandTitle}
-                                    {!minimal && formatProgressText((grandItem as StructureItem).progress) && (
-                                      <span className="item-progress-inline">
-                                        {formatProgressText((grandItem as StructureItem).progress)}
-                                      </span>
-                                    )}
-                                    {!minimal && layer3Delta && (
-                                      <span className="item-checkpoint-delta" style={{ color: `var(${layer3Delta.varName})` }}>
-                                        {layer3Delta.text}
-                                      </span>
-                                    )}
-                                    {!minimal && layer3Value && (
-                                      <span className="item-cost">{layer3Value}</span>
-                                    )}
-                                    {!minimal && getItemDueDate(grandItem as StructureItem) && (
-                                      <span className={`item-due due-${getDueCategory(getItemDueDate(grandItem as StructureItem))}`}>
-                                        {formatDueDate(getItemDueDate(grandItem as StructureItem)!)}
-                                      </span>
-                                    )}
+                                    <DateAndTagBadges item={grandItem as StructureItem} minimal={minimal} />
                                   </span>
                                 </div>
                               </>

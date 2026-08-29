@@ -4,12 +4,8 @@ export interface StructureItem {
   id?: string
   title?: string
   context?: string
-  progress?: string  // "X/Y" fraction, e.g. "3/10" or "40/100" (displayed as "40%" when Y is 100)
-  cost?: { amount: number; unit: string }  // unit defaults to "$" in the editor when left blank
-  // Sorted by date; "X/Y" per entry, same format as progress. There is no separate
-  // "due date" field — a due date IS a checkpoint whose progress normalizes to
-  // done===total (e.g. "1/1", "5/5"); see getItemDueDate.
-  checkpoints?: { date: string; progress: string }[]
+  date?: string  // plain "YYYY-MM-DD", meaning whatever the user/agent wants (due, scheduled, logged) — no fraction, no rollup
+  tags?: string[]  // short labels, cut across the tree independent of parent/child
   children?: Record<string, StructureItem>
   [key: string]: unknown
 }
@@ -29,9 +25,9 @@ export interface GraphUpdatePayload { display_name?: string; description?: strin
 export interface ItemResponse { path: string; name: string; data: StructureItem }
 
 export interface UpdatePayload {
-  name?: string; progress?: string | ''; context?: string | ''
-  cost?: { amount: number; unit: string } | null  // undefined=untouched, null=cleared
-  checkpoints?: { date: string; progress: string }[]  // undefined=untouched, []=cleared, non-empty=wholesale replace
+  name?: string; context?: string | ''
+  date?: string | ''  // undefined=untouched, ''=cleared
+  tags?: string[]  // undefined=untouched, []=cleared, non-empty=wholesale replace
 }
 
 export interface GraphStateVersion { graph: string; version: number; backend: string }
@@ -80,10 +76,30 @@ export function clearDeletion(name: string) {
   localStorage.setItem(DELETED_KEY, JSON.stringify(d))
 }
 
+// One-time best-effort cleanup of pre-"date"/"tags" data: a legacy item's
+// checkpoints (if any) collapse into a single `date` — the chronologically
+// last one, same value the old due-date badge would have shown — and its
+// progress/cost are simply dropped (no equivalent). Runs on every load since
+// it's cheap and idempotent; the next save() persists the cleaned shape.
+function migrateLegacyItem(item: StructureItem): void {
+  const legacyCheckpoints = item.checkpoints as { date: string; progress: string }[] | undefined
+  if (item.date === undefined && Array.isArray(legacyCheckpoints) && legacyCheckpoints.length) {
+    item.date = [...legacyCheckpoints].sort((a, b) => a.date.localeCompare(b.date)).pop()!.date
+  }
+  delete item.progress
+  delete item.checkpoints
+  delete item.cost
+  if (item.children) for (const child of Object.values(item.children)) migrateLegacyItem(child)
+}
+
 function loadStructure(graphName = 'default'): Structure {
   try {
     const raw = localStorage.getItem(dataKey(graphName))
-    if (raw) return JSON.parse(raw)
+    if (raw) {
+      const s = JSON.parse(raw)
+      for (const item of Object.values(s.structure as Record<string, StructureItem>)) migrateLegacyItem(item)
+      return s
+    }
   } catch { /* fall through */ }
   return { metadata: { title: 'My Graph', description: '', version: '1.0' }, structure: {} }
 }
@@ -125,87 +141,6 @@ function injectIds(items: Record<string, StructureItem>, parentId = '') {
   }
 }
 
-// A due date is a checkpoint whose progress normalizes to done===total — the
-// planned "finish line". Only the chronologically LAST checkpoint can be that
-// finish line (interpolation holds flat past it); if it isn't done===total,
-// the item has milestones but no due date yet.
-export function getItemDueDate(item: Pick<StructureItem, 'checkpoints'>): string | undefined {
-  const cps = item.checkpoints
-  if (!cps || !cps.length) return undefined
-  const last = [...cps].sort((a, b) => a.date.localeCompare(b.date))[cps.length - 1]
-  const m = last.progress.match(/^(\d+)\/(\d+)$/)
-  if (!m || m[1] !== m[2]) return undefined
-  return last.date
-}
-
-// Cost display/serialization: currency-like symbols prefix the number ("$500"),
-// alphanumeric units suffix it ("40h") — matches how people already write both.
-export function formatCost(cost: { amount: number; unit: string } | undefined): string | null {
-  if (!cost) return null
-  const isSymbol = /^[^a-zA-Z0-9]+$/.test(cost.unit)
-  return isSymbol ? `${cost.unit}${cost.amount}` : `${cost.amount}${cost.unit}`
-}
-
-export interface ValueTotal { actual: number; target?: number }
-
-// A non-leaf's own `cost` is a target/budget, not spent money — it must never be
-// added into an ancestor's rollup (that would double-count it on top of its own
-// children). Only true leaves contribute to the actual sum.
-function accumulateLeafValues(item: StructureItem, totals: Record<string, number>): void {
-  const children = item.children ? Object.values(item.children) : []
-  if (children.length === 0) {
-    if (item.cost && typeof item.cost.amount === 'number' && !isNaN(item.cost.amount) && item.cost.unit) {
-      totals[item.cost.unit] = (totals[item.cost.unit] ?? 0) + item.cost.amount
-    }
-    return
-  }
-  for (const child of children) accumulateLeafValues(child, totals)
-}
-
-// Leaf: its own value, shown plainly. Parent: sum of all leaf values in its
-// subtree — and if the parent itself has a `cost` set, that value is the
-// denominator (a target/budget) the leaf sum is measured against, per unit.
-// Walks the real item.children tree to unbounded depth, independent of how
-// many levels Section.tsx renders at once.
-export function sumValues(item: StructureItem): Record<string, ValueTotal> {
-  const hasChildren = !!item.children && Object.keys(item.children).length > 0
-  const totals: Record<string, number> = {}
-
-  if (hasChildren) {
-    for (const child of Object.values(item.children!)) accumulateLeafValues(child, totals)
-  } else if (item.cost && typeof item.cost.amount === 'number' && !isNaN(item.cost.amount) && item.cost.unit) {
-    totals[item.cost.unit] = item.cost.amount
-  }
-
-  const out: Record<string, ValueTotal> = {}
-  for (const unit of Object.keys(totals)) {
-    // Round once, after all additions — rounding per recursion level would compound error.
-    out[unit] = { actual: Math.round(totals[unit] * 100) / 100 }
-  }
-
-  if (hasChildren && item.cost && typeof item.cost.amount === 'number' && !isNaN(item.cost.amount) && item.cost.unit) {
-    const unit = item.cost.unit
-    out[unit] = { actual: out[unit]?.actual ?? 0, target: Math.round(item.cost.amount * 100) / 100 }
-  }
-
-  return out
-}
-
-// Multi-unit display: each unit formatted via formatCost's own symbol/suffix heuristic,
-// joined with " · ". A unit with a target renders as "actual/target" (fraction against
-// the parent's own value) instead of the plain amount. Empty totals (nothing anywhere
-// in the subtree) → null, no badge — same as today's "no cost = no badge".
-export function formatValueTotals(totals: Record<string, ValueTotal>): string | null {
-  const units = Object.keys(totals)
-  if (units.length === 0) return null
-  return units.map(unit => {
-    const { actual, target } = totals[unit]
-    if (target === undefined) return formatCost({ amount: actual, unit })
-    const isSymbol = /^[^a-zA-Z0-9]+$/.test(unit)
-    return isSymbol ? `${unit}${actual}/${target}` : `${actual}/${target}${unit}`
-  }).join(' · ')
-}
-
 // ── Path navigation ──────────────────────────────────────────────────────────
 function getContainer(structure: Record<string, StructureItem>, path: string): Record<string, StructureItem> | null {
   if (!path) return structure
@@ -228,23 +163,25 @@ function getParentAndKey(structure: Record<string, StructureItem>, path: string)
 
 // ── Markdown-heading parser (mirrors serializeStructure) ──────────────────────
 // Heading depth = nesting depth ("#" = top level, "##" = its children, ...).
-// A heading line is `#+ Title (progress)? cost?` — cost is the trailing token
-// (stripped first since it's the outermost), then a trailing "(x/y)" is progress.
-// A "- date: x/y" line is a checkpoint (attached to the nearest heading above);
-// a bare "Checkpoints:" line is a cosmetic label, skipped on parse. Everything
-// else is context text for the nearest heading above, verbatim (blank lines
-// inside are preserved; only leading/trailing blank lines are trimmed).
-function parseCostSuffix(s: string): { rest: string; cost?: { amount: number; unit: string } } {
-  let m = s.match(/^(.*?)\s+(\d+(?:\.\d+)?)([a-zA-Z]+)$/)
-  if (m) return { rest: m[1], cost: { amount: Number(m[2]), unit: m[3] } }
-  m = s.match(/^(.*?)\s+([^\sa-zA-Z0-9(){}[\]"]+)(\d+(?:\.\d+)?)$/)
-  if (m) return { rest: m[1], cost: { amount: Number(m[3]), unit: m[2] } }
-  return { rest: s }
+// A heading line is `#+ Title (date)? tags?` — tags are the trailing "#word"
+// tokens (stripped first since they're outermost), then a trailing "(YYYY-MM-DD)"
+// is the date. Everything else is context text for the nearest heading above,
+// verbatim (blank lines inside are preserved; only leading/trailing blank lines
+// are trimmed).
+function parseTagsSuffix(s: string): { rest: string; tags?: string[] } {
+  const tags: string[] = []
+  let rest = s
+  let m: RegExpMatchArray | null
+  while ((m = rest.match(/^(.*?)\s+#([\w-]+)$/))) {
+    tags.unshift(m[2])
+    rest = m[1]
+  }
+  return tags.length ? { rest, tags } : { rest: s }
 }
 
-function parseProgressSuffix(s: string): { rest: string; progress?: string } {
-  const m = s.match(/^(.*?)\s+\((\d+\/\d+)\)$/)
-  return m ? { rest: m[1], progress: m[2] } : { rest: s }
+function parseDateSuffix(s: string): { rest: string; date?: string } {
+  const m = s.match(/^(.*?)\s+\((\d{4}-\d{2}-\d{2})\)$/)
+  return m ? { rest: m[1], date: m[2] } : { rest: s }
 }
 
 function parseMarkdownStructure(text: string): Record<string, StructureItem> {
@@ -270,8 +207,8 @@ function parseMarkdownStructure(text: string): Record<string, StructureItem> {
     if (headingMatch) {
       flushContext()
       const depth = headingMatch[1].length
-      const { rest: afterCost, cost } = parseCostSuffix(headingMatch[2].trim())
-      const { rest: title, progress } = parseProgressSuffix(afterCost)
+      const { rest: afterTags, tags } = parseTagsSuffix(headingMatch[2].trim())
+      const { rest: title, date } = parseDateSuffix(afterTags)
 
       while (stack.length > 1 && stack[stack.length - 1].depth >= depth) stack.pop()
       const frame = stack[stack.length - 1]
@@ -281,22 +218,12 @@ function parseMarkdownStructure(text: string): Record<string, StructureItem> {
       while (key in frame.container) key = `${rawKey}_${n++}`
 
       const newItem: StructureItem = { title: title || 'Item', children: {} }
-      if (progress !== undefined) newItem.progress = progress
-      if (cost !== undefined) newItem.cost = cost
+      if (date !== undefined) newItem.date = date
+      if (tags !== undefined) newItem.tags = tags
 
       frame.container[key] = newItem
       stack.push({ container: newItem.children!, depth, item: newItem })
       contextLines = []
-      continue
-    }
-
-    const trimmed = rawLine.trim()
-    if (trimmed === 'Checkpoints:') continue
-
-    const cpMatch = trimmed.match(/^-\s+(\d{4}-\d{2}-\d{2}):\s*(\d+\/\d+)\s*$/)
-    const currentItem = stack[stack.length - 1].item
-    if (cpMatch && currentItem) {
-      currentItem.checkpoints = [...(currentItem.checkpoints ?? []), { date: cpMatch[1], progress: cpMatch[2] }]
       continue
     }
 
@@ -310,17 +237,10 @@ function parseMarkdownStructure(text: string): Record<string, StructureItem> {
 export function serializeStructure(items: Record<string, StructureItem>, depth = 1): string {
   const hashes = '#'.repeat(depth)
   const blocks = Object.values(items).map(item => {
-    const progressSuffix = item.progress !== undefined ? ` (${item.progress})` : ''
-    const costText = formatCost(item.cost)
-    const costSuffix = costText ? ` ${costText}` : ''
-    let block = `${hashes} ${item.title}${progressSuffix}${costSuffix}\n`
+    const dateSuffix = item.date ? ` (${item.date})` : ''
+    const tagsSuffix = item.tags && item.tags.length ? ` ${item.tags.map(t => `#${t}`).join(' ')}` : ''
+    let block = `${hashes} ${item.title}${dateSuffix}${tagsSuffix}\n`
     if (item.context) block += `${item.context}\n`
-    if (item.checkpoints && item.checkpoints.length) {
-      block += `Checkpoints:\n`
-      for (const cp of [...item.checkpoints].sort((a, b) => a.date.localeCompare(b.date))) {
-        block += `- ${cp.date}: ${cp.progress}\n`
-      }
-    }
     if (item.children && Object.keys(item.children).length)
       block += serializeStructure(item.children, depth + 1)
     return block
@@ -334,42 +254,24 @@ export function serializeItem(key: string, item: StructureItem, depth = 1): stri
 }
 
 // ── Validation ───────────────────────────────────────────────────────────────
-function validateProgressValue(s: string, label = 'Progress') {
-  const xy = s.match(/^(\d+)\/(\d+)$/)
-  if (xy) {
-    const total = Number(xy[2])
-    if (total <= 0) throw new Error(`${label} total must be > 0`)
-  } else {
-    const p = Number(s)
-    if (isNaN(p) || p < 0 || p > 100) throw new Error(`${label} must be 0–100 or X/Y format`)
-  }
+function validateDateValue(s: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) throw new Error('Date must be YYYY-MM-DD format')
 }
 
-function validateCostValue(cost: { amount: number; unit: string }) {
-  if (typeof cost.amount !== 'number' || isNaN(cost.amount) || cost.amount < 0) {
-    throw new Error('Cost amount must be a non-negative number')
+function validateTagsValue(tags: string[]) {
+  for (const t of tags) {
+    if (typeof t !== 'string' || !t.trim()) throw new Error('Tags cannot be empty')
+    if (!/^[\w-]+$/.test(t)) throw new Error('Tags may only contain letters, numbers, underscore, and dash')
   }
-  if (typeof cost.unit !== 'string' || !cost.unit.trim()) throw new Error('Cost unit cannot be empty')
 }
 
 function validateUpdatePayload(data: UpdatePayload) {
-  if (data.progress !== undefined && data.progress !== '') {
-    validateProgressValue(String(data.progress))
-  }
-  if (data.cost !== undefined && data.cost !== null) validateCostValue(data.cost)
+  if (data.date !== undefined && data.date !== '') validateDateValue(data.date)
   if (data.name !== undefined && !data.name.trim()) throw new Error('Name cannot be empty')
   if (data.context !== undefined && typeof data.context === 'string' && data.context.length > 10000) {
     throw new Error('Context too long (max 10000 chars)')
   }
-  if (data.checkpoints !== undefined) {
-    for (const cp of data.checkpoints) {
-      if (!cp || typeof cp.date !== 'string' || typeof cp.progress !== 'string') {
-        throw new Error('Invalid checkpoint entry')
-      }
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(cp.date)) throw new Error('Checkpoint date must be YYYY-MM-DD format')
-      validateProgressValue(cp.progress, 'Checkpoint progress')
-    }
-  }
+  if (data.tags !== undefined) validateTagsValue(data.tags)
 }
 
 // ── Public API (same signatures as client.ts) ────────────────────────────────
@@ -404,21 +306,17 @@ export async function updateItem(path: string, data: UpdatePayload, graphName = 
   const { parent, key } = pk
   const item = { ...parent[key] }
 
-  if (data.progress !== undefined) {
-    if (data.progress === '') delete item.progress
-    else item.progress = data.progress
+  if (data.date !== undefined) {
+    if (data.date === '') delete item.date
+    else item.date = data.date
   }
   if (data.context !== undefined) {
     if (data.context === '') delete item.context
     else item.context = data.context
   }
-  if (data.cost !== undefined) {
-    if (data.cost === null) delete item.cost
-    else item.cost = data.cost
-  }
-  if (data.checkpoints !== undefined) {
-    if (data.checkpoints.length === 0) delete item.checkpoints
-    else item.checkpoints = data.checkpoints
+  if (data.tags !== undefined) {
+    if (data.tags.length === 0) delete item.tags
+    else item.tags = data.tags
   }
 
   if (data.name !== undefined) {
@@ -456,10 +354,9 @@ export async function createItem(parentPath: string, data: UpdatePayload, graphN
   const item: StructureItem = {
     title: data.name,
     children: {},
-    ...(data.progress !== undefined && data.progress !== '' && { progress: data.progress }),
+    ...(data.date !== undefined && data.date !== '' && { date: data.date }),
     ...(data.context && { context: data.context }),
-    ...(data.cost && { cost: data.cost }),
-    ...(data.checkpoints !== undefined && data.checkpoints.length > 0 && { checkpoints: data.checkpoints }),
+    ...(data.tags !== undefined && data.tags.length > 0 && { tags: data.tags }),
   }
   container[key] = item
   saveStructure(graphName, s)
