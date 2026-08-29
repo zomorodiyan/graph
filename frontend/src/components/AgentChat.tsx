@@ -36,13 +36,17 @@ const MIN_PANEL_HEIGHT_IDLE = 76
 // Docked split-pane sizing (>=32rem — see .agent-chat-shell/.agent-chat-splitter
 // in App.css). Below 60rem the split stacks (drag adjusts DOCK_HEIGHT
 // instead of DOCK_WIDTH) since there isn't room to sit side-by-side at a
-// readable width.
+// readable width. Each side also has its own minimum — dragging the
+// splitter past MIN_DOCK_* snaps the agent panel fully closed (panelOpen),
+// past MIN_MAIN_* snaps .app-main fully closed instead (mainOpen) and lets
+// the panel take over the rest, so the splitter can travel all the way to
+// either edge rather than stopping at a floor — see handleSplitterMove.
 const WIDE_SPLIT_QUERY = '(min-width: 60rem)'
 const MIN_DOCK_WIDTH = 260
-const MAX_DOCK_WIDTH_RATIO = 0.5
+const MIN_MAIN_WIDTH = 320
 const DEFAULT_DOCK_WIDTH = 380
 const MIN_DOCK_HEIGHT = 160
-const MAX_DOCK_HEIGHT_RATIO = 0.7
+const MIN_MAIN_HEIGHT = 200
 const DEFAULT_DOCK_HEIGHT_RATIO = 0.45
 
 function readStoredSize(key: string, fallback: number) {
@@ -70,7 +74,10 @@ function readStoredSize(key: string, fallback: number) {
 // App.css. Talks to the Claude API directly from the browser with the
 // user's own key (see agentClient.ts), which can view, edit, and add items
 // in the currently open graph via tools.
-function AgentChat({ panelOpen, setPanelOpen }: { panelOpen: boolean; setPanelOpen: (open: boolean) => void }) {
+function AgentChat({ panelOpen, setPanelOpen, mainOpen, setMainOpen }: {
+  panelOpen: boolean; setPanelOpen: (open: boolean) => void
+  mainOpen: boolean; setMainOpen: (open: boolean) => void
+}) {
   const { expanded, setExpanded, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop } = useAgentChat()
   const [draft, setDraft] = useState('')
   const messagesRef = useRef<HTMLDivElement>(null)
@@ -284,8 +291,8 @@ function AgentChat({ panelOpen, setPanelOpen }: { panelOpen: boolean; setPanelOp
   const [dockHeight, setDockHeightRaw] = useState(() => readStoredSize('agent-panel-height', Math.round(window.innerHeight * DEFAULT_DOCK_HEIGHT_RATIO)))
   useEffect(() => { localStorage.setItem('agent-panel-width', String(dockWidth)) }, [dockWidth])
   useEffect(() => { localStorage.setItem('agent-panel-height', String(dockHeight)) }, [dockHeight])
-  const setDockWidth = (w: number) => setDockWidthRaw(Math.min(Math.max(w, MIN_DOCK_WIDTH), window.innerWidth * MAX_DOCK_WIDTH_RATIO))
-  const setDockHeight = (h: number) => setDockHeightRaw(Math.min(Math.max(h, MIN_DOCK_HEIGHT), window.innerHeight * MAX_DOCK_HEIGHT_RATIO))
+  const setDockWidth = (w: number) => setDockWidthRaw(Math.min(Math.max(w, MIN_DOCK_WIDTH), window.innerWidth - MIN_MAIN_WIDTH))
+  const setDockHeight = (h: number) => setDockHeightRaw(Math.min(Math.max(h, MIN_DOCK_HEIGHT), window.innerHeight - MIN_MAIN_HEIGHT))
 
   // Splitter drag (.agent-chat-splitter) — orientation is read fresh off
   // matchMedia at drag-start rather than tracked in state, since it only
@@ -305,9 +312,35 @@ function AgentChat({ panelOpen, setPanelOpen }: { panelOpen: boolean; setPanelOp
     if (!drag) return
     // The panel sits after the splitter (to its right, or below it), so
     // dragging toward the panel (left/up) should grow it — hence the sign
-    // flip on both axes.
-    if (drag.axis === 'x') setDockWidth(drag.startSize - (e.clientX - drag.start))
-    else setDockHeight(drag.startSize - (e.clientY - drag.start))
+    // flip on both axes. Past either side's minimum, snap that side fully
+    // closed instead of stopping the drag there — dragging back across the
+    // threshold (still mid-gesture) reopens it just as fluidly, matching
+    // how a maximize/restore window drag feels.
+    if (drag.axis === 'x') {
+      const next = drag.startSize - (e.clientX - drag.start)
+      if (next < MIN_DOCK_WIDTH) {
+        setPanelOpen(false)
+      } else if (next > window.innerWidth - MIN_MAIN_WIDTH) {
+        setPanelOpen(true)
+        setMainOpen(false)
+      } else {
+        setPanelOpen(true)
+        setMainOpen(true)
+        setDockWidth(next)
+      }
+    } else {
+      const next = drag.startSize - (e.clientY - drag.start)
+      if (next < MIN_DOCK_HEIGHT) {
+        setPanelOpen(false)
+      } else if (next > window.innerHeight - MIN_MAIN_HEIGHT) {
+        setPanelOpen(true)
+        setMainOpen(false)
+      } else {
+        setPanelOpen(true)
+        setMainOpen(true)
+        setDockHeight(next)
+      }
+    }
   }
   const handleSplitterUp = () => {
     splitDragRef.current = null
@@ -403,7 +436,7 @@ function AgentChat({ panelOpen, setPanelOpen }: { panelOpen: boolean; setPanelOp
         shell in DOM order so flex places it right at their boundary; axis
         (width vs height) is purely CSS-driven by the same 60rem breakpoint
         handleSplitterDown reads via matchMedia. */}
-    {panelOpen && (
+    {panelOpen && mainOpen && (
       <div
         className="agent-chat-splitter"
         onPointerDown={handleSplitterDown}
@@ -414,7 +447,7 @@ function AgentChat({ panelOpen, setPanelOpen }: { panelOpen: boolean; setPanelOp
       />
     )}
     <div
-      className={`agent-chat-shell${expanded ? ' expanded' : ''}${panelOpen ? ' docked-open' : ' docked-closed'}`}
+      className={`agent-chat-shell${expanded ? ' expanded' : ''}${panelOpen ? ' docked-open' : ' docked-closed'}${mainOpen ? '' : ' main-collapsed'}`}
       style={{ height: panelHeight, ...({ '--agent-panel-width': `${dockWidth}px`, '--agent-panel-height': `${dockHeight}px` } as React.CSSProperties) }}
       onBlur={handleContainerBlur}
     >
