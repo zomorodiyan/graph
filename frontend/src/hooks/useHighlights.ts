@@ -14,6 +14,14 @@ function userHighlightsKey(graphName: string | undefined) {
 function agentHighlightsKey(graphName: string | undefined) {
   return ['agent-highlights', graphName] as const
 }
+// Separate from agentHighlights ("look at this") — items the agent has asked
+// to delete but hasn't been confirmed yet (see request_delete_items in
+// agentClient.ts). Its own channel so a delete proposal renders with its own
+// (red) ring regardless of whatever the agent/user were already pointing at,
+// and clears independently once the user confirms or rejects.
+function agentDeletePendingKey(graphName: string | undefined) {
+  return ['agent-delete-pending', graphName] as const
+}
 
 export function useHighlights(graphName: string | undefined) {
   const queryClient = useQueryClient()
@@ -27,6 +35,13 @@ export function useHighlights(graphName: string | undefined) {
   })
   const { data: agentHighlights = [] } = useQuery({
     queryKey: agentHighlightsKey(graphName),
+    queryFn: () => [] as string[],
+    initialData: [] as string[],
+    staleTime: Infinity,
+    enabled: Boolean(graphName),
+  })
+  const { data: agentDeletePending = [] } = useQuery({
+    queryKey: agentDeletePendingKey(graphName),
     queryFn: () => [] as string[],
     initialData: [] as string[],
     staleTime: Infinity,
@@ -51,5 +66,21 @@ export function useHighlights(graphName: string | undefined) {
     queryClient.setQueryData(agentHighlightsKey(graphName), paths)
   }
 
-  return { userHighlights, agentHighlights, toggleUserHighlight, clearUserHighlights, setAgentHighlights }
+  // Replaces the whole pending-delete set each call, same "here's what I'm
+  // pointing at right now" semantics as setAgentHighlights.
+  function setAgentDeletePending(paths: string[]) {
+    queryClient.setQueryData(agentDeletePendingKey(graphName), paths)
+  }
+  // User confirmed or rejected — either way the proposal is resolved, so the
+  // ring goes away. Confirming also actually deletes the items (GraphView's
+  // job); this just clears the marker.
+  function clearAgentDeletePending() {
+    queryClient.setQueryData(agentDeletePendingKey(graphName), [] as string[])
+  }
+
+  return {
+    userHighlights, agentHighlights, agentDeletePending,
+    toggleUserHighlight, clearUserHighlights, setAgentHighlights,
+    setAgentDeletePending, clearAgentDeletePending,
+  }
 }

@@ -43,6 +43,10 @@ interface SectionProps {
   onToggleHighlight?: (path: string) => void
   userHighlights?: Set<string>
   agentHighlights?: Set<string>
+  // Items the agent has proposed deleting (see request_delete_items in
+  // agentClient.ts) — a distinct red ring, takes visual precedence over the
+  // two highlight rings above when it applies (see highlightClasses).
+  agentDeletePending?: Set<string>
   isPending?: boolean
   // Level-2/3 drag reordering — level-1 drag lives in GraphView's own
   // section-wrapper, outside this component. draggedPath/dragOverPath are full
@@ -70,11 +74,14 @@ interface SectionProps {
   rawText?: string
 }
 
-// Appends the highlight class(es) for a row — both can apply at once (see
-// useHighlights.ts and the .user-highlighted/.agent-highlighted CSS, which
-// layer as independent box-shadow rings rather than competing outlines).
-function highlightClasses(path: string, userHighlights?: Set<string>, agentHighlights?: Set<string>): string {
-  return `${userHighlights?.has(path) ? ' user-highlighted' : ''}${agentHighlights?.has(path) ? ' agent-highlighted' : ''}`
+// Appends the highlight class(es) for a row — user/agent highlights can both
+// apply at once (see useHighlights.ts and the .user-highlighted/.agent-highlighted
+// CSS, which layer as independent box-shadow rings rather than competing
+// outlines). agent-delete-pending is deliberately higher-specificity in CSS
+// so it visually wins outright over either — a proposed deletion is an alert
+// state, not just another "look here" ring.
+function highlightClasses(path: string, userHighlights?: Set<string>, agentHighlights?: Set<string>, agentDeletePending?: Set<string>): string {
+  return `${userHighlights?.has(path) ? ' user-highlighted' : ''}${agentHighlights?.has(path) ? ' agent-highlighted' : ''}${agentDeletePending?.has(path) ? ' agent-delete-pending' : ''}`
 }
 
 // Which part of a row a drag is hovering over — mirrors GraphView's own
@@ -153,6 +160,7 @@ function Section({
   onToggleHighlight,
   userHighlights,
   agentHighlights,
+  agentDeletePending,
   isPending = false,
   draggedPath = null,
   dragOverPath = null,
@@ -223,7 +231,7 @@ function Section({
           ) : (
             <>
               <div
-                className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}${highlightClasses(itemPath, userHighlights, agentHighlights)}`}
+                className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}${highlightClasses(itemPath, userHighlights, agentHighlights, agentDeletePending)}`}
                 {...(!isMobile && rowEditable
                   ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, itemPath, true) }
                   : {})}
@@ -317,7 +325,7 @@ function Section({
                     ) : (
                       <>
                         <div
-                          className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}${highlightClasses(childPath, userHighlights, agentHighlights)}`}
+                          className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}${highlightClasses(childPath, userHighlights, agentHighlights, agentDeletePending)}`}
                           {...(!isMobile && childRowEditable
                             ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, childPath, depth >= 3) }
                             : {})}
@@ -397,7 +405,7 @@ function Section({
                             ) : (
                               <>
                                 <div
-                                  className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}${highlightClasses(grandPath, userHighlights, agentHighlights)}`}
+                                  className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}${highlightClasses(grandPath, userHighlights, agentHighlights, agentDeletePending)}`}
                                   {...(!isMobile && grandRowEditable
                                     ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, grandPath, false) }
                                     : {})}

@@ -53,12 +53,21 @@ export interface AgentChatMessage {
   content: string
 }
 
+const MENTION_TRUNCATE_LENGTH = 24
+
 const SYSTEM_PREAMBLE = `You are a helpful assistant embedded inside "Knowledge Graph", a personal
 hierarchical thinking/taxonomy/planning app. The user is looking at the view
 described below (as its Markdown representation — heading depth is nesting
 depth, a trailing "(YYYY-MM-DD)" is the item's date, trailing "#word" tokens
-are its tags). When you mention items to the user, describe them in plain
-language rather than quoting the raw Markdown syntax back at them.
+are its tags).
+
+When you mention an item by name, write its plain title text with no markdown
+emphasis (no bold, no italics, no quotes) — the highlight ring (see below) is
+what shows the user exactly which item you mean, not text styling. If a title
+is longer than ${MENTION_TRUNCATE_LENGTH} characters, truncate it to
+${MENTION_TRUNCATE_LENGTH} characters and append ".." (two periods, not an
+ellipsis), e.g. "Multi-Material Simulatio..". Never quote the raw Markdown
+heading syntax back at the user.
 
 You have tools to look at, edit, and add items anywhere in the current graph,
 not just what's shown below. Use view_item to look something up (by its
@@ -75,7 +84,15 @@ can spot them in the list without hunting. It replaces your previous
 highlights each time, so pass every item you're currently pointing at, not
 just new ones; pass an empty array once you've moved on. Separately, the
 view below may say the user has highlighted some items themselves — that's
-them pointing at something for you, most likely what their message is about.`
+them pointing at something for you, most likely what their message is about.
+
+There is no direct delete tool. To remove an item, call
+request_delete_items with the path(s) — this flags them with their own ring
+(don't also call highlight_items for the same paths) and makes Confirm/Reject
+buttons appear in the app; nothing is actually deleted until the user clicks
+Confirm. Say what you're proposing to delete before calling it, and don't
+assume it succeeded — you won't be told the outcome unless the user tells you
+in their next message, so if it matters, ask.`
 
 interface ViewItemArgs { path: string }
 interface UpdateItemArgs {
@@ -87,8 +104,14 @@ interface UpdateItemArgs {
 }
 interface AddItemArgs { parent_path: string; name: string; context?: string; date?: string; tags?: string[] }
 interface HighlightItemsArgs { paths: string[] }
+interface RequestDeleteItemsArgs { paths: string[] }
 
-function buildTools(graphName: string | undefined, onMutate: () => void, onHighlight: (paths: string[]) => void) {
+function buildTools(
+  graphName: string | undefined,
+  onMutate: () => void,
+  onHighlight: (paths: string[]) => void,
+  onDeletePending: (paths: string[]) => void,
+) {
   if (!graphName) return []
 
   return [
@@ -181,6 +204,28 @@ function buildTools(graphName: string | undefined, onMutate: () => void, onHighl
         return paths.length ? `Highlighted ${paths.length} item(s).` : 'Cleared your highlights.'
       },
     }),
+    makeTool<RequestDeleteItemsArgs>({
+      name: 'request_delete_items',
+      description:
+        'Propose deleting one or more items (and their children). Does NOT delete anything itself — it flags the items with a ring in the app and shows the user Confirm/Reject buttons; the delete only happens if they click Confirm. Replaces any previous delete proposal. Pass an empty array to withdraw your proposal.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          paths: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Dot-separated paths of the items to propose deleting, e.g. ["alpha.beta"]. Empty array withdraws the proposal.',
+          },
+        },
+        required: ['paths'],
+      },
+      run: async ({ paths }) => {
+        onDeletePending(paths)
+        return paths.length
+          ? `Flagged ${paths.length} item(s) for deletion — waiting on the user to confirm or reject in the app.`
+          : 'Withdrew the delete proposal.'
+      },
+    }),
   ]
 }
 
@@ -192,15 +237,18 @@ function buildTools(graphName: string | undefined, onMutate: () => void, onHighl
 // fires after any successful update_item/add_item, so the caller can
 // invalidate its React Query cache and see the change reflected live;
 // onHighlight fires with the agent's full highlight set each time
-// highlight_items is called (an empty array means "cleared"). Throws on
-// failure (missing/invalid key, network, refusal, etc.) — callers should
-// catch and render an error state.
+// highlight_items is called (an empty array means "cleared"). onDeletePending
+// fires the same way for request_delete_items — the caller owns actually
+// deleting anything once the user confirms; this call site only ever flags.
+// Throws on failure (missing/invalid key, network, refusal, etc.) — callers
+// should catch and render an error state.
 export async function streamAgentReply(
   messages: AgentChatMessage[],
   viewContext: string,
   graphName: string | undefined,
   onMutate: () => void,
   onHighlight: (paths: string[]) => void,
+  onDeletePending: (paths: string[]) => void,
   onDelta: (text: string) => void,
   onToolUse: (toolName: string) => void,
   signal?: AbortSignal,
@@ -216,7 +264,7 @@ export async function streamAgentReply(
       max_tokens: 4096,
       system: `${SYSTEM_PREAMBLE}\n\nCurrent view:\n${viewContext}`,
       messages,
-      tools: buildTools(graphName, onMutate, onHighlight),
+      tools: buildTools(graphName, onMutate, onHighlight, onDeletePending),
       max_iterations: MAX_TOOL_ITERATIONS,
       stream: true,
     },
