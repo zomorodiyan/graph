@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useHighlights } from '../hooks/useHighlights'
 import { useViewOptions } from '../hooks/useViewOptions'
-import { useCircularScroll, LOOP_SPACER_PX } from '../hooks/useCircularScroll'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { usePageSwipe } from '../hooks/usePageSwipe'
 import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem } from '@api'
@@ -66,28 +65,6 @@ function renderViewPositionDots(count: number) {
     </span>
   )
 }
-
-// Wired into the two circular-loop boundary clones in place of every real
-// interactive callback (not just left as pointer-events:none + inert state
-// props) — defense in depth, so a clone can't trigger a real side effect
-// (opening an editor, starting a drag, navigating) even if some future code
-// path or automation dispatches an event straight at it, bypassing the CSS
-// hit-testing block a real user gesture would be subject to.
-const noop = () => {}
-
-// Reserve, in px, subtracted from the viewport height to get the circular
-// scroll container's height budget — mirrors `.circular-scroll-container
-// .circular`'s max-height calc in App.css (just the agent bar's own
-// height, nothing extra — the breadcrumb is allowed to overlap the list's
-// last bit of content, since it has its own background). Looping itself is
-// always on once a list has 2+ items (see useCircularScroll.ts) — this
-// budget only bounds how tall the container is allowed to render and how
-// big the clone groups need to grow to keep scrolling seamless at that
-// height. Uses the mobile --agent-bar-height (58px); being off by the
-// desktop bump doesn't materially matter here since it only feeds that
-// clone-sizing math, not the actual rendered max-height (pure CSS, and
-// responsive to the real var).
-const CIRCULAR_SCROLL_CHROME_RESERVE_PX = 58
 
 // Reorder helper for level-2/3 drags — same in-place delete+reassign trick as
 // applyOptimisticReorder in useGraph.ts, but walks a local items snapshot by
@@ -254,31 +231,6 @@ function GraphView() {
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
   }, [])
-  // Tracked reactively (not read inline at render time) so rotating a device
-  // or resizing the window updates the circular-scroll height budget below.
-  // Debounced (only commits after 250ms of no further resize events) —
-  // mobile browsers fire `resize` mid-scroll as their own address bar
-  // collapses/expands, which on an un-debounced setter fed a live-changing
-  // circularBudgetPx straight into useCircularScroll's clone-growth effect,
-  // regrowing the clone group and correcting scrollTop to compensate WHILE
-  // the user's own scroll gesture was still in flight — felt like the list
-  // "refreshing" to a different spot mid-scroll instead of just scrolling.
-  // A real rotation/window-resize still lands within 250ms of settling, so
-  // that case isn't meaningfully slower, just no longer fires constantly
-  // during ordinary scrolling.
-  const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight)
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null
-    const handler = () => {
-      if (timer) clearTimeout(timer)
-      timer = setTimeout(() => setViewportHeight(window.innerHeight), 250)
-    }
-    window.addEventListener('resize', handler)
-    return () => {
-      window.removeEventListener('resize', handler)
-      if (timer) clearTimeout(timer)
-    }
-  }, [])
   // Depth / note-view state and its buttons now live in AgentChat.tsx's
   // unified compose bar (see useViewOptions.ts) — GraphView still owns what
   // these values DRIVE (Section props, context-injection closures below),
@@ -410,19 +362,6 @@ function GraphView() {
   // Level-1 keys actually rendered as items.
   const levelOneKeys = displayOrder
 
-  // Circular ("revolving") scroll for the level-1 item list — see
-  // useCircularScroll.ts. Resets on `path` change (a drill-in/out is
-  // conceptually a brand-new list) and pauses while a level-1 drag is live
-  // (some browsers auto-scroll a scrollable container near its edges during
-  // dragover, which would otherwise fight the drag).
-  const circularBudgetPx = Math.max(200, viewportHeight - CIRCULAR_SCROLL_CHROME_RESERVE_PX)
-  const { circular, cloneCount, containerRef: circularContainerRef, topCloneRef, bottomCloneRef, realListRef } = useCircularScroll({
-    count: levelOneKeys.length,
-    resetKey: path,
-    paused: !!draggedItem,
-    budgetPx: circularBudgetPx,
-  })
-
   // Helper to build URL paths with optional graph prefix
   const buildPath = (itemPath: string) => {
     const base = graphName ? `/g/${graphName}` : ''
@@ -521,8 +460,8 @@ function GraphView() {
   // Swipe-right always means "go up the tree" — one level shallower, and
   // eventually out to the graphs list — regardless of where on the page it
   // starts (see usePageSwipe: one page-level gesture, not a per-item one,
-  // so this fires the same whether the finger started on a real row, a
-  // circular-scroll clone, or empty background space). Computes the target
+  // so this fires the same whether the finger started on a real row or
+  // empty background space). Computes the target
   // explicitly, like handleItemClick/handleNavigateInto above, instead of
   // calling browser-history back: navigate(-1) only steps up through levels
   // actually *visited* in this tab, so landing on a deep path directly (a
@@ -1040,74 +979,6 @@ function GraphView() {
     return null
   })()
 
-  // Builds a `cloneCount`-long array of indices into levelOneKeys for one
-  // clone group — cycling through the real list more than once if
-  // cloneCount > count (see useCircularScroll.ts's doc comment on why a
-  // short list's clone group needs to wrap/repeat to fill the viewport
-  // budget, rather than stopping at one pass through the real items).
-  // 'before': the top clone, read top-to-bottom, must end with the item
-  // immediately preceding real item 1 — i.e. items at "steps back" from
-  // index 0, walking further back as cloneCount grows. 'after': the bottom
-  // clone must start with the item immediately following the last real
-  // item, walking forward.
-  const wrappedCloneIndices = (cloneCount: number, count: number, direction: 'before' | 'after'): number[] =>
-    count === 0 ? [] : Array.from({ length: cloneCount }, (_, j) =>
-      direction === 'before' ? (((j - cloneCount) % count) + count) % count : j % count
-    )
-
-  // One item inside a circular-loop boundary clone group — see
-  // useCircularScroll.ts. Every interactive callback is a no-op and every
-  // "this item is mid-interaction" state prop is forced off (defense in
-  // depth on top of the wrapper's pointer-events:none), so a clone can never
-  // cause a real side effect; visual-only props (colorIndex, highlights,
-  // depth/minimal/showRaw) mirror the real item so it's pixel-identical.
-  const renderCloneSection = (key: string, reactKeyPrefix: string, colorIndex: number) => {
-    const item = displayItems[key]
-    if (!item) return null
-    // A clone can be exactly what's under the finger during a swipe — clones
-    // are pointer-events: none, so the page-level swipe hit-test resolves by
-    // position (data-item-path), not by which DOM node the browser would
-    // normally target — see usePageSwipe's itemPathAtY.
-    return (
-      <Section
-        key={`${reactKeyPrefix}${key}`}
-        itemKey={key}
-        item={item as StructureItem}
-        parentPath={path || ''}
-        colorIndex={colorIndex % COLORS.length}
-        onItemClick={noop}
-        onEditClick={noop}
-        editingPath={null}
-        editInline={!isMobile}
-        onInlineSave={noop}
-        onInlineCancel={noop}
-        creatingPath={null}
-        onSubCreateStart={noop}
-        onSubCreateSave={noop}
-        onSubCreateCancel={noop}
-        onContextMenu={noop}
-        onToggleHighlight={noop}
-        userHighlights={userHighlightSet}
-        agentHighlights={agentHighlightSet}
-        isPending={false}
-        draggedPath={null}
-        dragOverPath={null}
-        dragOverZone={null}
-        onItemDragStart={noop}
-        onItemDragOver={noop}
-        onItemDragEnd={noop}
-        onItemDrop={noop}
-        dragEnabled={false}
-        pendingPaths={pendingItems}
-        showContext={viewMode === 'context' && !minimalView}
-        minimal={minimalView}
-        depth={depth}
-        showRaw={depth === 0}
-        rawText={depth === 0 ? serializeItem(key, item as StructureItem, 1).trimEnd() : undefined}
-      />
-    )
-  }
-
   return (
     <>
       {/* Breadcrumb — fixed below bottom buttons */}
@@ -1158,130 +1029,84 @@ function GraphView() {
             </div>
           </div>
         )}
-        {/* Sections - rendered in local order for instant drag feedback.
-            Wrapped in a persistent container so useCircularScroll can manage
-            scrollTop across mode changes without unmounting the real items —
-            only the container's CLASS toggles between plain (single item,
-            nothing to loop) and circular (2+ items — always on, capped +
-            scrollable), never its identity. The two boundary clones only
-            mount in circular mode and are fully inert (pointer-events:none +
-            aria-hidden, plus their own edit/drag/drop state forced off) so
-            no interaction — and no stray "this item is mid-edit" render —
-            can ever come from a clone; see
-            useCircularScroll.ts for why this is needed at all. */}
-        <div
-          ref={circularContainerRef}
-          className={`circular-scroll-container${circular ? ' circular' : ''}`}
-          tabIndex={0}
-          role="region"
-          aria-label="Items"
-        >
-          {circular && cloneCount > 0 && (
-            <>
-            <div ref={topCloneRef} className="circular-clone circular-clone-top" aria-hidden="true" tabIndex={-1}>
-              {wrappedCloneIndices(cloneCount, levelOneKeys.length, 'before').map((srcIndex, j) =>
-                renderCloneSection(levelOneKeys[srcIndex], `__circular_clone_top__${j}_`, srcIndex)
-              )}
-            </div>
-            {/* Marks the loop seam — scrolling past the last real item lands
-                here (blank) before the top clone's first item, rather than
-                jumping straight into what would otherwise read as a repeat
-                with no warning. Height must match LOOP_SPACER_PX exactly;
-                see useCircularScroll.ts's teleport math. */}
-            <div className="circular-loop-spacer" style={{ height: LOOP_SPACER_PX }} aria-hidden="true" />
-            </>
-          )}
-          <div ref={realListRef} className="real-items">
-            {levelOneKeys.map((key, index) => {
-              const item = displayItems[key]
-              if (!item) return null
-              const itemPath = path ? `${path}.${key}` : key
-              const isPending = pendingItems.has(itemPath)
-              const canDrag = !isPending && !inlineEdit && !subCreate
+        {/* Sections - rendered in local order for instant drag feedback. */}
+        <div role="region" aria-label="Items" tabIndex={0}>
+        {levelOneKeys.map((key, index) => {
+          const item = displayItems[key]
+          if (!item) return null
+          const itemPath = path ? `${path}.${key}` : key
+          const isPending = pendingItems.has(itemPath)
+          const canDrag = !isPending && !inlineEdit && !subCreate
 
-              return (
-                <div
-                  key={key}
-                  draggable={canDrag}
-                  onDragStart={(e) => {
-                    // Only allow drag from background, not from text or interactive elements
-                    const target = e.target as HTMLElement
-                    if (
-                      target.classList.contains('item-title') ||
-                      target.classList.contains('layer2-item') ||
-                      target.classList.contains('layer3-item') ||
-                      target.classList.contains('layer2-title') ||
-                      target.classList.contains('layer3-title') ||
-                      target.classList.contains('copy-handle') ||
-                      target.classList.contains('item-edit-zone') ||
-                      target.tagName === 'BUTTON' ||
-                      target.tagName === 'A' ||
-                      target.tagName === 'INPUT' ||
-                      target.tagName === 'TEXTAREA'
-                    ) {
-                      e.preventDefault()
-                      return
-                    }
-                    handleDragStart(itemPath)
-                  }}
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  onDragEnd={handleDragEnd}
-                  onDrop={() => handleDrop(index)}
-                  className={`section-wrapper ${draggedItem === itemPath ? 'dragging' : ''} ${dragOverIndex === index && dragOverZone === 'nest' ? 'drag-over-nest' : ''} ${dragOverIndex === index && dragOverZone !== 'nest' ? 'drag-over' : ''} ${isPending ? 'pending' : ''}`}
-                >
-                  <Section
-                    key={key}
-                    itemKey={key}
-                    item={item as StructureItem}
-                    parentPath={path || ''}
-                    colorIndex={index % COLORS.length}
-                    onItemClick={handleItemClick}
-                    onEditClick={handleEditClick}
-                    editingPath={inlineEdit?.path || null}
-                    editInline={!isMobile}
-                    onInlineSave={handleInlineSave}
-                    onInlineCancel={() => setInlineEdit(null)}
-                    creatingPath={subCreate}
-                    onSubCreateStart={handleSubCreateStart}
-                    onSubCreateSave={handleSubCreateSave}
-                    onSubCreateCancel={() => setSubCreate(null)}
-                    onContextMenu={handleItemContextMenu}
-                    onToggleHighlight={toggleUserHighlight}
-                    userHighlights={userHighlightSet}
-                    agentHighlights={agentHighlightSet}
-                    isPending={isPending}
-                    draggedPath={draggedItem}
-                    dragOverPath={dragOverPath}
-                    dragOverZone={dragOverZone}
-                    onItemDragStart={handleDragStart}
-                    onItemDragOver={(p, z) => { setDragOverPath(p); setDragOverZone(z) }}
-                    onItemDragEnd={handleDragEnd}
-                    onItemDrop={handleDropAtPath}
-                    dragEnabled={!inlineEdit && !subCreate}
-                    pendingPaths={pendingItems}
-                    showContext={viewMode === 'context' && !minimalView}
-                    minimal={minimalView}
-                    depth={depth}
-                    showRaw={depth === 0}
-                    rawText={depth === 0 ? serializeItem(key, item as StructureItem, 1).trimEnd() : undefined}
-                  />
-                </div>
-              )
-            })}
-          </div>
-          {circular && cloneCount > 0 && (
-            <>
-            {/* Symmetric spacer for the other seam — scrolling up past the
-                first real item lands here before the bottom clone's last
-                item. */}
-            <div className="circular-loop-spacer" style={{ height: LOOP_SPACER_PX }} aria-hidden="true" />
-            <div ref={bottomCloneRef} className="circular-clone circular-clone-bottom" aria-hidden="true" tabIndex={-1}>
-              {wrappedCloneIndices(cloneCount, levelOneKeys.length, 'after').map((srcIndex, j) =>
-                renderCloneSection(levelOneKeys[srcIndex], `__circular_clone_bottom__${j}_`, srcIndex)
-              )}
+          return (
+            <div
+              key={key}
+              draggable={canDrag}
+              onDragStart={(e) => {
+                // Only allow drag from background, not from text or interactive elements
+                const target = e.target as HTMLElement
+                if (
+                  target.classList.contains('item-title') ||
+                  target.classList.contains('layer2-item') ||
+                  target.classList.contains('layer3-item') ||
+                  target.classList.contains('layer2-title') ||
+                  target.classList.contains('layer3-title') ||
+                  target.classList.contains('copy-handle') ||
+                  target.classList.contains('item-edit-zone') ||
+                  target.tagName === 'BUTTON' ||
+                  target.tagName === 'A' ||
+                  target.tagName === 'INPUT' ||
+                  target.tagName === 'TEXTAREA'
+                ) {
+                  e.preventDefault()
+                  return
+                }
+                handleDragStart(itemPath)
+              }}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+              onDrop={() => handleDrop(index)}
+              className={`section-wrapper ${draggedItem === itemPath ? 'dragging' : ''} ${dragOverIndex === index && dragOverZone === 'nest' ? 'drag-over-nest' : ''} ${dragOverIndex === index && dragOverZone !== 'nest' ? 'drag-over' : ''} ${isPending ? 'pending' : ''}`}
+            >
+              <Section
+                key={key}
+                itemKey={key}
+                item={item as StructureItem}
+                parentPath={path || ''}
+                colorIndex={index % COLORS.length}
+                onItemClick={handleItemClick}
+                onEditClick={handleEditClick}
+                editingPath={inlineEdit?.path || null}
+                editInline={!isMobile}
+                onInlineSave={handleInlineSave}
+                onInlineCancel={() => setInlineEdit(null)}
+                creatingPath={subCreate}
+                onSubCreateStart={handleSubCreateStart}
+                onSubCreateSave={handleSubCreateSave}
+                onSubCreateCancel={() => setSubCreate(null)}
+                onContextMenu={handleItemContextMenu}
+                onToggleHighlight={toggleUserHighlight}
+                userHighlights={userHighlightSet}
+                agentHighlights={agentHighlightSet}
+                isPending={isPending}
+                draggedPath={draggedItem}
+                dragOverPath={dragOverPath}
+                dragOverZone={dragOverZone}
+                onItemDragStart={handleDragStart}
+                onItemDragOver={(p, z) => { setDragOverPath(p); setDragOverZone(z) }}
+                onItemDragEnd={handleDragEnd}
+                onItemDrop={handleDropAtPath}
+                dragEnabled={!inlineEdit && !subCreate}
+                pendingPaths={pendingItems}
+                showContext={viewMode === 'context' && !minimalView}
+                minimal={minimalView}
+                depth={depth}
+                showRaw={depth === 0}
+                rawText={depth === 0 ? serializeItem(key, item as StructureItem, 1).trimEnd() : undefined}
+              />
             </div>
-            </>
-          )}
+          )
+        })}
         </div>
 
         {levelOneKeys.length === 0 && (

@@ -13,6 +13,13 @@
      Desktop's agent card floats bottom-right instead, so doesn't need this
      at all. */
   padding-top: var(--agent-bubble-height, 0px);
+  /* The page-level swipe gesture (usePageSwipe.ts, attached to this
+     element) needs to win horizontal drags back from the browser's own
+     touch-scroll recognizer, which can otherwise grab a swipe before the
+     gesture's own touchmove handler sees it, since default touch-action
+     lets it claim any pannable direction. pan-y declares "only vertical
+     panning is native here" so horizontal swipes are always left for JS. */
+  touch-action: pan-y;
 }
 
 @media (min-width: 32rem) {
@@ -21,13 +28,8 @@
   }
 }
 
-/* Single vertical column, always — level-1 items no longer pack into
-   side-by-side CSS columns (removed in favor of this) because circular
-   scrolling needs scrollTop to correspond 1:1 with "next item in list
-   order," which multi-column masonry can't guarantee (you'd scroll all the
-   way down column 1 before column 2, visually to the right, even starts).
-   Kept uniform for every graph, not just ones large enough to loop, so
-   there's no reflow the moment a graph's item count crosses that threshold. */
+/* Single vertical column — level-1 items don't pack into side-by-side CSS
+   columns, so scrolling always visits them in list order top-to-bottom. */
 .items-grid {
   flex: 0 0 100%;
 }
@@ -45,76 +47,6 @@
 
 .items-grid .section {
   width: 100%;
-}
-
-/* Wraps the level-1 item list (+ the two circular-loop boundary clones and
-   their spacers, when active) — see useCircularScroll.ts. Stays mounted
-   across plain/circular transitions; only this class toggles, so the real
-   items underneath never unmount just because the mode flipped. Plain (no
-   `.circular`, a single item — nothing to loop): natural height, no
-   scrolling, nothing rendered beyond the real item. */
-.circular-scroll-container {
-  width: 100%;
-}
-
-/* Circular: capped height + its own scroll region, so scrollTop can be
-   teleported precisely at the clone boundaries without fighting whole-page
-   scroll. The budget mirrors CIRCULAR_SCROLL_CHROME_RESERVE_PX in
-   GraphView.tsx and .breadcrumb's own `bottom` below — keep all three in
-   sync. Only clears the agent bar itself (an interactive control, so items
-   under it would be hard to tap) — the breadcrumb is allowed to sit over
-   the list's last bit of content, since it paints its own background and
-   stays legible either way. Adds env(safe-area-inset-bottom) for the same
-   reason as .breadcrumb — without it this undershoots the bar's real
-   height on devices with a home-indicator/notch, leaving a gap the size of
-   that inset. */
-.circular-scroll-container.circular {
-  max-height: calc(100dvh - (var(--agent-bar-height) + env(safe-area-inset-bottom, 0px)));
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  /* Chrome's native scroll anchoring auto-adjusts scrollTop when content
-     changes off-screen (e.g. the clone group growing by another item) —
-     the exact same kind of compensation useCircularScroll.ts already does
-     manually. Left enabled, both fire for the same DOM change and the
-     scrollTop correction gets double-applied. This hook owns scrollTop
-     entirely; the browser must not also weigh in. */
-  overflow-anchor: none;
-  /* Looping is now always on (see useCircularScroll.ts), so this container
-     is a scrollable ancestor of every item — including 2-3 item lists that
-     used to render in plain page flow with no scrollable ancestor nearby at
-     all. The page-level swipe gesture (usePageSwipe.ts) needs to win
-     horizontal drags back from the browser's own touch-scroll recognizer,
-     which can otherwise grab a swipe before the gesture's own touchmove
-     handler sees it, since default touch-action lets it claim any pannable
-     direction. pan-y declares "only vertical panning is native here" so
-     horizontal swipes are always left for JS, regardless of whether this
-     container actually has anything to scroll. */
-  touch-action: pan-y;
-}
-
-/* Purely visual scroll padding — never a real interaction target. */
-.circular-clone {
-  pointer-events: none;
-}
-
-/* Blank marker at each loop seam (see useCircularScroll.ts's LOOP_SPACER_PX
-   and GraphView.tsx's JSX) — height is set inline from that same constant,
-   this rule is just the look. A centered dotted rule rather than truly
-   empty space, so scrolling past the last item reads as "the list ends and
-   loops here" instead of a glitchy blank gap. */
-.circular-loop-spacer {
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  opacity: 0.4;
-}
-
-.circular-loop-spacer::before {
-  content: '· · ·';
-  font-size: 0.875rem;
-  letter-spacing: 0.25rem;
 }
 
 /* Copy/Delete-selected bar (class name predates the "New"/"Paste" buttons'

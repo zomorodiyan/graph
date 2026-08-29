@@ -3,14 +3,8 @@ import { useRef, useCallback } from 'react'
 export const SWIPE_THRESHOLD = 50
 export const SWIPE_VERTICAL_LIMIT = 75
 
-// Finds whichever rendered level-1 item — real OR a circular-scroll clone,
-// both carry the same data-item-path (see Section.tsx) — currently occupies
-// a given Y coordinate. Deliberately bounding-rect based, not
-// elementFromPoint: clones are pointer-events: none so the browser's own
-// hit-testing sees straight through them to whatever's behind, never their
-// own data attribute — this is what actually lets a swipe starting on a
-// clone (a real gap before this hook existed) resolve to the real item it's
-// standing in for.
+// Finds whichever rendered level-1 item (see Section.tsx's data-item-path)
+// currently occupies a given Y coordinate.
 function itemPathAtY(container: HTMLElement, y: number): string | null {
   const els = container.querySelectorAll<HTMLElement>('[data-item-path]')
   for (let i = 0; i < els.length; i++) {
@@ -22,12 +16,9 @@ function itemPathAtY(container: HTMLElement, y: number): string | null {
 
 // One swipe gesture, anywhere on the graph page — not one listener per item
 // (the previous design). Swipe right always navigates up the tree, whether
-// it starts on an item, a clone, or empty background space. Swipe left
-// navigates into whichever level-1 item occupies the gesture's starting
-// height, resolved fresh each gesture via itemPathAtY rather than relying
-// on which DOM node happened to catch the touch — the same item reads as
-// swipeable whether what's currently rendered at that height is the real
-// row or one of its circular-scroll clones. The target item is fixed at
+// it starts on an item or empty background space. Swipe left navigates
+// into whichever level-1 item occupies the gesture's starting height,
+// resolved fresh each gesture via itemPathAtY. The target item is fixed at
 // touchstart for the whole gesture (not re-resolved as the finger drifts
 // vertically), so a little wobble mid-swipe can't retarget it.
 //
@@ -43,10 +34,10 @@ function itemPathAtY(container: HTMLElement, y: number): string | null {
 // Attaches touchmove as a raw, non-passive native listener (via a callback
 // `ref`) instead of React's onTouchMove prop, for the same reason the old
 // per-item version did: React's delegated touchmove is passive, so
-// preventDefault() inside it silently no-ops, and .circular-scroll-container
-// (touch-action: pan-y) needs that preventDefault to keep the browser's own
-// direction-lock heuristic from grabbing a horizontal swipe before this ever
-// sees the full gesture. preventDefault only fires once the gesture is
+// preventDefault() inside it silently no-ops, and .graph-container
+// (touch-action: pan-y, see App.css) needs that preventDefault to keep the
+// browser's own direction-lock heuristic from grabbing a horizontal swipe
+// before this ever sees the full gesture. preventDefault only fires once the gesture is
 // actually trending horizontal (|deltaX| > deltaY) — calling it purely
 // because deltaY hasn't yet crossed SWIPE_VERTICAL_LIMIT would also swallow
 // the first ~75px of every ordinary vertical scroll, native momentum
