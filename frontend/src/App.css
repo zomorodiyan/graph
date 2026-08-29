@@ -49,16 +49,21 @@
   width: 100%;
 }
 
-/* Copy/Delete-selected bar (class name predates the "New"/"Paste" buttons'
-   removal — those used to share this same bar) — two halves, shaped like a
-   real level-1 item but in neutral gray with an outline, marking it as an
-   action rather than content (see .layer1.add-item below) */
-.new-paste-wrapper .layer1 {
-  flex: 1;
-  cursor: pointer;
+/* Copy/Delete-selection toolbar — mobile only (hidden at >=32rem, where the
+   same two actions live in .graph-header-buttons next to depth/note
+   instead, see GraphView.tsx). Two circular icon buttons, same family as
+   .copy-toggle/.delete-toggle below. */
+.selection-toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
 }
-.new-paste-wrapper .layer1 .item-title {
-  text-align: center;
+
+@media (min-width: 32rem) {
+  .selection-toolbar {
+    display: none;
+  }
 }
 
 /* Wraps the breadcrumb plus (at >=32rem) this view's own depth/note buttons
@@ -97,7 +102,9 @@
      .agent-chat-input-row's own override below) — the default standalone
      button size (44px) reads oversized next to breadcrumb text. */
   .graph-header-buttons .depth-toggle,
-  .graph-header-buttons .ctx-toggle {
+  .graph-header-buttons .ctx-toggle,
+  .graph-header-buttons .copy-toggle,
+  .graph-header-buttons .delete-toggle {
     width: 2.25rem;
     height: 2.25rem;
     font-size: 16px;
@@ -317,32 +324,6 @@
 }
 [data-theme='dark'] .layer1:hover {
   background-color: rgba(255,255,255,0.06);
-}
-
-/* "New" / "Paste" — action buttons, not real items, so they opt out of the
-   level/scheme accent color and use a muted mid-gray instead (a 40%/60%
-   lightness pair, closer to neutral than level 2's title color so they
-   stay unobtrusive), same in every color scheme. */
-.layer1.add-item,
-.layer1.add-item .item-title {
-  color: #666666;
-}
-[data-theme='dark'] .layer1.add-item,
-[data-theme='dark'] .layer1.add-item .item-title {
-  color: #999999;
-}
-.layer1.add-item {
-  border: 1px solid var(--border-color);
-}
-
-/* "D" (delete selection) — same bar, red text/border instead of the neutral
-   gray, flagging it as destructive (same red as .context-menu-item.danger). */
-.layer1.add-item.danger,
-.layer1.add-item.danger .item-title {
-  color: #c62828;
-}
-.layer1.add-item.danger {
-  border-color: #c62828;
 }
 
 .layer2-section {
@@ -879,7 +860,9 @@
 .theme-toggle,
 .depth-toggle,
 .ctx-toggle,
-.sync-toggle {
+.sync-toggle,
+.copy-toggle,
+.delete-toggle {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -894,8 +877,16 @@
   opacity: 0.6;
 }
 
-.theme-toggle {
+.theme-toggle,
+.copy-toggle,
+.delete-toggle {
   opacity: 1;
+}
+
+/* Delete-selection — red instead of the shared blue, flagging it as
+   destructive (same red as .context-menu-item.danger). */
+.delete-toggle {
+  background: #c62828;
 }
 
 .depth-toggle,
@@ -953,6 +944,8 @@
 .theme-toggle:hover,
 .depth-toggle:hover,
 .ctx-toggle:hover,
+.copy-toggle:hover,
+.delete-toggle:hover,
 .copy-btn:hover {
   transform: scale(1.1);
 }

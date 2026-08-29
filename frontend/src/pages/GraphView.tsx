@@ -23,6 +23,29 @@ function isTouchDevice(): boolean {
 // Color assignment based on index
 const COLORS = ['sky', 'indigo', 'fuchsia']
 
+// Copy/Delete-selection icons — plain hand-drawn outlines (no icon package
+// in this project), sized to sit inside the same circular buttons as
+// depth/note (see .copy-toggle/.delete-toggle in App.css).
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="12" height="12" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  )
+}
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
+  )
+}
+
 // Small dot row under a breadcrumb crumb — how many siblings it had at that
 // level and roughly where among them, without needing a separate mini-map
 // widget. Caps at MAX_CRUMB_DOTS so a level with dozens of items still
@@ -1032,6 +1055,19 @@ function GraphView() {
               own compose-row copies instead (same shared state either way,
               see useViewOptions.ts). */}
           <div className="graph-header-buttons">
+            {/* Copy/delete-selection — only present while something's
+                highlighted (see the matching .selection-toolbar copy below,
+                mobile's version of the same two actions). */}
+            {userHighlights.length > 0 && (
+              <>
+                <button className="copy-toggle" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
+                  <CopyIcon />
+                </button>
+                <button className="delete-toggle" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
+                  <TrashIcon />
+                </button>
+              </>
+            )}
             <button
               className={`depth-toggle active${depth === 0 ? ' raw' : ''}`}
               {...depthLongPress}
@@ -1061,17 +1097,17 @@ function GraphView() {
         {/* Copy + Delete for the current selection — only shows once
             something's highlighted (the "+New"/"Paste" default state this
             bar used to have was removed; top-level item creation now goes
-            through the agent chat instead). */}
+            through the agent chat instead). Mobile-only — hidden at >=32rem
+            via CSS, where the same two actions live in .graph-header-buttons
+            instead, next to depth/note (see above). */}
         {userHighlights.length > 0 && (
-          <div className="section-wrapper new-paste-wrapper">
-            <div className="section">
-              <div className="layer1 add-item" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
-                <span className="item-title">C</span>
-              </div>
-              <div className="layer1 add-item danger" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
-                <span className="item-title">D</span>
-              </div>
-            </div>
+          <div className="selection-toolbar">
+            <button className="copy-toggle" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
+              <CopyIcon />
+            </button>
+            <button className="delete-toggle" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
+              <TrashIcon />
+            </button>
           </div>
         )}
         {/* Sections - rendered in local order for instant drag feedback. */}
@@ -1161,15 +1197,13 @@ function GraphView() {
 
         {/* Copy + Delete for the current selection — bottom copy, same as the top one. */}
         {userHighlights.length > 0 && (
-          <div className="section-wrapper new-paste-wrapper">
-            <div className="section">
-              <div className="layer1 add-item" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
-                <span className="item-title">C</span>
-              </div>
-              <div className="layer1 add-item danger" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
-                <span className="item-title">D</span>
-              </div>
-            </div>
+          <div className="selection-toolbar">
+            <button className="copy-toggle" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
+              <CopyIcon />
+            </button>
+            <button className="delete-toggle" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
+              <TrashIcon />
+            </button>
           </div>
         )}
         </div>{/* end items-grid */}
