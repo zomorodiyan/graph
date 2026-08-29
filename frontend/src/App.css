@@ -61,6 +61,49 @@
   text-align: center;
 }
 
+/* Wraps the breadcrumb plus (at >=32rem) this view's own depth/note buttons
+   (see GraphView.tsx) — mobile keeps the breadcrumb pinned near the compose
+   bar and hides the button copy entirely (AgentChat's own compose-row
+   buttons cover it there instead); >=32rem turns this into a normal in-flow
+   header above the item list, since the docked agent panel no longer
+   overlaps the bottom of the page the way the old floating/fixed bar did. */
+.graph-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+@media (min-width: 32rem) {
+  .graph-header {
+    align-items: center;
+    padding: 0.75rem 0.75rem 0.5rem;
+  }
+}
+
+.graph-header-buttons {
+  display: none;
+}
+
+@media (min-width: 32rem) {
+  .graph-header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  /* Same compact size AgentChat.tsx's mobile compose-row copies use (see
+     .agent-chat-input-row's own override below) — the default standalone
+     button size (44px) reads oversized next to breadcrumb text. */
+  .graph-header-buttons .depth-toggle,
+  .graph-header-buttons .ctx-toggle {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 16px;
+  }
+}
+
 .breadcrumb {
   position: fixed;
   /* Sits flush against the bottom bar's own top edge and the screen's left
@@ -83,6 +126,24 @@
   opacity: 0.85;
   padding: 0.25rem 0.6rem;
   border-radius: 0.5rem;
+}
+
+@media (min-width: 32rem) {
+  /* In-flow header, not a floating pill — sits at the top of .app-main's
+     own column, so it never overlaps the docked agent panel or the item
+     list below it. */
+  .breadcrumb {
+    position: static;
+    bottom: auto;
+    left: auto;
+    z-index: auto;
+    background: none;
+    opacity: 1;
+    padding: 0;
+    border-radius: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 }
 
 .breadcrumb a {
@@ -1611,6 +1672,17 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+/* Depth/note move into GraphView's own header at >=32rem (see
+   .graph-header-buttons) — this compose row keeps only theme (always
+   relevant) and sync (graphs-list-only already, via the graphName check in
+   AgentChat.tsx). Mobile keeps all four here, unaffected. */
+@media (min-width: 32rem) {
+  .agent-chat-view-buttons .depth-toggle,
+  .agent-chat-view-buttons .ctx-toggle {
+    display: none;
+  }
 }
 
 .agent-chat-input-row textarea {

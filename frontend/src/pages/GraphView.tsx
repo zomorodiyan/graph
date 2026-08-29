@@ -3,9 +3,10 @@ import { useLocation, useNavigate, useNavigationType, Link, useParams } from 're
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useHighlights } from '../hooks/useHighlights'
-import { useViewOptions } from '../hooks/useViewOptions'
+import { useViewOptions, DEPTHS } from '../hooks/useViewOptions'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { usePageSwipe } from '../hooks/usePageSwipe'
+import { useLongPress } from '../hooks/useLongPress'
 import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem } from '@api'
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
@@ -231,11 +232,27 @@ function GraphView() {
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
   }, [])
-  // Depth / note-view state and its buttons now live in AgentChat.tsx's
-  // unified compose bar (see useViewOptions.ts) — GraphView still owns what
-  // these values DRIVE (Section props, context-injection closures below),
-  // just no longer the buttons or the persistence effects.
-  const { depth, viewMode, minimalView } = useViewOptions()
+  // Depth / note-view state — shared with AgentChat.tsx's mobile compose bar
+  // via the same query-cache-backed hook (see useViewOptions.ts). GraphView
+  // owns what these values DRIVE (Section props, context-injection closures
+  // below) and, at >=32rem, its own copy of the buttons themselves too (see
+  // depthLongPress/ctxLongPress and the header JSX below) — mobile keeps
+  // getting them from AgentChat instead.
+  const { depth, viewMode, minimalView, setDepth, setViewMode, setMinimalView } = useViewOptions()
+  const depthLongPress = useLongPress(
+    () => setDepth(0),
+    () => setDepth(d => {
+      const idx = (DEPTHS as readonly number[]).indexOf(d)
+      return DEPTHS[(idx + 1) % DEPTHS.length]
+    }),
+  )
+  const ctxLongPress = useLongPress(
+    () => setMinimalView(v => !v),
+    () => {
+      if (minimalView) { setMinimalView(false); return }
+      setViewMode(m => m === 'context' ? 'default' : 'context')
+    },
+  )
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
   // Bumped by AgentChat.tsx after a tool-driven edit/add, which mutates the
@@ -981,26 +998,49 @@ function GraphView() {
 
   return (
     <>
-      {/* Breadcrumb — fixed below bottom buttons */}
+      {/* Breadcrumb — fixed near the bottom on mobile (below the compose
+          bar's own buttons, which own depth/note there); a normal in-flow
+          header above the item list at >=32rem instead, alongside this
+          view's own depth/note buttons (see App.css's .graph-header /
+          .breadcrumb media overrides). */}
       {!inlineEdit && !subCreate && (
-        <nav className="breadcrumb">
-          {breadcrumb.flatMap((crumb, i) => {
-            const els = []
-            if (i > 0) els.push(<span key={`${crumb.path}-sep`} className="sep">/</span>)
-            els.push(
-              <span key={crumb.path} className="crumb-col">
-                {i === breadcrumb.length - 1 ? (
-                  <span>{crumb.label}</span>
-                ) : (
-                  <Link to={crumb.path}>{crumb.label}</Link>
-                )}
-                {renderSiblingDots(crumb.siblingCount, crumb.siblingIndex)}
-                {i === breadcrumb.length - 1 && renderViewPositionDots(levelOneKeys.length)}
-              </span>,
-            )
-            return els
-          })}
-        </nav>
+        <div className="graph-header">
+          <nav className="breadcrumb">
+            {breadcrumb.flatMap((crumb, i) => {
+              const els = []
+              if (i > 0) els.push(<span key={`${crumb.path}-sep`} className="sep">/</span>)
+              els.push(
+                <span key={crumb.path} className="crumb-col">
+                  {i === breadcrumb.length - 1 ? (
+                    <span>{crumb.label}</span>
+                  ) : (
+                    <Link to={crumb.path}>{crumb.label}</Link>
+                  )}
+                  {renderSiblingDots(crumb.siblingCount, crumb.siblingIndex)}
+                  {i === breadcrumb.length - 1 && renderViewPositionDots(levelOneKeys.length)}
+                </span>,
+              )
+              return els
+            })}
+          </nav>
+          {/* Hidden below 32rem via CSS — mobile gets these from AgentChat's
+              own compose-row copies instead (same shared state either way,
+              see useViewOptions.ts). */}
+          <div className="graph-header-buttons">
+            <button
+              className={`depth-toggle active${depth === 0 ? ' raw' : ''}`}
+              {...depthLongPress}
+              title={depth === 0 ? 'Raw view — tap to return, long-press elsewhere for Raw' : `Showing ${depth} levels — tap to cycle, long-press for Raw`}
+            >{depth === 0 ? 'R' : depth}</button>
+            <button
+              className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}${minimalView ? ' minimal' : ''}`}
+              {...ctxLongPress}
+              title={minimalView
+                ? 'Minimal view — tap to return to normal'
+                : `${viewMode === 'context' ? 'Note on' : 'Note off'} — tap to toggle, long-press for minimal view`}
+            >N</button>
+          </div>
+        </div>
       )}
 
       <div

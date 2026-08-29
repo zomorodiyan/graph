@@ -5,11 +5,21 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 // "active-view-mode" / "active-minimal-view" localStorage value shared across
 // every graph. Centralized here (React Query cache, same technique as
 // useHighlights.ts) so GraphView.tsx and AgentChat.tsx — sibling component
-// trees — can both read and write it without prop-drilling; GraphView still
-// owns what these values DO (Section props, context-injection closures),
-// AgentChat owns rendering the actual depth/note buttons.
+// trees — can both read and write it without prop-drilling; GraphView owns
+// what these values DO (Section props, context-injection closures) and also
+// renders its own copy of the depth/note buttons in its >=32rem header,
+// next to the breadcrumb — mobile still gets them from AgentChat's compose
+// row instead (each hidden via CSS at the other's breakpoint), since both
+// read/write the exact same query-cache state, there's nothing to keep in
+// sync beyond that.
 export type Depth = 0 | 2 | 3
 export type ViewMode = 'default' | 'context'
+
+// Depths cycled by tapping the depth button — 3 levels, 2 levels. Raw (0)
+// isn't part of the cycle; long-pressing the button jumps to it directly.
+// Shared by AgentChat.tsx (mobile's compose-row buttons) and GraphView.tsx
+// (the >=32rem header's own copy — see the module comment below).
+export const DEPTHS = [3, 2] as const
 
 const DEPTH_KEY = ['view-depth'] as const
 const VIEW_MODE_KEY = ['view-mode'] as const

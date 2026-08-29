@@ -5,7 +5,7 @@ import { useAgentChat } from '../hooks/useAgentChat'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useVisualViewportRect } from '../hooks/useVisualViewportRect'
 import { useHighlights } from '../hooks/useHighlights'
-import { useViewOptions } from '../hooks/useViewOptions'
+import { useViewOptions, DEPTHS } from '../hooks/useViewOptions'
 import { useLongPress } from '../hooks/useLongPress'
 import { useTheme } from '../context/ThemeContext'
 import { useGraphs, getItemByPath } from '../hooks/useGraph'
@@ -13,10 +13,6 @@ import { useSyncManager, SyncAllResult } from '../hooks/useSyncManager'
 import { fetchStructure, serializeItem, serializeStructure } from '../api/localClient'
 import AgentAccessGuide from './AgentAccessGuide'
 import Notification from './Notification'
-
-// View depths cycled by tapping the depth button — 3 levels, 2 levels.
-// Raw (0) isn't part of the cycle; long-pressing the button jumps to it directly.
-const DEPTHS = [3, 2] as const
 
 // Smallest the permanent bubble can be dragged down to — two different
 // floors depending on whether the input row is part of the bubble's own
