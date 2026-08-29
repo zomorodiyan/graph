@@ -71,7 +71,7 @@ function readStoredSize(key: string, fallback: number) {
 // user's own key (see agentClient.ts), which can view, edit, and add items
 // in the currently open graph via tools.
 function AgentChat() {
-  const { expanded, setExpanded, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop } = useAgentChat()
+  const { expanded, setExpanded, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop, clearMessages } = useAgentChat()
   const [draft, setDraft] = useState('')
   const messagesRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -100,6 +100,16 @@ function AgentChat() {
   // Theme is a global toggle, relevant everywhere. Depth/note only make
   // sense with a graph open, so their buttons are gated on graphName below.
   const { toggleTheme } = useTheme()
+  // Long-press to clear the persisted conversation and start fresh (see
+  // useAgentChat's MESSAGES_KEY) — theme is the one view-button that's
+  // always present regardless of where you are (depth/note are graph-only,
+  // sync is graphs-list-only), so it's the natural home for an always-
+  // available action. confirm() matches the same destructive-action pattern
+  // GraphView.tsx's handleDeleteSelected already uses.
+  const themeLongPress = useLongPress(
+    () => { if (confirm('Clear the conversation? This can\'t be undone.')) clearMessages() },
+    toggleTheme,
+  )
   const { depth, viewMode, minimalView, setDepth, setViewMode, setMinimalView } = useViewOptions()
   const depthLongPress = useLongPress(
     () => setDepth(0),
@@ -476,7 +486,7 @@ function AgentChat() {
           layout, unchanged from before. */}
       <div className="agent-chat-input-row">
         <div className="agent-chat-view-buttons">
-          <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
+          <button className="theme-toggle" {...themeLongPress} title="Toggle theme — long-press to clear the conversation" />
           {graphName && (
             <button
               className={`depth-toggle active${depth === 0 ? ' raw' : ''}`}
