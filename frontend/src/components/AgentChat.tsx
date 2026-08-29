@@ -36,13 +36,16 @@ const MIN_PANEL_HEIGHT_IDLE = 76
 // Docked split-pane sizing (>=32rem — see .agent-chat-shell/.agent-chat-splitter
 // in App.css). Below 60rem the split stacks (drag adjusts DOCK_HEIGHT
 // instead of DOCK_WIDTH) since there isn't room to sit side-by-side at a
-// readable width. No open/closed toggle state — dragging the splitter all
-// the way to either edge just continuously shrinks that side to 0 (see
-// handleSplitterMove/setDockWidth/setDockHeight's clamping), and it's
-// dragged back out the same way since the splitter itself is always
-// rendered, never hidden by a collapsed side.
+// readable width. No open/closed toggle state — dragging the splitter
+// smoothly shrinks either side down to EDGE_GAP (see
+// handleSplitterMove/setDockWidth/setDockHeight's clamping), never all the
+// way to the literal edge — flush against the edge, the splitter itself
+// would be sitting right at (or past) the edge of the viewport, too easy to
+// lose and impossible to grab again. EDGE_GAP keeps a thin sliver of
+// whichever side is "collapsed" always visible and always draggable.
 const WIDE_SPLIT_QUERY = '(min-width: 60rem)'
 const SPLITTER_SIZE = 5
+const EDGE_GAP = 32
 const DEFAULT_DOCK_WIDTH = 380
 const DEFAULT_DOCK_HEIGHT_RATIO = 0.45
 
@@ -285,10 +288,10 @@ function AgentChat() {
   const [dockHeight, setDockHeightRaw] = useState(() => readStoredSize('agent-panel-height', Math.round(window.innerHeight * DEFAULT_DOCK_HEIGHT_RATIO)))
   useEffect(() => { localStorage.setItem('agent-panel-width', String(dockWidth)) }, [dockWidth])
   useEffect(() => { localStorage.setItem('agent-panel-height', String(dockHeight)) }, [dockHeight])
-  // Clamped to [0, viewport - splitter] rather than a floor above 0 — see
-  // the module comment above for why there's no separate collapsed state.
-  const setDockWidth = (w: number) => setDockWidthRaw(Math.min(Math.max(w, 0), window.innerWidth - SPLITTER_SIZE))
-  const setDockHeight = (h: number) => setDockHeightRaw(Math.min(Math.max(h, 0), window.innerHeight - SPLITTER_SIZE))
+  // Clamped to [EDGE_GAP, viewport - splitter - EDGE_GAP] on both ends —
+  // see the module comment above for why neither side goes fully to 0.
+  const setDockWidth = (w: number) => setDockWidthRaw(Math.min(Math.max(w, EDGE_GAP), window.innerWidth - SPLITTER_SIZE - EDGE_GAP))
+  const setDockHeight = (h: number) => setDockHeightRaw(Math.min(Math.max(h, EDGE_GAP), window.innerHeight - SPLITTER_SIZE - EDGE_GAP))
 
   // Splitter drag (.agent-chat-splitter) — orientation is read fresh off
   // matchMedia at drag-start rather than tracked in state, since it only
