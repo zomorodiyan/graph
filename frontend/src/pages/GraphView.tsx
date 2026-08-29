@@ -45,6 +45,22 @@ function TrashIcon() {
     </svg>
   )
 }
+// Confirm/reject an agent-proposed deletion (see .confirm-toggle/.reject-toggle in App.css).
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  )
+}
+function XIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  )
+}
 
 // Small dot row under a breadcrumb crumb — how many siblings it had at that
 // level and roughly where among them, without needing a separate mini-map
@@ -295,9 +311,10 @@ function GraphView() {
   // Two-way "point at an item" channel with the agent chat — see
   // useHighlights.ts. Converted to Sets here (once per render) so every
   // row's highlightClasses() lookup in Section.tsx is O(1).
-  const { userHighlights, agentHighlights, toggleUserHighlight, clearUserHighlights } = useHighlights(graphName)
+  const { userHighlights, agentHighlights, agentDeletePending, toggleUserHighlight, clearUserHighlights, clearAgentDeletePending } = useHighlights(graphName)
   const userHighlightSet = useMemo(() => new Set(userHighlights), [userHighlights])
   const agentHighlightSet = useMemo(() => new Set(agentHighlights), [agentHighlights])
+  const agentDeletePendingSet = useMemo(() => new Set(agentDeletePending), [agentDeletePending])
 
   // The literal hardware/browser back button (a real history POP) is a
   // separate code path from handleNavigateBack below, which clears
@@ -986,6 +1003,30 @@ function GraphView() {
     }
   }
 
+  // Confirm/reject an agent-proposed deletion (see request_delete_items in
+  // agentClient.ts) — the button click itself is the confirmation, no
+  // separate browser confirm() dialog. Same root-paths-only + sequential
+  // delete approach as handleDeleteSelected above.
+  const handleConfirmAgentDelete = async () => {
+    const count = agentDeletePending.length
+    if (!count) return
+    try {
+      for (const rootPath of selectionRoots(agentDeletePending)) {
+        await deleteItem(rootPath, graphName)
+      }
+      clearAgentDeletePending()
+      setLocalItems(null)
+      setLocalOrder(null)
+      await queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
+      showNotification(`Deleted ${count} item${count > 1 ? 's' : ''}!`)
+    } catch (err) {
+      showNotification('Failed to delete', 'error')
+    }
+  }
+  const handleRejectAgentDelete = () => {
+    clearAgentDeletePending()
+  }
+
   // Mobile-only: whichever of edit / sub-create is active,
   // resolved into the props MobileEditSheet needs. The corresponding item (or
   // its parent, for sub-create) gets a border highlight in the list instead —
@@ -1060,6 +1101,19 @@ function GraphView() {
                 </button>
               </>
             )}
+            {/* Confirm/reject an agent-proposed deletion (see the matching
+                .pending-delete-toolbar copy below for mobile) — independent
+                of the user's own selection above, both can show at once. */}
+            {agentDeletePending.length > 0 && (
+              <>
+                <button className="confirm-toggle" onClick={handleConfirmAgentDelete} title={`Confirm deleting ${agentDeletePending.length} item(s) the agent proposed`}>
+                  <CheckIcon />
+                </button>
+                <button className="reject-toggle" onClick={handleRejectAgentDelete} title="Reject — keep these items">
+                  <XIcon />
+                </button>
+              </>
+            )}
             <button
               className={`depth-toggle active${depth === 0 ? ' raw' : ''}`}
               {...depthLongPress}
@@ -1099,6 +1153,18 @@ function GraphView() {
             </button>
             <button className="delete-toggle" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
               <TrashIcon />
+            </button>
+          </div>
+        )}
+        {/* Confirm/reject an agent-proposed deletion — mobile-only version of
+            the header's copy above. */}
+        {agentDeletePending.length > 0 && (
+          <div className="selection-toolbar">
+            <button className="confirm-toggle" onClick={handleConfirmAgentDelete} title={`Confirm deleting ${agentDeletePending.length} item(s) the agent proposed`}>
+              <CheckIcon />
+            </button>
+            <button className="reject-toggle" onClick={handleRejectAgentDelete} title="Reject — keep these items">
+              <XIcon />
             </button>
           </div>
         )}
@@ -1162,6 +1228,7 @@ function GraphView() {
                 onToggleHighlight={toggleUserHighlight}
                 userHighlights={userHighlightSet}
                 agentHighlights={agentHighlightSet}
+                agentDeletePending={agentDeletePendingSet}
                 isPending={isPending}
                 draggedPath={draggedItem}
                 dragOverPath={dragOverPath}
@@ -1195,6 +1262,16 @@ function GraphView() {
             </button>
             <button className="delete-toggle" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
               <TrashIcon />
+            </button>
+          </div>
+        )}
+        {agentDeletePending.length > 0 && (
+          <div className="selection-toolbar">
+            <button className="confirm-toggle" onClick={handleConfirmAgentDelete} title={`Confirm deleting ${agentDeletePending.length} item(s) the agent proposed`}>
+              <CheckIcon />
+            </button>
+            <button className="reject-toggle" onClick={handleRejectAgentDelete} title="Reject — keep these items">
+              <XIcon />
             </button>
           </div>
         )}

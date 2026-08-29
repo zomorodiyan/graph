@@ -104,7 +104,9 @@
   .graph-header-buttons .depth-toggle,
   .graph-header-buttons .ctx-toggle,
   .graph-header-buttons .copy-toggle,
-  .graph-header-buttons .delete-toggle {
+  .graph-header-buttons .delete-toggle,
+  .graph-header-buttons .confirm-toggle,
+  .graph-header-buttons .reject-toggle {
     width: 2.25rem;
     height: 2.25rem;
     font-size: 16px;
@@ -805,7 +807,9 @@
 .ctx-toggle,
 .sync-toggle,
 .copy-toggle,
-.delete-toggle {
+.delete-toggle,
+.confirm-toggle,
+.reject-toggle {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -822,13 +826,18 @@
 
 .theme-toggle,
 .copy-toggle,
-.delete-toggle {
+.delete-toggle,
+.confirm-toggle,
+.reject-toggle {
   opacity: 1;
 }
 
-/* Delete-selection — red instead of the shared blue, flagging it as
-   destructive (same red as .context-menu-item.danger). */
-.delete-toggle {
+/* Delete-selection / confirm-delete — red instead of the shared blue,
+   flagging the action as destructive (same red as .context-menu-item.danger).
+   Reject (keep the item — the safe choice) deliberately stays the plain
+   default blue instead, no override needed. */
+.delete-toggle,
+.confirm-toggle {
   background: #c62828;
 }
 
@@ -889,6 +898,8 @@
 .ctx-toggle:hover,
 .copy-toggle:hover,
 .delete-toggle:hover,
+.confirm-toggle:hover,
+.reject-toggle:hover,
 .copy-btn:hover {
   transform: scale(1.1);
 }
@@ -1252,6 +1263,17 @@
 .layer2.user-highlighted.agent-highlighted,
 .layer3-item.user-highlighted.agent-highlighted {
   box-shadow: 0 0 0 2px rgba(67, 160, 71, 0.85) inset, 0 0 0 4px rgba(251, 140, 0, 0.85) inset;
+}
+
+/* Agent-proposed deletion (see request_delete_items in agentClient.ts and
+   the Confirm/Reject buttons below) — a red ring that deliberately wins over
+   either highlight ring above: the extra repeated class is a cheap
+   specificity bump (3 class-selectors, same trick as the combo rule above)
+   so this always renders instead of, not alongside, a same-item highlight. */
+.layer1.agent-delete-pending.agent-delete-pending,
+.layer2.agent-delete-pending.agent-delete-pending,
+.layer3-item.agent-delete-pending.agent-delete-pending {
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.9) inset;
 }
 
 /* Sized/positioned to exactly match window.visualViewport (see

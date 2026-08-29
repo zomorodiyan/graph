@@ -21,6 +21,7 @@ export function useAgentChat() {
     graphName: string | undefined,
     onMutate: () => void,
     onHighlight: (paths: string[]) => void,
+    onDeletePending: (paths: string[]) => void,
   ) => {
     const trimmed = text.trim()
     if (!trimmed || isSending) return
@@ -47,6 +48,7 @@ export function useAgentChat() {
         graphName,
         onMutate,
         onHighlight,
+        onDeletePending,
         delta => {
           setMessages(m => {
             const next = [...m]

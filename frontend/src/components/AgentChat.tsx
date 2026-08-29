@@ -95,7 +95,7 @@ function AgentChat() {
     enabled: Boolean(graphName),
   })
   const { data: graphs } = useGraphs()
-  const { userHighlights, setAgentHighlights } = useHighlights(graphName)
+  const { userHighlights, setAgentHighlights, setAgentDeletePending } = useHighlights(graphName)
 
   // Theme is a global toggle, relevant everywhere. Depth/note only make
   // sense with a graph open, so their buttons are gated on graphName below.
@@ -384,6 +384,7 @@ function AgentChat() {
         queryClient.setQueryData(['agent-mutation-signal', graphName], (n: number = 0) => n + 1)
       },
       setAgentHighlights,
+      setAgentDeletePending,
     )
     setDraft('')
   }
