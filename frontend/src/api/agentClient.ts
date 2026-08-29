@@ -115,6 +115,24 @@ interface AddItemArgs { parent_path: string; name: string; context?: string; dat
 interface HighlightItemsArgs { paths: string[] }
 interface RequestDeleteItemsArgs { paths: string[] }
 
+// Both highlight_items and request_delete_items take model-guessed paths —
+// the model only ever sees titles in the Markdown outline, so it has to
+// infer the dot-path itself, and sometimes gets it wrong (wrong
+// normalization, a stale path from earlier in the conversation, etc.).
+// Splitting into valid/invalid up front means a bad guess surfaces as
+// specific feedback the model can act on, instead of the ring silently not
+// appearing (highlight) or Confirm failing with a generic error later (delete).
+async function partitionValidPaths(graphName: string, paths: string[]): Promise<{ valid: string[]; invalid: string[] }> {
+  const structure = await fetchStructure(graphName)
+  const valid: string[] = []
+  const invalid: string[] = []
+  for (const path of paths) {
+    if (getItemByPath(structure, path)) valid.push(path)
+    else invalid.push(path)
+  }
+  return { valid, invalid }
+}
+
 function buildTools(
   graphName: string | undefined,
   onMutate: () => void,
@@ -209,8 +227,17 @@ function buildTools(
         required: ['paths'],
       },
       run: async ({ paths }) => {
-        onHighlight(paths)
-        return paths.length ? `Highlighted ${paths.length} item(s).` : 'Cleared your highlights.'
+        if (paths.length === 0) {
+          onHighlight([])
+          return 'Cleared your highlights.'
+        }
+        const { valid, invalid } = await partitionValidPaths(graphName, paths)
+        onHighlight(valid)
+        if (invalid.length === 0) return `Highlighted ${valid.length} item(s).`
+        const invalidNote = `Could not find, so skipped: ${invalid.join(', ')} — double-check these paths (view_item with an empty path shows the whole outline).`
+        return valid.length > 0
+          ? `Highlighted ${valid.length} item(s). ${invalidNote}`
+          : invalidNote
       },
     }),
     makeTool<RequestDeleteItemsArgs>({
@@ -229,10 +256,20 @@ function buildTools(
         required: ['paths'],
       },
       run: async ({ paths }) => {
-        onDeletePending(paths)
-        return paths.length
-          ? `Flagged ${paths.length} item(s) for deletion — waiting on the user to confirm or reject in the app.`
-          : 'Withdrew the delete proposal.'
+        if (paths.length === 0) {
+          onDeletePending([])
+          return 'Withdrew the delete proposal.'
+        }
+        const { valid, invalid } = await partitionValidPaths(graphName, paths)
+        // Unlike highlight (cosmetic), a delete proposal on a path that
+        // doesn't exist is worth failing hard on — better the model retries
+        // with a correct path than the user sees Confirm/Reject buttons for
+        // an item that was never actually flagged.
+        if (invalid.length > 0) {
+          throw new Error(`These paths don't exist, so nothing was flagged: ${invalid.join(', ')} — double-check with view_item (empty path shows the whole outline) and try again.`)
+        }
+        onDeletePending(valid)
+        return `Flagged ${valid.length} item(s) for deletion — waiting on the user to confirm or reject in the app.`
       },
     }),
   ]
