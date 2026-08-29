@@ -579,10 +579,9 @@ function GraphView() {
     const normalizedName = data.name.toLowerCase().replace(/ /g, '_')
     const newItem: StructureItem = {
       title: data.name,
-      ...(data.progress && { progress: data.progress }),
+      ...(data.date && { date: data.date }),
       ...(data.context && { context: data.context }),
-      ...(data.cost && { cost: data.cost }),
-      ...(data.checkpoints && data.checkpoints.length > 0 && { checkpoints: data.checkpoints }),
+      ...(data.tags && data.tags.length > 0 && { tags: data.tags }),
     }
 
     const currentPathParts = path ? path.split('.') : []
@@ -674,11 +673,11 @@ function GraphView() {
         const updatedItem = { ...target[itemKey] }
         
         // Update properties
-        if (data.progress !== undefined) {
-          if (data.progress === '') {
-            delete updatedItem.progress
+        if (data.date !== undefined) {
+          if (data.date === '') {
+            delete updatedItem.date
           } else {
-            updatedItem.progress = data.progress
+            updatedItem.date = data.date
           }
         }
         if (data.context !== undefined) {
@@ -688,18 +687,11 @@ function GraphView() {
             updatedItem.context = data.context
           }
         }
-        if (data.cost !== undefined) {
-          if (data.cost === null) {
-            delete updatedItem.cost
+        if (data.tags !== undefined) {
+          if (data.tags.length === 0) {
+            delete updatedItem.tags
           } else {
-            updatedItem.cost = data.cost
-          }
-        }
-        if (data.checkpoints !== undefined) {
-          if (data.checkpoints.length === 0) {
-            delete updatedItem.checkpoints
-          } else {
-            updatedItem.checkpoints = data.checkpoints
+            updatedItem.tags = data.tags
           }
         }
 

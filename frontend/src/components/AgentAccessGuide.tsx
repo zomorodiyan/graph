@@ -40,17 +40,12 @@ then \`write\` the full result back (there's no partial/line-level edit endpoint
 ## Markdown format (mirrors \`frontend/src/api/localClient.ts\` in the graph repo)
 
 - Heading depth = nesting depth: \`#\` top level, \`##\` its children, \`###\` grandchildren, etc.
-- Heading line: \`#+ Title (progress)? cost?\`
-  - \`(x/y)\` trailing suffix = progress, e.g. \`## Ship v2 (3/5)\`
-  - a trailing \`<amount><unit>\` token (or \`<unit><amount>\`) = cost, e.g. \`### Server 40hr\`
+- Heading line: \`#+ Title (date)? tags?\`
+  - a trailing \`(YYYY-MM-DD)\` = the item's date, e.g. \`## Ship v2 (2026-07-15)\`
+  - trailing \`#word\` tokens = tags, e.g. \`### Server #infra #urgent\`
+  - both can appear together, date before tags: \`## Ship v2 (2026-07-15) #launch\`
 - Non-heading lines right after a heading = free-text context/description for that item,
   verbatim (blank lines inside preserved).
-- Optional checkpoints block under an item:
-  \`\`\`
-  Checkpoints:
-  - 2026-07-01: 1/5
-  - 2026-07-15: 3/5
-  \`\`\`
 - Item keys (used internally, not shown here) are derived from the title — don't worry
   about them, only edit the visible Markdown.
 

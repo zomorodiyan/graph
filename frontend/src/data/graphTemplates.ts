@@ -1,14 +1,12 @@
 // Sample graphs offered to new users via the "New Graph" card's left zone.
 // `structure` is the same markdown-heading text used by clipboard copy/paste:
 //   - "#"-depth headings are items; nesting depth = number of "#"s
-//   - a heading's trailing "(x/y)" is progress, a trailing amount+unit is cost
-//     (e.g. "## Title (3/5) $500") — see serializeStructure/parseMarkdownStructure
-//   - there's no separate due-date field: a due date is a checkpoint whose
-//     progress normalizes to done===total (see getItemDueDate). Templates author
-//     checkpoint dates as "+Nd"/"-Nd" offsets (days from instantiation, negative
-//     for already-overdue samples) so they never read as stale; `resolveTemplateDates`
-//     resolves them to real YYYY-MM-DD dates
+//   - a heading's trailing "(YYYY-MM-DD)" is its date, trailing "#word" tokens
+//     are its tags (see serializeStructure/parseMarkdownStructure)
 //   - plain text under a heading is that item's context note
+//   - templates author dates as "(+Nd)"/"(-Nd)" offsets (days from
+//     instantiation, negative for already-overdue samples) so they never read
+//     as stale; resolveTemplateDates resolves them to real YYYY-MM-DD dates
 // Each template flexes the features differently to suit its domain.
 
 export interface GraphTemplate {
@@ -18,14 +16,14 @@ export interface GraphTemplate {
   structure: string
 }
 
-// Replaces "- +Nd: x/y" checkpoint bullets with a real "- YYYY-MM-DD: x/y", N days
-// from `now` (today by default). Templates author dates as offsets so they never
-// read as stale/overdue no matter when a user creates the sample graph.
+// Replaces a heading's "(+Nd)"/"(-Nd)" date offset with a real "(YYYY-MM-DD)",
+// N days from `now` (today by default). Templates author dates as offsets so
+// they never read as stale/overdue no matter when a user creates the sample graph.
 export function resolveTemplateDates(structure: string, now: Date = new Date()): string {
-  return structure.replace(/^(- )([+-]\d+)d(:.*)$/gm, (_match, prefix: string, offset: string, rest: string) => {
+  return structure.replace(/\(([+-]\d+)d\)/g, (_match, offset: string) => {
     const d = new Date(now)
     d.setDate(d.getDate() + Number(offset))
-    return `${prefix}${d.toISOString().slice(0, 10)}${rest}`
+    return `(${d.toISOString().slice(0, 10)})`
   })
 }
 
@@ -35,35 +33,27 @@ export const GRAPH_TEMPLATES: GraphTemplate[] = [
     displayName: 'Career',
     description: 'Research, advising, growth',
     structure: `# Projects
-## Process Simulation (3/5)
+## Process Simulation (+67d)
 Parameters drive part quality
-Checkpoints:
-- +67d: 5/5
 
-## Multi-Material (2/4)
+## Multi-Material
 Interface behavior, dissimilar materials
 
-## Digital Twin (1/4)
+## Digital Twin
 Sensor data feeds defect predictions
 
 # Advising
-## Advisor Meeting (0/1)
+## Advisor Meeting (+0d) #recurring
 Bring blockers, not status
-Checkpoints:
-- +0d: 1/1
 
-## Lab Meeting (3/4)
+## Lab Meeting
 
 ## Committee
-### Qualifying Exam Feedback (60/100)
+### Qualifying Exam Feedback (+36d)
 Feeds the candidacy defense
-Checkpoints:
-- +36d: 100/100
 
 # Outreach
-## Grant Proposal (1/4)
-Checkpoints:
-- +22d: 4/4
+## Grant Proposal (+22d)
 ### Problem Statement
 
 ### Draft Narrative
@@ -71,53 +61,35 @@ Get advisor feedback first
 
 ### Budget Justification
 
-## Conference Talk (1/3)
+## Conference Talk #travel
 
 # Goals
 ## Publications
-### Laser Interaction (1/3)
+### Laser Interaction (+67d)
 Pick venue before drafting
-Checkpoints:
-- +67d: 3/3
-#### Checkpoint 1 (0/1)
-Checkpoints:
-- +5d: 1/1
+#### Checkpoint 1 (+5d)
 
-#### Checkpoint 2 (0/1)
-Checkpoints:
-- +36d: 1/1
+#### Checkpoint 2 (+36d)
 
-#### Checkpoint 3 (0/1)
-Checkpoints:
-- +67d: 1/1
+#### Checkpoint 3 (+67d)
 
-### Multi-Material Simulation (1/3)
-Checkpoints:
-- +67d: 3/3
-#### Checkpoint 1 (0/1)
-Checkpoints:
-- +5d: 1/1
+### Multi-Material Simulation (+67d)
+#### Checkpoint 1 (+5d)
 
-#### Checkpoint 2 (0/1)
-Checkpoints:
-- +36d: 1/1
+#### Checkpoint 2 (+36d)
 
-#### Checkpoint 3 (0/1)
-Checkpoints:
-- +67d: 1/1
+#### Checkpoint 3 (+67d)
 
-## Candidacy Exam (3/6)
+## Candidacy Exam (+189d)
 Track committee feedback
-Checkpoints:
-- +189d: 6/6
 
-## Internship (1/5)
+## Internship
 No citizenship requirement needed
 
 ## Next Position
 ### Postdoc
 
-### Research Scientist
+### Research Scientist #someday
 Start search a year out`,
   },
   {
@@ -155,22 +127,22 @@ It's been almost a year
 
 # Practice
 ## Skills
-### Japanese (15/100)
-#### Section 1 (9/9)
-##### Lessons 1-5 (15/15)
+### Japanese
+#### Section 1
+##### Lessons 1-5
 Order Food, Describe People, Introduce Yourself, Order Food and Drink, Talk About Countries
 
-##### Lessons 6-9 (12/12)
+##### Lessons 6-9
 Ask for Directions, Describe Belongings, Talk About Neighbors, Tell Time
 
-#### Section 2 (15/30)
-##### Lessons 1-5 (15/15)
+#### Section 2
+##### Lessons 1-5
 Get Help When Traveling, Get to Know People, Describe Your Family, Talk About Hobbies, Describe Eating Habits
 
-##### Lessons 6-10 (15/15)
+##### Lessons 6-10
 Shop for Clothes, Order Food and Drink, Use Present Tense Verbs, Get Around a Station, Describe Your Routine
 
-##### Lessons 11-15 (15/15)
+##### Lessons 11-15
 Talk About Interests, Describe Your Home, Take Public Transit, Use Na-Adjectives, Get Emergency Help
 
 ##### Lessons 16-20
@@ -183,11 +155,9 @@ Use Negative Verbs, Discuss Classes, Talk About Jobs, Get Around a Theme Park, D
 Communication at Work, Discuss Seasonal Events, Talk About Date Plans
 
 #### Speaking
-##### Weekly Tutor (0/1)
-Checkpoints:
-- +2d: 1/1
+##### Weekly Tutor (+2d)
 
-### Chess (6/20)
+### Chess
 Tactics puzzles most days
 
 ## Queue
@@ -206,7 +176,7 @@ Coming target
 ### Blog Posts
 
 # Health
-## Fitness (4/7)
+## Fitness
 ### Cardio
 #### Run
 10 min
@@ -231,7 +201,7 @@ Coming target
 #### Scapular Push-Ups
 
 ### General
-#### Squat (70/100)
+#### Squat
 
 #### Deadlift
 1x5 @ 120kg
@@ -284,9 +254,7 @@ Keep added sugar under 30g per day
 ## Metrics
 ### Weight
 
-### Bloodwork (0/1)
-Checkpoints:
-- +144d: 1/1
+### Bloodwork (+144d)
 
 # Chores
 ## Bedroom
@@ -317,7 +285,7 @@ Grains for batch cook
 
 #### Potato
 
-#### Onion (0/1)
+#### Onion #restock
 Out — restock
 
 #### Oil
@@ -334,10 +302,10 @@ Out — restock
 
 #### Fruits
 
-#### Vegetables (0/1)
+#### Vegetables #restock
 Out — restock
 
-#### Lemons (0/1)
+#### Lemons #restock
 Out — restock
 
 #### Eggs
@@ -365,13 +333,13 @@ Tofu for stir fry
 #### Boiled Eggs
 
 ### Batch Meals
-#### Tomato Stew (0/4)
+#### Tomato Stew
 Freeze the rest
 
-#### Vegetable Stew (0/4)
+#### Vegetable Stew
 Freeze the rest
 
-#### Lasagna (0/4)
+#### Lasagna
 Freeze the rest
 
 ### To Try
@@ -379,48 +347,50 @@ Freeze the rest
 
 #### Shakshuka
 
-# Finances $2300
-## Fixed Costs $1035
-### Rent $950
-Paid, my share of total
+# Finances
+## Fixed Costs
+### Rent
+Paid, my share of total — $950/mo
 
-### Insurance $55
-Share of total
+### Insurance
+Share of total — $55/mo
 
-### Subscriptions $30
-Share of total
+### Subscriptions
+Share of total — $30/mo
 
-## Budgeted $965
-### Groceries $450
+## Budgeted
+### Groceries
+$450/mo
 
-### Dining Out $130
+### Dining Out
+$130/mo
 
-### Transport $150
+### Transport
+$150/mo
 
-### Clothes $0
+### Clothes
 
-### Household Supplies $45
-Cleaning, bathroom
+### Household Supplies
+Cleaning, bathroom — $45/mo
 
-### Office Supplies $20
-Pens, paper, small gear
+### Office Supplies
+Pens, paper, small gear — $20/mo
 
-### Personal Care $70
+### Personal Care
+$70/mo
 
-### Health/Medical $100
-Copays, prescriptions
+### Health/Medical
+Copays, prescriptions — $100/mo
 
-## Investments $300
-### Roth IRA $50
-Monthly contribution
+## Investments
+### Roth IRA
+Monthly contribution — $50/mo
 
-### Emergency Fund $250
-Monthly contribution — lawyer, income gaps, health, gifts
+### Emergency Fund
+Monthly contribution — lawyer, income gaps, health, gifts — $250/mo
 
 ## Goals
-### Pay Off Loan (0/12000)
-Checkpoints:
-- +1000d: 12000/12000
+### Pay Off Loan (+1000d)
 
 # Leisure
 ## Reading
@@ -429,10 +399,10 @@ Checkpoints:
 ## Watchlist
 ### Anime
 #### Watching
-##### One Piece (1085/1120)
+##### One Piece
 Egghead arc, no spoilers
 
-##### Attack on Titan (4/4)
+##### Attack on Titan
 Rewatching before final chapter
 
 #### Queue
@@ -443,10 +413,10 @@ Rewatching before final chapter
 Recommended by Sam
 
 ### Shows
-#### Severance (6/9)
+#### Severance
 
 ### Games
-#### Hollow Knight: Silksong (60/100)
+#### Hollow Knight: Silksong
 
 #### Minecraft
 
@@ -503,16 +473,12 @@ Restock pantry, produce for the week
 Check spend against Budgeted categories
 
 # Admin
-## Visa Status (0/1)
+## Visa Status (+53d)
 Renew before it expires
-Checkpoints:
-- +53d: 1/1
 
 ## ID Renewal
 
-## Taxes (0/1)
-Checkpoints:
-- +279d: 1/1`,
+## Taxes (+279d)`,
   },
   {
     name: 'app-features',
@@ -539,14 +505,11 @@ Copy a graph's structure to the clipboard as markdown text, paste to create a ne
 ## Context
 Free-text note shown under the title.
 
-## Progress
-An X/Y fraction, shown as a percent when Y is 100.
+## Date
+A single optional date — means whatever you want it to (due, scheduled, logged). No fraction, no rollup into a parent.
 
-## Cost
-An amount plus a unit, $ by default.
-
-## Checkpoints
-Dated progress snapshots — one whose done equals total doubles as the due date.
+## Tags
+Short labels, hash-colored, cutting across the tree independent of parent/child.
 
 ## Children
 Nested sub-items, no depth limit.
@@ -562,10 +525,10 @@ Show 3 levels, 2 levels, or everything at once.
 Default vs. Context — Context also shows each item's note.
 
 ## Minimal View
-Hides progress, cost, due date, and notes — titles only.
+Hides date, tags, and notes — titles only.
 
-## Facet View (0/1)
-New: long-press the theme button to filter the current tree down to only items that have a chosen facet — keeps the same nested structure.
+## Facet View #planned
+long-press the theme button to filter the current tree down to only items that have a chosen facet — keeps the same nested structure.
 
 # Sync
 ## GitHub Token
@@ -596,19 +559,19 @@ Select an item (or several) to copy or delete via the bar that appears; paste un
 ## Drag Reorder
 Reorders an item among its siblings by dragging.
 
-### Multi-Level Drag (1/1)
+### Multi-Level Drag #shipped
 Level-2 and level-3 items can now be dragged among their own siblings too, each still carrying its own subitems along — including ones not currently visible at the active depth.
 
-### Drag to Nest (1/1)
+### Drag to Nest #shipped
 Dropping an item on the body of another item (any level, any parent) makes it that item's child instead of reordering it — the top edge of a row still means "insert before" like ordinary reordering.
 
 ## Swipe & Long-Press
 Touch shortcuts for common actions.
 
-## Time (1/1)
-Progress and Checkpoints are now one button called Time. Inside it, add progress and dates together, and remove any entry with an x.
+## Fields Simplified #shipped
+Progress, checkpoints, and cost (and the "Time"/"Value" buttons that edited them) are gone — replaced by two flatter fields: Date (a single optional date, no fraction or rollup) and Tags (short labels, hash-colored, cutting across the tree). Nothing set on an item ever affects how its parent renders anymore.
 
-## Mobile Interaction Rework (1/1)
+## Mobile Interaction Rework #shipped
 On mobile: tap does nothing now — swipe-left on an item navigates into it, swipe-right navigates up the tree (same action no matter where you swipe, item or empty background), long-press opens the editor directly (no menu step). The hardware back button also steps up one level instead of exiting the graph. Pinch-zoom still resizes text, but no longer shifts where the layout reflows. Desktop click/right-click are unchanged. Adding a sub-item to a specific existing item no longer has its own swipe shortcut — right-click it (or long-press on mobile) from its parent's list and choose New.
 
 # Agent Access
@@ -618,11 +581,11 @@ In-app instructions for connecting an AI agent to your graph data.
 ## Gist-Based API
 Agents read and write the same Gist-backed structure the app itself uses.
 
-## Conversational Agent (1/1)
+## Conversational Agent #shipped
 Bottom-anchored chat, Telegram-style — a toggle button on every view opens a panel with a message list and a textbox that shifts up above the on-screen keyboard when focused. Bring-your-own Anthropic API key, called directly from the browser (billed to the user, not this app). The agent has tools to look at, edit, and add items anywhere in the current graph — not just what's on screen — and edits show up live as it makes them. Deferred: fine-tuning how it talks about items (plain language vs. raw Markdown), voice input.
 
-## Item Highlighting (1/1)
-A two-way "point at an item" channel alongside editing. User highlights an item — tap on mobile, Ctrl/Cmd+click on desktop (the title fills the row edge to edge, so a plain click keeps opening the editor) — and it's included as context on the next message. The agent highlights back via its own tool, in a different color; both can apply to the same item at once. Ephemeral — not saved with the graph.
+## Item Highlighting #shipped
+A two-way "point at an item" channel alongside editing. User highlights an item — tap on mobile, Ctrl/Cmd+click on desktop — and it's included as context on the next message. The agent highlights back via its own tool, in a different color; both can apply to the same item at once. Ephemeral — not saved with the graph.
 
 # Platform
 ## PWA Install

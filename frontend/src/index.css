@@ -97,10 +97,6 @@
   --slate-lighter: #B0BEC5;
   --slate-dark: #37474F;
   --slate-darker: #263238;
-
-  /* Checkpoint status colors — actual vs. expected-by-date progress */
-  --status-good: #388E3C;
-  --status-bad:  #E65100;
 }
 
 /* Same breakpoint App.css's .agent-chat-shell docks the agent panel at —
@@ -134,8 +130,6 @@
   --royal-blue-light: #9490DF;
   --blue-medium:      #231BBB;
   --blue-lighter:     #C9C8EA;
-  --status-good:      #388E3C;
-  --status-bad:       #E65100;
 }
 [data-color-scheme='green'] {
   --sky-dark:         #1BBB5B;
@@ -144,9 +138,6 @@
   --royal-blue-light: #90DFB0;
   --blue-medium:      #1BBB5B;
   --blue-lighter:     #C8EAD5;
-  /* default green "good" status would vanish into the scheme's own accent — swap to violet */
-  --status-good:      #7E57C2;
-  --status-bad:       #E65100;
 }
 [data-color-scheme='red'] {
   --sky-dark:         #BB331B;
@@ -155,9 +146,6 @@
   --royal-blue-light: #DF9C90;
   --blue-medium:      #BB331B;
   --blue-lighter:     #EACDC8;
-  /* default red-leaning "bad" status collides with red's own accent — swap to indigo */
-  --status-good:      #388E3C;
-  --status-bad:       #231BBB;
 }
 
 * {

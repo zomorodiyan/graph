@@ -54,11 +54,11 @@ export interface AgentChatMessage {
 }
 
 const SYSTEM_PREAMBLE = `You are a helpful assistant embedded inside "Knowledge Graph", a personal
-hierarchical note-taking app. The user is looking at the view described below
-(as its Markdown representation — heading depth is nesting depth, "(x/y)"
-suffixes are progress, trailing amounts are cost). When you mention items to
-the user, describe them in plain language rather than quoting the raw
-Markdown syntax back at them.
+hierarchical thinking/taxonomy/planning app. The user is looking at the view
+described below (as its Markdown representation — heading depth is nesting
+depth, a trailing "(YYYY-MM-DD)" is the item's date, trailing "#word" tokens
+are its tags). When you mention items to the user, describe them in plain
+language rather than quoting the raw Markdown syntax back at them.
 
 You have tools to look at, edit, and add items anywhere in the current graph,
 not just what's shown below. Use view_item to look something up (by its
@@ -82,12 +82,10 @@ interface UpdateItemArgs {
   path: string
   name?: string
   context?: string
-  progress?: string
-  cost_amount?: number
-  cost_unit?: string
-  clear_cost?: boolean
+  date?: string
+  tags?: string[]
 }
-interface AddItemArgs { parent_path: string; name: string; context?: string; progress?: string }
+interface AddItemArgs { parent_path: string; name: string; context?: string; date?: string; tags?: string[] }
 interface HighlightItemsArgs { paths: string[] }
 
 function buildTools(graphName: string | undefined, onMutate: () => void, onHighlight: (paths: string[]) => void) {
@@ -97,7 +95,7 @@ function buildTools(graphName: string | undefined, onMutate: () => void, onHighl
     makeTool<ViewItemArgs>({
       name: 'view_item',
       description:
-        'View an item\'s full details (title, note, progress, cost, and its children) by its dot-separated path in the current graph, e.g. "alpha.beta". Call with an empty path to see the whole graph as an outline first if you do not already know the exact path.',
+        'View an item\'s full details (title, note, date, tags, and its children) by its dot-separated path in the current graph, e.g. "alpha.beta". Call with an empty path to see the whole graph as an outline first if you do not already know the exact path.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -116,33 +114,24 @@ function buildTools(graphName: string | undefined, onMutate: () => void, onHighl
     makeTool<UpdateItemArgs>({
       name: 'update_item',
       description:
-        'Edit an existing item\'s title, note, progress, or cost. Only include the fields you want to change — omitted fields are left untouched.',
+        'Edit an existing item\'s title, note, date, or tags. Only include the fields you want to change — omitted fields are left untouched.',
       inputSchema: {
         type: 'object',
         properties: {
           path: { type: 'string', description: 'Dot-separated path to the item to edit.' },
           name: { type: 'string', description: 'New title.' },
           context: { type: 'string', description: 'New free-text note. Pass an empty string to clear it.' },
-          progress: { type: 'string', description: 'New progress: "X/Y" (e.g. "3/10") or a 0-100 percent number as a string. Pass an empty string to clear it.' },
-          cost_amount: { type: 'number', description: 'New cost amount. Provide together with cost_unit.' },
-          cost_unit: { type: 'string', description: 'New cost unit, e.g. "$" or "hr". Provide together with cost_amount.' },
-          clear_cost: { type: 'boolean', description: 'Set true to remove the cost entirely.' },
+          date: { type: 'string', description: 'New date, "YYYY-MM-DD" — means whatever the user wants (due, scheduled, logged). Pass an empty string to clear it.' },
+          tags: { type: 'array', items: { type: 'string' }, description: 'Wholesale replacement for the item\'s tags (short labels, letters/numbers/dash/underscore only). Pass an empty array to clear all tags.' },
         },
         required: ['path'],
       },
-      run: async ({ path, name, context, progress, cost_amount, cost_unit, clear_cost }) => {
+      run: async ({ path, name, context, date, tags }) => {
         const payload: UpdatePayload = {}
         if (name !== undefined) payload.name = name
         if (context !== undefined) payload.context = context
-        if (progress !== undefined) payload.progress = progress
-        if (clear_cost) {
-          payload.cost = null
-        } else if (cost_amount !== undefined || cost_unit !== undefined) {
-          if (cost_amount === undefined || cost_unit === undefined) {
-            throw new Error('Both cost_amount and cost_unit are required together to set a cost.')
-          }
-          payload.cost = { amount: cost_amount, unit: cost_unit }
-        }
+        if (date !== undefined) payload.date = date
+        if (tags !== undefined) payload.tags = tags
         const result = await updateItem(path, payload, graphName)
         onMutate()
         return `Updated "${result.data.title}" at "${result.path}".`
@@ -157,14 +146,16 @@ function buildTools(graphName: string | undefined, onMutate: () => void, onHighl
           parent_path: { type: 'string', description: 'Dot-separated path of the parent to add under. Empty string to add at the top level of the graph.' },
           name: { type: 'string', description: 'Title for the new item.' },
           context: { type: 'string', description: 'Optional free-text note.' },
-          progress: { type: 'string', description: 'Optional starting progress, e.g. "0/10".' },
+          date: { type: 'string', description: 'Optional date, "YYYY-MM-DD".' },
+          tags: { type: 'array', items: { type: 'string' }, description: 'Optional tags (short labels, letters/numbers/dash/underscore only).' },
         },
         required: ['parent_path', 'name'],
       },
-      run: async ({ parent_path, name, context, progress }) => {
+      run: async ({ parent_path, name, context, date, tags }) => {
         const payload: UpdatePayload = { name }
         if (context !== undefined) payload.context = context
-        if (progress !== undefined) payload.progress = progress
+        if (date !== undefined) payload.date = date
+        if (tags !== undefined) payload.tags = tags
         const result = await createItem(parent_path, payload, graphName)
         onMutate()
         return `Created "${result.data.title}" at "${result.path}".`

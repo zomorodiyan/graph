@@ -8,13 +8,10 @@ to (see `~/.claude/skills/graph/SKILL.md` and its `scripts/gist.mjs`):
   and what `gist.mjs write` expects on stdin/file. Demonstrates every format
   feature in one place:
   - nesting depth via `#`/`##`/`###`
-  - progress `(x/y)` — `Pay Off Loan`, `Marathon Training`
-  - checkpoints (a due date is just a checkpoint where done===total) — both items above
-  - cost, both symbol-prefixed (`$950`) and alphanumeric-suffixed (`3hr`)
-  - a parent's own cost acting as a target against its children's summed
-    cost (`Fixed Costs`, `Finances`) — see `sumValues`/`formatValueTotals`
-    in `frontend/src/api/localClient.ts`
-  - free-text context lines under a heading (e.g. under `Rent`, `Marathon Training`)
+  - a date `(YYYY-MM-DD)` — `Pay Off Loan`, `Marathon Training`
+  - tags `#word` — `Pay Off Loan #debt`, `Marathon Training #race`, `Cross Training #recurring`
+  - free-text context lines under a heading (e.g. under `Rent`, `Marathon Training`) —
+    dollar amounts now just live in that free text, there's no structured cost field
 - `_graph_meta.json` — the sidecar `_graph_meta.json` file from the same Gist,
   keyed by the same graph name, holding display metadata (never structure data).
 
