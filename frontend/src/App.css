@@ -1382,23 +1382,24 @@
 
 /* App.tsx's split-view container. Mobile (<32rem): inert (block layout,
    document-level scroll, untouched) — AgentChat stays the permanent fixed
-   overlay described below. >=32rem: a real docked split-pane. .app-main
-   keeps its own natural height (no forced 100vh) so a short page like an
-   empty graph doesn't leave a blank band under it — instead the docked
-   panel pins itself to the viewport via position:sticky (below), so it
-   reads as full-height regardless of how tall .app-main's actual content
-   is, and the whole page scrolls normally past it when content is taller
-   than the viewport. .app-body only forces a 100vh/overflow:hidden shell
-   in the one case that actually needs it: .main-collapsed, where .app-main
-   is hidden entirely and the panel legitimately owns the whole viewport
-   (see AgentChat.tsx's handleSplitterMove — dragging the splitter past
-   .app-main's minimum size snaps it fully closed instead of stopping
-   there). 32rem–60rem stacks the split (column: main content above the
+   overlay described below. >=32rem: a real docked split-pane, continuously
+   resizable by dragging .agent-chat-splitter — no open/closed toggle state,
+   dragging the splitter all the way to an edge just smoothly shrinks that
+   side to zero (see AgentChat.tsx's handleSplitterMove/MIN/MAX) and it's
+   dragged back out the same way, no separate button. .app-main keeps its
+   own natural height (no forced 100vh) so a short page like a small graph
+   doesn't leave a blank band under it — instead the docked panel pins
+   itself to the viewport via position:sticky (below), so it reads as
+   full-height regardless of how tall .app-main's actual content is, and
+   the whole page scrolls normally past it when content is taller than the
+   viewport. 32rem–60rem stacks the split (column: main content above the
    panel) since there's no room to sit side-by-side at a readable width;
    >=60rem sits side-by-side (row, the flex default) — align-items:
    flex-start there specifically stops .app-main from being cross-axis
    stretched to the sticky panel's full height, which is what caused the
-   blank band in the first place. */
+   blank band in the first place. .app-main's own flex-shrink (below) is
+   what lets it yield width to the panel as --agent-panel-width grows,
+   all the way down to 0 — no JS-driven "hide main content" needed. */
 @media (min-width: 32rem) {
   .app-body {
     display: flex;
@@ -1408,19 +1409,10 @@
     flex: 1 1 auto;
     min-width: 0;
   }
-
-  .app-body.main-collapsed {
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  .app-main.app-main-collapsed {
-    display: none;
-  }
 }
 
 @media (min-width: 32rem) and (max-width: 59.999rem) {
-  .app-body.panel-open {
+  .app-body {
     flex-direction: column;
   }
 }
@@ -1466,10 +1458,8 @@
      of either stretching .app-main or clipping it — see the top:0/bottom:0
      offsets below, which is what actually activates the stickiness (a
      sticky element with neither set behaves like static). !important on
-     width/height wins over the inline mobile `style` and --agent-panel-*
-     vars respectively where they need overriding (docked-closed,
-     main-collapsed) — those are set inline so beat a plain media rule
-     otherwise. */
+     height wins over the inline mobile `style`, which desktop ignores
+     entirely but which otherwise always beats a plain media rule. */
   .agent-chat-shell {
     position: sticky;
     width: var(--agent-panel-width, 24rem);
@@ -1479,19 +1469,6 @@
     box-shadow: none;
     margin: 0;
     padding-top: 0;
-  }
-
-  /* Collapsed: nothing rendered in its place — see .agent-panel-reopen. */
-  .agent-chat-shell.docked-closed {
-    display: none;
-  }
-
-  /* .app-main is hidden entirely (main-collapsed) — the panel takes every
-     bit of space .app-body has instead of sitting at its dragged size. */
-  .agent-chat-shell.main-collapsed {
-    width: auto !important;
-    height: auto !important;
-    flex: 1 1 auto;
   }
 }
 
@@ -1515,11 +1492,11 @@
 
 /* Draggable boundary between .app-main and the docked panel (AgentChat.tsx
    renders this immediately before .agent-chat-shell so flex places it right
-   at their edge). Hidden on mobile and whenever either side is fully
-   collapsed — nothing to drag against then. Sticky with the same offsets
-   as the panel so it stays visually attached to its edge while the page
-   scrolls, instead of scrolling away from the panel it's supposed to
-   border. */
+   at their edge) — always present at >=32rem, even when one side is
+   dragged all the way down to zero, so it's always there to drag back out.
+   Sticky with the same offsets as the panel so it stays visually attached
+   to its edge while the page scrolls, instead of scrolling away from the
+   panel it's supposed to border. */
 .agent-chat-splitter {
   display: none;
 }
@@ -1553,103 +1530,6 @@
     height: 5px;
     cursor: ns-resize;
     touch-action: none;
-  }
-}
-
-/* Small header above the docked panel's messages, holding only the
-   collapse button — mobile and the removed floating-card look never had
-   one, so it's hidden by default and only shown docked. */
-.agent-chat-dock-header {
-  display: none;
-}
-
-@media (min-width: 32rem) {
-  .agent-chat-dock-header {
-    display: flex;
-    justify-content: flex-end;
-    padding: 0.35rem 0.35rem 0;
-    flex-shrink: 0;
-  }
-
-  .agent-chat-dock-collapse {
-    width: 1.75rem;
-    height: 1.75rem;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    border-radius: 0.4rem;
-    cursor: pointer;
-  }
-
-  .agent-chat-dock-collapse:hover {
-    background: var(--bg-primary);
-  }
-}
-
-/* Reopen tab, replacing the panel entirely once collapsed — mobile has no
-   collapse concept at all, so this stays hidden below 32rem. */
-.agent-panel-reopen {
-  display: none;
-}
-
-@media (min-width: 32rem) {
-  .agent-panel-reopen {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    right: 0;
-    bottom: 1.5rem;
-    z-index: 1600;
-    padding: 0.5rem 0.5rem;
-    writing-mode: vertical-rl;
-    background: var(--bg-secondary);
-    border: 1.5px solid var(--border-color);
-    border-right: none;
-    border-radius: 0.6rem 0 0 0.6rem;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    cursor: pointer;
-  }
-
-  .agent-panel-reopen:hover {
-    color: var(--text-primary);
-  }
-}
-
-/* Mirrors .agent-panel-reopen on the opposite edge — shown instead of
-   .app-main once the splitter's been dragged all the way to its minimum
-   width/height (see handleSplitterMove in AgentChat.tsx). Mobile never
-   collapses .app-main at all, so this stays hidden below 32rem same as
-   the agent one. */
-.app-main-reopen {
-  display: none;
-}
-
-@media (min-width: 32rem) {
-  .app-main-reopen {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    left: 0;
-    bottom: 1.5rem;
-    z-index: 1600;
-    padding: 0.5rem 0.5rem;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    background: var(--bg-secondary);
-    border: 1.5px solid var(--border-color);
-    border-left: none;
-    border-radius: 0 0.6rem 0.6rem 0;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    cursor: pointer;
-  }
-
-  .app-main-reopen:hover {
-    color: var(--text-primary);
   }
 }
 

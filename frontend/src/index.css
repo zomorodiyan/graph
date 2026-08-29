@@ -103,12 +103,13 @@
   --status-bad:  #E65100;
 }
 
-/* Same breakpoint App.css's .agent-chat-shell switches to the floating-card
-   desktop layout at, which adds its own 20px bottom margin — bump the
-   reserve by exactly that so nothing that clears "the bar" undershoots. */
+/* Same breakpoint App.css's .agent-chat-shell docks the agent panel at —
+   as its own column/row in the split-view rather than a bar overlapping
+   the bottom of .app-main, nothing there needs clearing any more, so the
+   reserve drops to 0 instead of carrying the old floating-card bump. */
 @media (min-width: 32rem) {
   :root {
-    --agent-bar-height: calc(3.625rem + 20px);
+    --agent-bar-height: 0px;
   }
 }
 
