@@ -10,7 +10,7 @@ import { useLongPress } from '../hooks/useLongPress'
 import { useTheme } from '../context/ThemeContext'
 import { useGraphs, getItemByPath } from '../hooks/useGraph'
 import { useSyncManager, SyncAllResult } from '../hooks/useSyncManager'
-import { fetchStructure, serializeItem, serializeStructure } from '../api/localClient'
+import { fetchStructure, serializeItemForAgent, serializeStructureForAgent } from '../api/localClient'
 import AgentAccessGuide from './AgentAccessGuide'
 import Notification from './Notification'
 
@@ -329,8 +329,8 @@ function AgentChat() {
 
     const item = path ? getItemByPath(structure, path) : null
     const base = item
-      ? `The user is viewing "${item.title}" inside the graph "${graphName}":\n${serializeItem('item', item)}`
-      : `The user is at the root of the graph "${graphName}":\n${serializeStructure(items)}`
+      ? `The user is viewing "${item.title}" inside the graph "${graphName}":\n${serializeItemForAgent(path, item)}`
+      : `The user is at the root of the graph "${graphName}":\n${serializeStructureForAgent(items)}`
 
     if (!userHighlights.length) return base
     const highlightLines = userHighlights.map(p => {

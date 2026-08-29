@@ -7,7 +7,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import { getItemByPath } from '../hooks/useGraph'
-import { createItem, fetchStructure, serializeItem, serializeStructure, updateItem, UpdatePayload } from './localClient'
+import { createItem, fetchStructure, serializeItemForAgent, serializeStructureForAgent, updateItem, UpdatePayload } from './localClient'
 
 // The SDK's own betaTool() helper (helpers/beta/json-schema) builds this
 // exact shape — {type: 'custom', name, input_schema, description, run,
@@ -70,21 +70,32 @@ message itself calls for it (they ask for detail, analysis, or explicitly
 want your take), or when you're about to do something consequential (like a
 delete proposal) that genuinely needs explaining first.
 
-When you mention an item by name, write its plain title text with no markdown
-emphasis (no bold, no italics, no quotes) — the highlight ring (see below) is
-what shows the user exactly which item you mean, not text styling. If a title
-is longer than ${MENTION_TRUNCATE_LENGTH} characters, truncate it to
-${MENTION_TRUNCATE_LENGTH} characters and append ".." (two periods, not an
-ellipsis), e.g. "Multi-Material Simulatio..". Never quote the raw Markdown
-heading syntax back at the user.
+When you mention an item by name to the user, write its plain title text with
+no markdown emphasis (no bold, no italics, no quotes) — the highlight ring
+(see below) is what shows the user exactly which item you mean, not text
+styling. If a title is longer than ${MENTION_TRUNCATE_LENGTH} characters,
+truncate it to ${MENTION_TRUNCATE_LENGTH} characters and append ".." (two
+periods, not an ellipsis), e.g. "Multi-Material Simulatio..". Never quote the
+raw Markdown heading syntax back at the user.
+
+Every heading below also ends with its own path in ⟨angle brackets⟩, e.g.
+"## Process Simulation (2026-07-15) ⟨projects.process_simulation⟩" — that
+⟨...⟩ is the exact, real path for that item. When you call any tool that
+takes a path (view_item, update_item, highlight_items,
+request_delete_items), copy it verbatim from there. Never guess a path by
+normalizing the title yourself (lowercasing it, swapping spaces for
+underscores, etc.) — duplicate titles get suffixed, punctuation strips
+unpredictably, and a guess that looks reasonable can still be wrong. The
+⟨...⟩ marker itself is not part of the title — never include it when you
+mention an item to the user.
 
 You have tools to look at, edit, and add items anywhere in the current graph,
-not just what's shown below. Use view_item to look something up (by its
-dot-separated path, e.g. "alpha.beta") before editing or adding under it if
-you haven't already seen its exact path in this conversation — calling
-view_item with an empty path shows the whole graph as an outline, useful for
-finding a path when you only know an item's title. If a graph is not
-currently open, these tools are unavailable — say so rather than guessing.
+not just what's shown below. Use view_item to look something up before
+editing or adding under it if you haven't already seen its ⟨path⟩ in this
+conversation — calling view_item with an empty path shows the whole graph as
+an outline, useful for finding an item's path when you only know its title.
+If a graph is not currently open, these tools are unavailable — say so
+rather than guessing.
 
 You also have highlight_items, a way to visually point at specific items in
 the app itself (a colored ring appears around them) instead of only naming
@@ -149,16 +160,16 @@ function buildTools(
       inputSchema: {
         type: 'object',
         properties: {
-          path: { type: 'string', description: 'Dot-separated path, e.g. "alpha.beta". Empty string for the whole graph.' },
+          path: { type: 'string', description: 'The item\'s path, copied from its ⟨...⟩ marker in the outline. Empty string for the whole graph.' },
         },
         required: ['path'],
       },
       run: async ({ path }) => {
         const structure = await fetchStructure(graphName)
-        if (!path) return serializeStructure(structure.structure) || '(this graph has no items yet)'
+        if (!path) return serializeStructureForAgent(structure.structure) || '(this graph has no items yet)'
         const item = getItemByPath(structure, path)
         if (!item) return `No item found at path "${path}". Try an empty path to see the whole graph.`
-        return serializeItem(path, item)
+        return serializeItemForAgent(path, item)
       },
     }),
     makeTool<UpdateItemArgs>({
@@ -168,7 +179,7 @@ function buildTools(
       inputSchema: {
         type: 'object',
         properties: {
-          path: { type: 'string', description: 'Dot-separated path to the item to edit.' },
+          path: { type: 'string', description: 'The item\'s path, copied from its ⟨...⟩ marker in the outline.' },
           name: { type: 'string', description: 'New title.' },
           context: { type: 'string', description: 'New free-text note. Pass an empty string to clear it.' },
           date: { type: 'string', description: 'New date, "YYYY-MM-DD" — means whatever the user wants (due, scheduled, logged). Pass an empty string to clear it.' },
@@ -193,7 +204,7 @@ function buildTools(
       inputSchema: {
         type: 'object',
         properties: {
-          parent_path: { type: 'string', description: 'Dot-separated path of the parent to add under. Empty string to add at the top level of the graph.' },
+          parent_path: { type: 'string', description: 'Path of the parent to add under, copied from its ⟨...⟩ marker in the outline. Empty string to add at the top level of the graph.' },
           name: { type: 'string', description: 'Title for the new item.' },
           context: { type: 'string', description: 'Optional free-text note.' },
           date: { type: 'string', description: 'Optional date, "YYYY-MM-DD".' },
@@ -221,7 +232,7 @@ function buildTools(
           paths: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Dot-separated paths of the items to highlight, e.g. ["alpha.beta", "gamma"]. Empty array clears your highlights.',
+            description: 'Paths of the items to highlight, copied from their ⟨...⟩ markers in the outline. Empty array clears your highlights.',
           },
         },
         required: ['paths'],
@@ -250,7 +261,7 @@ function buildTools(
           paths: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Dot-separated paths of the items to propose deleting, e.g. ["alpha.beta"]. Empty array withdraws the proposal.',
+            description: 'Paths of the items to propose deleting, copied from their ⟨...⟩ markers in the outline. Empty array withdraws the proposal.',
           },
         },
         required: ['paths'],
