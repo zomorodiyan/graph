@@ -33,6 +33,23 @@ const DEPTHS = [3, 2] as const
 const MIN_PANEL_HEIGHT_EXPANDED = 132
 const MIN_PANEL_HEIGHT_IDLE = 76
 
+// Docked split-pane sizing (>=32rem — see .agent-chat-shell/.agent-chat-splitter
+// in App.css). Below 60rem the split stacks (drag adjusts DOCK_HEIGHT
+// instead of DOCK_WIDTH) since there isn't room to sit side-by-side at a
+// readable width.
+const WIDE_SPLIT_QUERY = '(min-width: 60rem)'
+const MIN_DOCK_WIDTH = 260
+const MAX_DOCK_WIDTH_RATIO = 0.5
+const DEFAULT_DOCK_WIDTH = 380
+const MIN_DOCK_HEIGHT = 160
+const MAX_DOCK_HEIGHT_RATIO = 0.7
+const DEFAULT_DOCK_HEIGHT_RATIO = 0.45
+
+function readStoredSize(key: string, fallback: number) {
+  const saved = Number(localStorage.getItem(key))
+  return saved > 0 ? saved : fallback
+}
+
 // Persistent, app-wide chat surface (mounted once in App.tsx, so it survives
 // navigation between the graphs list and any individual graph — "from
 // within any view" per the App Features template). On mobile this is a
@@ -53,7 +70,7 @@ const MIN_PANEL_HEIGHT_IDLE = 76
 // App.css. Talks to the Claude API directly from the browser with the
 // user's own key (see agentClient.ts), which can view, edit, and add items
 // in the currently open graph via tools.
-function AgentChat() {
+function AgentChat({ panelOpen, setPanelOpen }: { panelOpen: boolean; setPanelOpen: (open: boolean) => void }) {
   const { expanded, setExpanded, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop } = useAgentChat()
   const [draft, setDraft] = useState('')
   const messagesRef = useRef<HTMLDivElement>(null)
@@ -258,6 +275,44 @@ function AgentChat() {
     if (expanded) setPanelHeight(h => Math.max(h, MIN_PANEL_HEIGHT_EXPANDED))
   }, [expanded])
 
+  // Docked panel's own size (>=32rem only — mobile ignores these, see
+  // panelHeight above). Two independent dimensions since row-split (wide)
+  // and column-split (narrow) modes resize different axes; each keeps
+  // whatever the user last dragged it to, persisted separately so switching
+  // orientation by resizing the browser window doesn't lose either one.
+  const [dockWidth, setDockWidthRaw] = useState(() => readStoredSize('agent-panel-width', DEFAULT_DOCK_WIDTH))
+  const [dockHeight, setDockHeightRaw] = useState(() => readStoredSize('agent-panel-height', Math.round(window.innerHeight * DEFAULT_DOCK_HEIGHT_RATIO)))
+  useEffect(() => { localStorage.setItem('agent-panel-width', String(dockWidth)) }, [dockWidth])
+  useEffect(() => { localStorage.setItem('agent-panel-height', String(dockHeight)) }, [dockHeight])
+  const setDockWidth = (w: number) => setDockWidthRaw(Math.min(Math.max(w, MIN_DOCK_WIDTH), window.innerWidth * MAX_DOCK_WIDTH_RATIO))
+  const setDockHeight = (h: number) => setDockHeightRaw(Math.min(Math.max(h, MIN_DOCK_HEIGHT), window.innerHeight * MAX_DOCK_HEIGHT_RATIO))
+
+  // Splitter drag (.agent-chat-splitter) — orientation is read fresh off
+  // matchMedia at drag-start rather than tracked in state, since it only
+  // matters for the duration of one drag and the CSS breakpoint is the
+  // single source of truth for which axis is actually visible.
+  const splitDragRef = useRef<{ axis: 'x' | 'y'; start: number; startSize: number } | null>(null)
+  const handleSplitterDown = (e: React.PointerEvent) => {
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    const isWide = window.matchMedia(WIDE_SPLIT_QUERY).matches
+    splitDragRef.current = isWide
+      ? { axis: 'x', start: e.clientX, startSize: dockWidth }
+      : { axis: 'y', start: e.clientY, startSize: dockHeight }
+  }
+  const handleSplitterMove = (e: React.PointerEvent) => {
+    const drag = splitDragRef.current
+    if (!drag) return
+    // The panel sits after the splitter (to its right, or below it), so
+    // dragging toward the panel (left/up) should grow it — hence the sign
+    // flip on both axes.
+    if (drag.axis === 'x') setDockWidth(drag.startSize - (e.clientX - drag.start))
+    else setDockHeight(drag.startSize - (e.clientY - drag.start))
+  }
+  const handleSplitterUp = () => {
+    splitDragRef.current = null
+  }
+
   const viewContext = useMemo(() => {
     if (!graphName) {
       if (!graphs?.length) return 'The user is on the graphs list, which is empty.'
@@ -343,11 +398,39 @@ function AgentChat() {
 
   return (
     <>
+    {/* Docked split-pane drag handle (>=32rem, panel open only — see
+        .agent-chat-splitter in App.css). Sits between .app-main and the
+        shell in DOM order so flex places it right at their boundary; axis
+        (width vs height) is purely CSS-driven by the same 60rem breakpoint
+        handleSplitterDown reads via matchMedia. */}
+    {panelOpen && (
+      <div
+        className="agent-chat-splitter"
+        onPointerDown={handleSplitterDown}
+        onPointerMove={handleSplitterMove}
+        onPointerUp={handleSplitterUp}
+        onPointerCancel={handleSplitterUp}
+        title="Drag to resize"
+      />
+    )}
     <div
-      className={`agent-chat-shell${expanded ? ' expanded' : ''}`}
-      style={{ height: panelHeight }}
+      className={`agent-chat-shell${expanded ? ' expanded' : ''}${panelOpen ? ' docked-open' : ' docked-closed'}`}
+      style={{ height: panelHeight, ...({ '--agent-panel-width': `${dockWidth}px`, '--agent-panel-height': `${dockHeight}px` } as React.CSSProperties) }}
       onBlur={handleContainerBlur}
     >
+      {/* Docked-only header (>=32rem, see .agent-chat-dock-header in
+          App.css) — collapses the panel back to the reopen tab. Mobile and
+          the old floating-card desktop look never had a header, so this
+          stays hidden below 32rem via CSS, not a class toggle. */}
+      <div className="agent-chat-dock-header">
+        <button
+          className="agent-chat-dock-collapse"
+          onClick={() => setPanelOpen(false)}
+          title="Collapse agent panel"
+        >
+          ✕
+        </button>
+      </div>
       {!apiKey ? (
         <div className="agent-chat-key-setup">
           <p className="agent-chat-key-title">Connect your Anthropic API key</p>
@@ -465,6 +548,14 @@ function AgentChat() {
         <div className="agent-chat-resize-grip" />
       </div>
     </div>
+
+    {/* Replaces the docked panel when collapsed (>=32rem — hidden below
+        that via CSS, mobile has no collapse concept at all). */}
+    {!panelOpen && (
+      <button className="agent-panel-reopen" onClick={() => setPanelOpen(true)} title="Open agent panel">
+        Agent
+      </button>
+    )}
 
     {notification && <Notification message={notification.message} type={notification.type} />}
 

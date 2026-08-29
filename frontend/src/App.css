@@ -1380,15 +1380,54 @@
   margin-bottom: 0.5rem;
 }
 
+/* App.tsx's split-view container. Mobile (<32rem): inert (block layout,
+   document-level scroll, untouched) — AgentChat stays the permanent fixed
+   overlay described below. >=32rem: a real docked split-pane, only while
+   the panel is actually open (.panel-open, toggled by AgentChat's collapse
+   button/reopen tab) — a closed panel leaves .app-main to its natural
+   height with ordinary document scroll, same as before this feature
+   existed, rather than always paying for a 100vh/overflow:hidden shell it
+   doesn't need. 32rem–60rem stacks the split (column: main content above
+   the panel) since there's no room to sit side-by-side at a readable
+   width; >=60rem sits side-by-side (row, the flex default). */
+@media (min-width: 32rem) {
+  .app-body {
+    display: flex;
+  }
+
+  .app-main {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .app-body.panel-open {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .app-body.panel-open .app-main {
+    overflow-y: auto;
+    height: 100%;
+  }
+}
+
+@media (min-width: 32rem) and (max-width: 59.999rem) {
+  .app-body.panel-open {
+    flex-direction: column;
+  }
+}
+
 /* Agent chat. Mobile: a PERMANENT top-anchored bubble — always this shape,
    always showing the scrollable conversation above a fixed input row
    (never a separate collapsed bottom bar to switch to/from; composing no
-   longer moves or resizes it). Desktop (min-width: 32rem, below) keeps the
-   original collapsed-bar / expanded-card toggle instead — no keyboard to
-   avoid there, so no reason to give up the compact idle state.
-   No wrapper element needed around this — collapsed and expanded (desktop)
-   or the one permanent shape (mobile) are each a simple rectangle, none of
-   them need an invisible click-through bounding box around it. */
+   longer moves or resizes it). Desktop/tablet (min-width: 32rem, below) is
+   a docked split-pane panel instead of a floating overlay — side-by-side
+   with .app-main at >=60rem, stacked below it from 32rem–60rem — sized via
+   the --agent-panel-width/--agent-panel-height custom properties AgentChat.tsx
+   sets inline as the user drags .agent-chat-splitter, and persisted across
+   reloads. No wrapper element needed around this — collapsed (mobile) and
+   docked (desktop) are each a simple rectangle, none of them need an
+   invisible click-through bounding box around it. */
 .agent-chat-shell {
   position: fixed;
   left: 0;
@@ -1406,53 +1445,135 @@
 }
 
 @media (min-width: 32rem) {
-  /* Desktop never uses the draggable inline height (AgentChat.tsx's
-     panelHeight only matters on mobile) — always its own content-driven
-     auto height, both collapsed and expanded below. !important is needed
-     to win over the inline style, which otherwise always beats a plain
-     media-query rule. */
+  /* Docked: part of .app-body's normal flex flow, not a floating overlay —
+     clear every fixed-positioning property from the mobile rule above.
+     !important on height wins over the inline mobile `style` (panelHeight,
+     which desktop ignores entirely). */
   .agent-chat-shell {
-    height: auto !important;
-  }
-
-  /* Collapsed: plain floating bar, bottom-right. */
-  .agent-chat-shell:not(.expanded) {
-    top: auto;
-    bottom: 0;
-    left: auto;
-    width: 22rem;
-    border-radius: 1rem;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
-    margin: 0 20px 20px 0;
-    padding-top: 0;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  /* Expanded: floating card, same corner, taller (content-driven). */
-  .agent-chat-shell.expanded {
-    top: auto;
-    bottom: 0;
-    left: auto;
-    width: 22rem;
-    border-radius: 1rem;
-    margin: 0 20px 20px 0;
+    position: static;
+    height: 100% !important;
+    width: var(--agent-panel-width, 24rem);
+    max-width: 50vw;
+    flex-shrink: 0;
+    border-width: 0 0 0 1.5px;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
     padding-top: 0;
   }
 
-  /* Collapsed: only the input row shows — history/key-setup/resize-handle
-     are hidden via display:none, not unmounted, so the textarea's DOM node
-     (and its focus) is never disturbed by expanding/collapsing. There's no
-     header — dismissing the expanded card is via tapping outside, Escape,
-     or losing focus. */
-  .agent-chat-shell:not(.expanded) .agent-chat-messages,
-  .agent-chat-shell:not(.expanded) .agent-chat-key-setup {
+  /* Collapsed: nothing rendered in its place — see .agent-panel-reopen. */
+  .agent-chat-shell.docked-closed {
     display: none;
   }
+}
 
-  /* Collapsed: nothing above it, so the input row's divider would just be
-     a stray mark at the top of the bar. */
-  .agent-chat-shell:not(.expanded) .agent-chat-input-row {
-    border-top: none;
+@media (min-width: 32rem) and (max-width: 59.999rem) {
+  /* Stacked: full-width strip above the splitter, own draggable height
+     instead of stretching to .app-body's full height. */
+  .agent-chat-shell {
+    width: 100%;
+    max-width: none;
+    height: var(--agent-panel-height, 45vh) !important;
+    border-width: 1.5px 0 0 0;
+  }
+}
+
+/* Draggable boundary between .app-main and the docked panel (AgentChat.tsx
+   renders this immediately before .agent-chat-shell so flex places it right
+   at their edge). Hidden on mobile and whenever the panel's collapsed —
+   nothing to drag against then. */
+.agent-chat-splitter {
+  display: none;
+}
+
+@media (min-width: 32rem) {
+  .agent-chat-splitter {
+    display: block;
+    flex-shrink: 0;
+    background: var(--border-color);
+  }
+
+  .agent-chat-splitter:hover {
+    background: var(--blue-medium);
+  }
+}
+
+@media (min-width: 60rem) {
+  .agent-chat-splitter {
+    width: 5px;
+    cursor: ew-resize;
+    touch-action: none;
+  }
+}
+
+@media (min-width: 32rem) and (max-width: 59.999rem) {
+  .agent-chat-splitter {
+    height: 5px;
+    cursor: ns-resize;
+    touch-action: none;
+  }
+}
+
+/* Small header above the docked panel's messages, holding only the
+   collapse button — mobile and the removed floating-card look never had
+   one, so it's hidden by default and only shown docked. */
+.agent-chat-dock-header {
+  display: none;
+}
+
+@media (min-width: 32rem) {
+  .agent-chat-dock-header {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.35rem 0.35rem 0;
+    flex-shrink: 0;
+  }
+
+  .agent-chat-dock-collapse {
+    width: 1.75rem;
+    height: 1.75rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    border-radius: 0.4rem;
+    cursor: pointer;
+  }
+
+  .agent-chat-dock-collapse:hover {
+    background: var(--bg-primary);
+  }
+}
+
+/* Reopen tab, replacing the panel entirely once collapsed — mobile has no
+   collapse concept at all, so this stays hidden below 32rem. */
+.agent-panel-reopen {
+  display: none;
+}
+
+@media (min-width: 32rem) {
+  .agent-panel-reopen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    right: 0;
+    bottom: 1.5rem;
+    z-index: 1600;
+    padding: 0.5rem 0.5rem;
+    writing-mode: vertical-rl;
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--border-color);
+    border-right: none;
+    border-radius: 0.6rem 0 0 0.6rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  .agent-panel-reopen:hover {
+    color: var(--text-primary);
   }
 }
 
