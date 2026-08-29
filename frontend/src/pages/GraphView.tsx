@@ -985,18 +985,55 @@ function GraphView() {
   // subtrees. Deletes sequentially (not Promise.all) since deleteItem does a
   // synchronous read-modify-write of the whole graph in localStorage;
   // running them concurrently could race and silently drop a delete.
+  // Immediately removes the given absolute paths from local state — the
+  // bulk-delete counterpart to handleDelete's single-path version above,
+  // used by handleDeleteSelected/handleConfirmAgentDelete below. Deliberately
+  // NOT the null-out-and-let-the-sync-effect-repopulate approach those two
+  // used to use: nulling localItems races queryClient.invalidateQueries's own
+  // async refetch — the sync effect can repopulate localItems from the
+  // still-stale cached "structure" before the invalidated refetch resolves,
+  // silently reviving the "deleted" item on screen until something else (a
+  // full page reload) forces a genuinely fresh fetch. Editing local state
+  // directly has no such race.
+  const removePathsFromLocal = (paths: string[]) => {
+    const currentPathParts = path ? path.split('.') : []
+    const relativePaths = paths
+      .map(p => p.split('.').slice(currentPathParts.length))
+      .filter(rel => rel.length > 0)
+
+    setLocalItems(prev => {
+      const newItems = JSON.parse(JSON.stringify(prev ?? rawItems))
+      for (const relativeParts of relativePaths) {
+        let target = newItems
+        let ok = true
+        for (let i = 0; i < relativeParts.length - 1; i++) {
+          const key = relativeParts[i]
+          if (target[key]) target = target[key].children || target[key]
+          else { ok = false; break }
+        }
+        if (ok) delete target[relativeParts[relativeParts.length - 1]]
+      }
+      return newItems
+    })
+
+    const topLevelDeleted = new Set(relativePaths.filter(rel => rel.length === 1).map(rel => rel[0]))
+    if (topLevelDeleted.size > 0) {
+      setLocalOrder(prev => (prev ?? serverKeys).filter(k => !topLevelDeleted.has(k)))
+    }
+  }
+
   const handleDeleteSelected = async () => {
     const count = userHighlights.length
     if (!count) return
     if (!confirm(`Delete ${count} item${count > 1 ? 's' : ''}? This cannot be undone.`)) return
     try {
-      for (const rootPath of selectionRoots(userHighlights)) {
+      const roots = selectionRoots(userHighlights)
+      for (const rootPath of roots) {
         await deleteItem(rootPath, graphName)
       }
+      removePathsFromLocal(roots)
       clearUserHighlights()
-      setLocalItems(null)
-      setLocalOrder(null)
-      await queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
+      queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
       showNotification(`Deleted ${count} item${count > 1 ? 's' : ''}!`)
     } catch (err) {
       showNotification('Failed to delete', 'error')
@@ -1011,13 +1048,13 @@ function GraphView() {
     const count = agentDeletePending.length
     if (!count) return
     try {
-      for (const rootPath of selectionRoots(agentDeletePending)) {
+      const roots = selectionRoots(agentDeletePending)
+      for (const rootPath of roots) {
         await deleteItem(rootPath, graphName)
       }
+      removePathsFromLocal(roots)
       clearAgentDeletePending()
-      setLocalItems(null)
-      setLocalOrder(null)
-      await queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
+      queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
       showNotification(`Deleted ${count} item${count > 1 ? 's' : ''}!`)
     } catch (err) {
       showNotification('Failed to delete', 'error')
