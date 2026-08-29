@@ -9,7 +9,13 @@ interface SectionProps {
   item: StructureItem
   parentPath: string
   colorIndex: number
+  // Plain click on a level-2/3 title (any device) — "promote this item and
+  // its siblings to the top" navigation.
   onItemClick: (path: string) => void
+  // Plain click on a level-1 title (desktop only) — "descend into this
+  // item's own children" navigation instead, a no-op on a leaf item (same
+  // target handleNavigateInto/mobile's swipe-left already use).
+  onItemEnter: (path: string) => void
   onEditClick: (path: string, name: string, data: StructureItem) => void
   editingPath?: string | null
   // When false (mobile), an item being edited/added-to stays in place with just
@@ -197,6 +203,7 @@ function Section({
   parentPath,
   colorIndex: _colorIndex,
   onItemClick,
+  onItemEnter,
   onEditClick,
   editingPath = null,
   editInline = true,
@@ -240,8 +247,11 @@ function Section({
   // into whichever item is at that height (see GraphView's usePageSwipe),
   // swipe-right navigates back up the tree, long-press opens the editor
   // directly, a plain tap toggles highlight (see makeLongPressHandlers
-  // below). Desktop is unchanged: click opens the editor (or navigates, for
-  // non-editable rows), right-click shows the context menu.
+  // below). Desktop: plain click navigates (into a level-1 item's own
+  // children via onItemEnter, or promoting a level-2/3 item to the top via
+  // onItemClick — a no-op on a leaf level-1 item), Ctrl/Cmd+click toggles
+  // highlight, Shift/Alt+click opens the editor directly, right-click shows
+  // the context menu.
   const isMobile = !editInline
   const makeLongPressHandlers = useLongPressFactory()
 
@@ -293,17 +303,18 @@ function Section({
                   className="item-title"
                   // Mobile: tap toggles this item's highlight (swipe-left
                   // navigates into it, long-press opens its editor — see the
-                  // gesture handlers above). Desktop: the title span fills
-                  // the row edge-to-edge (flex: 1, no gap — there's no
-                  // separate "row background" to give highlight its own
-                  // click target), so a plain click keeps its existing job
-                  // and Ctrl/Cmd+click toggles highlight instead.
-                  title={!isMobile && rowEditable ? 'Ctrl/Cmd+click to highlight' : undefined}
+                  // gesture handlers above). Desktop: plain click navigates
+                  // into this item's own children (onItemEnter — a no-op on
+                  // a leaf item), Ctrl/Cmd+click toggles highlight, Shift/
+                  // Alt+click opens the editor directly.
+                  title={!isMobile && rowEditable ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
                   onClick={isMobile ? undefined : (e) => {
                     if (rowEditable && (e.ctrlKey || e.metaKey)) {
                       onToggleHighlight?.(itemPath)
+                    } else if (rowEditable && (e.shiftKey || e.altKey)) {
+                      onEditClick(itemPath, title, item)
                     } else {
-                      rowEditable ? onEditClick(itemPath, title, item) : onItemClick(itemPath)
+                      onItemEnter(itemPath)
                     }
                   }}
                 >
@@ -402,9 +413,10 @@ function Section({
                         >
                           <span
                             className="item-title"
-                            title={!isMobile && childRowEditable ? 'Ctrl/Cmd+click to highlight' : undefined}
+                            title={!isMobile && childRowEditable ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
                             onClick={isMobile ? undefined : (e) => {
                               if (childRowEditable && (e.ctrlKey || e.metaKey)) onToggleHighlight?.(childPath)
+                              else if (childRowEditable && (e.shiftKey || e.altKey)) onEditClick(childPath, childTitle, childItem as StructureItem)
                               else onItemClick(childPath)
                             }}
                           >
@@ -499,9 +511,10 @@ function Section({
                                 >
                                   <span
                                     className="item-title"
-                                    title={!isMobile && grandRowEditable ? 'Ctrl/Cmd+click to highlight' : undefined}
+                                    title={!isMobile && grandRowEditable ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
                                     onClick={isMobile ? undefined : (e) => {
                                       if (grandRowEditable && (e.ctrlKey || e.metaKey)) onToggleHighlight?.(grandPath)
+                                      else if (grandRowEditable && (e.shiftKey || e.altKey)) onEditClick(grandPath, grandTitle, grandItem as StructureItem)
                                       else onItemClick(grandPath)
                                     }}
                                   >

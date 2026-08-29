@@ -446,9 +446,13 @@ function GraphView() {
     return (targetItem?.originalPath as string | undefined) ?? itemPath
   }
 
-  // Handle item click - navigate to the item's PARENT page, so the clicked
-  // item shows up as a 1st-level item alongside its siblings (with its own
-  // children/grandchildren now visible as the 2nd/3rd levels below it).
+  // Level-2/3 click (any device) and level-1 items that opt out of editing
+  // (see Section.tsx's rowEditable): navigate to the item's PARENT page, so
+  // the clicked item shows up as a 1st-level item alongside its siblings
+  // (with its own children/grandchildren now visible as the 2nd/3rd levels
+  // below it) — a "promote to top" navigation, not "descend into it" (see
+  // handleNavigateInto below for that one, which level-1's own click uses
+  // instead).
   const handleItemClick = (itemPath: string) => {
     const realPath = resolveRealPath(itemPath)
     const parentPath = realPath.split('.').slice(0, -1).join('.')
@@ -459,14 +463,15 @@ function GraphView() {
     navigate(buildPath(parentPath))
   }
 
-  // Swipe-left-to-navigate-into-it, anywhere on the page at that item's
-  // height (mobile gesture — see usePageSwipe, wired to .graph-container via
-  // pageSwipeRef below). Level-1 items have no "go to parent" navigation
+  // Navigate straight into a level-1 item's own children, making them the
+  // new level-1 list — level-1 items have no "go to parent" navigation
   // today because their own parent IS the current page (handleItemClick's
-  // trick would just reload the same page) — this goes straight to the
-  // item's own path instead, so its children become the new level-1 list.
-  // No-ops on a leaf item (no children) — there's nowhere for the swipe to
-  // go, so it's better ignored than navigating to an empty page.
+  // trick would just reload the same page), so this is the one that both
+  // mobile's swipe-left (anywhere on the page at that item's height, via
+  // usePageSwipe below) and desktop's plain click on a level-1 title (see
+  // Section.tsx's onItemEnter) use to descend a level. No-ops on a leaf item
+  // (no children) — there's nowhere to go, so it's better ignored than
+  // navigating to an empty page.
   const handleNavigateInto = (itemPath: string) => {
     const realPath = resolveRealPath(itemPath)
     const item = getItemByPath(structure, realPath)
@@ -1115,6 +1120,7 @@ function GraphView() {
                 parentPath={path || ''}
                 colorIndex={index % COLORS.length}
                 onItemClick={handleItemClick}
+                onItemEnter={handleNavigateInto}
                 onEditClick={handleEditClick}
                 editingPath={inlineEdit?.path || null}
                 editInline={!isMobile}
