@@ -253,6 +253,41 @@ export function serializeItem(key: string, item: StructureItem, depth = 1): stri
   return serializeStructure({ [key]: item }, depth)
 }
 
+// ── Agent-facing serializer (mirrors serializeStructure, never round-tripped) ─
+// The agent only ever sees item titles here, never the normalized dot-key
+// each tool call actually addresses items by — so every heading also carries
+// its own absolute path in ⟨angle brackets⟩, which the agent is instructed to
+// copy verbatim instead of reconstructing a path from the title (see
+// agentClient.ts's SYSTEM_PREAMBLE). This is a separate text from
+// serializeStructure/serializeItem above — those stay byte-identical to the
+// human-facing Raw view / copy-paste / Gist format; this one is free to
+// diverge since it's never parsed back or shown to the user.
+function agentItemBlock(path: string, item: StructureItem, depth: number): string {
+  const hashes = '#'.repeat(depth)
+  const dateSuffix = item.date ? ` (${item.date})` : ''
+  const tagsSuffix = item.tags && item.tags.length ? ` ${item.tags.map(t => `#${t}`).join(' ')}` : ''
+  let block = `${hashes} ${item.title}${dateSuffix}${tagsSuffix} ⟨${path}⟩\n`
+  if (item.context) block += `${item.context}\n`
+  if (item.children && Object.keys(item.children).length) {
+    block += Object.entries(item.children)
+      .map(([key, child]) => agentItemBlock(`${path}.${key}`, child, depth + 1))
+      .join('\n')
+  }
+  return block
+}
+
+export function serializeStructureForAgent(items: Record<string, StructureItem>, parentPath = '', depth = 1): string {
+  return Object.entries(items)
+    .map(([key, item]) => agentItemBlock(parentPath ? `${parentPath}.${key}` : key, item, depth))
+    .join('\n')
+}
+
+// Single item (and its children) at a known absolute path — used for
+// view_item's result and the "user is viewing X" system-prompt line.
+export function serializeItemForAgent(path: string, item: StructureItem, depth = 1): string {
+  return agentItemBlock(path, item, depth)
+}
+
 // ── Validation ───────────────────────────────────────────────────────────────
 function validateDateValue(s: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) throw new Error('Date must be YYYY-MM-DD format')
