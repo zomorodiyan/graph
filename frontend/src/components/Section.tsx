@@ -382,7 +382,7 @@ function Section({
                       return (
                         <div
                           key={grandKey}
-                          className={`layer3-row${grandCanDrag ? ' draggable' : ''}${draggedPath === grandPath ? ' dragging' : ''}${dragOverPath === grandPath && dragOverZone === 'before' ? ' drag-over-before' : ''}`}
+                          className={`layer3-row${grandCanDrag ? ' draggable' : ''}${draggedPath === grandPath ? ' dragging' : ''}${dragOverPath === grandPath && dragOverZone === 'before' ? ' drag-over-before' : ''}${dragOverPath === grandPath && dragOverZone === 'nest' ? ' drag-over-nest' : ''}`}
                           draggable={grandCanDrag}
                           data-drag-path={grandPath}
                           onDragStart={(e) => {
@@ -402,16 +402,19 @@ function Section({
                             e.dataTransfer.setData('text/plain', grandPath)
                             onItemDragStart?.(grandPath)
                           }}
-                          // Always 'before' — layer3 is the deepest rendered
-                          // level, so nesting onto one would create a layer4
-                          // child with no way to ever see or reach it again
-                          // in the normal UI (view_item aside).
-                          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); onItemDragOver?.(grandPath, 'before') }}
+                          // Same before/nest split as layer2 — nesting onto a
+                          // layer3 item makes the dragged item ITS child,
+                          // one level deeper than layer3 itself renders. That
+                          // nested item is still reachable, the same way any
+                          // layer3 item's own children are: click the layer3
+                          // item to promote it (and what's now nested under
+                          // it) to the top of a new view (see onItemClick).
+                          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); onItemDragOver?.(grandPath, getDropZone(e)) }}
                           onDragEnd={() => onItemDragEnd?.()}
                           onDrop={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
-                            onItemDrop?.(grandPath, 'before')
+                            onItemDrop?.(grandPath, dragOverZone === 'nest' ? 'nest' : 'before')
                           }}
                         >
                           <div className="layer3-wrapper">

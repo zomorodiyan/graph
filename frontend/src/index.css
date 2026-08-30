@@ -302,9 +302,8 @@ body {
   background-color: rgba(33, 150, 243, 0.08);
 }
 
-/* layer3 has no nest target of its own (see the onDragOver/onDrop comment
-   in Section.tsx) — only .layer2 needs this. */
-.layer2-wrapper.drag-over-nest .layer2 {
+.layer2-wrapper.drag-over-nest .layer2,
+.layer3-row.drag-over-nest .layer3-item {
   outline: 2px dashed #2196F3;
   outline-offset: -2px;
   background-color: rgba(33, 150, 243, 0.12);
