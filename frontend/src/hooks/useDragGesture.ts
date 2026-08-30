@@ -37,6 +37,15 @@ export function useDragGestureFactory(callbacks: DragGestureCallbacks) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const firedRef = useRef(false)
   const startRef = useRef<{ x: number; y: number } | null>(null)
+  // Once a hold turns out to be a plain swipe rather than a long-press (the
+  // MOVE_CANCEL_PX check below), the rows themselves need touch-action:none
+  // for the drag gesture to work at all (see App.css's .layer1 comment — a
+  // mobile browser can otherwise decide mid-hold that this is a native pan
+  // and silently cancel the pointer sequence before the long-press timer
+  // even fires). That blocks native scrolling on the row too, so once a
+  // swipe is recognized this hook takes over forwarding it as a manual
+  // window scroll instead, rather than just going inert.
+  const scrollingRef = useRef(false)
   const callbacksRef = useRef(callbacks)
   callbacksRef.current = callbacks
 
@@ -52,6 +61,7 @@ export function useDragGestureFactory(callbacks: DragGestureCallbacks) {
       onPointerDown: (e: React.PointerEvent) => {
         callbacksRef.current.onDebug?.(`pointerdown pointerType=${e.pointerType}`)
         firedRef.current = false
+        scrollingRef.current = false
         clearTimer()
         startRef.current = { x: e.clientX, y: e.clientY }
         // Explicit capture (same pattern as AgentChat.tsx's resize-handle
@@ -78,30 +88,47 @@ export function useDragGestureFactory(callbacks: DragGestureCallbacks) {
           callbacksRef.current.onDragMove(e.clientX, e.clientY)
           return
         }
+        if (scrollingRef.current) {
+          // Manually forward the swipe as a page scroll — see scrollingRef's
+          // own comment above for why native scrolling can't do this once
+          // touch-action:none is in effect. startRef is reused here as
+          // "last position" so each move only scrolls by its own delta,
+          // giving 1:1 tracking with the finger (no native momentum/
+          // deceleration on release, which is the one thing this can't
+          // replicate without reimplementing physics).
+          const last = startRef.current
+          if (last) window.scrollBy(0, last.y - e.clientY)
+          startRef.current = { x: e.clientX, y: e.clientY }
+          return
+        }
         const s = startRef.current
         if (!s) return
         if (Math.abs(e.clientX - s.x) > MOVE_CANCEL_PX || Math.abs(e.clientY - s.y) > MOVE_CANCEL_PX) {
-          callbacksRef.current.onDebug?.('pointermove: exceeded MOVE_CANCEL_PX before long-press fired, timer canceled')
+          callbacksRef.current.onDebug?.('pointermove: exceeded MOVE_CANCEL_PX before long-press fired — treating as a scroll')
           clearTimer()
-          startRef.current = null
+          scrollingRef.current = true
+          startRef.current = { x: e.clientX, y: e.clientY }
         }
       },
       onPointerUp: () => {
         callbacksRef.current.onDebug?.(`pointerup fired=${firedRef.current}`)
         clearTimer()
         if (firedRef.current) callbacksRef.current.onDrop()
+        scrollingRef.current = false
         startRef.current = null
       },
       onPointerLeave: () => {
         callbacksRef.current.onDebug?.(`pointerleave fired=${firedRef.current}`)
         clearTimer()
         if (firedRef.current) callbacksRef.current.onCancel()
+        scrollingRef.current = false
         startRef.current = null
       },
       onPointerCancel: () => {
         callbacksRef.current.onDebug?.(`pointercancel fired=${firedRef.current}`)
         clearTimer()
         if (firedRef.current) callbacksRef.current.onCancel()
+        scrollingRef.current = false
         startRef.current = null
       },
       onClick: (e: React.MouseEvent) => {
