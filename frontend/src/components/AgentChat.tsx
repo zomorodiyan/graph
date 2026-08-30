@@ -437,18 +437,7 @@ function AgentChat() {
       style={{ height: panelHeight, ...({ '--agent-panel-width': `${dockWidth}px`, '--agent-panel-height': `${dockHeight}px` } as React.CSSProperties) }}
       onBlur={handleContainerBlur}
     >
-      {!apiKey ? (
-        <div className="agent-chat-key-setup">
-          <p className="agent-chat-key-title">Connect your Anthropic API key</p>
-          <p className="agent-chat-key-hint">
-            Chat calls the Claude API directly from your browser with your own key —
-            usage is billed to your Anthropic account, not to this app. Get one at{' '}
-            <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">
-              console.anthropic.com
-            </a>, then paste it below.
-          </p>
-        </div>
-      ) : (
+      {apiKey && (
         // The padding lives on the inner div, not this one — this outer
         // element is the flex item that needs to shrink to true zero when
         // the panel's dragged to MIN_PANEL_HEIGHT (see .agent-chat-messages
