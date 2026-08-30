@@ -29,6 +29,13 @@ import Notification from './Notification'
 const MIN_PANEL_HEIGHT_EXPANDED = 132
 const MIN_PANEL_HEIGHT_IDLE = 76
 
+// Minimum visual-viewport height drop, while composing, that counts as "a
+// real on-screen keyboard opened" rather than noise (address-bar hide/show,
+// rounding). Arbitrary but generous: real keyboards run 150-300+px tall, so
+// this has wide margin against false positives while still comfortably
+// catching the smallest keyboards (see keyboardOpen below).
+const KEYBOARD_HEIGHT_THRESHOLD = 80
+
 // Docked split-pane sizing (>=32rem — see .agent-chat-shell/.agent-chat-splitter
 // in App.css). Below 60rem the split stacks (drag adjusts DOCK_HEIGHT
 // instead of DOCK_WIDTH) since there isn't room to sit side-by-side at a
@@ -59,23 +66,30 @@ function readStoredSize(key: string, fallback: number) {
 // Persistent, app-wide chat surface (mounted once in App.tsx, so it survives
 // navigation between the graphs list and any individual graph — "from
 // within any view" per the App Features template). On mobile this is a
-// PERMANENT top-anchored bubble (see .agent-chat-shell in App.css) whose
-// outer bounds (position + height) never move. Idle (not composing), the
-// bubble shows only messages + the resize handle — the whole input row
-// (theme/depth/ctx/sync buttons + textarea + send), a single line tall,
-// lives in its own `position: fixed` bar at the true bottom of the screen
-// instead, via a CSS toggle on `.agent-chat-input-row` keyed off `.expanded`
-// (see App.css) — it stays a child of this component's JSX/DOM the whole
-// time, never unmounted. Focusing the textarea flips that class: the row
-// rejoins the bubble's own flex flow at its bottom (`position: static`) and
-// the view-buttons hide (no room once composing), while the bubble itself
-// doesn't move or resize. The hardware/gesture back button (and Escape)
-// blur the textarea and undo both, via useModalBackButton below. Desktop
-// keeps the original collapsed-bar / expanded-card toggle behavior,
-// unaffected by any of this — see the `min-width: 32rem` overrides in
-// App.css. Talks to the Claude API directly from the browser with the
-// user's own key (see agentClient.ts), which can view, edit, and add items
-// in the currently open graph via tools.
+// PERMANENT top-anchored bubble (see .agent-chat-shell in App.css), but its
+// height isn't fixed — it only occupies real screen space when something of
+// its own is actually inside its flow (see visibleBubbleHeight below), and
+// collapses to nothing otherwise so it never holds open blank space (e.g.
+// before an API key is saved and idle). The whole input row (theme/depth/
+// ctx/sync buttons + textarea + send), a single line tall, normally lives in
+// its own `position: fixed` bar at the true bottom of the screen instead of
+// the bubble's own flow — it stays a child of this component's JSX/DOM the
+// whole time, never unmounted. That bar-vs-flow placement is a CSS toggle on
+// `.agent-chat-input-row` keyed off `.keyboard-open` (see App.css), not
+// focus alone: focusing the textarea sets `.expanded` immediately, but the
+// row only actually moves once a real on-screen keyboard is detected
+// (keyboardOpen below) covering the fixed bottom bar — otherwise (a resized-
+// narrow desktop window, or a device whose keyboard doesn't pop up) the row
+// stays put instead of jumping to the bubble and looking like it vanished.
+// Once it does move, the view-buttons hide too (no room once composing).
+// The hardware/gesture back button (and Escape) blur the textarea and undo
+// all of this, via useModalBackButton below. Desktop keeps the original
+// collapsed-bar / expanded-card toggle behavior (still keyed on `.expanded`
+// directly, a different meaning of that class there), unaffected by any of
+// this — see the `min-width: 32rem` overrides in App.css. Talks to the
+// Claude API directly from the browser with the user's own key (see
+// agentClient.ts), which can view, edit, and add items in the currently
+// open graph via tools.
 function AgentChat() {
   const { expanded, setExpanded, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop, clearMessages } = useAgentChat()
   const [draft, setDraft] = useState('')
@@ -241,6 +255,32 @@ function AgentChat() {
     if (hasDraggedRef.current) setPanelHeight(h => Math.min(h, height))
   }, [height])
 
+  // Real on-screen keyboard detection. Focusing the textarea isn't proof one
+  // actually opened — a resized-narrow desktop browser window has no
+  // keyboard at all, and on some devices/inputs it just doesn't show — so
+  // moving the input row off the fixed bottom bar on focus alone made it
+  // look like the row had simply vanished whenever no keyboard showed up to
+  // explain the jump. idleHeightRef remembers the last visual-viewport
+  // height seen while not composing; once composing, a real keyboard shows
+  // up as that height shrinking by more than a trivial amount (address-bar
+  // hide/show, rounding). Only then does .keyboard-open (App.css) move the
+  // row into the bubble's own flow — otherwise it stays right on the fixed
+  // bottom bar where the user tapped it, since there's nothing covering it.
+  const idleHeightRef = useRef(height)
+  useEffect(() => {
+    if (!expanded) idleHeightRef.current = height
+  }, [height, expanded])
+  const keyboardOpen = expanded && idleHeightRef.current - height > KEYBOARD_HEIGHT_THRESHOLD
+
+  // The bubble only needs to reserve real screen space when something of
+  // its own actually sits inside its flow: messages (once a key is saved,
+  // always in-flow regardless of keyboard state) or the input row after a
+  // real keyboard has pulled it in (see keyboardOpen above). Before a key
+  // is saved and idle/no-keyboard, neither is true — the row is off in its
+  // own fixed bottom bar — so there's nothing to show up top and the bubble
+  // collapses to nothing instead of holding open blank space.
+  const visibleBubbleHeight = (apiKey || keyboardOpen) ? panelHeight : 0
+
   // The permanent mobile bubble is position:fixed, so it doesn't reserve
   // any space in normal page flow — GraphView/StructuresView's own content
   // still starts at the true top of the page and would render right
@@ -255,8 +295,8 @@ function AgentChat() {
   // one-frame flash of page content under the bubble before it gets
   // pushed down.
   useLayoutEffect(() => {
-    document.documentElement.style.setProperty('--agent-bubble-height', `${panelHeight}px`)
-  }, [panelHeight])
+    document.documentElement.style.setProperty('--agent-bubble-height', `${visibleBubbleHeight}px`)
+  }, [visibleBubbleHeight])
 
   const dragStateRef = useRef<{ startY: number; startHeight: number } | null>(null)
   const handleResizeStart = (e: React.PointerEvent) => {
@@ -433,8 +473,8 @@ function AgentChat() {
       title="Drag to resize"
     />
     <div
-      className={`agent-chat-shell${expanded ? ' expanded' : ''}`}
-      style={{ height: panelHeight, ...({ '--agent-panel-width': `${dockWidth}px`, '--agent-panel-height': `${dockHeight}px` } as React.CSSProperties) }}
+      className={`agent-chat-shell${expanded ? ' expanded' : ''}${keyboardOpen ? ' keyboard-open' : ''}`}
+      style={{ height: visibleBubbleHeight, ...({ '--agent-panel-width': `${dockWidth}px`, '--agent-panel-height': `${dockHeight}px` } as React.CSSProperties) }}
       onBlur={handleContainerBlur}
     >
       {apiKey && (
@@ -467,18 +507,20 @@ function AgentChat() {
       )}
 
       {/* Never unmounted — the textarea's DOM node (and its focus) must
-          never be disturbed. Idle (not composing): the WHOLE row — buttons
-          + textbox + send — is pulled out via position:fixed into its own
-          bar at the true bottom of the screen (see .agent-chat-input-row
-          in App.css), since the permanent bubble itself shows no input
-          until you actually focus it. Composing (.expanded): the row
-          rejoins the bubble's own flex flow at its bottom instead — the
-          bubble's own bounds never move, only this internal reflow happens
-          — and the view-buttons group hides (CSS descendant selector, no
-          class toggle needed) since there's no room for it there and it
-          doesn't apply mid-chat anyway. Desktop ignores all of this — the
-          row is always part of the collapsed-bar/expanded-card's own
-          layout, unchanged from before. */}
+          never be disturbed. Normally the WHOLE row — buttons + textbox +
+          send — is pulled out via position:fixed into its own bar at the
+          true bottom of the screen (see .agent-chat-input-row in App.css).
+          It only rejoins the bubble's own flex flow at its bottom instead
+          (.keyboard-open, position:static) once a real on-screen keyboard
+          is actually detected covering that bottom bar (keyboardOpen
+          above) — focus alone (.expanded) isn't enough, so a resized-narrow
+          desktop window or a device whose keyboard doesn't pop up leaves
+          the row right where the user tapped it. Once it does move, the
+          view-buttons group hides too (CSS descendant selector off
+          .keyboard-open) since there's no room for it there and it doesn't
+          apply mid-chat anyway. Desktop ignores all of this — the row is
+          always part of the collapsed-bar/expanded-card's own layout,
+          unchanged from before (still keyed on .expanded there). */}
       <div className="agent-chat-input-row">
         <div className="agent-chat-view-buttons">
           <button className="theme-toggle" {...themeLongPress} title="Toggle theme — long-press to clear the conversation" />
