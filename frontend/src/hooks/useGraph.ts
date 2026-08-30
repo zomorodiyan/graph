@@ -7,7 +7,7 @@ import {
   deleteItem,
   moveItemUp,
   moveItemDown,
-  reorderItem,
+  moveItemToPosition,
   moveItemToParent,
   syncToDrive,
   UpdatePayload,
@@ -177,8 +177,8 @@ export function useMoveItem(graphName?: string) {
           : Math.min(orderedKeys.length - 1, currentIndex + 1)
         
         if (targetIndex === currentIndex) return old
-        
-        return applyOptimisticReorder(old, path, targetIndex)
+
+        return applyOptimisticMoveToPosition(old, path, keys.slice(0, -1).join('.'), targetIndex)
       })
 
       return { previousStructure }
@@ -196,26 +196,28 @@ export function useMoveItem(graphName?: string) {
   })
 }
 
-// Hook for drag-and-drop reordering with optimistic updates
-export function useReorderItem(graphName?: string) {
+// Hook for drag-and-drop "before"-zone drops — moves an item to a specific
+// position, in the same parent (a plain reorder) or a different one (both
+// reparenting and positioning in one move), with optimistic updates.
+export function useMoveItemToPosition(graphName?: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ path, targetIndex }: { path: string; targetIndex: number }) =>
-      reorderItem(path, targetIndex, graphName),
-    
-    // Optimistic update - immediately show the reordered items
-    onMutate: async ({ path, targetIndex }) => {
+    mutationFn: ({ path, newParentPath, targetIndex }: { path: string; newParentPath: string; targetIndex: number }) =>
+      moveItemToPosition(path, newParentPath, targetIndex, graphName),
+
+    // Optimistic update - immediately show the item in its new spot
+    onMutate: async ({ path, newParentPath, targetIndex }) => {
       // Cancel any outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: ['structure', graphName] })
 
       // Snapshot the previous value for rollback
       const previousStructure = queryClient.getQueryData(['structure', graphName])
 
-      // Optimistically update the cache to show new order immediately
+      // Optimistically update the cache to show the new position immediately
       queryClient.setQueryData(['structure', graphName], (old: any) => {
         if (!old) return old
-        return applyOptimisticReorder(old, path, targetIndex)
+        return applyOptimisticMoveToPosition(old, path, newParentPath, targetIndex)
       })
 
       // Return context with the snapshot for rollback
@@ -224,7 +226,7 @@ export function useReorderItem(graphName?: string) {
 
     // Rollback on error
     onError: (_err, _vars, context) => {
-      console.error('Reorder error:', _err)
+      console.error('Move error:', _err)
       if (context?.previousStructure) {
         queryClient.setQueryData(['structure', graphName], context.previousStructure)
       }
@@ -238,8 +240,8 @@ export function useReorderItem(graphName?: string) {
 }
 
 // Hook for drag-to-nest — moves an item to become the last child of a
-// different parent, unlike useReorderItem which only repositions within the
-// same parent.
+// different parent, unlike useMoveItemToPosition which lands at a specific
+// index rather than always appending.
 export function useMoveItemToParent(graphName?: string) {
   const queryClient = useQueryClient()
 
@@ -425,48 +427,64 @@ function applyOptimisticDelete(structure: any, path: string): any {
   return newStructure
 }
 
-// Helper function to apply optimistic reorder
-function applyOptimisticReorder(structure: any, path: string, targetIndex: number): any {
+// Helper function to apply an optimistic move-to-position — combines
+// applyOptimisticMove (reparent) and the old applyOptimisticReorder
+// (position) into one operation, since "before"-zone drops always mean
+// "insert before this item's own list" now, whether that's the dragged
+// item's current parent or a different one (see moveItemToPosition
+// server-side for the matching same-parent-index-adjustment logic).
+function applyOptimisticMoveToPosition(structure: any, path: string, newParentPath: string, targetIndex: number): any {
   const keys = path.split('.')
   const newStructure = JSON.parse(JSON.stringify(structure))
-  
   const itemKey = keys[keys.length - 1]
-  
-  // Get parent container
+
   let parentContainer = newStructure.structure
   for (let i = 0; i < keys.length - 1; i++) {
-    if (parentContainer[keys[i]]?.children) {
-      parentContainer = parentContainer[keys[i]].children
-    } else if (parentContainer[keys[i]]) {
-      parentContainer = parentContainer[keys[i]]
+    if (parentContainer[keys[i]]?.children) parentContainer = parentContainer[keys[i]].children
+    else if (parentContainer[keys[i]]) parentContainer = parentContainer[keys[i]]
+  }
+  const item = parentContainer[itemKey]
+  if (!item) return structure
+
+  let targetContainer = newStructure.structure
+  if (newParentPath) {
+    for (const key of newParentPath.split('.')) {
+      if (targetContainer[key]?.children) targetContainer = targetContainer[key].children
+      else if (targetContainer[key]) targetContainer = targetContainer[key]
+      else return structure // target vanished — bail, no-op
     }
   }
-  
-  // Get ordered keys and reorder
-  const orderedKeys = Object.keys(parentContainer)
-  const currentIndex = orderedKeys.indexOf(itemKey)
-  
-  if (currentIndex === -1) return structure
-  
-  // Remove from current position
-  orderedKeys.splice(currentIndex, 1)
-  // targetIndex is the drop target's index before removal ("insert before
-  // this row"); a forward move needs it shifted back by one to still land
-  // before the same visual row once the dragged item is gone.
-  const adjustedTargetIndex = currentIndex < targetIndex ? targetIndex - 1 : targetIndex
-  const safeTargetIndex = Math.max(0, Math.min(adjustedTargetIndex, orderedKeys.length))
-  orderedKeys.splice(safeTargetIndex, 0, itemKey)
-  
-  // Rebuild parent container in new order
-  const newParent: Record<string, any> = {}
-  for (const key of orderedKeys) {
-    newParent[key] = parentContainer[key]
+
+  const sameParent = targetContainer === parentContainer
+  const oldIndex = Object.keys(parentContainer).indexOf(itemKey)
+  delete parentContainer[itemKey]
+
+  let key = itemKey
+  if (!sameParent) {
+    let n = 2
+    while (key in targetContainer) key = `${itemKey}_${n++}`
   }
-  
-  // Replace parent contents
-  Object.keys(parentContainer).forEach(k => delete parentContainer[k])
-  Object.assign(parentContainer, newParent)
-  
+
+  // targetIndex is the drop target's index before removal ("insert before
+  // this row"); a same-parent forward move needs it shifted back by one to
+  // still land before the same visual row once the dragged item is gone —
+  // a cross-parent move needs no such adjustment, since the dragged item
+  // was never part of the target list to begin with.
+  const adjustedTargetIndex = sameParent && oldIndex !== -1 && oldIndex < targetIndex ? targetIndex - 1 : targetIndex
+  const orderedKeys = Object.keys(targetContainer)
+  const safeIndex = Math.max(0, Math.min(adjustedTargetIndex, orderedKeys.length))
+  orderedKeys.splice(safeIndex, 0, key)
+
+  // Rebuild target container in new order
+  const newTarget: Record<string, any> = {}
+  for (const k of orderedKeys) {
+    newTarget[k] = k === key ? item : targetContainer[k]
+  }
+
+  // Replace target contents
+  Object.keys(targetContainer).forEach(k => delete targetContainer[k])
+  Object.assign(targetContainer, newTarget)
+
   return newStructure
 }
 

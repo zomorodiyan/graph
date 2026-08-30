@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate, useNavigationType, Link, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
+import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useMoveItemToPosition, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
 import { useHighlights } from '../hooks/useHighlights'
 import { useViewOptions, DEPTHS } from '../hooks/useViewOptions'
 import { useModalBackButton } from '../hooks/useModalBackButton'
@@ -137,43 +137,68 @@ function renderViewPositionDots(count: number) {
   )
 }
 
-// Reorder helper for level-2/3 drags — same in-place delete+reassign trick as
-// applyOptimisticReorder in useGraph.ts, but walks a local items snapshot by
-// path relative to the current view instead of the full structure.
-function reorderLocalItems(
+// Local-items counterpart to applyOptimisticMoveToPosition in useGraph.ts —
+// walks a local items snapshot by path relative to the current view instead
+// of the full structure. Combines the old reorderLocalItems (same-parent
+// position) and applyLocalMove (cross-parent, append-only) into one general
+// move-to-position operation, since a "before"-zone drop now always means
+// "insert before this item's own list", whichever parent that is — a plain
+// reorder is just the case where newParentRelativeParts happens to name the
+// dragged item's current parent. Returns the resolved key alongside the new
+// items snapshot (deduped against the target list when it crosses parents,
+// same as the server) so callers that also track a separate order array
+// (level-1's localOrder) can stay in sync without re-deriving the dedupe
+// themselves.
+function applyLocalMoveToPosition(
   items: Record<string, StructureItem>,
-  relativeParts: string[],
+  itemRelativeParts: string[],
+  newParentRelativeParts: string[],
   targetIndex: number,
-): Record<string, StructureItem> {
+): { items: Record<string, StructureItem>; key: string } {
   const newItems = JSON.parse(JSON.stringify(items))
-  const itemKey = relativeParts[relativeParts.length - 1]
+  const itemKey = itemRelativeParts[itemRelativeParts.length - 1]
 
-  let container: Record<string, StructureItem> = newItems
-  for (let i = 0; i < relativeParts.length - 1; i++) {
-    const key = relativeParts[i]
-    if (!container[key]) return items
-    container = (container[key].children || {}) as Record<string, StructureItem>
+  let oldContainer: Record<string, StructureItem> = newItems
+  for (let i = 0; i < itemRelativeParts.length - 1; i++) {
+    const key = itemRelativeParts[i]
+    if (!oldContainer[key]) return { items, key: itemKey }
+    oldContainer = (oldContainer[key].children || {}) as Record<string, StructureItem>
+  }
+  const item = oldContainer[itemKey]
+  if (!item) return { items, key: itemKey }
+
+  let newContainer: Record<string, StructureItem> = newItems
+  for (const key of newParentRelativeParts) {
+    if (!newContainer[key]) return { items, key: itemKey }
+    if (!newContainer[key].children) newContainer[key].children = {}
+    newContainer = newContainer[key].children as Record<string, StructureItem>
   }
 
-  const orderedKeys = Object.keys(container)
-  const currentIndex = orderedKeys.indexOf(itemKey)
-  if (currentIndex === -1) return items
+  const sameParent = newContainer === oldContainer
+  const oldIndex = Object.keys(oldContainer).indexOf(itemKey)
+  delete oldContainer[itemKey]
 
-  orderedKeys.splice(currentIndex, 1)
-  // targetIndex is the drop target's index in the pre-removal order ("insert
-  // before this row"); removing the dragged item first shifts everything
-  // after it back by one, so a forward move (currentIndex < targetIndex)
-  // needs targetIndex-1 to still land before the same visual row.
-  const adjustedTargetIndex = currentIndex < targetIndex ? targetIndex - 1 : targetIndex
-  const safeTargetIndex = Math.max(0, Math.min(adjustedTargetIndex, orderedKeys.length))
-  orderedKeys.splice(safeTargetIndex, 0, itemKey)
+  let newKey = itemKey
+  if (!sameParent) {
+    let n = 2
+    while (newKey in newContainer) newKey = `${itemKey}_${n++}`
+  }
 
-  const reordered: Record<string, StructureItem> = {}
-  for (const key of orderedKeys) reordered[key] = container[key]
-  Object.keys(container).forEach(k => delete container[k])
-  Object.assign(container, reordered)
+  // See applyOptimisticMoveToPosition's matching comment: same-parent moves
+  // need the target index shifted back by one once the dragged item is
+  // removed from ahead of it; cross-parent moves don't, since the dragged
+  // item was never part of the target list to begin with.
+  const adjustedTargetIndex = sameParent && oldIndex !== -1 && oldIndex < targetIndex ? targetIndex - 1 : targetIndex
+  const orderedKeys = Object.keys(newContainer)
+  const safeIndex = Math.max(0, Math.min(adjustedTargetIndex, orderedKeys.length))
+  orderedKeys.splice(safeIndex, 0, newKey)
 
-  return newItems
+  const rebuilt: Record<string, StructureItem> = {}
+  for (const k of orderedKeys) rebuilt[k] = k === newKey ? item : newContainer[k]
+  Object.keys(newContainer).forEach(k => delete newContainer[k])
+  Object.assign(newContainer, rebuilt)
+
+  return { items: newItems, key: newKey }
 }
 
 // Ordered sibling keys at `parentRelativeParts` (relative to the current view),
@@ -368,7 +393,7 @@ function GraphView() {
 
   const updateItem = useUpdateItem(graphName)
   const deleteItemMutation = useDeleteItem(graphName)
-  const reorderItem = useReorderItem(graphName)
+  const moveToPosition = useMoveItemToPosition(graphName)
   const moveToParent = useMoveItemToParent(graphName)
   const createItem = useCreateItem(graphName)
 
@@ -916,57 +941,77 @@ function GraphView() {
       return
     }
 
-    // Check if dropped in same position - do nothing
+    // Already a top-level item — the fast path: reorder within localOrder in
+    // place, nothing to move between containers.
     const currentIndex = localOrder?.indexOf(draggedKey) ?? -1
-    if (currentIndex === -1) {
-      // Reordering only works among true top-level siblings — a nested
-      // item dropped in a top-level row's "before" zone (rather than onto
-      // it, which would nest it there instead) has no top-level position to
-      // go to. Without this, the drag just silently ends with nothing
-      // visibly different, indistinguishable from a bug (mirrors the same
-      // notification handleDropAtPath shows for the level-2/3 case).
-      const isTopLevelDrag = itemToReorder === (path ? `${path}.${draggedKey}` : draggedKey)
-      if (!isTopLevelDrag) {
-        showNotification('Drop onto an item to move it there — reordering only works within the same list', 'error')
+    const isTopLevelDrag = itemToReorder === (path ? `${path}.${draggedKey}` : draggedKey)
+    if (isTopLevelDrag) {
+      if (currentIndex === -1 || currentIndex === targetIndex) return
+
+      // IMMEDIATELY update local order for instant visual feedback
+      setLocalOrder(prevOrder => {
+        if (!prevOrder) return prevOrder
+        const idx = prevOrder.indexOf(draggedKey)
+        if (idx === -1) return prevOrder
+
+        const newOrder = [...prevOrder]
+        newOrder.splice(idx, 1)
+        // Forward moves need the target shifted back by one to land before
+        // the same visual row once the dragged item is gone.
+        const adjustedTargetIndex = idx < targetIndex ? targetIndex - 1 : targetIndex
+        newOrder.splice(Math.max(0, Math.min(adjustedTargetIndex, newOrder.length)), 0, draggedKey)
+        return newOrder
+      })
+
+      try {
+        await moveToPosition.mutateAsync({ path: itemToReorder, newParentPath: path, targetIndex })
+        showNotification('Reordered!')
+      } catch (err: any) {
+        setLocalOrder(serverKeys)
+        const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to reorder'
+        showNotification(msg.substring(0, 60), 'error')
       }
       return
     }
-    if (currentIndex === targetIndex) {
-      return
-    }
 
-    // IMMEDIATELY update local order for instant visual feedback
+    // A nested item dropped in a top-level row's "before" zone — promote it
+    // to a top-level item at targetIndex, same move-to-position machinery as
+    // the same-parent case above, just crossing into a different (the view's
+    // own top-level) container. Needs both localItems (the item moves out of
+    // its old nested container) and localOrder (it's now one of the flat
+    // top-level keys) kept in sync — applyLocalMoveToPosition only touches
+    // the former, so the resolved (possibly deduped) key it returns is used
+    // to update the latter directly here.
+    const prefix = path ? `${path}.` : ''
+    if (!itemToReorder.startsWith(prefix) || !displayItems) return
+    const draggedRelative = itemToReorder.slice(prefix.length).split('.')
+
+    const { items: movedItems, key: newKey } = applyLocalMoveToPosition(displayItems, draggedRelative, [], targetIndex)
+    setLocalItems(movedItems)
     setLocalOrder(prevOrder => {
-      if (!prevOrder) return prevOrder
-      const idx = prevOrder.indexOf(draggedKey)
-      if (idx === -1) return prevOrder
-
-      const newOrder = [...prevOrder]
-      newOrder.splice(idx, 1)
-      // See reorderLocalItems' comment above: forward moves need the target
-      // shifted back by one to land before the same visual row.
-      const adjustedTargetIndex = idx < targetIndex ? targetIndex - 1 : targetIndex
-      newOrder.splice(Math.max(0, Math.min(adjustedTargetIndex, newOrder.length)), 0, draggedKey)
-      return newOrder
+      const base = [...(prevOrder ?? serverKeys)]
+      base.splice(Math.max(0, Math.min(targetIndex, base.length)), 0, newKey)
+      return base
     })
-    
-    // Then sync to server in background
+
     try {
-      await reorderItem.mutateAsync({ path: itemToReorder, targetIndex })
-      showNotification('Reordered!')
+      await moveToPosition.mutateAsync({ path: itemToReorder, newParentPath: path, targetIndex })
+      showNotification('Moved!')
     } catch (err: any) {
-      // Rollback on error - reset to server order
+      setLocalItems(rawItems)
       setLocalOrder(serverKeys)
-      const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to reorder'
+      const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to move'
       showNotification(msg.substring(0, 60), 'error')
     }
   }
 
-  // Drop handler for level-2/3 items. 'before' zone: reorders among siblings
-  // only (same parent as the dragged item) — a drop over a different
-  // parent's list is a no-op rather than reparenting. 'nest' zone: hands off
-  // to handleNestDrop, which allows crossing into a different parent since
-  // that's the point of drag-to-nest. Level-1 keeps using handleDrop above.
+  // Drop handler for level-2/3 items. 'before' zone: moves the dragged item
+  // to a specific position in the TARGET's own parent's list — same parent
+  // as the dragged item (a plain reorder) or a different one (reparenting
+  // and positioning in one move, same move-to-position machinery handleDrop
+  // above uses for promoting a nested item to top-level). 'nest' zone: hands
+  // off to handleNestDrop (always appends, unlike 'before's specific
+  // position) — Level-1 keeps using handleDrop above.
   const handleDropAtPath = async (targetPath: string, zone: 'before' | 'nest') => {
     if (!draggedItem) return
     const itemToReorder = draggedItem
@@ -980,39 +1025,41 @@ function GraphView() {
     }
 
     const prefix = path ? `${path}.` : ''
-    if (!itemToReorder.startsWith(prefix) || !targetPath.startsWith(prefix)) return
+    if (!itemToReorder.startsWith(prefix) || !targetPath.startsWith(prefix) || !displayItems) return
 
     const draggedRelative = itemToReorder.slice(prefix.length).split('.')
     const targetRelative = targetPath.slice(prefix.length).split('.')
     const draggedKey = draggedRelative[draggedRelative.length - 1]
     const targetKey = targetRelative[targetRelative.length - 1]
-    const parentRelative = draggedRelative.slice(0, -1)
-    if (targetRelative.slice(0, -1).join('.') !== parentRelative.join('.')) {
-      // Reordering only works among true siblings — dropping in the "before"
-      // zone of an item under a different parent is a no-op rather than a
-      // reparent (drag onto the item's lower half for that, via handleNestDrop).
-      // Without this, the drag just silently ends with nothing visibly
-      // different, indistinguishable from a bug.
-      showNotification('Drop onto an item to move it there — reordering only works within the same list', 'error')
-      return
-    }
+    const targetParentRelative = targetRelative.slice(0, -1)
+    const wasTopLevel = draggedRelative.length === 1
 
-    const siblingKeys = getSiblingOrder(displayItems, parentRelative)
-    const currentIndex = siblingKeys.indexOf(draggedKey)
+    const siblingKeys = getSiblingOrder(displayItems, targetParentRelative)
     const targetIndex = siblingKeys.indexOf(targetKey)
-    if (currentIndex === -1 || targetIndex === -1 || currentIndex === targetIndex) return
+    if (targetIndex === -1) return
+    // Same-parent drop onto the same spot it's already at — no-op.
+    if (!wasTopLevel && targetParentRelative.join('.') === draggedRelative.slice(0, -1).join('.') && siblingKeys.indexOf(draggedKey) === targetIndex) return
+
+    const newParentPath = targetParentRelative.length ? `${prefix}${targetParentRelative.join('.')}` : path
 
     // IMMEDIATELY update local state for instant visual feedback
-    setLocalItems(prev => prev ? reorderLocalItems(prev, draggedRelative, targetIndex) : prev)
+    const { items: movedItems } = applyLocalMoveToPosition(displayItems, draggedRelative, targetParentRelative, targetIndex)
+    setLocalItems(movedItems)
+    // The dragged item was a top-level key — it no longer is, so drop it
+    // from localOrder too (mirrors handleNestDrop's same adjustment).
+    if (wasTopLevel) {
+      setLocalOrder(prev => prev ? prev.filter(k => k !== draggedKey) : prev)
+    }
 
     // Then sync to server in background
     try {
-      await reorderItem.mutateAsync({ path: itemToReorder, targetIndex })
-      showNotification('Reordered!')
+      await moveToPosition.mutateAsync({ path: itemToReorder, newParentPath, targetIndex })
+      showNotification('Moved!')
     } catch (err: any) {
-      // Rollback on error - reset to server order
+      // Rollback on error - reset to server state
       setLocalItems(rawItems)
-      const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to reorder'
+      setLocalOrder(serverKeys)
+      const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to move'
       showNotification(msg.substring(0, 60), 'error')
     }
   }

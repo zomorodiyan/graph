@@ -501,25 +501,54 @@ export async function moveItemDown(path: string, graphName = 'default'): Promise
   return { success: true, message: 'Moved down' }
 }
 
-export async function reorderItem(path: string, targetIndex: number, graphName = 'default'): Promise<{ success: boolean; message: string }> {
+// Move an item to a specific position within a (possibly different) parent's
+// children — the general case behind drag-and-drop "before"-zone drops.
+// targetIndex is the drop target's index in the pre-removal order of ITS OWN
+// parent's children (the UI's "insert before this row" semantics); same-
+// parent moves (a plain reorder) need that shifted back by one once the
+// dragged item is removed from ahead of it, same as the old reorderItem did
+// — cross-parent moves need no such adjustment, since the dragged item was
+// never part of the target list to begin with. Deduping the key on a
+// cross-parent move mirrors moveItemToParent below.
+export async function moveItemToPosition(path: string, newParentPath: string, targetIndex: number, graphName = 'default'): Promise<{ success: boolean; message: string }> {
   const s = loadStructure(graphName)
   const pk = getParentAndKey(s.structure, path)
   if (!pk) throw new Error(`Item not found: ${path}`)
-  // targetIndex is the drag-and-drop UI's pre-removal "insert before this
-  // row" index, while reorderKeys expects the final post-removal splice
-  // index (the contract moveItemUp/moveItemDown already satisfy directly) —
-  // convert here rather than in reorderKeys, so those two are unaffected.
-  const currentIndex = Object.keys(pk.parent).indexOf(pk.key)
-  const adjustedTargetIndex = currentIndex !== -1 && currentIndex < targetIndex ? targetIndex - 1 : targetIndex
-  reorderKeys(pk.parent, pk.key, adjustedTargetIndex)
+  if (path === newParentPath || newParentPath.startsWith(`${path}.`)) {
+    throw new Error('Cannot move an item into itself or its own descendant')
+  }
+
+  const container = getContainer(s.structure, newParentPath)
+  if (!container) throw new Error(`Parent not found: ${newParentPath}`)
+
+  const sameParent = container === pk.parent
+  const item = pk.parent[pk.key]
+  const oldIndex = Object.keys(pk.parent).indexOf(pk.key)
+  delete pk.parent[pk.key]
+
+  let key = pk.key
+  if (!sameParent) {
+    let n = 2
+    while (key in container) key = `${pk.key}_${n++}`
+  }
+
+  const adjustedTargetIndex = sameParent && oldIndex !== -1 && oldIndex < targetIndex ? targetIndex - 1 : targetIndex
+  const keys = Object.keys(container)
+  const safeIndex = Math.max(0, Math.min(adjustedTargetIndex, keys.length))
+  keys.splice(safeIndex, 0, key)
+  const rebuilt: Record<string, StructureItem> = {}
+  for (const k of keys) rebuilt[k] = k === key ? item : container[k]
+  Object.keys(container).forEach(k => delete container[k])
+  Object.assign(container, rebuilt)
+
   saveStructure(graphName, s)
-  return { success: true, message: 'Reordered' }
+  touchMeta(graphName)
+  return { success: true, message: 'Moved' }
 }
 
 // Move an item to become the last child of a different parent (drag-to-nest).
-// Unlike reorderItem (same parent, position only) this changes which
-// container the item lives in — used when a drop lands on an item's body
-// rather than the gap between rows.
+// Unlike moveItemToPosition (a specific index) this always appends — used
+// when a drop lands on an item's body rather than the gap between rows.
 export async function moveItemToParent(path: string, newParentPath: string, graphName = 'default'): Promise<{ success: boolean; message: string }> {
   const s = loadStructure(graphName)
   const pk = getParentAndKey(s.structure, path)
