@@ -271,15 +271,20 @@ function buildSelectionForest(structure: Structure, selectedPaths: string[]): Re
 // chip rows (see Section.tsx's copy of this function) — reordering there
 // moves an item earlier/later along that same left-to-right flow.
 //
-// Measured against the layer1 TITLE BAR's own rect, not e.currentTarget's
-// (the whole .section-wrapper, title plus whatever lvl2/3 children are
-// rendered underneath it) — using the full section's width/height made
-// "nest" nearly unreachable by hovering the title bubble itself on any item
-// with enough children to make the section noticeably taller than its
-// title.
+// Measured against the layer1 TITLE+NOTE block's own rect (.layer1-container,
+// which wraps both .layer1-wrapper and the item's .item-context note below
+// it) — not e.currentTarget's (the whole .section-wrapper, title/note plus
+// whatever lvl2/3 children are rendered underneath them) — using the full
+// section's width/height made "nest" nearly unreachable by hovering the
+// title bubble itself on any item with enough children to make the section
+// noticeably taller than its title. Title and note stack vertically within
+// that block, so a release anywhere on either one still needs the SAME
+// horizontal split to land consistently — using just the (often narrower)
+// title's own rect made dropping on the note read as further right than it
+// visually was, since a note can wrap wider than its title.
 function getDropZone(e: React.DragEvent): 'before' | 'nest' | 'after' {
   const wrapper = e.currentTarget as HTMLElement
-  const titleEl = wrapper.querySelector<HTMLElement>('.layer1-wrapper') ?? wrapper
+  const titleEl = wrapper.querySelector<HTMLElement>('.layer1-container') ?? wrapper
   const rect = titleEl.getBoundingClientRect()
   const frac = (e.clientX - rect.left) / rect.width
   if (frac < 0.3) return 'before'
@@ -1145,14 +1150,16 @@ function GraphView() {
     const hitPath = rowEl.dataset.dragPath!
     const currentDepth = path ? path.split('.').length : 0
     const relativeDepth = hitPath.split('.').length - currentDepth
-    // Level-1's hit target (rowEl) is the whole section — title plus
-    // whatever lvl2/3 children are rendered underneath it — which can be far
-    // wider/taller than the title bar itself, so the zone split is measured
-    // against the title bar's own rect instead (see GraphView's module-level
-    // getDropZone, the desktop-mouse equivalent of this). Level-2/3 hit
-    // targets are already single-row elements, no adjustment needed there.
+    // Level-1's hit target (rowEl) is the whole section — title/note plus
+    // whatever lvl2/3 children are rendered underneath them — which can be
+    // far wider/taller than the title+note block itself, so the zone split
+    // is measured against that block's own rect (.layer1-container, title
+    // plus its note) instead — see GraphView's module-level getDropZone, the
+    // desktop-mouse equivalent of this, for why the note needs including too.
+    // Level-2/3 hit targets are already single-row elements, no adjustment
+    // needed there.
     const zoneRect = relativeDepth === 1
-      ? (rowEl.querySelector<HTMLElement>('.layer1-wrapper') ?? rowEl).getBoundingClientRect()
+      ? (rowEl.querySelector<HTMLElement>('.layer1-container') ?? rowEl).getBoundingClientRect()
       : rowEl.getBoundingClientRect()
     const frac = (clientX - zoneRect.left) / zoneRect.width
     const zone: 'before' | 'nest' | 'after' = frac < 0.3 ? 'before' : frac > 0.7 ? 'after' : 'nest'
