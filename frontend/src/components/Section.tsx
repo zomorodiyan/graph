@@ -369,7 +369,7 @@ function Section({
                       return (
                         <div
                           key={grandKey}
-                          className={`layer3-row${grandCanDrag ? ' draggable' : ''}${draggedPath === grandPath ? ' dragging' : ''}${dragOverPath === grandPath && dragOverZone === 'before' ? ' drag-over-before' : ''}${dragOverPath === grandPath && dragOverZone === 'nest' ? ' drag-over-nest' : ''}`}
+                          className={`layer3-row${grandCanDrag ? ' draggable' : ''}${draggedPath === grandPath ? ' dragging' : ''}${dragOverPath === grandPath && dragOverZone === 'before' ? ' drag-over-before' : ''}`}
                           draggable={grandCanDrag}
                           onDragStart={(e) => {
                             // Only allow drag from background, not from text or interactive elements
@@ -388,12 +388,16 @@ function Section({
                             e.dataTransfer.setData('text/plain', grandPath)
                             onItemDragStart?.(grandPath)
                           }}
-                          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); onItemDragOver?.(grandPath, getDropZone(e)) }}
+                          // Always 'before' — layer3 is the deepest rendered
+                          // level, so nesting onto one would create a layer4
+                          // child with no way to ever see or reach it again
+                          // in the normal UI (view_item aside).
+                          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); onItemDragOver?.(grandPath, 'before') }}
                           onDragEnd={() => onItemDragEnd?.()}
                           onDrop={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
-                            onItemDrop?.(grandPath, dragOverZone === 'nest' ? 'nest' : 'before')
+                            onItemDrop?.(grandPath, 'before')
                           }}
                         >
                           <div className="layer3-wrapper">
