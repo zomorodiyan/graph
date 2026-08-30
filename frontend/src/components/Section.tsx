@@ -285,7 +285,12 @@ function Section({
           const grandchildren = (childItem as StructureItem).children || {}
           // Check if this child item is editable
           const childRowEditable = rowEditable && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
-          const childCanDrag = dragEnabled && childRowEditable && !pendingPaths?.has(childPath)
+          // Native HTML5 draggable — desktop only, same reason as GraphView.tsx's
+          // own canDrag: some mobile browsers translate a long-press-and-move on
+          // a draggable="true" element into their own native drag session,
+          // which cancels the custom touch-gesture system's pointer tracking
+          // mid-drag and leaves the eventual drop finding nothing to move.
+          const childCanDrag = !isMobile && dragEnabled && childRowEditable && !pendingPaths?.has(childPath)
 
           return (
             <div
@@ -371,7 +376,8 @@ function Section({
                       const grandTitle = (grandItem as StructureItem).title || grandKey
                       // Check if this grandchild item is editable
                       const grandRowEditable = rowEditable && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
-                      const grandCanDrag = dragEnabled && grandRowEditable && !pendingPaths?.has(grandPath)
+                      // Desktop only — see childCanDrag's comment above.
+                      const grandCanDrag = !isMobile && dragEnabled && grandRowEditable && !pendingPaths?.has(grandPath)
 
                       return (
                         <div
