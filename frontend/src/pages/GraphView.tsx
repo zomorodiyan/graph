@@ -399,6 +399,12 @@ function GraphView() {
 
   // Drag state
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
+  // Always-current mirror of draggedItem for usePageSwipe's native touch
+  // listeners below — those are attached once (not re-subscribed every
+  // render), so they need a ref to read live drag state rather than the
+  // draggedItem closure from whichever render attached them.
+  const draggedItemRef = useRef<string | null>(null)
+  draggedItemRef.current = draggedItem
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   // Drag-over target for level-2/3 drags, tracked by path (unlike dragOverIndex,
   // which is a level-1-only list position) — see handleDropAtPath.
@@ -636,7 +642,11 @@ function GraphView() {
     }
     navigate(buildPath(path.split('.').slice(0, -1).join('.')))
   }
-  const { ref: pageSwipeRef } = usePageSwipe(handleNavigateInto, handleNavigateBack)
+  // Suppressed for the duration of a long-press drag (see draggedItemRef
+  // above) — without this, the same finger motion that repositions a
+  // dragged item can also read as a horizontal swipe, firing an unwanted
+  // navigation right as (or after) the drop lands.
+  const { ref: pageSwipeRef } = usePageSwipe(handleNavigateInto, handleNavigateBack, () => draggedItemRef.current !== null)
 
   // Handle edit click
   const handleEditClick = (itemPath: string, _name: string, _data: StructureItem) => {
@@ -1114,9 +1124,15 @@ function GraphView() {
     }
     const hitPath = rowEl.dataset.dragPath!
     const rect = rowEl.getBoundingClientRect()
-    const zone: 'before' | 'nest' = (clientY - rect.top) < rect.height * 0.5 ? 'before' : 'nest'
     const currentDepth = path ? path.split('.').length : 0
     const relativeDepth = hitPath.split('.').length - currentDepth
+    // Level-3 rows have no nest target of their own (mirrors Section.tsx's
+    // desktop onDragOver, which always passes 'before' for a layer3 row) —
+    // without this, the bottom half of a small layer3 chip read as a
+    // (silently accepted, invisible) nest onto a fellow layer3 item instead
+    // of a reorder, since layer3 itself has nothing to render a nested child
+    // under.
+    const zone: 'before' | 'nest' = relativeDepth >= 3 || (clientY - rect.top) < rect.height * 0.5 ? 'before' : 'nest'
     if (relativeDepth === 1) {
       const index = levelOneKeys.indexOf(hitPath.split('.').pop()!)
       touchDropTargetRef.current = index === -1 ? null : { kind: 'level1', index }
