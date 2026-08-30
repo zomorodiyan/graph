@@ -240,6 +240,11 @@ body {
   background: linear-gradient(90deg, #4CAF50, #2196F3);
   border-radius: 2px;
   animation: pulse 0.5s ease-in-out infinite alternate;
+  /* Purely decorative — without this, a drop landing in this 4px band (a
+     very natural place to release, since it's the exact "insert here" line
+     the user is watching) hits this bar instead of the row underneath,
+     which has the real onDrop handler, and silently does nothing. */
+  pointer-events: none;
 }
 
 /* Level-2/3 "insert before" indicator sits INSET (top: 0, not poking above
@@ -262,6 +267,12 @@ body {
   border-radius: 2px;
   animation: pulse 0.5s ease-in-out infinite alternate;
   z-index: 1;
+  /* Purely decorative — confirmed bug without this: a drop landing in this
+     3px band (right where the "insert here" indicator itself is, easy to
+     land on since it's inset over the row's own top edge) hits this bar
+     instead of the row underneath, which has the real onDrop handler, and
+     silently does nothing — the reorder never happens. */
+  pointer-events: none;
 }
 
 /* "Drop to nest inside this item" — a dashed outline instead of an edge
@@ -275,8 +286,9 @@ body {
   background-color: rgba(33, 150, 243, 0.08);
 }
 
-.layer2-wrapper.drag-over-nest .layer2,
-.layer3-row.drag-over-nest .layer3-item {
+/* layer3 has no nest target of its own (see the onDragOver/onDrop comment
+   in Section.tsx) — only .layer2 needs this. */
+.layer2-wrapper.drag-over-nest .layer2 {
   outline: 2px dashed #2196F3;
   outline-offset: -2px;
   background-color: rgba(33, 150, 243, 0.12);

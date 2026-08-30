@@ -906,10 +906,23 @@ function GraphView() {
 
     // Check if dropped in same position - do nothing
     const currentIndex = localOrder?.indexOf(draggedKey) ?? -1
-    if (currentIndex === targetIndex || currentIndex === -1) {
+    if (currentIndex === -1) {
+      // Reordering only works among true top-level siblings — a nested
+      // item dropped in a top-level row's "before" zone (rather than onto
+      // it, which would nest it there instead) has no top-level position to
+      // go to. Without this, the drag just silently ends with nothing
+      // visibly different, indistinguishable from a bug (mirrors the same
+      // notification handleDropAtPath shows for the level-2/3 case).
+      const isTopLevelDrag = itemToReorder === (path ? `${path}.${draggedKey}` : draggedKey)
+      if (!isTopLevelDrag) {
+        showNotification('Drop onto an item to move it there — reordering only works within the same list', 'error')
+      }
       return
     }
-    
+    if (currentIndex === targetIndex) {
+      return
+    }
+
     // IMMEDIATELY update local order for instant visual feedback
     setLocalOrder(prevOrder => {
       if (!prevOrder) return prevOrder
