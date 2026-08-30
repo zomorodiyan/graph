@@ -263,13 +263,24 @@ function buildSelectionForest(structure: Structure, selectedPaths: string[]): Re
   return forest
 }
 
-// Which part of a row a drag is hovering over — the top half means "reorder
-// to before this item", the bottom half means "nest as a child of this item"
-// (drag-to-nest, matches dropping "on top of" an item). A 35% top band used
-// to leave most of the row triggering nest, making plain reordering hard to
-// hit reliably.
+// Which part of a level-1 row a drag is hovering over — the top half means
+// "reorder to before this item", the bottom half means "nest as a child of
+// this item" (drag-to-nest, matches dropping "on top of" an item). A 35% top
+// band used to leave most of the row triggering nest, making plain
+// reordering hard to hit reliably.
+//
+// Measured against the layer1 TITLE BAR's own rect, not e.currentTarget's
+// (the whole .section-wrapper, title plus whatever lvl2/3 children are
+// rendered underneath it) — using the full section's height made "nest"
+// nearly unreachable by hovering the title bubble itself on any item with
+// enough children to make the section noticeably taller than its title, and
+// made "before" fire almost everywhere instead. Below the title bar (e.g.
+// empty space among wrapped lvl2/3 chips) still resolves to 'nest' — you're
+// hovering into that item's own content area, not at its top edge.
 function getDropZone(e: React.DragEvent): 'before' | 'nest' {
-  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const wrapper = e.currentTarget as HTMLElement
+  const titleEl = wrapper.querySelector<HTMLElement>('.layer1-wrapper') ?? wrapper
+  const rect = titleEl.getBoundingClientRect()
   const relativeY = e.clientY - rect.top
   return relativeY < rect.height * 0.5 ? 'before' : 'nest'
 }
@@ -1123,16 +1134,18 @@ function GraphView() {
       return
     }
     const hitPath = rowEl.dataset.dragPath!
-    const rect = rowEl.getBoundingClientRect()
     const currentDepth = path ? path.split('.').length : 0
     const relativeDepth = hitPath.split('.').length - currentDepth
-    // Level-3 rows have no nest target of their own (mirrors Section.tsx's
-    // desktop onDragOver, which always passes 'before' for a layer3 row) —
-    // without this, the bottom half of a small layer3 chip read as a
-    // (silently accepted, invisible) nest onto a fellow layer3 item instead
-    // of a reorder, since layer3 itself has nothing to render a nested child
-    // under.
-    const zone: 'before' | 'nest' = relativeDepth >= 3 || (clientY - rect.top) < rect.height * 0.5 ? 'before' : 'nest'
+    // Level-1's hit target (rowEl) is the whole section — title plus
+    // whatever lvl2/3 children are rendered underneath it — which can be far
+    // taller than the title bar itself, so the before/nest split is measured
+    // against the title bar's own rect instead (see GraphView's module-level
+    // getDropZone, the desktop-mouse equivalent of this). Level-2/3 hit
+    // targets are already single-row elements, no adjustment needed there.
+    const zoneRect = relativeDepth === 1
+      ? (rowEl.querySelector<HTMLElement>('.layer1-wrapper') ?? rowEl).getBoundingClientRect()
+      : rowEl.getBoundingClientRect()
+    const zone: 'before' | 'nest' = (clientY - zoneRect.top) < zoneRect.height * 0.5 ? 'before' : 'nest'
     if (relativeDepth === 1) {
       const index = levelOneKeys.indexOf(hitPath.split('.').pop()!)
       touchDropTargetRef.current = index === -1 ? null : { kind: 'level1', index }
