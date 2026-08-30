@@ -11,6 +11,12 @@
      env(safe-area-inset-bottom) covers the device-specific home-indicator/
      notch part separately, added directly in the consuming rules. */
   --agent-bar-height: 3.625rem;
+  /* Height of the mobile breadcrumb bar (see .breadcrumb in App.css) — kept
+     live by GraphView.tsx off the real element since, unlike the compose
+     bar above, it isn't a fixed height (breadcrumb depth and pinch-zoom
+     both change it). This is just the initial-paint fallback before that
+     measurement runs. */
+  --breadcrumb-bar-height: 2.25rem;
 
   /* Light theme colors */
   --bg-primary: #ffffff;
@@ -106,6 +112,7 @@
 @media (min-width: 32rem) {
   :root {
     --agent-bar-height: 0px;
+    --breadcrumb-bar-height: 0px;
   }
 }
 
