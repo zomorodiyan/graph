@@ -1,7 +1,6 @@
 import { useRef } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
 import { parseLocalDate, daysUntil } from '../utils/dates'
-import { useLongPressFactory } from '../hooks/useLongPress'
 import InlineItemEditor from './InlineItemEditor'
 
 interface SectionProps {
@@ -37,10 +36,15 @@ interface SectionProps {
   onContextMenu?: (e: React.MouseEvent, path: string, canAddSub: boolean) => void
   // Two-way "point at an item" channel with the agent chat (see
   // useHighlights.ts) — desktop: click the row background (not the title,
-  // which keeps its own click); mobile: a plain tap (long-press still opens
-  // the editor). userHighlights/agentHighlights are absolute paths, same
+  // which keeps its own click); mobile: a plain tap (long-press starts a
+  // drag instead). userHighlights/agentHighlights are absolute paths, same
   // format as itemPath/childPath/grandPath below.
   onToggleHighlight?: (path: string) => void
+  // Mobile long-press-to-drag (see useDragGesture.ts) — built and owned by
+  // GraphView (it has the reorder/nest state and functions this ultimately
+  // drives), passed down so all three row levels share the same gesture
+  // recognizer instead of each Section instance running its own.
+  makeDragGestureHandlers?: (itemPath: string, onTap: () => void) => Record<string, unknown>
   userHighlights?: Set<string>
   agentHighlights?: Set<string>
   // Items the agent has proposed deleting (see request_delete_items in
@@ -158,6 +162,7 @@ function Section({
   onSubCreateCancel,
   onContextMenu,
   onToggleHighlight,
+  makeDragGestureHandlers,
   userHighlights,
   agentHighlights,
   agentDeletePending,
@@ -189,15 +194,16 @@ function Section({
   const showLoading = isPending
   // Mobile gesture vocabulary: swipe-left anywhere on the page navigates
   // into whichever item is at that height (see GraphView's usePageSwipe),
-  // swipe-right navigates back up the tree, long-press opens the editor
-  // directly, a plain tap toggles highlight (see makeLongPressHandlers
-  // below). Desktop: plain click navigates (into a level-1 item's own
-  // children via onItemEnter, or promoting a level-2/3 item to the top via
-  // onItemClick — a no-op on a leaf level-1 item), Ctrl/Cmd+click toggles
-  // highlight, Shift/Alt+click opens the editor directly, right-click shows
-  // the context menu.
+  // swipe-right navigates back up the tree, long-press starts a drag (see
+  // makeDragGestureHandlers, passed down from GraphView since it owns the
+  // reorder/nest state and functions), a plain tap toggles highlight, and
+  // editing moves to the selection toolbar's Edit button instead (long-press
+  // can't mean both "open the editor" and "start a drag"). Desktop: plain
+  // click navigates (into a level-1 item's own children via onItemEnter, or
+  // promoting a level-2/3 item to the top via onItemClick — a no-op on a
+  // leaf level-1 item), Ctrl/Cmd+click toggles highlight, Shift/Alt+click
+  // opens the editor directly, right-click shows the context menu.
   const isMobile = !editInline
-  const makeLongPressHandlers = useLongPressFactory()
 
   // Get child items for layer2
   const children = item.children || {}
@@ -236,7 +242,7 @@ function Section({
                   ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, itemPath, true) }
                   : {})}
                 {...(isMobile && rowEditable
-                  ? makeLongPressHandlers(() => onEditClick(itemPath, title, item), () => onToggleHighlight?.(itemPath))
+                  ? makeDragGestureHandlers?.(itemPath, () => onToggleHighlight?.(itemPath))
                   : {})}
               >
                 <span
@@ -291,6 +297,7 @@ function Section({
                   <div
                     className={`layer2-wrapper${childCanDrag ? ' draggable' : ''}${dragOverPath === childPath && dragOverZone === 'nest' ? ' drag-over-nest' : ''}`}
                     draggable={childCanDrag}
+                    data-drag-path={childPath}
                     onDragStart={(e) => {
                       // Only allow drag from background, not from text or interactive elements
                       const target = e.target as HTMLElement
@@ -331,7 +338,7 @@ function Section({
                             ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, childPath, depth >= 3) }
                             : {})}
                           {...(isMobile && childRowEditable
-                            ? makeLongPressHandlers(() => onEditClick(childPath, childTitle, childItem as StructureItem), () => onToggleHighlight?.(childPath))
+                            ? makeDragGestureHandlers?.(childPath, () => onToggleHighlight?.(childPath))
                             : {})}
                         >
                           <span
@@ -371,6 +378,7 @@ function Section({
                           key={grandKey}
                           className={`layer3-row${grandCanDrag ? ' draggable' : ''}${draggedPath === grandPath ? ' dragging' : ''}${dragOverPath === grandPath && dragOverZone === 'before' ? ' drag-over-before' : ''}`}
                           draggable={grandCanDrag}
+                          data-drag-path={grandPath}
                           onDragStart={(e) => {
                             // Only allow drag from background, not from text or interactive elements
                             const target = e.target as HTMLElement
@@ -416,7 +424,7 @@ function Section({
                                     ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, grandPath, false) }
                                     : {})}
                                   {...(isMobile && grandRowEditable
-                                    ? makeLongPressHandlers(() => onEditClick(grandPath, grandTitle, grandItem as StructureItem), () => onToggleHighlight?.(grandPath))
+                                    ? makeDragGestureHandlers?.(grandPath, () => onToggleHighlight?.(grandPath))
                                     : {})}
                                 >
                                   <span
