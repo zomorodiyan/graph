@@ -437,18 +437,6 @@ function GraphView() {
     return () => clearTimeout(timer)
   }, [draggedItem])
 
-  // TEMPORARY — on-screen debug log for diagnosing a mobile drag-and-drop
-  // bug that only reproduces on real touch hardware (Playwright's touch
-  // emulation doesn't catch it). Remove once diagnosed. Renders as a small
-  // overlay (see .drag-debug-log below) so the log is visible on a phone
-  // without a devtools console attached — tap it to clear.
-  const [dragDebugLog, setDragDebugLog] = useState<string[]>([])
-  const logDrag = (msg: string) => {
-    const t = new Date().toISOString().substring(14, 23) // mm:ss.SSS
-    setDragDebugLog(prev => [...prev.slice(-14), `${t} ${msg}`])
-  }
-
-
   // LOCAL order state - this is what controls the visual display
   const [localOrder, setLocalOrder] = useState<string[] | null>(null)
   
@@ -915,7 +903,6 @@ function GraphView() {
 
   // Drag and drop handlers
   const handleDragStart = (itemPath: string) => {
-    logDrag(`dragStart: ${itemPath} localOrder=${JSON.stringify(localOrder)}`)
     setDraggedItem(itemPath)
   }
 
@@ -965,8 +952,7 @@ function GraphView() {
   }
 
   const handleDrop = async (targetIndex: number) => {
-    logDrag(`handleDrop: targetIndex=${targetIndex} draggedItem=${draggedItem}`)
-    if (!draggedItem) { logDrag('handleDrop: BAIL no draggedItem'); return }
+    if (!draggedItem) return
 
     const itemToReorder = draggedItem
     const draggedKey = itemToReorder.split('.').pop()!
@@ -978,9 +964,8 @@ function GraphView() {
 
     if (zone === 'nest') {
       const targetKey = displayOrder[targetIndex]
-      if (!targetKey) { logDrag('handleDrop: BAIL nest, no targetKey'); return }
+      if (!targetKey) return
       const targetPath = path ? `${path}.${targetKey}` : targetKey
-      logDrag(`handleDrop: nest -> ${targetPath}`)
       await handleNestDrop(itemToReorder, targetPath)
       return
     }
@@ -990,11 +975,7 @@ function GraphView() {
     const currentIndex = localOrder?.indexOf(draggedKey) ?? -1
     const isTopLevelDrag = itemToReorder === (path ? `${path}.${draggedKey}` : draggedKey)
     if (isTopLevelDrag) {
-      if (currentIndex === -1 || currentIndex === targetIndex) {
-        logDrag(`handleDrop: BAIL top-level no-op (currentIndex=${currentIndex} targetIndex=${targetIndex} draggedKey=${draggedKey} localOrder=${JSON.stringify(localOrder)} serverKeys=${JSON.stringify(serverKeys)})`)
-        return
-      }
-      logDrag(`handleDrop: top-level reorder ${currentIndex} -> ${targetIndex}`)
+      if (currentIndex === -1 || currentIndex === targetIndex) return
 
       // IMMEDIATELY update local order for instant visual feedback
       setLocalOrder(prevOrder => {
@@ -1013,10 +994,8 @@ function GraphView() {
 
       try {
         await moveToPosition.mutateAsync({ path: itemToReorder, newParentPath: path, targetIndex })
-        logDrag('handleDrop: top-level mutateAsync OK')
         showNotification('Reordered!')
       } catch (err: any) {
-        logDrag(`handleDrop: top-level mutateAsync ERROR ${err?.message}`)
         setLocalOrder(serverKeys)
         const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to reorder'
         showNotification(msg.substring(0, 60), 'error')
@@ -1033,12 +1012,8 @@ function GraphView() {
     // the former, so the resolved (possibly deduped) key it returns is used
     // to update the latter directly here.
     const prefix = path ? `${path}.` : ''
-    if (!itemToReorder.startsWith(prefix) || !displayItems) {
-      logDrag(`handleDrop: BAIL promote prefix mismatch or no displayItems (prefix=${prefix})`)
-      return
-    }
+    if (!itemToReorder.startsWith(prefix) || !displayItems) return
     const draggedRelative = itemToReorder.slice(prefix.length).split('.')
-    logDrag(`handleDrop: promote to top-level at ${targetIndex}`)
 
     const { items: movedItems, key: newKey } = applyLocalMoveToPosition(displayItems, draggedRelative, [], targetIndex)
     setLocalItems(movedItems)
@@ -1050,10 +1025,8 @@ function GraphView() {
 
     try {
       await moveToPosition.mutateAsync({ path: itemToReorder, newParentPath: path, targetIndex })
-      logDrag('handleDrop: promote mutateAsync OK')
       showNotification('Moved!')
     } catch (err: any) {
-      logDrag(`handleDrop: promote mutateAsync ERROR ${err?.message}`)
       setLocalItems(rawItems)
       setLocalOrder(serverKeys)
       const msg = err?.message?.includes(':') ? err.message.split(':').slice(1).join(':').trim() : 'Failed to move'
@@ -1061,68 +1034,52 @@ function GraphView() {
     }
   }
 
-  // Drop handler for level-2/3 items. 'before' zone: moves the dragged item
-  // to a specific position in the TARGET's own parent's list — same parent
-  // as the dragged item (a plain reorder) or a different one (reparenting
-  // and positioning in one move, same move-to-position machinery handleDrop
-  // above uses for promoting a nested item to top-level). 'nest' zone: hands
-  // off to handleNestDrop (always appends, unlike 'before's specific
-  // position) — Level-1 keeps using handleDrop above.
+  // Drop handler for level-2/3 items. 'nest' zone: hands off to
+  // handleNestDrop (always appends as the target's last child — this is how
+  // an item crosses into a different parent, actions 2/3 in the drag model
+  // above). 'before' zone only reorders within the dragged item's OWN
+  // current parent (actions 4/5) — a cross-parent "before" drop no-ops
+  // rather than reparenting-and-positioning, keeping the two gestures'
+  // meanings distinct: nest to move between parents, before to reorder in
+  // place. Level-1 keeps using handleDrop above (it has no parent to match
+  // against — any source can land at any position there).
   const handleDropAtPath = async (targetPath: string, zone: 'before' | 'nest') => {
-    logDrag(`handleDropAtPath: targetPath=${targetPath} zone=${zone} draggedItem=${draggedItem}`)
-    if (!draggedItem) { logDrag('handleDropAtPath: BAIL no draggedItem'); return }
+    if (!draggedItem) return
     const itemToReorder = draggedItem
     setDraggedItem(null)
     setDragOverPath(null)
     setDragOverZone(null)
 
     if (zone === 'nest') {
-      logDrag('handleDropAtPath: nest')
       await handleNestDrop(itemToReorder, targetPath)
       return
     }
 
     const prefix = path ? `${path}.` : ''
-    if (!itemToReorder.startsWith(prefix) || !targetPath.startsWith(prefix) || !displayItems) {
-      logDrag(`handleDropAtPath: BAIL prefix/displayItems (prefix=${prefix})`)
-      return
-    }
+    if (!itemToReorder.startsWith(prefix) || !targetPath.startsWith(prefix) || !displayItems) return
 
     const draggedRelative = itemToReorder.slice(prefix.length).split('.')
     const targetRelative = targetPath.slice(prefix.length).split('.')
     const draggedKey = draggedRelative[draggedRelative.length - 1]
     const targetKey = targetRelative[targetRelative.length - 1]
-    const targetParentRelative = targetRelative.slice(0, -1)
-    const wasTopLevel = draggedRelative.length === 1
+    const parentRelative = targetRelative.slice(0, -1)
+    if (parentRelative.join('.') !== draggedRelative.slice(0, -1).join('.')) return
 
-    const siblingKeys = getSiblingOrder(displayItems, targetParentRelative)
+    const siblingKeys = getSiblingOrder(displayItems, parentRelative)
     const targetIndex = siblingKeys.indexOf(targetKey)
-    if (targetIndex === -1) { logDrag(`handleDropAtPath: BAIL targetKey ${targetKey} not in siblings [${siblingKeys}]`); return }
-    // Same-parent drop onto the same spot it's already at — no-op.
-    if (!wasTopLevel && targetParentRelative.join('.') === draggedRelative.slice(0, -1).join('.') && siblingKeys.indexOf(draggedKey) === targetIndex) {
-      logDrag('handleDropAtPath: BAIL already at that position')
-      return
-    }
-    logDrag(`handleDropAtPath: moving to targetIndex=${targetIndex}`)
+    if (targetIndex === -1 || siblingKeys.indexOf(draggedKey) === targetIndex) return
 
-    const newParentPath = targetParentRelative.length ? `${prefix}${targetParentRelative.join('.')}` : path
+    const newParentPath = parentRelative.length ? `${prefix}${parentRelative.join('.')}` : path
 
     // IMMEDIATELY update local state for instant visual feedback
-    const { items: movedItems } = applyLocalMoveToPosition(displayItems, draggedRelative, targetParentRelative, targetIndex)
+    const { items: movedItems } = applyLocalMoveToPosition(displayItems, draggedRelative, parentRelative, targetIndex)
     setLocalItems(movedItems)
-    // The dragged item was a top-level key — it no longer is, so drop it
-    // from localOrder too (mirrors handleNestDrop's same adjustment).
-    if (wasTopLevel) {
-      setLocalOrder(prev => prev ? prev.filter(k => k !== draggedKey) : prev)
-    }
 
     // Then sync to server in background
     try {
       await moveToPosition.mutateAsync({ path: itemToReorder, newParentPath, targetIndex })
-      logDrag('handleDropAtPath: mutateAsync OK')
       showNotification('Moved!')
     } catch (err: any) {
-      logDrag(`handleDropAtPath: mutateAsync ERROR ${err?.message}`)
       // Rollback on error - reset to server state
       setLocalItems(rawItems)
       setLocalOrder(serverKeys)
@@ -1149,7 +1106,6 @@ function GraphView() {
     const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null
     const rowEl = el?.closest('[data-drag-path]') as HTMLElement | null
     if (!rowEl) {
-      if (touchDropTargetRef.current !== null) logDrag('move: off any row (target -> null)')
       touchDropTargetRef.current = null
       setDragOverIndex(null)
       setDragOverPath(null)
@@ -1163,19 +1119,11 @@ function GraphView() {
     const relativeDepth = hitPath.split('.').length - currentDepth
     if (relativeDepth === 1) {
       const index = levelOneKeys.indexOf(hitPath.split('.').pop()!)
-      const next = index === -1 ? null : { kind: 'level1' as const, index }
-      if (JSON.stringify(next) !== JSON.stringify(touchDropTargetRef.current)) {
-        logDrag(`move: hit ${hitPath} -> level1 index=${index}`)
-      }
-      touchDropTargetRef.current = next
+      touchDropTargetRef.current = index === -1 ? null : { kind: 'level1', index }
       setDragOverIndex(index === -1 ? null : index)
       setDragOverPath(null)
     } else {
-      const next = { kind: 'nested' as const, path: hitPath, zone }
-      if (JSON.stringify(next) !== JSON.stringify(touchDropTargetRef.current)) {
-        logDrag(`move: hit ${hitPath} -> nested zone=${zone}`)
-      }
-      touchDropTargetRef.current = next
+      touchDropTargetRef.current = { kind: 'nested', path: hitPath, zone }
       setDragOverPath(hitPath)
       setDragOverIndex(null)
     }
@@ -1184,7 +1132,6 @@ function GraphView() {
 
   const handleTouchDrop = () => {
     const target = touchDropTargetRef.current
-    logDrag(`touchDrop: target=${JSON.stringify(target)}`)
     touchDropTargetRef.current = null
     if (!target) {
       handleDragEnd()
@@ -1195,7 +1142,6 @@ function GraphView() {
   }
 
   const handleTouchDragCancel = () => {
-    logDrag('touchDragCancel (pointerleave/pointercancel fired)')
     touchDropTargetRef.current = null
     handleDragEnd()
   }
@@ -1205,7 +1151,6 @@ function GraphView() {
     onDragMove: handleTouchDragMove,
     onDrop: handleTouchDrop,
     onCancel: handleTouchDragCancel,
-    onDebug: logDrag,
   })
 
   if (isLoading) {
@@ -1540,9 +1485,9 @@ function GraphView() {
           // into their OWN native drag session, competing with the custom
           // touch-gesture system below (useDragGestureFactory) — the two
           // fire independently, and the native session's dragstart firing
-          // mid-gesture cancels the custom one's pointer tracking (see the
-          // dragDebugLog investigation this fixes), so the drop always
-          // finds draggedItem already cleared to null and no-ops.
+          // mid-gesture cancels the custom one's pointer tracking, so the
+          // drop always finds draggedItem already cleared to null and
+          // no-ops.
           const canDrag = !isMobile && !isPending && !inlineEdit && !subCreate
 
           return (
@@ -1668,14 +1613,6 @@ function GraphView() {
 
       {/* Mobile edit/create sheet — see the mobileSheet derivation above */}
       {mobileSheet && <MobileEditSheet {...mobileSheet} />}
-
-      {/* TEMPORARY — see dragDebugLog above. Remove once the mobile drag bug
-          is diagnosed. Tap to clear. */}
-      {dragDebugLog.length > 0 && (
-        <div className="drag-debug-log" onClick={() => setDragDebugLog([])}>
-          {dragDebugLog.map((line, i) => <div key={i}>{line}</div>)}
-        </div>
-      )}
     </>
   )
 }

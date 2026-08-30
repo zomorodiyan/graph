@@ -1816,24 +1816,3 @@
     display: none;
   }
 }
-
-/* TEMPORARY — on-screen debug log for diagnosing a mobile drag-and-drop bug
-   (see dragDebugLog in GraphView.tsx). Remove once diagnosed. */
-.drag-debug-log {
-  position: fixed;
-  left: 0.5rem;
-  right: 0.5rem;
-  bottom: 0.5rem;
-  z-index: 9999;
-  max-height: 40vh;
-  overflow-y: auto;
-  background: rgba(0, 0, 0, 0.85);
-  color: #0f0;
-  font-family: monospace;
-  font-size: 0.65rem;
-  line-height: 1.35;
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
