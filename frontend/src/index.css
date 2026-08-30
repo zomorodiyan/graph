@@ -206,6 +206,17 @@ body {
   transition: all 0.2s ease;
 }
 
+/* EXPERIMENTAL — see .layer1's matching comment in App.css. .layer2-wrapper
+   is covered there directly; level-3's own gesture listener lives on
+   .layer3-item (nested inside .layer3-row), but touch-action intersects up
+   the ancestor chain, so setting it here covers that descendant too — no
+   .draggable qualifier, since that class (and childCanDrag/grandCanDrag,
+   which it's keyed off) is desktop-only now, but the touch gesture itself
+   isn't. */
+.layer3-row {
+  touch-action: none;
+}
+
 .section-wrapper:active,
 .layer2-wrapper.draggable:active,
 .layer3-row.draggable:active {

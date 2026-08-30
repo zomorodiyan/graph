@@ -340,6 +340,15 @@
      is the real drag source there) — this just brings mobile's actual hit
      area in line with what already looks draggable. */
   flex: 1;
+  /* EXPERIMENTAL — testing whether the inherited touch-action: pan-y from
+     .graph-container (set for the swipe-back gesture) is letting the
+     browser claim a long-press-then-drag as a native scroll gesture and
+     fire pointercancel on it, even when no scrolling ends up visible (a
+     cancellation doesn't require the resulting scroll to actually happen).
+     Known tradeoff: this also blocks scrolling the page by touching
+     directly on a row — only doing this while diagnosing the mobile drag
+     bug, revisit once confirmed one way or the other. */
+  touch-action: none;
 }
 
 .layer1 .item-title {
@@ -1049,6 +1058,11 @@
   display: flex;
   align-items: stretch;
   gap: 0;
+}
+
+/* EXPERIMENTAL — see .layer1's matching comment in this file. */
+.layer2-wrapper {
+  touch-action: none;
 }
 
 /* Loading spinner for pending items */
