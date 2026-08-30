@@ -242,12 +242,13 @@ body {
   border-radius: 0.25rem;
 }
 
-/* "Insert before/after this row" — a vertical line on the row's left/right
-   edge (not top/bottom), matching the drop-zone split itself: left 30% of a
-   row means before, right 30% means after (see GraphView's and Section's
-   getDropZone). Side lines read naturally at every level, including
-   level-2/3's own horizontally-flowing chip rows, where before/after really
-   does mean "earlier/later along this same line" rather than "above/below". */
+/* "Insert before/after this BUBBLE" — a horizontal line on the bubble's top/
+   bottom edge, matching the drop-zone split itself: top 10% of the whole
+   bubble (title, note, and all its rendered lvl2/3 children) means before,
+   bottom 10% means after (see GraphView's getDropZone). Level-2/3's own
+   before/after stays a left/right SIDE line instead (below) — their split is
+   horizontal along each row's own left-to-right flow, not vertical like
+   level-1's whole-bubble one. */
 .section-wrapper.drag-over-before,
 .section-wrapper.drag-over-after {
   position: relative;
@@ -257,10 +258,10 @@ body {
 .section-wrapper.drag-over-after::before {
   content: '';
   position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, #4CAF50, #2196F3);
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #4CAF50, #2196F3);
   border-radius: 2px;
   animation: pulse 0.5s ease-in-out infinite alternate;
   /* Purely decorative — without this, a drop landing in this 4px band (a
@@ -270,10 +271,10 @@ body {
   pointer-events: none;
 }
 .section-wrapper.drag-over-before::before {
-  left: -4px;
+  top: -4px;
 }
 .section-wrapper.drag-over-after::before {
-  right: -4px;
+  bottom: -4px;
 }
 
 /* Level-2/3's indicator sits INSET (left/right: 0, not poking outside the
