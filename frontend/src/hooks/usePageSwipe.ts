@@ -44,10 +44,17 @@ function itemPathAtY(container: HTMLElement, y: number): string | null {
 // scrolling included, which is what was actually making list scrolling feel
 // rough: every scroll attempt anywhere in the list used to fight the
 // browser for its first several frames before finally being let through.
-export function usePageSwipe(onSwipeLeft: (path: string) => void, onSwipeRight: () => void) {
+// isDragActive: polled fresh in touchmove/touchend (not just captured at
+// touchstart) so a long-press that turns into a drag mid-gesture — the
+// common case, since the drag only picks up after LONG_PRESS_MS — still gets
+// caught. Once a drag is seen active, the swipe is abandoned outright
+// (start.current cleared) rather than merely skipped for that one event, so
+// touchend can't still fire a swipe from a stale start point after the drag
+// itself has already ended.
+export function usePageSwipe(onSwipeLeft: (path: string) => void, onSwipeRight: () => void, isDragActive: () => boolean = () => false) {
   const start = useRef<{ x: number; y: number; path: string | null } | null>(null)
-  const callbacksRef = useRef({ onSwipeLeft, onSwipeRight })
-  callbacksRef.current = { onSwipeLeft, onSwipeRight }
+  const callbacksRef = useRef({ onSwipeLeft, onSwipeRight, isDragActive })
+  callbacksRef.current = { onSwipeLeft, onSwipeRight, isDragActive }
 
   const cleanupRef = useRef<(() => void) | null>(null)
 
@@ -73,6 +80,10 @@ export function usePageSwipe(onSwipeLeft: (path: string) => void, onSwipeRight: 
     function onTouchMove(e: TouchEvent) {
       const s = start.current
       if (!s) return
+      if (callbacksRef.current.isDragActive()) {
+        start.current = null
+        return
+      }
       const t = e.touches[0]
       const deltaX = t.clientX - s.x
       const deltaY = Math.abs(t.clientY - s.y)
@@ -84,6 +95,7 @@ export function usePageSwipe(onSwipeLeft: (path: string) => void, onSwipeRight: 
       const s = start.current
       start.current = null
       if (!s) return
+      if (callbacksRef.current.isDragActive()) return
       const t = e.changedTouches[0]
       const deltaX = t.clientX - s.x
       const deltaY = Math.abs(t.clientY - s.y)
