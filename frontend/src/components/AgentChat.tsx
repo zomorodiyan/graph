@@ -125,9 +125,17 @@ function AgentChat() {
   // always present regardless of where you are (depth/note are graph-only,
   // sync is graphs-list-only), so it's the natural home for an always-
   // available action. confirm() matches the same destructive-action pattern
-  // GraphView.tsx's handleDeleteSelected already uses.
+  // GraphView.tsx's handleDeleteSelected already uses. Also clears any
+  // agent highlight ring still showing — the agent only clears its own
+  // highlights when it decides to (see highlight_items in agentClient.ts),
+  // so wiping the conversation it came from without also clearing it would
+  // leave an orphaned ring pointing at nothing.
   const themeLongPress = useLongPress(
-    () => { if (confirm('Clear the conversation? This can\'t be undone.')) clearMessages() },
+    () => {
+      if (!confirm('Clear the conversation? This can\'t be undone.')) return
+      clearMessages()
+      setAgentHighlights([])
+    },
     toggleTheme,
   )
   const { depth, viewMode, minimalView, setDepth, setViewMode, setMinimalView } = useViewOptions()
