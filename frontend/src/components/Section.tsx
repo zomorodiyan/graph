@@ -58,14 +58,15 @@ interface SectionProps {
   // unambiguous across however many Section instances are on screen.
   draggedPath?: string | null
   dragOverPath?: string | null
-  // Which part of the hovered row the drag is over — 'before' reorders,
-  // 'nest' makes the dragged item a child of the hovered one (see
-  // getDropZone). Only meaningful together with dragOverPath.
-  dragOverZone?: 'before' | 'nest' | null
+  // Which part of the hovered row the drag is over — 'before'/'after'
+  // reorder relative to the hovered row, 'nest' makes the dragged item a
+  // child of the hovered one (see getDropZone). Only meaningful together
+  // with dragOverPath.
+  dragOverZone?: 'before' | 'nest' | 'after' | null
   onItemDragStart?: (path: string) => void
-  onItemDragOver?: (path: string, zone: 'before' | 'nest') => void
+  onItemDragOver?: (path: string, zone: 'before' | 'nest' | 'after') => void
   onItemDragEnd?: () => void
-  onItemDrop?: (path: string, zone: 'before' | 'nest') => void
+  onItemDrop?: (path: string, zone: 'before' | 'nest' | 'after') => void
   dragEnabled?: boolean
   pendingPaths?: Set<string>
   isTimeView?: boolean
@@ -90,11 +91,16 @@ function highlightClasses(path: string, userHighlights?: Set<string>, agentHighl
 
 // Which part of a row a drag is hovering over — mirrors GraphView's own
 // getDropZone (level-1 uses that one directly; this is the level-2/3 copy,
-// small enough not to be worth threading through props/exports for).
-function getDropZone(e: React.DragEvent): 'before' | 'nest' {
+// small enough not to be worth threading through props/exports for). Left
+// 30% reorders before this row, right 30% reorders after it, the middle 40%
+// nests — side zones so this reads naturally along these rows' own
+// left-to-right flow (see .layer2-section/.layer3-container's flex-wrap).
+function getDropZone(e: React.DragEvent): 'before' | 'nest' | 'after' {
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-  const relativeY = e.clientY - rect.top
-  return relativeY < rect.height * 0.5 ? 'before' : 'nest'
+  const frac = (e.clientX - rect.left) / rect.width
+  if (frac < 0.3) return 'before'
+  if (frac > 0.7) return 'after'
+  return 'nest'
 }
 
 // Helper to calculate due date category for CSS class
@@ -295,7 +301,7 @@ function Section({
           return (
             <div
               key={childKey}
-              className={`layer2-container${draggedPath === childPath ? ' dragging' : ''}${dragOverPath === childPath && dragOverZone === 'before' ? ' drag-over-before' : ''}`}
+              className={`layer2-container${draggedPath === childPath ? ' dragging' : ''}${dragOverPath === childPath && dragOverZone === 'before' ? ' drag-over-before' : ''}${dragOverPath === childPath && dragOverZone === 'after' ? ' drag-over-after' : ''}`}
             >
               <div className="layer2-l3-frame">
                 <div className="layer2-content">
@@ -325,7 +331,7 @@ function Section({
                     onDrop={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      onItemDrop?.(childPath, dragOverZone === 'nest' ? 'nest' : 'before')
+                      onItemDrop?.(childPath, dragOverZone ?? 'before')
                     }}
                   >
                     {editingPath === childPath && editInline ? (
@@ -382,7 +388,7 @@ function Section({
                       return (
                         <div
                           key={grandKey}
-                          className={`layer3-row${grandCanDrag ? ' draggable' : ''}${draggedPath === grandPath ? ' dragging' : ''}${dragOverPath === grandPath && dragOverZone === 'before' ? ' drag-over-before' : ''}${dragOverPath === grandPath && dragOverZone === 'nest' ? ' drag-over-nest' : ''}`}
+                          className={`layer3-row${grandCanDrag ? ' draggable' : ''}${draggedPath === grandPath ? ' dragging' : ''}${dragOverPath === grandPath && dragOverZone === 'before' ? ' drag-over-before' : ''}${dragOverPath === grandPath && dragOverZone === 'nest' ? ' drag-over-nest' : ''}${dragOverPath === grandPath && dragOverZone === 'after' ? ' drag-over-after' : ''}`}
                           draggable={grandCanDrag}
                           data-drag-path={grandPath}
                           onDragStart={(e) => {
@@ -402,7 +408,7 @@ function Section({
                             e.dataTransfer.setData('text/plain', grandPath)
                             onItemDragStart?.(grandPath)
                           }}
-                          // Same before/nest split as layer2 — nesting onto a
+                          // Same before/nest/after split as layer2 — nesting onto a
                           // layer3 item makes the dragged item ITS child,
                           // one level deeper than layer3 itself renders. That
                           // nested item is still reachable, the same way any
@@ -414,7 +420,7 @@ function Section({
                           onDrop={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
-                            onItemDrop?.(grandPath, dragOverZone === 'nest' ? 'nest' : 'before')
+                            onItemDrop?.(grandPath, dragOverZone ?? 'before')
                           }}
                         >
                           <div className="layer3-wrapper">
