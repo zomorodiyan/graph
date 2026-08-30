@@ -13,6 +13,16 @@
      Desktop's agent card floats bottom-right instead, so doesn't need this
      at all. */
   padding-top: var(--agent-bubble-height, 0px);
+  /* Mobile only — the swipe gesture (usePageSwipe.ts) listens on this
+     element, but without a minimum height it's only as tall as its actual
+     content (e.g. a single item), leaving the rest of the screen as plain
+     page background that never receives a touchstart at all — swipe-right
+     to go back wouldn't work there. 100dvh (dynamic viewport height, so
+     mobile browser chrome showing/hiding doesn't leave a gap; 100vh is the
+     fallback for browsers without dvh support) makes it always cover the
+     full visible screen regardless of how little content there is. */
+  min-height: 100vh;
+  min-height: 100dvh;
   /* The page-level swipe gesture (usePageSwipe.ts, attached to this
      element) needs to win horizontal drags back from the browser's own
      touch-scroll recognizer, which can otherwise grab a swipe before the
@@ -25,6 +35,11 @@
 @media (min-width: 32rem) {
   .graph-container {
     padding-top: 0;
+    /* Desktop/tablet: back to natural height — forcing full-viewport here
+       would reintroduce the blank-band issue .app-main's own comment
+       describes (a short page stretched under the sticky docked panel). No
+       swipe gesture to worry about there anyway (mouse/keyboard only). */
+    min-height: 0;
   }
 }
 
