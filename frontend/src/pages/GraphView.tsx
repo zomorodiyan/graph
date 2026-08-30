@@ -61,6 +61,25 @@ function XIcon() {
     </svg>
   )
 }
+// Add/paste a sub-item under the single selected item (see .addsub-toggle/.pastesub-toggle in App.css).
+function AddSubIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  )
+}
+function PasteSubIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+      <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" />
+      <line x1="8" y1="12" x2="16" y2="12" />
+      <line x1="8" y1="16" x2="16" y2="16" />
+    </svg>
+  )
+}
 
 // Small dot row under a breadcrumb crumb — how many siblings it had at that
 // level and roughly where among them, without needing a separate mini-map
@@ -129,7 +148,12 @@ function reorderLocalItems(
   if (currentIndex === -1) return items
 
   orderedKeys.splice(currentIndex, 1)
-  const safeTargetIndex = Math.min(targetIndex, orderedKeys.length)
+  // targetIndex is the drop target's index in the pre-removal order ("insert
+  // before this row"); removing the dragged item first shifts everything
+  // after it back by one, so a forward move (currentIndex < targetIndex)
+  // needs targetIndex-1 to still land before the same visual row.
+  const adjustedTargetIndex = currentIndex < targetIndex ? targetIndex - 1 : targetIndex
+  const safeTargetIndex = Math.max(0, Math.min(adjustedTargetIndex, orderedKeys.length))
   orderedKeys.splice(safeTargetIndex, 0, itemKey)
 
   const reordered: Record<string, StructureItem> = {}
@@ -202,13 +226,15 @@ function buildSelectionForest(structure: Structure, selectedPaths: string[]): Re
   return forest
 }
 
-// Which part of a row a drag is hovering over — the top ~35% means "reorder
-// to before this item" (the original behavior), the rest means "nest as a
-// child of this item" (drag-to-nest, matches dropping "on top of" an item).
+// Which part of a row a drag is hovering over — the top half means "reorder
+// to before this item", the bottom half means "nest as a child of this item"
+// (drag-to-nest, matches dropping "on top of" an item). A 35% top band used
+// to leave most of the row triggering nest, making plain reordering hard to
+// hit reliably.
 function getDropZone(e: React.DragEvent): 'before' | 'nest' {
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const relativeY = e.clientY - rect.top
-  return relativeY < rect.height * 0.35 ? 'before' : 'nest'
+  return relativeY < rect.height * 0.5 ? 'before' : 'nest'
 }
 
 // Local-items counterpart to applyOptimisticMove in useGraph.ts — removes the
@@ -888,10 +914,13 @@ function GraphView() {
       if (!prevOrder) return prevOrder
       const idx = prevOrder.indexOf(draggedKey)
       if (idx === -1) return prevOrder
-      
+
       const newOrder = [...prevOrder]
       newOrder.splice(idx, 1)
-      newOrder.splice(targetIndex, 0, draggedKey)
+      // See reorderLocalItems' comment above: forward moves need the target
+      // shifted back by one to land before the same visual row.
+      const adjustedTargetIndex = idx < targetIndex ? targetIndex - 1 : targetIndex
+      newOrder.splice(Math.max(0, Math.min(adjustedTargetIndex, newOrder.length)), 0, draggedKey)
       return newOrder
     })
     
@@ -932,7 +961,15 @@ function GraphView() {
     const draggedKey = draggedRelative[draggedRelative.length - 1]
     const targetKey = targetRelative[targetRelative.length - 1]
     const parentRelative = draggedRelative.slice(0, -1)
-    if (targetRelative.slice(0, -1).join('.') !== parentRelative.join('.')) return
+    if (targetRelative.slice(0, -1).join('.') !== parentRelative.join('.')) {
+      // Reordering only works among true siblings — dropping in the "before"
+      // zone of an item under a different parent is a no-op rather than a
+      // reparent (drag onto the item's lower half for that, via handleNestDrop).
+      // Without this, the drag just silently ends with nothing visibly
+      // different, indistinguishable from a bug.
+      showNotification('Drop onto an item to move it there — reordering only works within the same list', 'error')
+      return
+    }
 
     const siblingKeys = getSiblingOrder(displayItems, parentRelative)
     const currentIndex = siblingKeys.indexOf(draggedKey)
@@ -1094,6 +1131,20 @@ function GraphView() {
     return null
   })()
 
+  // Add-sub/Paste-sub-item toolbar buttons — only meaningful with exactly one
+  // item selected, and only when that item has room for a sub-item: same
+  // depth rule the right-click menu's canAddSub uses (layer1 always, layer2
+  // only when the view shows 3 levels, layer3 never — no layer4 to render).
+  const singleSelectedPath = userHighlights.length === 1 ? userHighlights[0] : null
+  const canAddSubToSelected = (() => {
+    if (!singleSelectedPath) return false
+    const currentDepth = path ? path.split('.').length : 0
+    const relativeDepth = singleSelectedPath.split('.').length - currentDepth
+    if (relativeDepth === 1) return true
+    if (relativeDepth === 2) return depth >= 3
+    return false
+  })()
+
   return (
     <>
       {/* Breadcrumb — fixed near the bottom on mobile (below the compose
@@ -1135,6 +1186,19 @@ function GraphView() {
                 </button>
                 <button className="delete-toggle" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
                   <TrashIcon />
+                </button>
+              </>
+            )}
+            {/* Add/paste a sub-item under the single selected item — only
+                when exactly one item is selected and it has room for one
+                (see canAddSubToSelected above). */}
+            {canAddSubToSelected && (
+              <>
+                <button className="addsub-toggle" onClick={() => handleSubCreateStart(singleSelectedPath!)} title="Add a sub-item here">
+                  <AddSubIcon />
+                </button>
+                <button className="pastesub-toggle" onClick={() => handlePasteSubItem(singleSelectedPath!)} title="Paste as sub-item(s) here">
+                  <PasteSubIcon />
                 </button>
               </>
             )}
@@ -1193,6 +1257,16 @@ function GraphView() {
             </button>
           </div>
         )}
+        {canAddSubToSelected && (
+          <div className="selection-toolbar">
+            <button className="addsub-toggle" onClick={() => handleSubCreateStart(singleSelectedPath!)} title="Add a sub-item here">
+              <AddSubIcon />
+            </button>
+            <button className="pastesub-toggle" onClick={() => handlePasteSubItem(singleSelectedPath!)} title="Paste as sub-item(s) here">
+              <PasteSubIcon />
+            </button>
+          </div>
+        )}
         {/* Confirm/reject an agent-proposed deletion — mobile-only version of
             the header's copy above. */}
         {agentDeletePending.length > 0 && (
@@ -1237,6 +1311,9 @@ function GraphView() {
                   e.preventDefault()
                   return
                 }
+                // Some browsers (Firefox) require dataTransfer to carry data
+                // for the drag to complete reliably, even for same-page drags.
+                e.dataTransfer.setData('text/plain', itemPath)
                 handleDragStart(itemPath)
               }}
               onDragOver={(e) => handleDragOver(e, index)}
@@ -1299,6 +1376,16 @@ function GraphView() {
             </button>
             <button className="delete-toggle" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
               <TrashIcon />
+            </button>
+          </div>
+        )}
+        {canAddSubToSelected && (
+          <div className="selection-toolbar">
+            <button className="addsub-toggle" onClick={() => handleSubCreateStart(singleSelectedPath!)} title="Add a sub-item here">
+              <AddSubIcon />
+            </button>
+            <button className="pastesub-toggle" onClick={() => handlePasteSubItem(singleSelectedPath!)} title="Paste as sub-item(s) here">
+              <PasteSubIcon />
             </button>
           </div>
         )}
