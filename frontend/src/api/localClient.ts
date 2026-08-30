@@ -184,6 +184,39 @@ function parseDateSuffix(s: string): { rest: string; date?: string } {
   return m ? { rest: m[1], date: m[2] } : { rest: s }
 }
 
+// The format reuses plain text for structural markers (a "#+ " heading, a
+// trailing "#word" tag, a trailing "(YYYY-MM-DD)" date) — so title/context
+// text that already happens to look like one of those markers would
+// otherwise be silently reinterpreted as real structure on the next paste
+// (e.g. a title literally ending in "#123", or a context line starting with
+// "# 1 ..."). A backslash right before the ambiguous character escapes it —
+// same trick Markdown itself uses for a literal "#" — reversed by
+// unescapeMarker/unescapeContextLine below. Doesn't handle a title/context
+// that already contains a literal backslash in that exact position (would
+// need escaping backslashes themselves too), but that's rare enough not to
+// be worth the extra complexity here.
+function escapeTitleForSerialize(title: string): string {
+  // Only the LAST trailing "#word" (if any) needs escaping: parseTagsSuffix
+  // strips repeatedly from the end, so breaking just its first match (a
+  // backslash where it requires plain whitespace before "#") stops it from
+  // reaching anything earlier in the title too.
+  let t = title.replace(/(\s)#([\w-]+)$/, '$1\\#$2')
+  t = t.replace(/(\s)\((\d{4}-\d{2}-\d{2})\)$/, '$1\\($2)')
+  return t
+}
+
+function unescapeMarker(s: string): string {
+  return s.replace(/\\#/g, '#').replace(/\\\(/g, '(')
+}
+
+function escapeContextLine(line: string): string {
+  return /^#+\s/.test(line) ? `\\${line}` : line
+}
+
+function unescapeContextLine(line: string): string {
+  return /^\\#+\s/.test(line) ? line.slice(1) : line
+}
+
 function parseMarkdownStructure(text: string): Record<string, StructureItem> {
   const root: Record<string, StructureItem> = {}
   interface Frame { container: Record<string, StructureItem>; depth: number; item: StructureItem | null }
@@ -208,7 +241,8 @@ function parseMarkdownStructure(text: string): Record<string, StructureItem> {
       flushContext()
       const depth = headingMatch[1].length
       const { rest: afterTags, tags } = parseTagsSuffix(headingMatch[2].trim())
-      const { rest: title, date } = parseDateSuffix(afterTags)
+      const { rest: rawTitle, date } = parseDateSuffix(afterTags)
+      const title = unescapeMarker(rawTitle)
 
       while (stack.length > 1 && stack[stack.length - 1].depth >= depth) stack.pop()
       const frame = stack[stack.length - 1]
@@ -227,7 +261,7 @@ function parseMarkdownStructure(text: string): Record<string, StructureItem> {
       continue
     }
 
-    if (contextLines) contextLines.push(rawLine)
+    if (contextLines) contextLines.push(unescapeContextLine(rawLine))
   }
   flushContext()
   return root
@@ -239,8 +273,8 @@ export function serializeStructure(items: Record<string, StructureItem>, depth =
   const blocks = Object.values(items).map(item => {
     const dateSuffix = item.date ? ` (${item.date})` : ''
     const tagsSuffix = item.tags && item.tags.length ? ` ${item.tags.map(t => `#${t}`).join(' ')}` : ''
-    let block = `${hashes} ${item.title}${dateSuffix}${tagsSuffix}\n`
-    if (item.context) block += `${item.context}\n`
+    let block = `${hashes} ${escapeTitleForSerialize(item.title ?? '')}${dateSuffix}${tagsSuffix}\n`
+    if (item.context) block += `${item.context.split('\n').map(escapeContextLine).join('\n')}\n`
     if (item.children && Object.keys(item.children).length)
       block += serializeStructure(item.children, depth + 1)
     return block
