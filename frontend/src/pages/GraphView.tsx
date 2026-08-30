@@ -415,13 +415,17 @@ function GraphView() {
   // skip all of those: HTML5's dragend isn't guaranteed to fire if a drop
   // lands outside the browser window/tab, and a touch gesture can be
   // swallowed by an OS-level interruption (a notification pull-down, an app
-  // switch) with no pointerup/pointercancel ever reaching the page. A live
-  // drag keeps updating these on every dragover/touch-move, so if none of
-  // them has changed in a while, the drag has been abandoned — force-clear
-  // everything so the indicator can't linger forever. Timer-based (not a
-  // window-level event listener) specifically so it can never race with a
-  // legitimate in-flight drop: those clear this same state synchronously
-  // within their own handler, well under this delay.
+  // switch) with no pointerup/pointercancel ever reaching the page. Starts
+  // once when a drag begins (deps: [draggedItem] only — NOT dragOverIndex/
+  // dragOverPath/dragOverZone) and force-clears everything if it's still
+  // running 30s later. Deliberately an absolute cap from drag-start, not a
+  // "reset on activity" timer: a touch held still over the same spot (no
+  // further pointermove) fires no further updates to those values at all,
+  // so a reset-on-change version of this fired mid-drag on any drag held
+  // steady for a moment — draggedItem going null out from under a still-
+  // active gesture, silently killing the eventual drop. 30s comfortably
+  // covers even a slow, deliberate real drag while still guaranteeing the
+  // indicator can't linger forever after a genuinely abandoned one.
   useEffect(() => {
     if (!draggedItem) return
     const timer = setTimeout(() => {
@@ -429,9 +433,9 @@ function GraphView() {
       setDragOverIndex(null)
       setDragOverPath(null)
       setDragOverZone(null)
-    }, 4000)
+    }, 30000)
     return () => clearTimeout(timer)
-  }, [draggedItem, dragOverIndex, dragOverPath, dragOverZone])
+  }, [draggedItem])
 
 
   // LOCAL order state - this is what controls the visual display
