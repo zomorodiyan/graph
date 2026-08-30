@@ -832,7 +832,8 @@
 .confirm-toggle,
 .reject-toggle,
 .addsub-toggle,
-.pastesub-toggle {
+.pastesub-toggle,
+.edit-toggle {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -853,7 +854,8 @@
 .confirm-toggle,
 .reject-toggle,
 .addsub-toggle,
-.pastesub-toggle {
+.pastesub-toggle,
+.edit-toggle {
   opacity: 1;
 }
 
@@ -927,6 +929,7 @@
 .reject-toggle:hover,
 .addsub-toggle:hover,
 .pastesub-toggle:hover,
+.edit-toggle:hover,
 .copy-btn:hover {
   transform: scale(1.1);
 }
@@ -1777,11 +1780,18 @@
   touch-action: none;
 }
 
+/* Same flat full-width line .agent-chat-splitter uses for the docked
+   resize boundary, so the mobile bubble's own resize edge reads as the
+   same affordance instead of a distinct small pill/grip. */
 .agent-chat-resize-grip {
-  width: 2.5rem;
-  height: 0.3rem;
-  border-radius: 999px;
+  width: 100%;
+  height: 5px;
   background: var(--border-color);
+}
+
+.agent-chat-resize-handle:hover .agent-chat-resize-grip,
+.agent-chat-resize-handle:active .agent-chat-resize-grip {
+  background: var(--blue-medium);
 }
 
 /* Desktop keeps the existing floating-card look for the expanded state —

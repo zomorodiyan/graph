@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate, useNavigationType, Link, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
@@ -7,6 +7,7 @@ import { useViewOptions, DEPTHS } from '../hooks/useViewOptions'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { usePageSwipe } from '../hooks/usePageSwipe'
 import { useLongPress } from '../hooks/useLongPress'
+import { useDragGestureFactory } from '../hooks/useDragGesture'
 import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem } from '@api'
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
@@ -58,6 +59,17 @@ function XIcon() {
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  )
+}
+// Edit the single selected item — mobile-only (see .edit-toggle in App.css):
+// long-press now starts a drag instead of opening the editor (see
+// useDragGesture.ts), so this button is the replacement path to it there.
+function EditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
     </svg>
   )
 }
@@ -1005,6 +1017,71 @@ function GraphView() {
     }
   }
 
+  // Touch drag-gesture orchestration (mobile long-press-to-drag — see
+  // useDragGesture.ts). Native HTML5 drag events never fire from touch at
+  // all, so this hit-tests the DOM directly on each move (via
+  // data-drag-path, set on the same three row wrappers the native
+  // draggable/onDragStart attributes already live on) and dispatches to the
+  // exact same handleDrop/handleDropAtPath/handleNestDrop desktop's mouse
+  // drag already uses. The resolved target is tracked in a ref, not just
+  // the dragOver* state (which still gets set too, for the existing visual
+  // feedback classes) — so onDrop always reads the up-to-date value
+  // synchronously, without waiting on a state update to flush.
+  const touchDropTargetRef = useRef<
+    { kind: 'level1'; index: number } | { kind: 'nested'; path: string; zone: 'before' | 'nest' } | null
+  >(null)
+
+  const handleTouchDragMove = (clientX: number, clientY: number) => {
+    const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null
+    const rowEl = el?.closest('[data-drag-path]') as HTMLElement | null
+    if (!rowEl) {
+      touchDropTargetRef.current = null
+      setDragOverIndex(null)
+      setDragOverPath(null)
+      setDragOverZone(null)
+      return
+    }
+    const hitPath = rowEl.dataset.dragPath!
+    const rect = rowEl.getBoundingClientRect()
+    const zone: 'before' | 'nest' = (clientY - rect.top) < rect.height * 0.5 ? 'before' : 'nest'
+    const currentDepth = path ? path.split('.').length : 0
+    const relativeDepth = hitPath.split('.').length - currentDepth
+    if (relativeDepth === 1) {
+      const index = levelOneKeys.indexOf(hitPath.split('.').pop()!)
+      touchDropTargetRef.current = index === -1 ? null : { kind: 'level1', index }
+      setDragOverIndex(index === -1 ? null : index)
+      setDragOverPath(null)
+    } else {
+      touchDropTargetRef.current = { kind: 'nested', path: hitPath, zone }
+      setDragOverPath(hitPath)
+      setDragOverIndex(null)
+    }
+    setDragOverZone(zone)
+  }
+
+  const handleTouchDrop = () => {
+    const target = touchDropTargetRef.current
+    touchDropTargetRef.current = null
+    if (!target) {
+      handleDragEnd()
+      return
+    }
+    if (target.kind === 'level1') handleDrop(target.index)
+    else handleDropAtPath(target.path, target.zone)
+  }
+
+  const handleTouchDragCancel = () => {
+    touchDropTargetRef.current = null
+    handleDragEnd()
+  }
+
+  const makeDragGestureHandlers = useDragGestureFactory({
+    onDragStart: handleDragStart,
+    onDragMove: handleTouchDragMove,
+    onDrop: handleTouchDrop,
+    onCancel: handleTouchDragCancel,
+  })
+
   if (isLoading) {
     return <div className="loading">Loading...</div>
   }
@@ -1159,6 +1236,46 @@ function GraphView() {
     return false
   })()
 
+  // Mobile-only selection toolbar — copy/delete, edit, add-sub/paste-sub all
+  // together in one row (they used to be three separate .selection-toolbar
+  // divs, each its own row since they're block-level siblings). Edit is
+  // mobile-only: long-press on a row now starts a drag instead of opening
+  // the editor (see useDragGesture.ts), so this button is the replacement
+  // path to it, shown whenever exactly one item is selected regardless of
+  // canAddSubToSelected (unlike add-sub/paste-sub, editing works on a
+  // layer3 item too).
+  const renderSelectionToolbar = () => (
+    (userHighlights.length > 0 || canAddSubToSelected) && (
+      <div className="selection-toolbar">
+        {userHighlights.length > 0 && (
+          <>
+            <button className="copy-toggle" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
+              <CopyIcon />
+            </button>
+            <button className="delete-toggle" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
+              <TrashIcon />
+            </button>
+          </>
+        )}
+        {singleSelectedPath && (
+          <button className="edit-toggle" onClick={() => handleEditClick(singleSelectedPath, '', {} as StructureItem)} title="Edit this item">
+            <EditIcon />
+          </button>
+        )}
+        {canAddSubToSelected && (
+          <>
+            <button className="addsub-toggle" onClick={() => handleSubCreateStart(singleSelectedPath!)} title="Add a sub-item here">
+              <AddSubIcon />
+            </button>
+            <button className="pastesub-toggle" onClick={() => handlePasteSubItem(singleSelectedPath!)} title="Paste as sub-item(s) here">
+              <PasteSubIcon />
+            </button>
+          </>
+        )}
+      </div>
+    )
+  )
+
   // Shared between the desktop header copy (top of the page, in-flow) and
   // the mobile copy (end of the item list, in-flow — see the
   // .breadcrumb--footer render below) — each is just hidden via CSS at the
@@ -1264,32 +1381,15 @@ function GraphView() {
             this, tapping a different row while editing could both commit the
             current edit and immediately trigger that row's own action. */}
         <div className={`items-grid${isMobile && mobileSheet ? ' items-grid-locked' : ''}`}>
-        {/* Copy + Delete for the current selection — only shows once
-            something's highlighted (the "+New"/"Paste" default state this
-            bar used to have was removed; top-level item creation now goes
-            through the agent chat instead). Mobile-only — hidden at >=32rem
-            via CSS, where the same two actions live in .graph-header-buttons
-            instead, next to depth/note (see above). */}
-        {userHighlights.length > 0 && (
-          <div className="selection-toolbar">
-            <button className="copy-toggle" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
-              <CopyIcon />
-            </button>
-            <button className="delete-toggle" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
-              <TrashIcon />
-            </button>
-          </div>
-        )}
-        {canAddSubToSelected && (
-          <div className="selection-toolbar">
-            <button className="addsub-toggle" onClick={() => handleSubCreateStart(singleSelectedPath!)} title="Add a sub-item here">
-              <AddSubIcon />
-            </button>
-            <button className="pastesub-toggle" onClick={() => handlePasteSubItem(singleSelectedPath!)} title="Paste as sub-item(s) here">
-              <PasteSubIcon />
-            </button>
-          </div>
-        )}
+        {/* Copy/delete/edit/add-sub/paste-sub for the current selection —
+            only shows once something's highlighted (the "+New"/"Paste"
+            default state this bar used to have was removed; top-level item
+            creation now goes through the agent chat instead). Mobile-only —
+            hidden at >=32rem via CSS, where copy/delete live in
+            .graph-header-buttons instead, next to depth/note (see above);
+            edit has no desktop equivalent here since desktop already has
+            Shift/Alt+click and the right-click menu for that. */}
+        {renderSelectionToolbar()}
         {/* Confirm/reject an agent-proposed deletion — mobile-only version of
             the header's copy above. */}
         {agentDeletePending.length > 0 && (
@@ -1342,6 +1442,7 @@ function GraphView() {
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
               onDrop={() => handleDrop(index)}
+              data-drag-path={itemPath}
               className={`section-wrapper ${draggedItem === itemPath ? 'dragging' : ''} ${dragOverIndex === index && dragOverZone === 'nest' ? 'drag-over-nest' : ''} ${dragOverIndex === index && dragOverZone !== 'nest' ? 'drag-over' : ''} ${isPending ? 'pending' : ''}`}
             >
               <Section
@@ -1353,6 +1454,7 @@ function GraphView() {
                 onItemClick={handleItemClick}
                 onItemEnter={handleNavigateInto}
                 onEditClick={handleEditClick}
+                makeDragGestureHandlers={makeDragGestureHandlers}
                 editingPath={inlineEdit?.path || null}
                 editInline={!isMobile}
                 onInlineSave={handleInlineSave}
@@ -1391,27 +1493,8 @@ function GraphView() {
           <div className="empty-state">No items at this level</div>
         )}
 
-        {/* Copy + Delete for the current selection — bottom copy, same as the top one. */}
-        {userHighlights.length > 0 && (
-          <div className="selection-toolbar">
-            <button className="copy-toggle" onClick={handleCopySelected} title={`Copy ${userHighlights.length} selected item(s)`}>
-              <CopyIcon />
-            </button>
-            <button className="delete-toggle" onClick={handleDeleteSelected} title={`Delete ${userHighlights.length} selected item(s)`}>
-              <TrashIcon />
-            </button>
-          </div>
-        )}
-        {canAddSubToSelected && (
-          <div className="selection-toolbar">
-            <button className="addsub-toggle" onClick={() => handleSubCreateStart(singleSelectedPath!)} title="Add a sub-item here">
-              <AddSubIcon />
-            </button>
-            <button className="pastesub-toggle" onClick={() => handlePasteSubItem(singleSelectedPath!)} title="Paste as sub-item(s) here">
-              <PasteSubIcon />
-            </button>
-          </div>
-        )}
+        {/* Copy/delete/edit/add-sub/paste-sub — bottom copy, same as the top one. */}
+        {renderSelectionToolbar()}
         {agentDeletePending.length > 0 && (
           <div className="selection-toolbar">
             <button className="confirm-toggle" onClick={handleConfirmAgentDelete} title={`Confirm deleting ${agentDeletePending.length} item(s) the agent proposed`}>
