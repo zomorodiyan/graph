@@ -915,7 +915,7 @@ function GraphView() {
 
   // Drag and drop handlers
   const handleDragStart = (itemPath: string) => {
-    logDrag(`dragStart: ${itemPath}`)
+    logDrag(`dragStart: ${itemPath} localOrder=${JSON.stringify(localOrder)}`)
     setDraggedItem(itemPath)
   }
 
@@ -991,7 +991,7 @@ function GraphView() {
     const isTopLevelDrag = itemToReorder === (path ? `${path}.${draggedKey}` : draggedKey)
     if (isTopLevelDrag) {
       if (currentIndex === -1 || currentIndex === targetIndex) {
-        logDrag(`handleDrop: BAIL top-level no-op (currentIndex=${currentIndex} targetIndex=${targetIndex})`)
+        logDrag(`handleDrop: BAIL top-level no-op (currentIndex=${currentIndex} targetIndex=${targetIndex} draggedKey=${draggedKey} localOrder=${JSON.stringify(localOrder)} serverKeys=${JSON.stringify(serverKeys)})`)
         return
       }
       logDrag(`handleDrop: top-level reorder ${currentIndex} -> ${targetIndex}`)
