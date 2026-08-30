@@ -13,10 +13,6 @@
      Desktop's agent card floats bottom-right instead, so doesn't need this
      at all. */
   padding-top: var(--agent-bubble-height, 0px);
-  /* Mobile only — the breadcrumb is a fixed full-width bar at the bottom of
-     the screen (see .breadcrumb below), so without this the last row(s) of
-     the item list would render underneath it, covered. */
-  padding-bottom: var(--breadcrumb-bar-height, 0px);
   /* The page-level swipe gesture (usePageSwipe.ts, attached to this
      element) needs to win horizontal drags back from the browser's own
      touch-scroll recognizer, which can otherwise grab a swipe before the
@@ -29,7 +25,6 @@
 @media (min-width: 32rem) {
   .graph-container {
     padding-top: 0;
-    padding-bottom: 0;
   }
 }
 
@@ -120,52 +115,49 @@
   }
 }
 
-/* Full-width bar, own dedicated strip above the compose bar — the same
-   "standalone element" treatment the desktop in-flow header gets, just
-   anchored at the bottom instead of the top (see the >=32rem override
-   below). Used to be a small floating, semi-transparent pill that
-   overlapped the item list underneath it; now it's opaque and reserves its
-   own space (see .graph-container's padding-bottom, kept in sync with this
-   bar's real height via GraphView.tsx's breadcrumbRef/ResizeObserver). */
+/* Always in-flow (never fixed/pinned) — two copies exist, one at the top
+   of the item list (.breadcrumb--header, GraphView.tsx's graph-header) and
+   one at the very end of it (.breadcrumb--footer), and only one is ever
+   shown per breakpoint: mobile shows the footer copy, so it scrolls away
+   with the rest of the page instead of staying permanently on screen (the
+   old fixed-bar treatment); >=32rem shows the header copy instead, sitting
+   above the item list the same way it always has. */
 .breadcrumb {
-  position: fixed;
-  /* Sits flush against the bottom bar's own top edge and the screen's left
-     edge — no deliberate buffer on either side. --agent-bar-height is a
-     static estimate of the bar's own height; the collapsed bar also grows
-     by env(safe-area-inset-bottom) on devices with a home-indicator/notch
-     (see .agent-chat-shell:not(.expanded)), so that has to be added here
-     too or this sits too high, leaving a gap above the bar on those
-     devices — that's the bar's real footprint, not extra spacing. */
-  bottom: calc(var(--agent-bar-height) + env(safe-area-inset-bottom, 0px));
-  left: 0;
-  right: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 8px;
   font-size: 18px;
   color: var(--text-secondary);
-  z-index: 999;
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-color);
-  padding: 0.5rem 0.75rem;
+}
+
+.breadcrumb--header {
+  display: none;
 }
 
 @media (min-width: 32rem) {
-  /* In-flow header, not a fixed bar — sits at the top of .app-main's own
-     column, so it never overlaps the docked agent panel or the item list
-     below it. */
-  .breadcrumb {
-    position: static;
-    bottom: auto;
-    left: auto;
-    right: auto;
-    z-index: auto;
-    background: none;
-    border-top: none;
-    padding: 0;
+  .breadcrumb--header {
+    display: flex;
     flex: 1 1 auto;
     min-width: 0;
+  }
+}
+
+.breadcrumb--footer {
+  flex: 0 0 100%;
+  border-top: 1px solid var(--border-color);
+  padding: 0.75rem 0.9rem;
+  /* This is the last thing in the scrollable page, and the compose bar
+     sits fixed over the true bottom of the screen (--agent-bar-height) —
+     without clearing it here, scrolling all the way down would still tuck
+     this (and the last real item above it) partly underneath the bar. */
+  padding-bottom: calc(0.75rem + var(--agent-bar-height, 0px) + env(safe-area-inset-bottom, 0px));
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 32rem) {
+  .breadcrumb--footer {
+    display: none;
   }
 }
 
@@ -1364,8 +1356,12 @@
    full-height regardless of how tall .app-main's actual content is, and
    the whole page scrolls normally past it when content is taller than the
    viewport. 32rem–60rem stacks the split (column: main content above the
-   panel) since there's no room to sit side-by-side at a readable width;
-   >=60rem sits side-by-side (row, the flex default) — align-items:
+   panel) since there's normally no room to sit side-by-side at a readable
+   width — except in landscape (a phone turned sideways), where it's the
+   opposite: plenty of width, not much height, so that orientation gets the
+   same side-by-side treatment as >=60rem instead (see the matching
+   orientation-gated overrides below); >=60rem always sits side-by-side
+   (row, the flex default) — align-items:
    flex-start there specifically stops .app-main from being cross-axis
    stretched to the sticky panel's full height, which is what caused the
    blank band in the first place. .app-main's own flex-shrink (below) is
@@ -1382,13 +1378,22 @@
   }
 }
 
-@media (min-width: 32rem) and (max-width: 59.999rem) {
+/* 32rem-60rem normally stacks (see the big comment above), but a short,
+   wide viewport — a phone in landscape — reads exactly backwards: there's
+   plenty of horizontal room and very little vertical room, so stacking
+   leaves both the item list and the agent panel cramped into thin
+   horizontal strips. orientation:landscape there gets the same side-by-side
+   treatment as >=60rem instead (see the matching overrides on
+   .agent-chat-shell/.agent-chat-splitter below, and WIDE_SPLIT_QUERY in
+   AgentChat.tsx, which has to agree on the same condition for the splitter
+   drag's resize axis). */
+@media (min-width: 32rem) and (max-width: 59.999rem) and (orientation: portrait) {
   .app-body {
     flex-direction: column;
   }
 }
 
-@media (min-width: 60rem) {
+@media (min-width: 60rem), (min-width: 32rem) and (max-width: 59.999rem) and (orientation: landscape) {
   .app-body {
     align-items: flex-start;
   }
@@ -1443,14 +1448,14 @@
   }
 }
 
-@media (min-width: 60rem) {
+@media (min-width: 60rem), (min-width: 32rem) and (max-width: 59.999rem) and (orientation: landscape) {
   .agent-chat-shell {
     top: 0;
     height: 100vh !important;
   }
 }
 
-@media (min-width: 32rem) and (max-width: 59.999rem) {
+@media (min-width: 32rem) and (max-width: 59.999rem) and (orientation: portrait) {
   /* Stacked: full-width strip below .app-main, own draggable height
      pinned to the viewport bottom instead of .app-body's full height. */
   .agent-chat-shell {
@@ -1485,7 +1490,7 @@
   }
 }
 
-@media (min-width: 60rem) {
+@media (min-width: 60rem), (min-width: 32rem) and (max-width: 59.999rem) and (orientation: landscape) {
   .agent-chat-splitter {
     top: 0;
     height: 100vh;
@@ -1495,7 +1500,7 @@
   }
 }
 
-@media (min-width: 32rem) and (max-width: 59.999rem) {
+@media (min-width: 32rem) and (max-width: 59.999rem) and (orientation: portrait) {
   .agent-chat-splitter {
     bottom: var(--agent-panel-height, 45vh);
     height: 5px;

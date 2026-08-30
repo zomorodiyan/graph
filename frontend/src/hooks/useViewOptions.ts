@@ -33,7 +33,7 @@ function readDepth(): Depth {
       if ([0, 2, 3].includes(parsed)) return parsed as Depth
     }
   } catch {}
-  return 3
+  return 2
 }
 function readViewMode(): ViewMode {
   try {
@@ -53,7 +53,7 @@ function readMinimalView(): boolean {
 export function useViewOptions() {
   const queryClient = useQueryClient()
 
-  const { data: depth = 3 } = useQuery({
+  const { data: depth = 2 } = useQuery({
     queryKey: DEPTH_KEY,
     queryFn: () => readDepth(),
     initialData: readDepth,
@@ -73,7 +73,7 @@ export function useViewOptions() {
   })
 
   function setDepth(next: Depth | ((prev: Depth) => Depth)) {
-    queryClient.setQueryData(DEPTH_KEY, (prev: Depth = 3) => {
+    queryClient.setQueryData(DEPTH_KEY, (prev: Depth = 2) => {
       const value = typeof next === 'function' ? (next as (p: Depth) => Depth)(prev) : next
       localStorage.setItem('active-depth', String(value))
       return value

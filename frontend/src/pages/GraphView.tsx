@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, useNavigationType, Link, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
@@ -318,31 +318,6 @@ function GraphView() {
       setViewMode(m => m === 'context' ? 'default' : 'context')
     },
   )
-
-  // Mobile: the breadcrumb is a fixed full-width bar above the compose bar
-  // (see .breadcrumb in App.css), so .graph-container needs matching
-  // padding-bottom to keep the item list from rendering underneath it. Its
-  // height isn't static like the compose bar's — it grows with breadcrumb
-  // depth and with the pinch-zoom font scale (see ZoomContext) — so it's
-  // measured live off the real element, same idea AgentChat.tsx uses for
-  // --agent-bubble-height. A callback ref (not useLayoutEffect+useRef) so
-  // this re-attaches whenever the <nav> mounts/unmounts (it's hidden while
-  // inline-editing/sub-creating — see the graph-header JSX below). Harmless
-  // to keep measuring at >=32rem too, since App.css resets the padding to 0
-  // there regardless of this variable's value.
-  const breadcrumbObserverRef = useRef<ResizeObserver | null>(null)
-  const breadcrumbRef = useCallback((el: HTMLElement | null) => {
-    breadcrumbObserverRef.current?.disconnect()
-    if (!el) {
-      document.documentElement.style.setProperty('--breadcrumb-bar-height', '0px')
-      return
-    }
-    const update = () => document.documentElement.style.setProperty('--breadcrumb-bar-height', `${el.offsetHeight}px`)
-    update()
-    const observer = new ResizeObserver(update)
-    observer.observe(el)
-    breadcrumbObserverRef.current = observer
-  }, [])
 
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
@@ -1171,33 +1146,42 @@ function GraphView() {
     return false
   })()
 
+  // Shared between the desktop header copy (top of the page, in-flow) and
+  // the mobile copy (end of the item list, in-flow — see the
+  // .breadcrumb--footer render below) — each is just hidden via CSS at the
+  // other's breakpoint (.breadcrumb--header/.breadcrumb--footer in App.css),
+  // rather than one shared fixed-position element pinned over the content.
+  const renderBreadcrumbNav = (variant: 'header' | 'footer') => (
+    <nav className={`breadcrumb breadcrumb--${variant}`}>
+      {breadcrumb.flatMap((crumb, i) => {
+        const els = []
+        if (i > 0) els.push(<span key={`${crumb.path}-sep`} className="sep">/</span>)
+        els.push(
+          <span key={crumb.path} className="crumb-col">
+            {i === breadcrumb.length - 1 ? (
+              <span>{crumb.label}</span>
+            ) : (
+              <Link to={crumb.path}>{crumb.label}</Link>
+            )}
+            {renderSiblingDots(crumb.siblingCount, crumb.siblingIndex)}
+            {i === breadcrumb.length - 1 && renderViewPositionDots(levelOneKeys.length)}
+          </span>,
+        )
+        return els
+      })}
+    </nav>
+  )
+
   return (
     <>
-      {/* Breadcrumb — fixed near the bottom on mobile (below the compose
-          bar's own buttons, which own depth/note there); a normal in-flow
-          header above the item list at >=32rem instead, alongside this
-          view's own depth/note buttons (see App.css's .graph-header /
-          .breadcrumb media overrides). */}
+      {/* Breadcrumb — an in-flow header above the item list at >=32rem
+          (alongside this view's own depth/note buttons); on mobile that
+          copy is hidden and a second copy renders at the end of the item
+          list instead (see below), so it scrolls away with the content
+          instead of staying permanently pinned on screen. */}
       {!inlineEdit && !subCreate && (
         <div className="graph-header">
-          <nav className="breadcrumb" ref={breadcrumbRef}>
-            {breadcrumb.flatMap((crumb, i) => {
-              const els = []
-              if (i > 0) els.push(<span key={`${crumb.path}-sep`} className="sep">/</span>)
-              els.push(
-                <span key={crumb.path} className="crumb-col">
-                  {i === breadcrumb.length - 1 ? (
-                    <span>{crumb.label}</span>
-                  ) : (
-                    <Link to={crumb.path}>{crumb.label}</Link>
-                  )}
-                  {renderSiblingDots(crumb.siblingCount, crumb.siblingIndex)}
-                  {i === breadcrumb.length - 1 && renderViewPositionDots(levelOneKeys.length)}
-                </span>,
-              )
-              return els
-            })}
-          </nav>
+          {renderBreadcrumbNav('header')}
           {/* Hidden below 32rem via CSS — mobile gets these from AgentChat's
               own compose-row copies instead (same shared state either way,
               see useViewOptions.ts). */}
@@ -1426,6 +1410,10 @@ function GraphView() {
           </div>
         )}
         </div>{/* end items-grid */}
+        {/* Mobile-only breadcrumb, at the very end of the item list — see
+            the comment on the header copy above. Hidden at >=32rem via CSS
+            (.breadcrumb--footer), where the header copy is the only one. */}
+        {!inlineEdit && !subCreate && renderBreadcrumbNav('footer')}
       </div>
 
       {/* Notification */}

@@ -32,14 +32,20 @@ const MIN_PANEL_HEIGHT_IDLE = 76
 // Docked split-pane sizing (>=32rem — see .agent-chat-shell/.agent-chat-splitter
 // in App.css). Below 60rem the split stacks (drag adjusts DOCK_HEIGHT
 // instead of DOCK_WIDTH) since there isn't room to sit side-by-side at a
-// readable width. No open/closed toggle state — dragging the splitter
+// readable width — except in landscape (a phone turned sideways), which
+// gets the side-by-side treatment at any width >=32rem instead (see
+// WIDE_SPLIT_QUERY below). No open/closed toggle state — dragging the splitter
 // smoothly shrinks either side down to EDGE_GAP (see
 // handleSplitterMove/setDockWidth/setDockHeight's clamping), never all the
 // way to the literal edge — flush against the edge, the splitter itself
 // would be sitting right at (or past) the edge of the viewport, too easy to
 // lose and impossible to grab again. EDGE_GAP keeps a thin sliver of
 // whichever side is "collapsed" always visible and always draggable.
-const WIDE_SPLIT_QUERY = '(min-width: 60rem)'
+// Must agree with App.css's own orientation-gated breakpoints for
+// .app-body/.agent-chat-shell/.agent-chat-splitter: a landscape phone
+// (32rem-60rem wide, short) gets the same side-by-side treatment as
+// >=60rem, since there's plenty of width and little height to stack into.
+const WIDE_SPLIT_QUERY = '(min-width: 60rem), (min-width: 32rem) and (max-width: 59.999rem) and (orientation: landscape)'
 const SPLITTER_SIZE = 5
 const EDGE_GAP = 32
 const DEFAULT_DOCK_WIDTH = 380
