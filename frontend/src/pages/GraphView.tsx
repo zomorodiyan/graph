@@ -263,26 +263,28 @@ function buildSelectionForest(structure: Structure, selectedPaths: string[]): Re
   return forest
 }
 
-// Which part of a level-1 row a drag is hovering over — the top half means
-// "reorder to before this item", the bottom half means "nest as a child of
-// this item" (drag-to-nest, matches dropping "on top of" an item). A 35% top
-// band used to leave most of the row triggering nest, making plain
-// reordering hard to hit reliably.
+// Which part of a level-1 row a drag is hovering over — left 30% means
+// "reorder to before this item", right 30% means "reorder to after this
+// item", the middle 40% means "nest as a child of this item" (drag-to-nest,
+// matches dropping "on top of" an item). Side zones (not top/bottom) so the
+// same gesture also reads naturally for level-2/3's own horizontally-flowing
+// chip rows (see Section.tsx's copy of this function) — reordering there
+// moves an item earlier/later along that same left-to-right flow.
 //
 // Measured against the layer1 TITLE BAR's own rect, not e.currentTarget's
 // (the whole .section-wrapper, title plus whatever lvl2/3 children are
-// rendered underneath it) — using the full section's height made "nest"
-// nearly unreachable by hovering the title bubble itself on any item with
-// enough children to make the section noticeably taller than its title, and
-// made "before" fire almost everywhere instead. Below the title bar (e.g.
-// empty space among wrapped lvl2/3 chips) still resolves to 'nest' — you're
-// hovering into that item's own content area, not at its top edge.
-function getDropZone(e: React.DragEvent): 'before' | 'nest' {
+// rendered underneath it) — using the full section's width/height made
+// "nest" nearly unreachable by hovering the title bubble itself on any item
+// with enough children to make the section noticeably taller than its
+// title.
+function getDropZone(e: React.DragEvent): 'before' | 'nest' | 'after' {
   const wrapper = e.currentTarget as HTMLElement
   const titleEl = wrapper.querySelector<HTMLElement>('.layer1-wrapper') ?? wrapper
   const rect = titleEl.getBoundingClientRect()
-  const relativeY = e.clientY - rect.top
-  return relativeY < rect.height * 0.5 ? 'before' : 'nest'
+  const frac = (e.clientX - rect.left) / rect.width
+  if (frac < 0.3) return 'before'
+  if (frac > 0.7) return 'after'
+  return 'nest'
 }
 
 // Local-items counterpart to applyOptimisticMove in useGraph.ts — removes the
@@ -420,10 +422,10 @@ function GraphView() {
   // Drag-over target for level-2/3 drags, tracked by path (unlike dragOverIndex,
   // which is a level-1-only list position) — see handleDropAtPath.
   const [dragOverPath, setDragOverPath] = useState<string | null>(null)
-  // Which part of the hovered row the drag is over — 'before' reorders (the
-  // original behavior), 'nest' makes the dragged item a child of the hovered
-  // one. Shared across all three levels; see getDropZone.
-  const [dragOverZone, setDragOverZone] = useState<'before' | 'nest' | null>(null)
+  // Which part of the hovered row the drag is over — 'before'/'after' reorder
+  // relative to the hovered row, 'nest' makes the dragged item a child of the
+  // hovered one. Shared across all three levels; see getDropZone.
+  const [dragOverZone, setDragOverZone] = useState<'before' | 'nest' | 'after' | null>(null)
 
   // Safety net: the pulsating "insert here" line (.drag-over-before in
   // index.css) is driven by dragOverIndex/dragOverPath/dragOverZone, which
@@ -991,12 +993,16 @@ function GraphView() {
       return
     }
 
+    // 'after' inserts one position later than 'before' at the same target
+    // row — everything below is otherwise oblivious to which zone fired.
+    const insertIndex = zone === 'after' ? targetIndex + 1 : targetIndex
+
     // Already a top-level item — the fast path: reorder within localOrder in
     // place, nothing to move between containers.
     const currentIndex = localOrder?.indexOf(draggedKey) ?? -1
     const isTopLevelDrag = itemToReorder === (path ? `${path}.${draggedKey}` : draggedKey)
     if (isTopLevelDrag) {
-      if (currentIndex === -1 || currentIndex === targetIndex) return
+      if (currentIndex === -1 || currentIndex === insertIndex) return
 
       // IMMEDIATELY update local order for instant visual feedback
       setLocalOrder(prevOrder => {
@@ -1008,13 +1014,13 @@ function GraphView() {
         newOrder.splice(idx, 1)
         // Forward moves need the target shifted back by one to land before
         // the same visual row once the dragged item is gone.
-        const adjustedTargetIndex = idx < targetIndex ? targetIndex - 1 : targetIndex
+        const adjustedTargetIndex = idx < insertIndex ? insertIndex - 1 : insertIndex
         newOrder.splice(Math.max(0, Math.min(adjustedTargetIndex, newOrder.length)), 0, draggedKey)
         return newOrder
       })
 
       try {
-        await moveToPosition.mutateAsync({ path: itemToReorder, newParentPath: path, targetIndex })
+        await moveToPosition.mutateAsync({ path: itemToReorder, newParentPath: path, targetIndex: insertIndex })
         showNotification('Reordered!')
       } catch (err: any) {
         setLocalOrder(serverKeys)
@@ -1024,28 +1030,28 @@ function GraphView() {
       return
     }
 
-    // A nested item dropped in a top-level row's "before" zone — promote it
-    // to a top-level item at targetIndex, same move-to-position machinery as
-    // the same-parent case above, just crossing into a different (the view's
-    // own top-level) container. Needs both localItems (the item moves out of
-    // its old nested container) and localOrder (it's now one of the flat
-    // top-level keys) kept in sync — applyLocalMoveToPosition only touches
-    // the former, so the resolved (possibly deduped) key it returns is used
-    // to update the latter directly here.
+    // A nested item dropped in a top-level row's before/after zone — promote
+    // it to a top-level item at insertIndex, same move-to-position machinery
+    // as the same-parent case above, just crossing into a different (the
+    // view's own top-level) container. Needs both localItems (the item moves
+    // out of its old nested container) and localOrder (it's now one of the
+    // flat top-level keys) kept in sync — applyLocalMoveToPosition only
+    // touches the former, so the resolved (possibly deduped) key it returns
+    // is used to update the latter directly here.
     const prefix = path ? `${path}.` : ''
     if (!itemToReorder.startsWith(prefix) || !displayItems) return
     const draggedRelative = itemToReorder.slice(prefix.length).split('.')
 
-    const { items: movedItems, key: newKey } = applyLocalMoveToPosition(displayItems, draggedRelative, [], targetIndex)
+    const { items: movedItems, key: newKey } = applyLocalMoveToPosition(displayItems, draggedRelative, [], insertIndex)
     setLocalItems(movedItems)
     setLocalOrder(prevOrder => {
       const base = [...(prevOrder ?? serverKeys)]
-      base.splice(Math.max(0, Math.min(targetIndex, base.length)), 0, newKey)
+      base.splice(Math.max(0, Math.min(insertIndex, base.length)), 0, newKey)
       return base
     })
 
     try {
-      await moveToPosition.mutateAsync({ path: itemToReorder, newParentPath: path, targetIndex })
+      await moveToPosition.mutateAsync({ path: itemToReorder, newParentPath: path, targetIndex: insertIndex })
       showNotification('Moved!')
     } catch (err: any) {
       setLocalItems(rawItems)
@@ -1058,13 +1064,13 @@ function GraphView() {
   // Drop handler for level-2/3 items. 'nest' zone: hands off to
   // handleNestDrop (always appends as the target's last child — this is how
   // an item crosses into a different parent, actions 2/3 in the drag model
-  // above). 'before' zone only reorders within the dragged item's OWN
-  // current parent (actions 4/5) — a cross-parent "before" drop no-ops
-  // rather than reparenting-and-positioning, keeping the two gestures'
-  // meanings distinct: nest to move between parents, before to reorder in
-  // place. Level-1 keeps using handleDrop above (it has no parent to match
-  // against — any source can land at any position there).
-  const handleDropAtPath = async (targetPath: string, zone: 'before' | 'nest') => {
+  // above). 'before'/'after' zones only reorder within the dragged item's
+  // OWN current parent (actions 4/5) — a cross-parent before/after drop
+  // no-ops rather than reparenting-and-positioning, keeping the two
+  // gestures' meanings distinct: nest to move between parents, before/after
+  // to reorder in place. Level-1 keeps using handleDrop above (it has no
+  // parent to match against — any source can land at any position there).
+  const handleDropAtPath = async (targetPath: string, zone: 'before' | 'nest' | 'after') => {
     if (!draggedItem) return
     const itemToReorder = draggedItem
     setDraggedItem(null)
@@ -1088,17 +1094,20 @@ function GraphView() {
 
     const siblingKeys = getSiblingOrder(displayItems, parentRelative)
     const targetIndex = siblingKeys.indexOf(targetKey)
-    if (targetIndex === -1 || siblingKeys.indexOf(draggedKey) === targetIndex) return
+    if (targetIndex === -1) return
+    // 'after' inserts one position later than 'before' at the same target row.
+    const insertIndex = zone === 'after' ? targetIndex + 1 : targetIndex
+    if (siblingKeys.indexOf(draggedKey) === insertIndex) return
 
     const newParentPath = parentRelative.length ? `${prefix}${parentRelative.join('.')}` : path
 
     // IMMEDIATELY update local state for instant visual feedback
-    const { items: movedItems } = applyLocalMoveToPosition(displayItems, draggedRelative, parentRelative, targetIndex)
+    const { items: movedItems } = applyLocalMoveToPosition(displayItems, draggedRelative, parentRelative, insertIndex)
     setLocalItems(movedItems)
 
     // Then sync to server in background
     try {
-      await moveToPosition.mutateAsync({ path: itemToReorder, newParentPath, targetIndex })
+      await moveToPosition.mutateAsync({ path: itemToReorder, newParentPath, targetIndex: insertIndex })
       showNotification('Moved!')
     } catch (err: any) {
       // Rollback on error - reset to server state
@@ -1120,7 +1129,7 @@ function GraphView() {
   // feedback classes) — so onDrop always reads the up-to-date value
   // synchronously, without waiting on a state update to flush.
   const touchDropTargetRef = useRef<
-    { kind: 'level1'; index: number } | { kind: 'nested'; path: string; zone: 'before' | 'nest' } | null
+    { kind: 'level1'; index: number } | { kind: 'nested'; path: string; zone: 'before' | 'nest' | 'after' } | null
   >(null)
 
   const handleTouchDragMove = (clientX: number, clientY: number) => {
@@ -1138,14 +1147,15 @@ function GraphView() {
     const relativeDepth = hitPath.split('.').length - currentDepth
     // Level-1's hit target (rowEl) is the whole section — title plus
     // whatever lvl2/3 children are rendered underneath it — which can be far
-    // taller than the title bar itself, so the before/nest split is measured
+    // wider/taller than the title bar itself, so the zone split is measured
     // against the title bar's own rect instead (see GraphView's module-level
     // getDropZone, the desktop-mouse equivalent of this). Level-2/3 hit
     // targets are already single-row elements, no adjustment needed there.
     const zoneRect = relativeDepth === 1
       ? (rowEl.querySelector<HTMLElement>('.layer1-wrapper') ?? rowEl).getBoundingClientRect()
       : rowEl.getBoundingClientRect()
-    const zone: 'before' | 'nest' = (clientY - zoneRect.top) < zoneRect.height * 0.5 ? 'before' : 'nest'
+    const frac = (clientX - zoneRect.left) / zoneRect.width
+    const zone: 'before' | 'nest' | 'after' = frac < 0.3 ? 'before' : frac > 0.7 ? 'after' : 'nest'
     if (relativeDepth === 1) {
       const index = levelOneKeys.indexOf(hitPath.split('.').pop()!)
       touchDropTargetRef.current = index === -1 ? null : { kind: 'level1', index }
@@ -1551,7 +1561,7 @@ function GraphView() {
               onDragEnd={handleDragEnd}
               onDrop={() => handleDrop(index)}
               data-drag-path={itemPath}
-              className={`section-wrapper ${draggedItem === itemPath ? 'dragging' : ''} ${dragOverIndex === index && dragOverZone === 'nest' ? 'drag-over-nest' : ''} ${dragOverIndex === index && dragOverZone !== 'nest' ? 'drag-over' : ''} ${isPending ? 'pending' : ''}`}
+              className={`section-wrapper ${draggedItem === itemPath ? 'dragging' : ''} ${dragOverIndex === index && dragOverZone === 'nest' ? 'drag-over-nest' : ''} ${dragOverIndex === index && dragOverZone === 'before' ? 'drag-over-before' : ''} ${dragOverIndex === index && dragOverZone === 'after' ? 'drag-over-after' : ''} ${isPending ? 'pending' : ''}`}
             >
               <Section
                 key={key}

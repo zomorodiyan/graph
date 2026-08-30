@@ -242,18 +242,25 @@ body {
   border-radius: 0.25rem;
 }
 
-.section-wrapper.drag-over {
+/* "Insert before/after this row" — a vertical line on the row's left/right
+   edge (not top/bottom), matching the drop-zone split itself: left 30% of a
+   row means before, right 30% means after (see GraphView's and Section's
+   getDropZone). Side lines read naturally at every level, including
+   level-2/3's own horizontally-flowing chip rows, where before/after really
+   does mean "earlier/later along this same line" rather than "above/below". */
+.section-wrapper.drag-over-before,
+.section-wrapper.drag-over-after {
   position: relative;
 }
 
-.section-wrapper.drag-over::before {
+.section-wrapper.drag-over-before::before,
+.section-wrapper.drag-over-after::before {
   content: '';
   position: absolute;
-  top: -4px;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #4CAF50, #2196F3);
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #4CAF50, #2196F3);
   border-radius: 2px;
   animation: pulse 0.5s ease-in-out infinite alternate;
   /* Purely decorative — without this, a drop landing in this 4px band (a
@@ -262,33 +269,50 @@ body {
      which has the real onDrop handler, and silently does nothing. */
   pointer-events: none;
 }
+.section-wrapper.drag-over-before::before {
+  left: -4px;
+}
+.section-wrapper.drag-over-after::before {
+  right: -4px;
+}
 
-/* Level-2/3 "insert before" indicator sits INSET (top: 0, not poking above
-   the box like level-1's) because .section has overflow: hidden and a
-   negative offset gets clipped there — see the L2/L3 drag investigation. */
+/* Level-2/3's indicator sits INSET (left/right: 0, not poking outside the
+   box like level-1's) because .section has overflow: hidden and an offset
+   outside the row gets clipped there — see the L2/L3 drag investigation. */
 .layer2-container.drag-over-before,
-.layer3-row.drag-over-before {
+.layer2-container.drag-over-after,
+.layer3-row.drag-over-before,
+.layer3-row.drag-over-after {
   position: relative;
 }
 
 .layer2-container.drag-over-before::before,
-.layer3-row.drag-over-before::before {
+.layer2-container.drag-over-after::before,
+.layer3-row.drag-over-before::before,
+.layer3-row.drag-over-after::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #4CAF50, #2196F3);
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #4CAF50, #2196F3);
   border-radius: 2px;
   animation: pulse 0.5s ease-in-out infinite alternate;
   z-index: 1;
   /* Purely decorative — confirmed bug without this: a drop landing in this
      3px band (right where the "insert here" indicator itself is, easy to
-     land on since it's inset over the row's own top edge) hits this bar
-     instead of the row underneath, which has the real onDrop handler, and
-     silently does nothing — the reorder never happens. */
+     land on since it's inset over the row's own edge) hits this bar instead
+     of the row underneath, which has the real onDrop handler, and silently
+     does nothing — the reorder never happens. */
   pointer-events: none;
+}
+.layer2-container.drag-over-before::before,
+.layer3-row.drag-over-before::before {
+  left: 0;
+}
+.layer2-container.drag-over-after::before,
+.layer3-row.drag-over-after::before {
+  right: 0;
 }
 
 /* "Drop to nest inside this item" — a dashed outline instead of an edge
