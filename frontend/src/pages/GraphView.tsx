@@ -1098,14 +1098,19 @@ function GraphView() {
   }
 
   // Drop handler for level-2/3 items. 'nest' zone: hands off to
-  // handleNestDrop (always appends as the target's last child — this is how
-  // an item crosses into a different parent, actions 2/3 in the drag model
-  // above). 'before'/'after' zones only reorder within the dragged item's
-  // OWN current parent (actions 4/5) — a cross-parent before/after drop
-  // no-ops rather than reparenting-and-positioning, keeping the two
-  // gestures' meanings distinct: nest to move between parents, before/after
-  // to reorder in place. Level-1 keeps using handleDrop above (it has no
-  // parent to match against — any source can land at any position there).
+  // handleNestDrop (always appends as the target's last child). 'before'/
+  // 'after' zones reorder relative to the hovered row — same parent or a
+  // different one, crossing parents exactly like 'nest' does but landing at
+  // a specific position instead of always last (previously this only
+  // reordered within the dragged item's own current parent and silently
+  // no-op'd on any other target, even though the before/after indicator lit
+  // up there just the same — see the user report this fixed). Guards against
+  // dropping into the dragged item's own subtree (itself or a descendant),
+  // mirroring handleNestDrop's identical check — before/after now crosses
+  // parents too, so that cycle is newly reachable here the same way it
+  // already was for 'nest'. Level-1 keeps using handleDrop above (it has no
+  // parent to match against — any source can already land at any position
+  // there).
   const handleDropAtPath = async (targetPath: string, zone: 'before' | 'nest' | 'after') => {
     if (!draggedItem) return
     const itemToReorder = draggedItem
@@ -1120,26 +1125,34 @@ function GraphView() {
 
     const prefix = path ? `${path}.` : ''
     if (!itemToReorder.startsWith(prefix) || !targetPath.startsWith(prefix) || !displayItems) return
+    if (targetPath === itemToReorder || targetPath.startsWith(`${itemToReorder}.`)) return
 
     const draggedRelative = itemToReorder.slice(prefix.length).split('.')
     const targetRelative = targetPath.slice(prefix.length).split('.')
     const draggedKey = draggedRelative[draggedRelative.length - 1]
     const targetKey = targetRelative[targetRelative.length - 1]
     const parentRelative = targetRelative.slice(0, -1)
-    if (parentRelative.join('.') !== draggedRelative.slice(0, -1).join('.')) return
+    const sameParent = parentRelative.join('.') === draggedRelative.slice(0, -1).join('.')
 
     const siblingKeys = getSiblingOrder(displayItems, parentRelative)
     const targetIndex = siblingKeys.indexOf(targetKey)
     if (targetIndex === -1) return
     // 'after' inserts one position later than 'before' at the same target row.
     const insertIndex = zone === 'after' ? targetIndex + 1 : targetIndex
-    if (siblingKeys.indexOf(draggedKey) === insertIndex) return
+    if (sameParent && siblingKeys.indexOf(draggedKey) === insertIndex) return
 
     const newParentPath = parentRelative.length ? `${prefix}${parentRelative.join('.')}` : path
 
     // IMMEDIATELY update local state for instant visual feedback
     const { items: movedItems } = applyLocalMoveToPosition(displayItems, draggedRelative, parentRelative, insertIndex)
     setLocalItems(movedItems)
+    // Crossing out of the top-level list (a level-2/3 before/after target,
+    // dragging a level-1 item) needs localOrder kept in sync too, same as
+    // handleNestDrop's matching case — applyLocalMoveToPosition only touches
+    // the items tree.
+    if (!sameParent && draggedRelative.length === 1) {
+      setLocalOrder(prev => prev ? prev.filter(k => k !== draggedRelative[0]) : prev)
+    }
 
     // Then sync to server in background
     try {
