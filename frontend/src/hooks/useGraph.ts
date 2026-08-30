@@ -450,8 +450,11 @@ function applyOptimisticReorder(structure: any, path: string, targetIndex: numbe
   
   // Remove from current position
   orderedKeys.splice(currentIndex, 1)
-  // Insert at target position
-  const safeTargetIndex = Math.min(targetIndex, orderedKeys.length)
+  // targetIndex is the drop target's index before removal ("insert before
+  // this row"); a forward move needs it shifted back by one to still land
+  // before the same visual row once the dragged item is gone.
+  const adjustedTargetIndex = currentIndex < targetIndex ? targetIndex - 1 : targetIndex
+  const safeTargetIndex = Math.max(0, Math.min(adjustedTargetIndex, orderedKeys.length))
   orderedKeys.splice(safeTargetIndex, 0, itemKey)
   
   // Rebuild parent container in new order

@@ -90,7 +90,7 @@ function highlightClasses(path: string, userHighlights?: Set<string>, agentHighl
 function getDropZone(e: React.DragEvent): 'before' | 'nest' {
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const relativeY = e.clientY - rect.top
-  return relativeY < rect.height * 0.35 ? 'before' : 'nest'
+  return relativeY < rect.height * 0.5 ? 'before' : 'nest'
 }
 
 // Helper to calculate due date category for CSS class
@@ -305,6 +305,7 @@ function Section({
                         return
                       }
                       e.stopPropagation()
+                      e.dataTransfer.setData('text/plain', childPath)
                       onItemDragStart?.(childPath)
                     }}
                     onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); onItemDragOver?.(childPath, getDropZone(e)) }}
@@ -384,6 +385,7 @@ function Section({
                               return
                             }
                             e.stopPropagation()
+                            e.dataTransfer.setData('text/plain', grandPath)
                             onItemDragStart?.(grandPath)
                           }}
                           onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); onItemDragOver?.(grandPath, getDropZone(e)) }}

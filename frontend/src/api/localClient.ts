@@ -471,7 +471,13 @@ export async function reorderItem(path: string, targetIndex: number, graphName =
   const s = loadStructure(graphName)
   const pk = getParentAndKey(s.structure, path)
   if (!pk) throw new Error(`Item not found: ${path}`)
-  reorderKeys(pk.parent, pk.key, targetIndex)
+  // targetIndex is the drag-and-drop UI's pre-removal "insert before this
+  // row" index, while reorderKeys expects the final post-removal splice
+  // index (the contract moveItemUp/moveItemDown already satisfy directly) —
+  // convert here rather than in reorderKeys, so those two are unaffected.
+  const currentIndex = Object.keys(pk.parent).indexOf(pk.key)
+  const adjustedTargetIndex = currentIndex !== -1 && currentIndex < targetIndex ? targetIndex - 1 : targetIndex
+  reorderKeys(pk.parent, pk.key, adjustedTargetIndex)
   saveStructure(graphName, s)
   return { success: true, message: 'Reordered' }
 }

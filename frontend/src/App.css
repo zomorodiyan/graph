@@ -106,7 +106,9 @@
   .graph-header-buttons .copy-toggle,
   .graph-header-buttons .delete-toggle,
   .graph-header-buttons .confirm-toggle,
-  .graph-header-buttons .reject-toggle {
+  .graph-header-buttons .reject-toggle,
+  .graph-header-buttons .addsub-toggle,
+  .graph-header-buttons .pastesub-toggle {
     width: 2.25rem;
     height: 2.25rem;
     font-size: 16px;
@@ -809,7 +811,9 @@
 .copy-toggle,
 .delete-toggle,
 .confirm-toggle,
-.reject-toggle {
+.reject-toggle,
+.addsub-toggle,
+.pastesub-toggle {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -828,7 +832,9 @@
 .copy-toggle,
 .delete-toggle,
 .confirm-toggle,
-.reject-toggle {
+.reject-toggle,
+.addsub-toggle,
+.pastesub-toggle {
   opacity: 1;
 }
 
@@ -900,6 +906,8 @@
 .delete-toggle:hover,
 .confirm-toggle:hover,
 .reject-toggle:hover,
+.addsub-toggle:hover,
+.pastesub-toggle:hover,
 .copy-btn:hover {
   transform: scale(1.1);
 }
