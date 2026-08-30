@@ -1535,7 +1535,15 @@ function GraphView() {
           if (!item) return null
           const itemPath = path ? `${path}.${key}` : key
           const isPending = pendingItems.has(itemPath)
-          const canDrag = !isPending && !inlineEdit && !subCreate
+          // Native HTML5 draggable — desktop only. Some mobile browsers
+          // translate a long-press-and-move on a draggable="true" element
+          // into their OWN native drag session, competing with the custom
+          // touch-gesture system below (useDragGestureFactory) — the two
+          // fire independently, and the native session's dragstart firing
+          // mid-gesture cancels the custom one's pointer tracking (see the
+          // dragDebugLog investigation this fixes), so the drop always
+          // finds draggedItem already cleared to null and no-ops.
+          const canDrag = !isMobile && !isPending && !inlineEdit && !subCreate
 
           return (
             <div
