@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate, useNavigationType, Link, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useStructure, useGraphs, useUpdateItem, useDeleteItem, useReorderItem, useMoveItemToParent, useCreateItem, getItemByPath } from '../hooks/useGraph'
@@ -318,6 +318,32 @@ function GraphView() {
       setViewMode(m => m === 'context' ? 'default' : 'context')
     },
   )
+
+  // Mobile: the breadcrumb is a fixed full-width bar above the compose bar
+  // (see .breadcrumb in App.css), so .graph-container needs matching
+  // padding-bottom to keep the item list from rendering underneath it. Its
+  // height isn't static like the compose bar's — it grows with breadcrumb
+  // depth and with the pinch-zoom font scale (see ZoomContext) — so it's
+  // measured live off the real element, same idea AgentChat.tsx uses for
+  // --agent-bubble-height. A callback ref (not useLayoutEffect+useRef) so
+  // this re-attaches whenever the <nav> mounts/unmounts (it's hidden while
+  // inline-editing/sub-creating — see the graph-header JSX below). Harmless
+  // to keep measuring at >=32rem too, since App.css resets the padding to 0
+  // there regardless of this variable's value.
+  const breadcrumbObserverRef = useRef<ResizeObserver | null>(null)
+  const breadcrumbRef = useCallback((el: HTMLElement | null) => {
+    breadcrumbObserverRef.current?.disconnect()
+    if (!el) {
+      document.documentElement.style.setProperty('--breadcrumb-bar-height', '0px')
+      return
+    }
+    const update = () => document.documentElement.style.setProperty('--breadcrumb-bar-height', `${el.offsetHeight}px`)
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    breadcrumbObserverRef.current = observer
+  }, [])
+
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
   // Bumped by AgentChat.tsx after a tool-driven edit/add, which mutates the
@@ -1154,7 +1180,7 @@ function GraphView() {
           .breadcrumb media overrides). */}
       {!inlineEdit && !subCreate && (
         <div className="graph-header">
-          <nav className="breadcrumb">
+          <nav className="breadcrumb" ref={breadcrumbRef}>
             {breadcrumb.flatMap((crumb, i) => {
               const els = []
               if (i > 0) els.push(<span key={`${crumb.path}-sep`} className="sep">/</span>)

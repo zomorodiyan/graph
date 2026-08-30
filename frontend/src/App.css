@@ -13,6 +13,10 @@
      Desktop's agent card floats bottom-right instead, so doesn't need this
      at all. */
   padding-top: var(--agent-bubble-height, 0px);
+  /* Mobile only — the breadcrumb is a fixed full-width bar at the bottom of
+     the screen (see .breadcrumb below), so without this the last row(s) of
+     the item list would render underneath it, covered. */
+  padding-bottom: var(--breadcrumb-bar-height, 0px);
   /* The page-level swipe gesture (usePageSwipe.ts, attached to this
      element) needs to win horizontal drags back from the browser's own
      touch-scroll recognizer, which can otherwise grab a swipe before the
@@ -25,6 +29,7 @@
 @media (min-width: 32rem) {
   .graph-container {
     padding-top: 0;
+    padding-bottom: 0;
   }
 }
 
@@ -115,6 +120,13 @@
   }
 }
 
+/* Full-width bar, own dedicated strip above the compose bar — the same
+   "standalone element" treatment the desktop in-flow header gets, just
+   anchored at the bottom instead of the top (see the >=32rem override
+   below). Used to be a small floating, semi-transparent pill that
+   overlapped the item list underneath it; now it's opaque and reserves its
+   own space (see .graph-container's padding-bottom, kept in sync with this
+   bar's real height via GraphView.tsx's breadcrumbRef/ResizeObserver). */
 .breadcrumb {
   position: fixed;
   /* Sits flush against the bottom bar's own top edge and the screen's left
@@ -126,6 +138,7 @@
      devices — that's the bar's real footprint, not extra spacing. */
   bottom: calc(var(--agent-bar-height) + env(safe-area-inset-bottom, 0px));
   left: 0;
+  right: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -133,25 +146,24 @@
   font-size: 18px;
   color: var(--text-secondary);
   z-index: 999;
-  background: var(--bg-primary);
-  opacity: 0.85;
-  padding: 0.25rem 0.6rem;
-  border-radius: 0.5rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  padding: 0.5rem 0.75rem;
 }
 
 @media (min-width: 32rem) {
-  /* In-flow header, not a floating pill — sits at the top of .app-main's
-     own column, so it never overlaps the docked agent panel or the item
-     list below it. */
+  /* In-flow header, not a fixed bar — sits at the top of .app-main's own
+     column, so it never overlaps the docked agent panel or the item list
+     below it. */
   .breadcrumb {
     position: static;
     bottom: auto;
     left: auto;
+    right: auto;
     z-index: auto;
     background: none;
-    opacity: 1;
+    border-top: none;
     padding: 0;
-    border-radius: 0;
     flex: 1 1 auto;
     min-width: 0;
   }
