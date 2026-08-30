@@ -331,6 +331,15 @@
   color: var(--item-title);
   transition: background-color 0.2s, transform 0.15s ease;
   cursor: pointer;
+  /* Fill the row instead of hugging the title's own width — this is where
+     mobile's long-press-to-drag gesture listener lives (see
+     makeDragGestureHandlers in Section.tsx), so a narrow box here left most
+     of the row dead to touch: nothing happened unless you happened to
+     press exactly on the title text itself. Desktop's native HTML5 drag
+     never had this problem (the outer .section-wrapper, already full-width,
+     is the real drag source there) — this just brings mobile's actual hit
+     area in line with what already looks draggable. */
+  flex: 1;
 }
 
 .layer1 .item-title {

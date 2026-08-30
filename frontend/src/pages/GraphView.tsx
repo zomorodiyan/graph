@@ -407,7 +407,33 @@ function GraphView() {
   // original behavior), 'nest' makes the dragged item a child of the hovered
   // one. Shared across all three levels; see getDropZone.
   const [dragOverZone, setDragOverZone] = useState<'before' | 'nest' | null>(null)
-  
+
+  // Safety net: the pulsating "insert here" line (.drag-over-before in
+  // index.css) is driven by dragOverIndex/dragOverPath/dragOverZone, which
+  // are meant to always clear via handleDragEnd/handleTouchDragCancel/
+  // handleDrop*/handleDropAtPath — but a drag can be abandoned in ways that
+  // skip all of those: HTML5's dragend isn't guaranteed to fire if a drop
+  // lands outside the browser window/tab, and a touch gesture can be
+  // swallowed by an OS-level interruption (a notification pull-down, an app
+  // switch) with no pointerup/pointercancel ever reaching the page. A live
+  // drag keeps updating these on every dragover/touch-move, so if none of
+  // them has changed in a while, the drag has been abandoned — force-clear
+  // everything so the indicator can't linger forever. Timer-based (not a
+  // window-level event listener) specifically so it can never race with a
+  // legitimate in-flight drop: those clear this same state synchronously
+  // within their own handler, well under this delay.
+  useEffect(() => {
+    if (!draggedItem) return
+    const timer = setTimeout(() => {
+      setDraggedItem(null)
+      setDragOverIndex(null)
+      setDragOverPath(null)
+      setDragOverZone(null)
+    }, 4000)
+    return () => clearTimeout(timer)
+  }, [draggedItem, dragOverIndex, dragOverPath, dragOverZone])
+
+
   // LOCAL order state - this is what controls the visual display
   const [localOrder, setLocalOrder] = useState<string[] | null>(null)
   
