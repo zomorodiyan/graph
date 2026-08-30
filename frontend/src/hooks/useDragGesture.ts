@@ -51,6 +51,16 @@ export function useDragGestureFactory(callbacks: DragGestureCallbacks) {
         firedRef.current = false
         clearTimer()
         startRef.current = { x: e.clientX, y: e.clientY }
+        // Explicit capture (same pattern as AgentChat.tsx's resize-handle
+        // drag) rather than relying on implicit touch capture — some mobile
+        // browsers don't reliably keep routing move/up/cancel to this same
+        // element once the finger physically travels over sibling rows
+        // during the drag, which silently drops the gesture before a real
+        // drop ever fires. Hit-testing what's under the finger during the
+        // drag itself is unaffected — handleTouchDragMove already does its
+        // own elementFromPoint lookup off the event's coordinates, not off
+        // which element the event happened to land on.
+        e.currentTarget.setPointerCapture(e.pointerId)
         timerRef.current = setTimeout(() => {
           firedRef.current = true
           callbacksRef.current.onDragStart(itemPath)
