@@ -212,9 +212,14 @@ body {
   cursor: grabbing;
 }
 
+/* opacity only, no transform — a transform on the touched element (or an
+   ancestor) mid-gesture is a known trigger for mobile browsers, notably
+   iOS Safari, to silently fire pointercancel and kill an in-progress touch
+   drag, since it changes the element's geometry out from under the input
+   pipeline's tracking. Testing whether this was the cause of mobile drags
+   visually working (indicators updating) but never actually committing. */
 .section-wrapper.dragging {
   opacity: 0.4;
-  transform: scale(0.98);
 }
 
 /* Level-2/3 rows are small, text-only chips — opacity alone is too subtle to
