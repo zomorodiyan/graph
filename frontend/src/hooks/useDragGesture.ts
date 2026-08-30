@@ -10,8 +10,6 @@ export interface DragGestureCallbacks {
   onDragMove: (clientX: number, clientY: number) => void
   onDrop: () => void
   onCancel: () => void
-  // TEMPORARY — see GraphView.tsx's dragDebugLog. Remove once diagnosed.
-  onDebug?: (msg: string) => void
 }
 
 // Mobile's long-press-to-drag gesture for item rows. HTML5 native
@@ -59,7 +57,6 @@ export function useDragGestureFactory(callbacks: DragGestureCallbacks) {
   function makeDragGestureHandlers(itemPath: string, onTap: () => void) {
     return {
       onPointerDown: (e: React.PointerEvent) => {
-        callbacksRef.current.onDebug?.(`pointerdown pointerType=${e.pointerType}`)
         firedRef.current = false
         scrollingRef.current = false
         clearTimer()
@@ -104,28 +101,24 @@ export function useDragGestureFactory(callbacks: DragGestureCallbacks) {
         const s = startRef.current
         if (!s) return
         if (Math.abs(e.clientX - s.x) > MOVE_CANCEL_PX || Math.abs(e.clientY - s.y) > MOVE_CANCEL_PX) {
-          callbacksRef.current.onDebug?.('pointermove: exceeded MOVE_CANCEL_PX before long-press fired — treating as a scroll')
           clearTimer()
           scrollingRef.current = true
           startRef.current = { x: e.clientX, y: e.clientY }
         }
       },
       onPointerUp: () => {
-        callbacksRef.current.onDebug?.(`pointerup fired=${firedRef.current}`)
         clearTimer()
         if (firedRef.current) callbacksRef.current.onDrop()
         scrollingRef.current = false
         startRef.current = null
       },
       onPointerLeave: () => {
-        callbacksRef.current.onDebug?.(`pointerleave fired=${firedRef.current}`)
         clearTimer()
         if (firedRef.current) callbacksRef.current.onCancel()
         scrollingRef.current = false
         startRef.current = null
       },
       onPointerCancel: () => {
-        callbacksRef.current.onDebug?.(`pointercancel fired=${firedRef.current}`)
         clearTimer()
         if (firedRef.current) callbacksRef.current.onCancel()
         scrollingRef.current = false
