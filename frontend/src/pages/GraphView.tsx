@@ -944,6 +944,40 @@ function GraphView() {
     setDragOverZone(null)
   }
 
+  // Recognizes the empty space below the last level-1 bubble as "after the
+  // last item" — without this, a drop landing anywhere past the bottom of
+  // the whole list had nowhere valid to go, since every other drop target is
+  // an actual row. Shared by the mouse dragover/drop pair below and by
+  // handleTouchDragMove's own equivalent check.
+  const isBelowLastLevelOneItem = (clientY: number): boolean => {
+    if (levelOneKeys.length === 0) return false
+    const lastKey = levelOneKeys[levelOneKeys.length - 1]
+    const lastPath = path ? `${path}.${lastKey}` : lastKey
+    const lastRow = document.querySelector<HTMLElement>(`[data-drag-path="${lastPath}"]`)
+    return !!lastRow && clientY > lastRow.getBoundingClientRect().bottom
+  }
+
+  // Desktop mouse needs an explicit listening ancestor for native HTML5 DnD
+  // to even consider a drop possible in that empty space at all — attached
+  // to .graph-container below, which wraps the whole item list (and the
+  // mobile footer breadcrumb under it). Level-1 rows' own onDragOver doesn't
+  // stop propagation (only level-2/3's does), so this also re-fires while
+  // hovering an actual row — isBelowLastLevelOneItem's own bounds check is
+  // what keeps it a no-op then, leaving that row's own state alone.
+  const handleBelowLastItemDragOver = (e: React.DragEvent) => {
+    if (!draggedItem || !isBelowLastLevelOneItem(e.clientY)) return
+    e.preventDefault()
+    setDragOverIndex(levelOneKeys.length - 1)
+    setDragOverZone('after')
+    setDragOverPath(null)
+  }
+
+  const handleBelowLastItemDrop = (e: React.DragEvent) => {
+    if (!draggedItem || !isBelowLastLevelOneItem(e.clientY)) return
+    e.preventDefault()
+    handleDrop(levelOneKeys.length - 1)
+  }
+
   // Shared "nest as a child of the drop target" handler for all three levels
   // — unlike reordering, this allows moving across different parents (that's
   // the whole point of drag-to-nest). Guards against nesting an item into
@@ -1138,6 +1172,19 @@ function GraphView() {
     const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null
     const rowEl = el?.closest('[data-drag-path]') as HTMLElement | null
     if (!rowEl) {
+      // Below the last level-1 item, past the bottom of the whole list —
+      // touch isn't limited to elements with their own listener the way
+      // mouse's native HTML5 DnD is (see handleBelowLastItemDragOver's own
+      // comment), so this reaches all the way past the list, footer
+      // breadcrumb included, not just .graph-container's own bounds.
+      if (isBelowLastLevelOneItem(clientY)) {
+        const index = levelOneKeys.length - 1
+        touchDropTargetRef.current = { kind: 'level1', index }
+        setDragOverIndex(index)
+        setDragOverPath(null)
+        setDragOverZone('after')
+        return
+      }
       touchDropTargetRef.current = null
       setDragOverIndex(null)
       setDragOverPath(null)
@@ -1489,6 +1536,8 @@ function GraphView() {
       <div
         className="graph-container"
         ref={pageSwipeRef}
+        onDragOver={handleBelowLastItemDragOver}
+        onDrop={handleBelowLastItemDrop}
       >
         {/* Items grid — CSS columns for tight packing with no gaps. Locked
             while the mobile sheet is open so a tap/swipe on a background row
