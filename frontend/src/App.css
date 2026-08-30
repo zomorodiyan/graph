@@ -1609,12 +1609,16 @@
   touch-action: none;
 }
 
-/* Mobile, idle (not composing): the WHOLE row — buttons, textbox, send —
-   is its own fixed bar at the true bottom of the screen, since the
-   permanent top bubble shows no input row until you actually focus it
-   (see .agent-chat-shell in AgentChat.tsx's own comment). Matches the old
-   pre-permanent-bubble compose-bar look. */
-.agent-chat-shell:not(.expanded) .agent-chat-input-row {
+/* Mobile, idle or composing-but-no-real-keyboard: the WHOLE row — buttons,
+   textbox, send — is its own fixed bar at the true bottom of the screen.
+   Keyed off .keyboard-open (not .expanded/focus alone, see keyboardOpen in
+   AgentChat.tsx) — a resized-narrow desktop window, or a device whose
+   keyboard never actually pops up, still gets focus, but nothing is
+   covering the fixed bar in that case, so the row should stay put instead
+   of jumping up to the bubble and looking like it vanished. Matches the
+   old pre-permanent-bubble compose-bar look whenever there's no keyboard
+   to make room for. */
+.agent-chat-shell:not(.keyboard-open) .agent-chat-input-row {
   position: fixed;
   left: 0;
   right: 0;
@@ -1625,19 +1629,21 @@
   padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
 }
 
-/* Mobile, composing (.expanded): the row rejoins the bubble's own flex
-   flow at its bottom instead — the bubble's own bounds (position, height)
-   never move, only this internal reflow happens, so nothing jumps just
-   because you tapped the textbox. */
-.agent-chat-shell.expanded .agent-chat-input-row {
+/* Mobile, a real keyboard is covering the fixed bottom bar (.keyboard-open):
+   the row rejoins the bubble's own flex flow at its bottom instead — only
+   this internal reflow happens, so nothing jumps just because you tapped
+   the textbox with no keyboard to actually cover it. */
+.agent-chat-shell.keyboard-open .agent-chat-input-row {
   position: static;
 }
 
-/* Composing: the view-toggle buttons don't apply mid-chat and there's no
-   room for them once the row is inside the compact bubble — hide them
-   (not the textarea/send). Desktop's collapsed<->expanded card toggle
-   hides them the same way, since it's driven by the same .expanded class. */
-.agent-chat-shell.expanded .agent-chat-input-row .agent-chat-view-buttons {
+/* Mobile, real keyboard covering the row (.keyboard-open): the view-toggle
+   buttons don't apply mid-chat and there's no room for them once the row
+   is inside the compact bubble — hide them (not the textarea/send).
+   Desktop has its own copy of this rule below, keyed on .expanded instead
+   — its collapsed<->expanded docked-panel card toggle is a different
+   meaning of that same class and isn't gated on a real keyboard at all. */
+.agent-chat-shell.keyboard-open .agent-chat-input-row .agent-chat-view-buttons {
   display: none;
 }
 
@@ -1653,6 +1659,15 @@
   }
   .agent-chat-input-row {
     touch-action: auto;
+  }
+
+  /* Desktop's own collapsed<->expanded card toggle hides the view-buttons
+     the same way mobile's .keyboard-open rule above does, but keyed on
+     .expanded directly — a different meaning of the class here (docked-
+     panel card state, not "a real keyboard is covering the row"), so it
+     can't share the mobile rule's .keyboard-open condition. */
+  .agent-chat-shell.expanded .agent-chat-input-row .agent-chat-view-buttons {
+    display: none;
   }
 }
 
