@@ -1741,31 +1741,6 @@
   background: #c62828;
 }
 
-.agent-chat-key-setup {
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.agent-chat-key-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.agent-chat-key-hint {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0 0 0.25rem;
-}
-
-.agent-chat-key-hint a {
-  color: var(--blue-medium);
-}
-
 /* Drag handle on the expanded panel's bottom edge (see AgentChat.tsx's
    handleResizeStart/Move/End) — touch-action:none hands the gesture fully
    to our own pointer handlers instead of letting the browser also try to
