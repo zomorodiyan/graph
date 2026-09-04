@@ -11,7 +11,7 @@ import InlineItemEditor from './InlineItemEditor'
 // whatever's actually visible instead of driving it.
 function ChevronIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 24 24" width="0.75em" height="0.75em" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="9 6 15 12 9 18" />
     </svg>
   )
