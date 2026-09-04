@@ -4,16 +4,25 @@ import { parseLocalDate, daysUntil } from '../utils/dates'
 import InlineItemEditor from './InlineItemEditor'
 
 // Per-item note disclosure triangle (see .context-toggle in App.css) — points
-// right when notes are hidden, rotates to point down when shown. Its onClick
-// calls the same handler as the page's N button (see GraphView's
-// toggleNoteView), so a triangle click and the button are one shared on/off
-// state, not a per-item override — every triangle always matches the button.
+// right when the note is hidden, rotates to point down when shown. A genuine
+// per-item override (see GraphView's contextOverrides/onToggleContext) — the
+// N button doesn't force these, it just reads them: see GraphView's
+// noteButtonActive for how the button's own on/off display is derived from
+// whatever's actually visible instead of driving it.
 function ChevronIcon() {
   return (
     <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="9 6 15 12 9 18" />
     </svg>
   )
+}
+
+// Whether a row's note is shown: an explicit per-item override (see
+// GraphView's contextOverrides/onToggleContext) wins over the page-wide
+// showContext setting — lets one item's note be flipped open/closed without
+// forcing every other item to match.
+function isContextShown(showContext: boolean, contextOverrides: Map<string, boolean> | undefined, path: string): boolean {
+  return contextOverrides?.has(path) ? contextOverrides.get(path)! : showContext
 }
 
 interface SectionProps {
@@ -84,10 +93,12 @@ interface SectionProps {
   pendingPaths?: Set<string>
   isTimeView?: boolean
   showContext?: boolean
-  // Called by a row's note-disclosure triangle — the same handler the page's
-  // N button uses (see GraphView's toggleNoteView), so clicking either one
-  // flips the one shared showContext state for every row at once.
-  onToggleContext?: () => void
+  // Per-item note visibility overrides (see isContextShown above) and the
+  // handler the row's disclosure triangle calls to flip one — both owned by
+  // GraphView (in-memory only, so they reset on reload, same as the rest of
+  // the view-option state).
+  contextOverrides?: Map<string, boolean>
+  onToggleContext?: (path: string, shown: boolean) => void
   // Long-press on the context toggle: hides date/tags badges too,
   // leaving just the title (showContext is expected to be forced off alongside this)
   minimal?: boolean
@@ -201,6 +212,7 @@ function Section({
   pendingPaths,
   isTimeView = false,
   showContext = true,
+  contextOverrides,
   onToggleContext,
   minimal = false,
   depth = 3,
@@ -209,6 +221,7 @@ function Section({
 }: SectionProps) {
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
   const title = item.title || itemKey
+  const itemContextShown = isContextShown(showContext, contextOverrides, itemPath)
 
   const sectionRef = useRef<HTMLDivElement>(null)
 
@@ -304,9 +317,9 @@ function Section({
                 {!minimal && item.context && (
                   <button
                     type="button"
-                    className={`context-toggle${showContext ? ' expanded' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); onToggleContext?.() }}
-                    title={showContext ? 'Hide notes' : 'Show notes'}
+                    className={`context-toggle${itemContextShown ? ' expanded' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleContext?.(itemPath, !itemContextShown) }}
+                    title={itemContextShown ? 'Hide note' : 'Show note'}
                   >
                     <ChevronIcon />
                   </button>
@@ -316,7 +329,7 @@ function Section({
           )}
         </div>
         {/* Context */}
-        {showContext && item.context && (
+        {itemContextShown && item.context && (
           <div
             className="item-context"
             onClick={!isMobile && rowEditable ? (e) => {
@@ -333,6 +346,7 @@ function Section({
         {childEntries.map(([childKey, childItem]) => {
           const childPath = `${itemPath}.${childKey}`
           const childTitle = (childItem as StructureItem).title || childKey
+          const childContextShown = isContextShown(showContext, contextOverrides, childPath)
           const grandchildren = (childItem as StructureItem).children || {}
           // Check if this child item is editable
           const childRowEditable = rowEditable && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
@@ -417,9 +431,9 @@ function Section({
                           {!minimal && (childItem as StructureItem).context && (
                             <button
                               type="button"
-                              className={`context-toggle${showContext ? ' expanded' : ''}`}
-                              onClick={(e) => { e.stopPropagation(); onToggleContext?.() }}
-                              title={showContext ? 'Hide notes' : 'Show notes'}
+                              className={`context-toggle${childContextShown ? ' expanded' : ''}`}
+                              onClick={(e) => { e.stopPropagation(); onToggleContext?.(childPath, !childContextShown) }}
+                              title={childContextShown ? 'Hide note' : 'Show note'}
                             >
                               <ChevronIcon />
                             </button>
@@ -429,7 +443,7 @@ function Section({
                     )}
                   </div>
                   {/* Context for layer2 */}
-                  {showContext && (childItem as StructureItem).context && (
+                  {childContextShown && (childItem as StructureItem).context && (
                     <div
                       className="item-context"
                       onClick={!isMobile && childRowEditable ? (e) => {
@@ -447,6 +461,7 @@ function Section({
                     {Object.entries(grandchildren).map(([grandKey, grandItem]) => {
                       const grandPath = `${childPath}.${grandKey}`
                       const grandTitle = (grandItem as StructureItem).title || grandKey
+                      const grandContextShown = isContextShown(showContext, contextOverrides, grandPath)
                       // Check if this grandchild item is editable
                       const grandRowEditable = rowEditable && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
                       // Desktop only — see childCanDrag's comment above.
@@ -529,9 +544,9 @@ function Section({
                                   {!minimal && (grandItem as StructureItem).context && (
                                     <button
                                       type="button"
-                                      className={`context-toggle${showContext ? ' expanded' : ''}`}
-                                      onClick={(e) => { e.stopPropagation(); onToggleContext?.() }}
-                                      title={showContext ? 'Hide notes' : 'Show notes'}
+                                      className={`context-toggle${grandContextShown ? ' expanded' : ''}`}
+                                      onClick={(e) => { e.stopPropagation(); onToggleContext?.(grandPath, !grandContextShown) }}
+                                      title={grandContextShown ? 'Hide note' : 'Show note'}
                                     >
                                       <ChevronIcon />
                                     </button>
@@ -541,7 +556,7 @@ function Section({
                             )}
                           </div>
                           {/* Context for layer3 */}
-                          {showContext && (grandItem as StructureItem).context && (
+                          {grandContextShown && (grandItem as StructureItem).context && (
                             <div
                               className="item-context"
                               style={{ marginLeft: '0.5rem' }}

@@ -363,14 +363,32 @@ function GraphView() {
       return DEPTHS[(idx + 1) % DEPTHS.length]
     }),
   )
-  // The N button's tap behavior — also called by every row's note-disclosure
-  // triangle (see Section.tsx's context-toggle), so a triangle click and a
-  // button click are the exact same action: one shared on/off state, not a
-  // per-item override, so the button's own "active" class and every row's
-  // triangle can never drift out of sync with each other.
+  // Per-item note-visibility overrides (the row-level disclosure triangle,
+  // see Section.tsx's context-toggle) — in-memory only, so they reset on
+  // reload same as the rest of the view-option state. A triangle click is a
+  // genuine per-item toggle; it does NOT touch viewMode.
+  const [contextOverrides, setContextOverrides] = useState<Map<string, boolean>>(new Map())
+  const toggleContextOverride = (path: string, shown: boolean) => {
+    setContextOverrides(prev => {
+      const next = new Map(prev)
+      next.set(path, shown)
+      return next
+    })
+  }
+
+  // The N button's own displayed on/off state — deliberately NOT just
+  // `viewMode === 'context'`. It's a "select-all checkbox": it only updates
+  // once every currently-visible noted item (see visibleNotedPaths below)
+  // agrees on a single state, and otherwise holds whatever it last showed
+  // (see the sync effect below displayItems). Clicking it forces every
+  // visible noted item to the opposite of what it's currently showing.
+  const [noteButtonActive, setNoteButtonActive] = useState(() => viewMode === 'context')
   const toggleNoteView = () => {
     if (minimalView) { setMinimalView(false); return }
-    setViewMode(m => m === 'context' ? 'default' : 'context')
+    const next = !noteButtonActive
+    setViewMode(next ? 'context' : 'default')
+    setContextOverrides(new Map())
+    setNoteButtonActive(next)
   }
   const ctxLongPress = useLongPress(
     () => setMinimalView(v => !v),
@@ -533,6 +551,44 @@ function GraphView() {
   }, [path, agentMutationSignal])
 
   const displayItems = useMemo(() => localItems || rawItems, [localItems, rawItems])
+
+  // Paths of every noted item actually rendered right now — respects the
+  // depth toggle (a level-3 item isn't in this list, and doesn't get a
+  // triangle either, when depth is 2), since the N button is meant to
+  // reflect "what is actually present" on screen, not the whole subtree
+  // (contrast with datedItems below, which is intentionally unlimited-depth).
+  const visibleNotedPaths = useMemo(() => {
+    const paths: string[] = []
+    for (const [k1, item1] of Object.entries(displayItems)) {
+      const p1 = path ? `${path}.${k1}` : k1
+      if (item1.context) paths.push(p1)
+      if (depth >= 2) {
+        for (const [k2, item2] of Object.entries(item1.children || {})) {
+          const p2 = `${p1}.${k2}`
+          if (item2.context) paths.push(p2)
+          if (depth >= 3) {
+            for (const [k3, item3] of Object.entries(item2.children || {})) {
+              const p3 = `${p2}.${k3}`
+              if (item3.context) paths.push(p3)
+            }
+          }
+        }
+      }
+    }
+    return paths
+  }, [displayItems, path, depth])
+
+  // Keeps noteButtonActive in sync with visibleNotedPaths — but only when
+  // they've reached consensus (see its own comment above): if every visible
+  // noted item is now shown, the button flips to "on"; if every one is now
+  // hidden, it flips to "off"; a mix leaves it exactly as it was, so one
+  // stray triangle doesn't yank the button out of the state it's showing.
+  useEffect(() => {
+    if (minimalView || visibleNotedPaths.length === 0) return
+    const states = visibleNotedPaths.map(p => contextOverrides.get(p) ?? (viewMode === 'context'))
+    if (states.every(s => s === true)) setNoteButtonActive(true)
+    else if (states.every(s => s === false)) setNoteButtonActive(false)
+  }, [visibleNotedPaths, contextOverrides, viewMode, minimalView])
 
   // Every dated item under the current page, at any depth (not just the
   // 3 levels the tree itself renders) — an always-on agenda strip below the
@@ -1565,11 +1621,11 @@ function GraphView() {
               title={depth === 0 ? 'Raw view — tap to return, long-press elsewhere for Raw' : `Showing ${depth} levels — tap to cycle, long-press for Raw`}
             >{depth === 0 ? 'R' : depth}</button>
             <button
-              className={`ctx-toggle${viewMode === 'context' ? ' active' : ''}${minimalView ? ' minimal' : ''}`}
+              className={`ctx-toggle${noteButtonActive ? ' active' : ''}${minimalView ? ' minimal' : ''}`}
               {...ctxLongPress}
               title={minimalView
                 ? 'Minimal view — tap to return to normal'
-                : `${viewMode === 'context' ? 'Note on' : 'Note off'} — tap to toggle, long-press for minimal view`}
+                : `${noteButtonActive ? 'Notes on' : 'Notes off'} — tap to toggle, long-press for minimal view`}
             >N</button>
           </div>
         </div>
@@ -1696,7 +1752,8 @@ function GraphView() {
                 dragEnabled={!inlineEdit && !subCreate}
                 pendingPaths={pendingItems}
                 showContext={viewMode === 'context' && !minimalView}
-                onToggleContext={toggleNoteView}
+                contextOverrides={contextOverrides}
+                onToggleContext={toggleContextOverride}
                 minimal={minimalView}
                 depth={depth}
                 showRaw={depth === 0}
