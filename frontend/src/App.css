@@ -256,10 +256,12 @@
   font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
   font-size: 0.8125rem;
   line-height: 1.5;
-  white-space: pre;
-  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
   color: var(--text-secondary);
   background: transparent;
+  user-select: text;
+  cursor: text;
 }
 
 /* Copy handle icon — two overlapping rectangles sized to their own bounding box */

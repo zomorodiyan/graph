@@ -10,6 +10,7 @@ import {
   moveItemToPosition,
   moveItemToParent,
   syncToDrive,
+  slugify,
   UpdatePayload,
   StructureItem,
 } from '@api'
@@ -322,7 +323,7 @@ function applyOptimisticUpdate(structure: any, path: string, data: UpdatePayload
   const finalKey = keys[keys.length - 1]
   if (current[finalKey]) {
     // Handle name change (rename)
-    const normalizedName = data.name ? data.name.toLowerCase().replace(/ /g, '_') : null
+    const normalizedName = data.name ? slugify(data.name) : null
     if (normalizedName && normalizedName !== finalKey) {
       // Preserve order by rebuilding the object
       const newCurrent: Record<string, any> = {}

@@ -8,7 +8,7 @@ import { useModalBackButton } from '../hooks/useModalBackButton'
 import { usePageSwipe } from '../hooks/usePageSwipe'
 import { useLongPress } from '../hooks/useLongPress'
 import { useDragGestureFactory } from '../hooks/useDragGesture'
-import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem } from '@api'
+import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem, slugify } from '@api'
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
@@ -600,21 +600,25 @@ function GraphView() {
     return (targetItem?.originalPath as string | undefined) ?? itemPath
   }
 
-  // Level-2/3 click (any device) and level-1 items that opt out of editing
-  // (see Section.tsx's rowEditable): navigate to the item's PARENT page, so
-  // the clicked item shows up as a 1st-level item alongside its siblings
-  // (with its own children/grandchildren now visible as the 2nd/3rd levels
-  // below it) — a "promote to top" navigation, not "descend into it" (see
-  // handleNavigateInto below for that one, which level-1's own click uses
-  // instead).
+  // Level-2/3 click (any device): navigate into the clicked item's own page
+  // (its children/grandchildren become the new 1st/2nd levels), same as
+  // handleNavigateInto below. Only a LEAF level-2/3 item (no children) falls
+  // back to the parent page instead — "promote to top" — since there's
+  // nowhere below it to descend into.
   const handleItemClick = (itemPath: string) => {
     const realPath = resolveRealPath(itemPath)
-    const parentPath = realPath.split('.').slice(0, -1).join('.')
+    const item = getItemByPath(structure, realPath)
+    const hasChildren = !!item?.children && Object.keys(item.children).length > 0
     // Push (not replace) so the hardware/OS back gesture still steps back up
     // through the levels actually visited, like normal browser back — swipe-
     // right (handleNavigateBack below) doesn't rely on this at all, it
     // computes its target from the current URL directly.
-    navigate(buildPath(parentPath))
+    if (hasChildren) {
+      navigate(buildPath(realPath))
+    } else {
+      const parentPath = realPath.split('.').slice(0, -1).join('.')
+      navigate(buildPath(parentPath))
+    }
   }
 
   // Navigate straight into a level-1 item's own children, making them the
@@ -711,7 +715,7 @@ function GraphView() {
     setSubCreate(null)
     if (!data.name) return
 
-    const normalizedName = data.name.toLowerCase().replace(/ /g, '_')
+    const normalizedName = slugify(data.name)
     const newItem: StructureItem = {
       title: data.name,
       ...(data.date && { date: data.date }),
@@ -780,7 +784,7 @@ function GraphView() {
       const itemKey = relativeParts[relativeParts.length - 1]
       const newName = data.name
       // Normalize name the same way the server does
-      const normalizedNewName = newName ? newName.toLowerCase().replace(/ /g, '_') : null
+      const normalizedNewName = newName ? slugify(newName) : null
       const isRename = normalizedNewName && normalizedNewName !== itemKey
       
       // IMMEDIATELY update local state for instant visual feedback
@@ -1594,7 +1598,10 @@ function GraphView() {
           // mid-gesture cancels the custom one's pointer tracking, so the
           // drop always finds draggedItem already cleared to null and
           // no-ops.
-          const canDrag = !isMobile && !isPending && !inlineEdit && !subCreate
+          // Raw view (depth 0) shows the item as plain selectable text — dragging
+          // is disabled there so a mouse-drag performs a text selection instead
+          // of starting a native HTML5 drag session.
+          const canDrag = !isMobile && !isPending && !inlineEdit && !subCreate && depth !== 0
 
           return (
             <div

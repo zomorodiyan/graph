@@ -245,7 +245,16 @@ function Section({
               <div
                 className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}${highlightClasses(itemPath, userHighlights, agentHighlights, agentDeletePending)}`}
                 {...(!isMobile && rowEditable
-                  ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, itemPath, true) }
+                  ? {
+                      onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, itemPath, true),
+                      // Ctrl/Cmd+click anywhere on the row (not just the title
+                      // span) toggles highlight — the title's own handler
+                      // stops propagation for this case so the toggle doesn't
+                      // fire twice when the click lands on the title itself.
+                      onClick: (e: React.MouseEvent) => {
+                        if (e.ctrlKey || e.metaKey) onToggleHighlight?.(itemPath)
+                      },
+                    }
                   : {})}
                 {...(isMobile && rowEditable
                   ? makeDragGestureHandlers?.(itemPath, () => onToggleHighlight?.(itemPath))
@@ -262,6 +271,7 @@ function Section({
                   title={!isMobile && rowEditable ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
                   onClick={isMobile ? undefined : (e) => {
                     if (rowEditable && (e.ctrlKey || e.metaKey)) {
+                      e.stopPropagation()
                       onToggleHighlight?.(itemPath)
                     } else if (rowEditable && (e.shiftKey || e.altKey)) {
                       onEditClick(itemPath, title, item)
@@ -279,7 +289,14 @@ function Section({
         </div>
         {/* Context */}
         {showContext && item.context && (
-          <div className="item-context">{item.context}</div>
+          <div
+            className="item-context"
+            onClick={!isMobile && rowEditable ? (e) => {
+              if (e.ctrlKey || e.metaKey) onToggleHighlight?.(itemPath)
+            } : undefined}
+          >
+            {item.context}
+          </div>
         )}
       </div>
 
@@ -346,7 +363,12 @@ function Section({
                         <div
                           className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}${highlightClasses(childPath, userHighlights, agentHighlights, agentDeletePending)}`}
                           {...(!isMobile && childRowEditable
-                            ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, childPath, depth >= 3) }
+                            ? {
+                                onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, childPath, depth >= 3),
+                                onClick: (e: React.MouseEvent) => {
+                                  if (e.ctrlKey || e.metaKey) onToggleHighlight?.(childPath)
+                                },
+                              }
                             : {})}
                           {...(isMobile && childRowEditable
                             ? makeDragGestureHandlers?.(childPath, () => onToggleHighlight?.(childPath))
@@ -356,7 +378,7 @@ function Section({
                             className="item-title"
                             title={!isMobile && childRowEditable ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
                             onClick={isMobile ? undefined : (e) => {
-                              if (childRowEditable && (e.ctrlKey || e.metaKey)) onToggleHighlight?.(childPath)
+                              if (childRowEditable && (e.ctrlKey || e.metaKey)) { e.stopPropagation(); onToggleHighlight?.(childPath) }
                               else if (childRowEditable && (e.shiftKey || e.altKey)) onEditClick(childPath, childTitle, childItem as StructureItem)
                               else onItemClick(childPath)
                             }}
@@ -370,7 +392,14 @@ function Section({
                   </div>
                   {/* Context for layer2 */}
                   {showContext && (childItem as StructureItem).context && (
-                    <div className="item-context">{(childItem as StructureItem).context}</div>
+                    <div
+                      className="item-context"
+                      onClick={!isMobile && childRowEditable ? (e) => {
+                        if (e.ctrlKey || e.metaKey) onToggleHighlight?.(childPath)
+                      } : undefined}
+                    >
+                      {(childItem as StructureItem).context}
+                    </div>
                   )}
                 </div>
 
@@ -436,7 +465,12 @@ function Section({
                                 <div
                                   className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}${highlightClasses(grandPath, userHighlights, agentHighlights, agentDeletePending)}`}
                                   {...(!isMobile && grandRowEditable
-                                    ? { onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, grandPath, false) }
+                                    ? {
+                                        onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, grandPath, false),
+                                        onClick: (e: React.MouseEvent) => {
+                                          if (e.ctrlKey || e.metaKey) onToggleHighlight?.(grandPath)
+                                        },
+                                      }
                                     : {})}
                                   {...(isMobile && grandRowEditable
                                     ? makeDragGestureHandlers?.(grandPath, () => onToggleHighlight?.(grandPath))
@@ -446,7 +480,7 @@ function Section({
                                     className="item-title"
                                     title={!isMobile && grandRowEditable ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
                                     onClick={isMobile ? undefined : (e) => {
-                                      if (grandRowEditable && (e.ctrlKey || e.metaKey)) onToggleHighlight?.(grandPath)
+                                      if (grandRowEditable && (e.ctrlKey || e.metaKey)) { e.stopPropagation(); onToggleHighlight?.(grandPath) }
                                       else if (grandRowEditable && (e.shiftKey || e.altKey)) onEditClick(grandPath, grandTitle, grandItem as StructureItem)
                                       else onItemClick(grandPath)
                                     }}
@@ -460,7 +494,13 @@ function Section({
                           </div>
                           {/* Context for layer3 */}
                           {showContext && (grandItem as StructureItem).context && (
-                            <div className="item-context" style={{ marginLeft: '0.5rem' }}>
+                            <div
+                              className="item-context"
+                              style={{ marginLeft: '0.5rem' }}
+                              onClick={!isMobile && grandRowEditable ? (e) => {
+                                if (e.ctrlKey || e.metaKey) onToggleHighlight?.(grandPath)
+                              } : undefined}
+                            >
                               {(grandItem as StructureItem).context}
                             </div>
                           )}
