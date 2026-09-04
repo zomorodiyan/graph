@@ -363,27 +363,19 @@ function GraphView() {
       return DEPTHS[(idx + 1) % DEPTHS.length]
     }),
   )
+  // The N button's tap behavior — also called by every row's note-disclosure
+  // triangle (see Section.tsx's context-toggle), so a triangle click and a
+  // button click are the exact same action: one shared on/off state, not a
+  // per-item override, so the button's own "active" class and every row's
+  // triangle can never drift out of sync with each other.
+  const toggleNoteView = () => {
+    if (minimalView) { setMinimalView(false); return }
+    setViewMode(m => m === 'context' ? 'default' : 'context')
+  }
   const ctxLongPress = useLongPress(
     () => setMinimalView(v => !v),
-    () => {
-      if (minimalView) { setMinimalView(false); return }
-      setViewMode(m => m === 'context' ? 'default' : 'context')
-    },
+    toggleNoteView,
   )
-
-  // Per-item note-visibility overrides (the row-level disclosure triangle,
-  // see Section.tsx's context-toggle) — in-memory only, so they reset on
-  // reload same as depth/viewMode's own localStorage-backed defaults would
-  // on a fresh session; deliberately NOT reset when the global N button
-  // (setViewMode) is toggled, so a one-off override stays put across that.
-  const [contextOverrides, setContextOverrides] = useState<Map<string, boolean>>(new Map())
-  const toggleContextOverride = (path: string, shown: boolean) => {
-    setContextOverrides(prev => {
-      const next = new Map(prev)
-      next.set(path, shown)
-      return next
-    })
-  }
 
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
@@ -1704,8 +1696,7 @@ function GraphView() {
                 dragEnabled={!inlineEdit && !subCreate}
                 pendingPaths={pendingItems}
                 showContext={viewMode === 'context' && !minimalView}
-                contextOverrides={contextOverrides}
-                onToggleContext={toggleContextOverride}
+                onToggleContext={toggleNoteView}
                 minimal={minimalView}
                 depth={depth}
                 showRaw={depth === 0}
