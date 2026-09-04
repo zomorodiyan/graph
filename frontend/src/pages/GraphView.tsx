@@ -11,7 +11,7 @@ import { useDragGestureFactory } from '../hooks/useDragGesture'
 import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem, slugify } from '@api'
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
-import Section from '../components/Section'
+import Section, { getDueCategory, formatDueDate } from '../components/Section'
 import ContextMenu from '../components/ContextMenu'
 
 // True on touch-primary devices (no on-screen keyboard problem on desktop,
@@ -371,6 +371,20 @@ function GraphView() {
     },
   )
 
+  // Per-item note-visibility overrides (the row-level disclosure triangle,
+  // see Section.tsx's context-toggle) — in-memory only, so they reset on
+  // reload same as depth/viewMode's own localStorage-backed defaults would
+  // on a fresh session; deliberately NOT reset when the global N button
+  // (setViewMode) is toggled, so a one-off override stays put across that.
+  const [contextOverrides, setContextOverrides] = useState<Map<string, boolean>>(new Map())
+  const toggleContextOverride = (path: string, shown: boolean) => {
+    setContextOverrides(prev => {
+      const next = new Map(prev)
+      next.set(path, shown)
+      return next
+    })
+  }
+
   const { data: structure, isLoading, error } = useStructure(graphName)
   const { data: graphs = [] } = useGraphs()
   // Bumped by AgentChat.tsx after a tool-driven edit/add, which mutates the
@@ -527,6 +541,25 @@ function GraphView() {
   }, [path, agentMutationSignal])
 
   const displayItems = useMemo(() => localItems || rawItems, [localItems, rawItems])
+
+  // Every dated item under the current page, at any depth (not just the
+  // 3 levels the tree itself renders) — an always-on agenda strip below the
+  // item list, only shown once there's more than one to make it worth
+  // scrolling to (see the render below).
+  const datedItems = useMemo(() => {
+    const results: { path: string; title: string; date: string }[] = []
+    const walk = (items: Record<string, StructureItem>, basePath: string) => {
+      for (const [key, item] of Object.entries(items)) {
+        if (item.originalPath) continue
+        const itemPath = basePath ? `${basePath}.${key}` : key
+        if (item.date) results.push({ path: itemPath, title: item.title || key, date: item.date })
+        if (item.children) walk(item.children, itemPath)
+      }
+    }
+    walk(displayItems, path)
+    results.sort((a, b) => a.date.localeCompare(b.date))
+    return results
+  }, [displayItems, path])
 
   const displayOrder = useMemo(() => localOrder || serverKeys, [localOrder, serverKeys])
 
@@ -1671,6 +1704,8 @@ function GraphView() {
                 dragEnabled={!inlineEdit && !subCreate}
                 pendingPaths={pendingItems}
                 showContext={viewMode === 'context' && !minimalView}
+                contextOverrides={contextOverrides}
+                onToggleContext={toggleContextOverride}
                 minimal={minimalView}
                 depth={depth}
                 showRaw={depth === 0}
@@ -1683,6 +1718,25 @@ function GraphView() {
 
         {levelOneKeys.length === 0 && (
           <div className="empty-state">No items at this level</div>
+        )}
+
+        {/* Agenda strip — every dated item under this page, any depth, soonest
+            first. Only worth showing once there's more than one. */}
+        {datedItems.length > 1 && (
+          <div className="time-view">
+            <div className="time-view-heading">Dates</div>
+            {datedItems.map(({ path: itemPath, title, date }) => (
+              <button
+                key={itemPath}
+                type="button"
+                className="time-view-row"
+                onClick={() => handleItemClick(itemPath)}
+              >
+                <span className="time-view-row-title">{title}</span>
+                <span className={`item-due due-${getDueCategory(date)}`}>{formatDueDate(date)}</span>
+              </button>
+            ))}
+          </div>
         )}
 
         {/* Copy/delete/edit/add-sub/paste-sub — bottom copy, same as the top one. */}

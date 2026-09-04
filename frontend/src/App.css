@@ -477,6 +477,33 @@
   background-color: rgba(255,255,255,0.06);
 }
 
+/* Per-item note disclosure triangle (see ChevronIcon in Section.tsx) — only
+   rendered for a row that actually has a note, sits right after its title,
+   points right when the note is hidden and rotates to point down when shown. */
+.context-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  align-self: center;
+  width: 1.125rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: currentColor;
+  opacity: 0.5;
+  cursor: pointer;
+}
+.context-toggle:hover {
+  opacity: 0.9;
+}
+.context-toggle svg {
+  transition: transform 0.15s ease;
+}
+.context-toggle.expanded svg {
+  transform: rotate(90deg);
+}
+
 /* Context and due date display */
 .item-context {
   font-size: 0.6875rem;
@@ -563,6 +590,53 @@
 [data-theme='dark'] .due-later {
   background-color: #253b4d;
   color: #e3f2fd;
+}
+
+/* Agenda strip at the bottom of the page — every dated item under the
+   current page (any depth), soonest first (see datedItems in GraphView.tsx).
+   Only rendered once there's more than one, so it reads as "worth scrolling
+   to" rather than a near-empty section on every page. */
+.time-view {
+  margin-top: 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+.time-view-heading {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin-bottom: 0.375rem;
+  padding: 0 0.5rem;
+}
+.time-view-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  border: none;
+  background: transparent;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--text-primary);
+}
+.time-view-row:hover {
+  background-color: rgba(0,0,0,0.06);
+}
+[data-theme='dark'] .time-view-row:hover {
+  background-color: rgba(255,255,255,0.06);
+}
+.time-view-row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Tags — small colored pills next to the title, hashed to one of 6 fixed

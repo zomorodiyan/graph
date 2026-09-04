@@ -3,6 +3,24 @@ import { StructureItem, UpdatePayload } from '../api/localClient'
 import { parseLocalDate, daysUntil } from '../utils/dates'
 import InlineItemEditor from './InlineItemEditor'
 
+// Per-item note disclosure triangle (see .context-toggle in App.css) —
+// points right when the note is hidden, rotates to point down when shown.
+function ChevronIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 6 15 12 9 18" />
+    </svg>
+  )
+}
+
+// Whether a row's note is shown: an explicit per-item override (see
+// GraphView's contextOverrides/onToggleContext) wins over the page-wide
+// showContext setting — lets one item's note be flipped open/closed without
+// touching the N button's global default for every other item.
+function isContextShown(showContext: boolean, contextOverrides: Map<string, boolean> | undefined, path: string): boolean {
+  return contextOverrides?.has(path) ? contextOverrides.get(path)! : showContext
+}
+
 interface SectionProps {
   itemKey: string
   item: StructureItem
@@ -71,6 +89,12 @@ interface SectionProps {
   pendingPaths?: Set<string>
   isTimeView?: boolean
   showContext?: boolean
+  // Per-item note visibility overrides (see isContextShown above) and the
+  // handler the row's disclosure triangle calls to flip one — both owned by
+  // GraphView (in-memory only, so they reset on reload, same as the rest of
+  // the view-option state).
+  contextOverrides?: Map<string, boolean>
+  onToggleContext?: (path: string, shown: boolean) => void
   // Long-press on the context toggle: hides date/tags badges too,
   // leaving just the title (showContext is expected to be forced off alongside this)
   minimal?: boolean
@@ -104,7 +128,7 @@ function getDropZone(e: React.DragEvent): 'before' | 'nest' | 'after' {
 }
 
 // Helper to calculate due date category for CSS class
-function getDueCategory(dueDate: string | undefined): string | null {
+export function getDueCategory(dueDate: string | undefined): string | null {
   if (!dueDate) return null
   const diffDays = daysUntil(dueDate)
   if (diffDays < 0) return 'overdue'
@@ -114,7 +138,7 @@ function getDueCategory(dueDate: string | undefined): string | null {
 }
 
 // Helper to format date display — today shows "Today", tomorrow "2d", etc.
-function formatDueDate(dueDate: string): string {
+export function formatDueDate(dueDate: string): string {
   const diffDays = daysUntil(dueDate)
   if (diffDays < 0) return `${Math.abs(diffDays)}d overdue`
   if (diffDays === 0) return 'Today'
@@ -184,6 +208,8 @@ function Section({
   pendingPaths,
   isTimeView = false,
   showContext = true,
+  contextOverrides,
+  onToggleContext,
   minimal = false,
   depth = 3,
   showRaw = false,
@@ -191,6 +217,7 @@ function Section({
 }: SectionProps) {
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
   const title = item.title || itemKey
+  const itemContextShown = isContextShown(showContext, contextOverrides, itemPath)
 
   const sectionRef = useRef<HTMLDivElement>(null)
 
@@ -283,12 +310,22 @@ function Section({
                   {title}
                   <DateAndTagBadges item={item} minimal={minimal} />
                 </span>
+                {!minimal && item.context && (
+                  <button
+                    type="button"
+                    className={`context-toggle${itemContextShown ? ' expanded' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleContext?.(itemPath, !itemContextShown) }}
+                    title={itemContextShown ? 'Hide note' : 'Show note'}
+                  >
+                    <ChevronIcon />
+                  </button>
+                )}
               </div>
             </>
           )}
         </div>
         {/* Context */}
-        {showContext && item.context && (
+        {itemContextShown && item.context && (
           <div
             className="item-context"
             onClick={!isMobile && rowEditable ? (e) => {
@@ -305,6 +342,7 @@ function Section({
         {childEntries.map(([childKey, childItem]) => {
           const childPath = `${itemPath}.${childKey}`
           const childTitle = (childItem as StructureItem).title || childKey
+          const childContextShown = isContextShown(showContext, contextOverrides, childPath)
           const grandchildren = (childItem as StructureItem).children || {}
           // Check if this child item is editable
           const childRowEditable = rowEditable && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
@@ -386,12 +424,22 @@ function Section({
                             {childTitle}
                             <DateAndTagBadges item={childItem as StructureItem} minimal={minimal} />
                           </span>
+                          {!minimal && (childItem as StructureItem).context && (
+                            <button
+                              type="button"
+                              className={`context-toggle${childContextShown ? ' expanded' : ''}`}
+                              onClick={(e) => { e.stopPropagation(); onToggleContext?.(childPath, !childContextShown) }}
+                              title={childContextShown ? 'Hide note' : 'Show note'}
+                            >
+                              <ChevronIcon />
+                            </button>
+                          )}
                         </div>
                       </>
                     )}
                   </div>
                   {/* Context for layer2 */}
-                  {showContext && (childItem as StructureItem).context && (
+                  {childContextShown && (childItem as StructureItem).context && (
                     <div
                       className="item-context"
                       onClick={!isMobile && childRowEditable ? (e) => {
@@ -409,6 +457,7 @@ function Section({
                     {Object.entries(grandchildren).map(([grandKey, grandItem]) => {
                       const grandPath = `${childPath}.${grandKey}`
                       const grandTitle = (grandItem as StructureItem).title || grandKey
+                      const grandContextShown = isContextShown(showContext, contextOverrides, grandPath)
                       // Check if this grandchild item is editable
                       const grandRowEditable = rowEditable && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
                       // Desktop only — see childCanDrag's comment above.
@@ -488,12 +537,22 @@ function Section({
                                     {grandTitle}
                                     <DateAndTagBadges item={grandItem as StructureItem} minimal={minimal} />
                                   </span>
+                                  {!minimal && (grandItem as StructureItem).context && (
+                                    <button
+                                      type="button"
+                                      className={`context-toggle${grandContextShown ? ' expanded' : ''}`}
+                                      onClick={(e) => { e.stopPropagation(); onToggleContext?.(grandPath, !grandContextShown) }}
+                                      title={grandContextShown ? 'Hide note' : 'Show note'}
+                                    >
+                                      <ChevronIcon />
+                                    </button>
+                                  )}
                                 </div>
                               </>
                             )}
                           </div>
                           {/* Context for layer3 */}
-                          {showContext && (grandItem as StructureItem).context && (
+                          {grandContextShown && (grandItem as StructureItem).context && (
                             <div
                               className="item-context"
                               style={{ marginLeft: '0.5rem' }}
