@@ -1772,7 +1772,6 @@ function GraphView() {
             first. Only worth showing once there's more than one. */}
         {datedItems.length > 1 && (
           <div className="time-view">
-            <div className="time-view-heading">Dates</div>
             {datedItems.map(({ path: itemPath, title, date }) => (
               <button
                 key={itemPath}
