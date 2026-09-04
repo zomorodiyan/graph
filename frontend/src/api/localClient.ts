@@ -15,6 +15,16 @@ export interface Structure {
   structure: Record<string, StructureItem>
 }
 
+// Item keys double as path segments joined with "." (see getContainer/
+// getParentAndKey below), so a key can never itself contain a literal "." —
+// or any other character split('.') based path lookups don't expect — or
+// every lookup/rename/delete on that item breaks silently. Strip down to
+// [a-z0-9_] the same way for every title -> key conversion, whether typed by
+// a person or produced by the agent.
+export function slugify(title: string): string {
+  return title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') || 'item'
+}
+
 export interface GraphInfo {
   name: string; display_name: string; path: string
   modified_at: string; size: number; description: string; version: string; icon: string
@@ -247,7 +257,7 @@ function parseMarkdownStructure(text: string): Record<string, StructureItem> {
       while (stack.length > 1 && stack[stack.length - 1].depth >= depth) stack.pop()
       const frame = stack[stack.length - 1]
 
-      const rawKey = title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') || 'item'
+      const rawKey = slugify(title)
       let key = rawKey, n = 2
       while (key in frame.container) key = `${rawKey}_${n++}`
 
@@ -389,7 +399,7 @@ export async function updateItem(path: string, data: UpdatePayload, graphName = 
   }
 
   if (data.name !== undefined) {
-    const newKey = data.name.toLowerCase().replace(/ /g, '_')
+    const newKey = slugify(data.name)
     item.title = data.name
     if (newKey !== key) {
       // Rename: rebuild parent preserving order
@@ -417,7 +427,7 @@ export async function createItem(parentPath: string, data: UpdatePayload, graphN
   if (!container) throw new Error(`Parent not found: ${parentPath}`)
 
   // Suffix duplicate keys (like paste does) instead of overwriting an existing item
-  const baseKey = data.name.toLowerCase().replace(/ /g, '_')
+  const baseKey = slugify(data.name)
   let key = baseKey, n = 2
   while (key in container) key = `${baseKey}_${n++}`
   const item: StructureItem = {
