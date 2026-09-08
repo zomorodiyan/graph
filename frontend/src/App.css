@@ -486,8 +486,9 @@
   justify-content: center;
   flex-shrink: 0;
   align-self: center;
-  width: 1ch;
+  width: 1em;
   height: 1em;
+  font-size: inherit;
   margin: 0;
   padding: 0;
   border: none;
