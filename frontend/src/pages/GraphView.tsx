@@ -11,7 +11,7 @@ import { useDragGestureFactory } from '../hooks/useDragGesture'
 import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem, slugify } from '@api'
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
-import Section, { getDueCategory, formatDueDate } from '../components/Section'
+import Section, { getDueCategory, formatDueDate, tagColorIndex } from '../components/Section'
 import ContextMenu from '../components/ContextMenu'
 
 // True on touch-primary devices (no on-screen keyboard problem on desktop,
@@ -368,6 +368,13 @@ function GraphView() {
   // reload same as the rest of the view-option state. A triangle click is a
   // genuine per-item toggle; it does NOT touch viewMode.
   const [contextOverrides, setContextOverrides] = useState<Map<string, boolean>>(new Map())
+  // Tag view (see tagView below) — lives in the URL as ?tag=, always at the
+  // graph root since tags cut across the whole tree, so browser back returns
+  // to it after opening one of its items.
+  const activeTag = new URLSearchParams(location.search).get('tag')
+  const [tagDraft, setTagDraft] = useState(activeTag ?? '')
+  const [tagInputFocused, setTagInputFocused] = useState(false)
+  useEffect(() => { setTagDraft(activeTag ?? '') }, [activeTag])
   const toggleContextOverride = (path: string, shown: boolean) => {
     setContextOverrides(prev => {
       const next = new Map(prev)
@@ -609,6 +616,67 @@ function GraphView() {
     return results
   }, [displayItems, path])
 
+  // How many items in the whole graph carry each tag — tags cut across the
+  // tree (see localClient.ts), so unlike datedItems this deliberately isn't
+  // limited to the current page. Pills for tags shared by 2+ items
+  // (sharedTags, see Section.tsx's DateAndTagBadges) open the tag view;
+  // allTags (most-used first) feeds the tag view's input suggestions.
+  const tagCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    const walk = (items: Record<string, StructureItem>) => {
+      for (const item of Object.values(items)) {
+        if (item.originalPath) continue
+        for (const tag of item.tags ?? []) counts.set(tag, (counts.get(tag) ?? 0) + 1)
+        if (item.children) walk(item.children)
+      }
+    }
+    walk(structure?.structure ?? {})
+    return counts
+  }, [structure])
+  const sharedTags = useMemo(
+    () => new Set([...tagCounts].filter(([, n]) => n > 1).map(([tag]) => tag)),
+    [tagCounts],
+  )
+  const allTags = useMemo(
+    () => [...tagCounts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([tag]) => tag),
+    [tagCounts],
+  )
+
+  // The graph filtered down to activeTag's items, keeping their connections:
+  // each tagged item hangs under its nearest TAGGED ancestor (untagged ones
+  // in between are skipped over), so a tag carried by every item reproduces
+  // the normal tree. Rendered read-only through the same Section component
+  // as the normal view (isTimeView), minus the active tag's own pill. Keys
+  // are synthetic (siblings here can come from different real parents, so
+  // real keys could collide) — realPaths maps each rendered path back.
+  const tagView = useMemo(() => {
+    if (!activeTag) return null
+    const realPaths = new Map<string, string>()
+    let n = 0
+    const build = (items: Record<string, StructureItem>, realBase: string, viewBase: string) => {
+      const out: Record<string, StructureItem> = {}
+      for (const [key, item] of Object.entries(items)) {
+        if (item.originalPath) continue
+        const realPath = realBase ? `${realBase}.${key}` : key
+        if (item.tags?.includes(activeTag)) {
+          const viewKey = `t${n++}`
+          const viewPath = viewBase ? `${viewBase}.${viewKey}` : viewKey
+          realPaths.set(viewPath, realPath)
+          const tags = item.tags.filter(t => t !== activeTag)
+          out[viewKey] = {
+            ...item,
+            tags: tags.length ? tags : undefined,
+            children: item.children ? build(item.children, realPath, viewPath) : {},
+          }
+        } else if (item.children) {
+          Object.assign(out, build(item.children, realPath, viewBase))
+        }
+      }
+      return out
+    }
+    return { items: build(structure?.structure ?? {}, '', ''), realPaths }
+  }, [structure, activeTag])
+
   const displayOrder = useMemo(() => localOrder || serverKeys, [localOrder, serverKeys])
 
   // Level-1 keys actually rendered as items.
@@ -686,8 +754,12 @@ function GraphView() {
   // handleNavigateInto below. Only a LEAF level-2/3 item (no children) falls
   // back to the parent page instead — "promote to top" — since there's
   // nowhere below it to descend into.
-  const handleItemClick = (itemPath: string) => {
-    const realPath = resolveRealPath(itemPath)
+  const handleItemClick = (itemPath: string) => navigateToItem(resolveRealPath(itemPath))
+
+  // Shared by handleItemClick and the tag list (whose paths are already
+  // real, absolute ones — resolveRealPath only understands paths under the
+  // current page).
+  const navigateToItem = (realPath: string) => {
     const item = getItemByPath(structure, realPath)
     const hasChildren = !!item?.children && Object.keys(item.children).length > 0
     // Push (not replace) so the hardware/OS back gesture still steps back up
@@ -702,6 +774,23 @@ function GraphView() {
     }
   }
 
+  const openTagView = (tag: string) => navigate(`${buildPath('')}?tag=${encodeURIComponent(tag)}`)
+  const closeTagView = () => navigate(location.pathname)
+  const handleTagClick = (tag: string) => (tag === activeTag ? closeTagView() : openTagView(tag))
+  // Tag view rows: synthetic path -> the real item (see tagView above).
+  const handleTagViewItemClick = (viewPath: string) => {
+    const realPath = tagView?.realPaths.get(viewPath)
+    if (realPath) navigateToItem(realPath)
+  }
+  const tagSuggestionQuery = tagDraft === activeTag ? '' : tagDraft.trim().replace(/^#/, '').toLowerCase()
+  const tagSuggestions = allTags.filter(t => t !== activeTag && t.toLowerCase().includes(tagSuggestionQuery))
+  const commitTagDraft = () => {
+    const q = tagSuggestionQuery
+    const tag = allTags.find(t => t.toLowerCase() === q) ?? tagSuggestions[0]
+    if (q && tag) openTagView(tag)
+    else setTagDraft(activeTag ?? '')
+  }
+
   // Navigate straight into a level-1 item's own children, making them the
   // new level-1 list — level-1 items have no "go to parent" navigation
   // today because their own parent IS the current page (handleItemClick's
@@ -712,7 +801,7 @@ function GraphView() {
   // (no children) — there's nowhere to go, so it's better ignored than
   // navigating to an empty page.
   const handleNavigateInto = (itemPath: string) => {
-    const realPath = resolveRealPath(itemPath)
+    const realPath = tagView?.realPaths.get(itemPath) ?? resolveRealPath(itemPath)
     const item = getItemByPath(structure, realPath)
     if (!item?.children || Object.keys(item.children).length === 0) return
     navigate(buildPath(realPath))
@@ -1664,6 +1753,75 @@ function GraphView() {
             </button>
           </div>
         )}
+        {/* Tag view — replaces the normal item list while ?tag= is set. */}
+        {tagView && activeTag && (
+          <div className="tag-view">
+            <div className="tag-view-header">
+              <span className={`tag-pill tag-${tagColorIndex(activeTag)}`}>#</span>
+              <input
+                className="tag-view-input"
+                value={tagDraft}
+                onChange={(e) => setTagDraft(e.target.value)}
+                onFocus={(e) => { setTagInputFocused(true); e.target.select() }}
+                onBlur={() => { setTagInputFocused(false); setTagDraft(activeTag) }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); commitTagDraft(); e.currentTarget.blur() }
+                  else if (e.key === 'Escape') e.currentTarget.blur()
+                }}
+                placeholder="tag…"
+                aria-label="Tag"
+              />
+              <span className="tag-view-count">{tagCounts.get(activeTag) ?? 0} items</span>
+              <button type="button" className="tag-view-close" onClick={closeTagView} title="Close tag view">
+                <XIcon />
+              </button>
+            </div>
+            {tagInputFocused && tagSuggestions.length > 0 && (
+              <div className="tag-view-suggestions">
+                {tagSuggestions.map(tag => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className={`tag-pill tag-${tagColorIndex(tag)} tag-pill-clickable`}
+                    // Keep the input focused through the click (blur would
+                    // otherwise unmount this list before the click lands).
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => openTagView(tag)}
+                  >
+                    {tag} <span className="tag-view-suggestion-count">{tagCounts.get(tag)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {tagView && Object.entries(tagView.items).map(([key, item], index) => (
+          <div key={key} className="section-wrapper">
+            <Section
+              itemKey={key}
+              item={item}
+              parentPath=""
+              colorIndex={index % COLORS.length}
+              onItemClick={handleTagViewItemClick}
+              onItemEnter={handleTagViewItemClick}
+              onEditClick={() => {}}
+              editInline={!isMobile}
+              isTimeView
+              showContext={viewMode === 'context' && !minimalView}
+              contextOverrides={contextOverrides}
+              onToggleContext={toggleContextOverride}
+              minimal={minimalView}
+              depth={depth}
+              sharedTags={sharedTags}
+              activeTag={activeTag}
+              onTagClick={handleTagClick}
+            />
+          </div>
+        ))}
+        {tagView && Object.keys(tagView.items).length === 0 && (
+          <div className="empty-state">No items with this tag</div>
+        )}
+        {!tagView && <>
         {/* Sections - rendered in local order for instant drag feedback. */}
         <div role="region" aria-label="Items" tabIndex={0}>
         {levelOneKeys.map((key, index) => {
@@ -1758,6 +1916,9 @@ function GraphView() {
                 depth={depth}
                 showRaw={depth === 0}
                 rawText={depth === 0 ? serializeItem(key, item as StructureItem, 1).trimEnd() : undefined}
+                sharedTags={sharedTags}
+                activeTag={activeTag}
+                onTagClick={handleTagClick}
               />
             </div>
           )
@@ -1785,6 +1946,7 @@ function GraphView() {
             ))}
           </div>
         )}
+        </>}
 
         {/* Copy/delete/edit/add-sub/paste-sub — bottom copy, same as the top one. */}
         {renderSelectionToolbar()}
