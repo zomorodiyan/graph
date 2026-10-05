@@ -105,6 +105,9 @@ interface SectionProps {
   depth?: number
   showRaw?: boolean
   rawText?: string
+  sharedTags?: Set<string>
+  activeTag?: string | null
+  onTagClick?: (tag: string) => void
 }
 
 // Appends the highlight class(es) for a row — user/agent highlights can both
@@ -153,14 +156,23 @@ export function formatDueDate(dueDate: string): string {
 // Stable hash → one of 6 fixed tag palette slots (see .tag-0..5 in App.css) —
 // same tag text always lands on the same color, independent of item/render order.
 const TAG_PALETTE_SIZE = 6
-function tagColorIndex(tag: string): number {
+export function tagColorIndex(tag: string): number {
   let hash = 0
   for (let i = 0; i < tag.length; i++) hash = (hash * 31 + tag.charCodeAt(i)) >>> 0
   return hash % TAG_PALETTE_SIZE
 }
 
+interface TagClickProps {
+  // Tags carried by more than one item in the graph (see GraphView's
+  // taggedItems) — only these pills are clickable, since a tag on just one
+  // item has nothing else to list. activeTag is the one whose list is open.
+  sharedTags?: Set<string>
+  activeTag?: string | null
+  onTagClick?: (tag: string) => void
+}
+
 // Date + tags badges, shared by all three layers — hidden entirely in minimal view.
-function DateAndTagBadges({ item, minimal }: { item: StructureItem; minimal: boolean }) {
+function DateAndTagBadges({ item, minimal, sharedTags, activeTag, onTagClick }: { item: StructureItem; minimal: boolean } & TagClickProps) {
   if (minimal) return null
   return (
     <>
@@ -169,7 +181,21 @@ function DateAndTagBadges({ item, minimal }: { item: StructureItem; minimal: boo
       )}
       {item.tags && item.tags.length > 0 && (
         <span className="item-tags">
-          {item.tags.map(tag => (
+          {item.tags.map(tag => onTagClick && sharedTags?.has(tag) ? (
+            <button
+              key={tag}
+              type="button"
+              className={`tag-pill tag-${tagColorIndex(tag)} tag-pill-clickable${activeTag === tag ? ' active' : ''}`}
+              title={activeTag === tag ? 'Hide items with this tag' : 'Show all items with this tag'}
+              // Stop pointerdown too, not just click — mobile rows capture the
+              // pointer on pointerdown (see useDragGesture.ts), which would
+              // retarget this tap's click to the row and toggle its highlight.
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onTagClick(tag) }}
+            >
+              {tag}
+            </button>
+          ) : (
             <span key={tag} className={`tag-pill tag-${tagColorIndex(tag)}`}>{tag}</span>
           ))}
         </span>
@@ -218,10 +244,14 @@ function Section({
   depth = 3,
   showRaw = false,
   rawText,
+  sharedTags,
+  activeTag,
+  onTagClick,
 }: SectionProps) {
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
   const title = item.title || itemKey
   const itemContextShown = isContextShown(showContext, contextOverrides, itemPath)
+  const tagProps = { sharedTags, activeTag, onTagClick }
 
   const sectionRef = useRef<HTMLDivElement>(null)
 
@@ -312,7 +342,7 @@ function Section({
                   }}
                 >
                   {title}
-                  <DateAndTagBadges item={item} minimal={minimal} />
+                  <DateAndTagBadges item={item} minimal={minimal} {...tagProps} />
                 </span>
                 {!minimal && item.context && (
                   <button
@@ -426,7 +456,7 @@ function Section({
                             }}
                           >
                             {childTitle}
-                            <DateAndTagBadges item={childItem as StructureItem} minimal={minimal} />
+                            <DateAndTagBadges item={childItem as StructureItem} minimal={minimal} {...tagProps} />
                           </span>
                           {!minimal && (childItem as StructureItem).context && (
                             <button
@@ -539,7 +569,7 @@ function Section({
                                     }}
                                   >
                                     {grandTitle}
-                                    <DateAndTagBadges item={grandItem as StructureItem} minimal={minimal} />
+                                    <DateAndTagBadges item={grandItem as StructureItem} minimal={minimal} {...tagProps} />
                                   </span>
                                   {!minimal && (grandItem as StructureItem).context && (
                                     <button
