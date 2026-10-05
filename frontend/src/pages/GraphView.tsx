@@ -21,9 +21,6 @@ function isTouchDevice(): boolean {
   return typeof window !== 'undefined' && !!window.matchMedia?.('(hover: none) and (pointer: coarse)').matches
 }
 
-// Color assignment based on index
-const COLORS = ['sky', 'indigo', 'fuchsia']
-
 // Copy/Delete-selection icons — plain hand-drawn outlines (no icon package
 // in this project), sized to sit inside the same circular buttons as
 // depth/note (see .copy-toggle/.delete-toggle in App.css).
@@ -1795,13 +1792,12 @@ function GraphView() {
             )}
           </div>
         )}
-        {tagView && Object.entries(tagView.items).map(([key, item], index) => (
+        {tagView && Object.entries(tagView.items).map(([key, item]) => (
           <div key={key} className="section-wrapper">
             <Section
               itemKey={key}
               item={item}
               parentPath=""
-              colorIndex={index % COLORS.length}
               onItemClick={handleTagViewItemClick}
               onItemEnter={handleTagViewItemClick}
               onEditClick={() => {}}
@@ -1881,7 +1877,6 @@ function GraphView() {
                 itemKey={key}
                 item={item as StructureItem}
                 parentPath={path || ''}
-                colorIndex={index % COLORS.length}
                 onItemClick={handleItemClick}
                 onItemEnter={handleNavigateInto}
                 onEditClick={handleEditClick}

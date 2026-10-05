@@ -40,18 +40,6 @@ export interface UpdatePayload {
   tags?: string[]  // undefined=untouched, []=cleared, non-empty=wholesale replace
 }
 
-export interface GraphStateVersion { graph: string; version: number; backend: string }
-
-export interface GraphMutation {
-  id: string; version: number; type: string; payload: Record<string, unknown>
-  actor: string; node_count: number; edge_count: number; created_at?: string
-}
-
-export interface GraphMutationsResponse {
-  graph: string; since_version: number; latest_version: number; count: number
-  mutations: GraphMutation[]
-}
-
 // ── Storage keys ────────────────────────────────────────────────────────────
 const GRAPHS_LIST_KEY = 'offline_graphs'
 const DELETED_KEY    = 'offline_deleted_graphs'
@@ -476,41 +464,6 @@ export async function pasteItems(
   return { success: true, added }
 }
 
-function reorderKeys(obj: Record<string, StructureItem>, key: string, targetIndex: number) {
-  const keys = Object.keys(obj)
-  const from = keys.indexOf(key)
-  if (from === -1) return
-  keys.splice(from, 1)
-  keys.splice(Math.min(targetIndex, keys.length), 0, key)
-  const rebuilt: Record<string, StructureItem> = {}
-  keys.forEach(k => { rebuilt[k] = obj[k] })
-  Object.keys(obj).forEach(k => delete obj[k])
-  Object.assign(obj, rebuilt)
-}
-
-export async function moveItemUp(path: string, graphName = 'default'): Promise<{ success: boolean; message: string }> {
-  const s = loadStructure(graphName)
-  const pk = getParentAndKey(s.structure, path)
-  if (!pk) throw new Error(`Item not found: ${path}`)
-  const { parent, key } = pk
-  const idx = Object.keys(parent).indexOf(key)
-  reorderKeys(parent, key, Math.max(0, idx - 1))
-  saveStructure(graphName, s)
-  return { success: true, message: 'Moved up' }
-}
-
-export async function moveItemDown(path: string, graphName = 'default'): Promise<{ success: boolean; message: string }> {
-  const s = loadStructure(graphName)
-  const pk = getParentAndKey(s.structure, path)
-  if (!pk) throw new Error(`Item not found: ${path}`)
-  const { parent, key } = pk
-  const keys = Object.keys(parent)
-  const idx = keys.indexOf(key)
-  reorderKeys(parent, key, Math.min(keys.length - 1, idx + 1))
-  saveStructure(graphName, s)
-  return { success: true, message: 'Moved down' }
-}
-
 // Move an item to a specific position within a (possibly different) parent's
 // children — the general case behind drag-and-drop "before"-zone drops.
 // targetIndex is the drop target's index in the pre-removal order of ITS OWN
@@ -582,10 +535,6 @@ export async function moveItemToParent(path: string, newParentPath: string, grap
   return { success: true, message: 'Moved' }
 }
 
-export async function syncToDrive(_graphName?: string): Promise<{ success: boolean; message: string }> {
-  return { success: true, message: 'Offline mode — no sync' }
-}
-
 export async function fetchStructureText(graphName = 'default'): Promise<string> {
   const s = loadStructure(graphName)
   return serializeStructure(s.structure)
@@ -630,14 +579,6 @@ export async function updateGraph(name: string, data: GraphUpdatePayload): Promi
   const updated = { ...meta, ...data, modified_at: new Date().toISOString() }
   saveMeta(name, updated)
   return updated
-}
-
-export async function fetchGraphStateVersion(graphName: string): Promise<GraphStateVersion> {
-  return { graph: graphName, version: 0, backend: 'offline' }
-}
-
-export async function fetchGraphMutations(graphName: string, sinceVersion = 0): Promise<GraphMutationsResponse> {
-  return { graph: graphName, since_version: sinceVersion, latest_version: 0, count: 0, mutations: [] }
 }
 
 // ── Parse structure body text (used by Gist sync pull) ───────────────────────
