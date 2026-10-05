@@ -29,7 +29,6 @@ interface SectionProps {
   itemKey: string
   item: StructureItem
   parentPath: string
-  colorIndex: number
   // Plain click on a level-2/3 title (any device) — "promote this item and
   // its siblings to the top" navigation.
   onItemClick: (path: string) => void
@@ -208,7 +207,6 @@ function Section({
   itemKey,
   item,
   parentPath,
-  colorIndex: _colorIndex,
   onItemClick,
   onItemEnter,
   onEditClick,

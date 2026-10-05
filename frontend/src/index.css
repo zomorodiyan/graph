@@ -39,64 +39,21 @@
   
   --purple-light: #BA90E8;
   --purple-lighter: #D1C4E9;
-  --purple-medium: #7E57C2;
   --purple-dark: #3A1080;
   --purple-darker: #331B78;
   
   --brown-light: #BCAAA4;
   --brown-lighter: #D7CCC8;
-  --brown-medium: #795548;
   --brown-dark: #5D4037;
   --brown-darker: #46302A;
-  
-  --green-light-alt: #81C784;
-  --blue-light-alt: #64B5F6;
-  --purple-light-alt: #9575CD;
-  --brown-light-alt: #A1887F;
-
-  --teal-light: #4DB6AC;
-  --teal-lighter: #80CBC4;
-  --teal-dark: #00695C;
-  --teal-darker: #004D40;
-
-  --amber-light: #FFB74D;
-  --amber-lighter: #FFCC80;
-  --amber-dark: #E65100;
-  --amber-darker: #BF360C;
-
-  --crimson-light: #EF9A9A;
-  --crimson-lighter: #FFCDD2;
-  --crimson-dark: #B71C1C;
-  --crimson-darker: #7F0000;
-  --red-medium: #D32F2F;
 
   --sky-dark: #1976D2;
   --sky-light: #5B9FE8;
 
-  --indigo-dark: #3730A3;
-  --indigo-light: #818CF8;
-
-  --fuchsia-dark: #880E4F;
-  --fuchsia-light: #F48FB1;
-
-  --pistachio-dark: #2E7D32;
-  --pistachio-light: #81C784;
-
-  --pine-dark: #123D30;
-  --pine-light: #4E9E82;
-
   --royal-blue-dark: #0D47A1;
-  --royal-blue-light: #90CAF9;
-
-  --sky-purple-dark: #7E57C2;
-  --sky-purple-light: #9575CD;
-  --royal-purple-dark: #3A1080;
-  --royal-purple-light: #BA90E8;
 
   --slate-light: #90A4AE;
-  --slate-lighter: #B0BEC5;
   --slate-dark: #37474F;
-  --slate-darker: #263238;
 }
 
 /* Same breakpoint App.css's .agent-chat-shell docks the agent panel at —
@@ -127,7 +84,6 @@
   --sky-dark:         #231BBB;
   --sky-light:        #9591F0;
   --royal-blue-dark:  #220DA1;
-  --royal-blue-light: #9490DF;
   --blue-medium:      #231BBB;
   --blue-lighter:     #C9C8EA;
 }
@@ -135,7 +91,6 @@
   --sky-dark:         #1BBB5B;
   --sky-light:        #5AE792;
   --royal-blue-dark:  #066B37;
-  --royal-blue-light: #90DFB0;
   --blue-medium:      #1BBB5B;
   --blue-lighter:     #C8EAD5;
 }
@@ -143,7 +98,6 @@
   --sky-dark:         #BB331B;
   --sky-light:        #E8705B;
   --royal-blue-dark:  #A1310D;
-  --royal-blue-light: #DF9C90;
   --blue-medium:      #BB331B;
   --blue-lighter:     #EACDC8;
 }

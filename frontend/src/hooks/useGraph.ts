@@ -5,11 +5,8 @@ import {
   updateItem,
   createItem,
   deleteItem,
-  moveItemUp,
-  moveItemDown,
   moveItemToPosition,
   moveItemToParent,
-  syncToDrive,
   slugify,
   UpdatePayload,
   StructureItem,
@@ -63,12 +60,6 @@ export function useUpdateItem(graphName?: string) {
         queryClient.setQueryData(['structure', graphName], context.previousStructure)
       }
     },
-
-    // Always refetch after success or error
-    onSettled: () => {
-      // Background sync to drive
-      syncToDrive(graphName).catch(console.error)
-    },
   })
 }
 
@@ -102,7 +93,6 @@ export function useCreateItem(graphName?: string) {
     onSettled: () => {
       // Refetch to get server's response (in case of name conflicts, etc)
       queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
-      syncToDrive(graphName).catch(console.error)
     },
   })
 }
@@ -130,69 +120,6 @@ export function useDeleteItem(graphName?: string) {
       if (context?.previousStructure) {
         queryClient.setQueryData(['structure', graphName], context.previousStructure)
       }
-    },
-
-    onSettled: () => {
-      syncToDrive(graphName).catch(console.error)
-    },
-  })
-}
-
-// Hook for reordering items (up/down buttons) with optimistic updates
-export function useMoveItem(graphName?: string) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ path, direction }: { path: string; direction: 'up' | 'down' }) =>
-      direction === 'up' ? moveItemUp(path, graphName) : moveItemDown(path, graphName),
-    
-    // Optimistic update
-    onMutate: async ({ path, direction }) => {
-      await queryClient.cancelQueries({ queryKey: ['structure', graphName] })
-      const previousStructure = queryClient.getQueryData(['structure', graphName])
-
-      // Calculate target index based on direction
-      queryClient.setQueryData(['structure', graphName], (old: any) => {
-        if (!old) return old
-        
-        const keys = path.split('.')
-        const itemKey = keys[keys.length - 1]
-        
-        // Get parent container
-        let parentContainer = old.structure
-        for (let i = 0; i < keys.length - 1; i++) {
-          if (parentContainer[keys[i]]?.children) {
-            parentContainer = parentContainer[keys[i]].children
-          } else if (parentContainer[keys[i]]) {
-            parentContainer = parentContainer[keys[i]]
-          }
-        }
-        
-        const orderedKeys = Object.keys(parentContainer)
-        const currentIndex = orderedKeys.indexOf(itemKey)
-        
-        if (currentIndex === -1) return old
-        
-        const targetIndex = direction === 'up' 
-          ? Math.max(0, currentIndex - 1)
-          : Math.min(orderedKeys.length - 1, currentIndex + 1)
-        
-        if (targetIndex === currentIndex) return old
-
-        return applyOptimisticMoveToPosition(old, path, keys.slice(0, -1).join('.'), targetIndex)
-      })
-
-      return { previousStructure }
-    },
-
-    onError: (_err, _vars, context) => {
-      if (context?.previousStructure) {
-        queryClient.setQueryData(['structure', graphName], context.previousStructure)
-      }
-    },
-
-    onSettled: () => {
-      syncToDrive(graphName).catch(console.error)
     },
   })
 }
@@ -233,10 +160,6 @@ export function useMoveItemToPosition(graphName?: string) {
       }
     },
 
-    // Background sync after success or error
-    onSettled: () => {
-      syncToDrive(graphName).catch(console.error)
-    },
   })
 }
 
@@ -265,10 +188,6 @@ export function useMoveItemToParent(graphName?: string) {
       if (context?.previousStructure) {
         queryClient.setQueryData(['structure', graphName], context.previousStructure)
       }
-    },
-
-    onSettled: () => {
-      syncToDrive(graphName).catch(console.error)
     },
   })
 }
