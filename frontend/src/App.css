@@ -23,6 +23,16 @@
      full visible screen regardless of how little content there is. */
   min-height: 100vh;
   min-height: 100dvh;
+  /* Phone layout is bottom-anchored for one-handed use (see
+     useBottomAnchor.ts): a page shorter than the screen sits at the bottom
+     (align-content), each page opens scrolled so its content ends just
+     above the bottom bar, and this extra top space (in place of the plain
+     --agent-bubble-height above) lets the first items be scrolled all the
+     way down to the bar too. The bottom padding keeps the last element
+     (the tag list, or the tag view's controls) clear of the bar. */
+  padding-top: max(var(--agent-bubble-height, 0px), calc(100dvh - var(--agent-bar-height, 0px) - 6rem));
+  padding-bottom: calc(var(--agent-bar-height, 0px) + env(safe-area-inset-bottom, 0px));
+  align-content: flex-end;
   /* The page-level swipe gesture (usePageSwipe.ts, attached to this
      element) needs to win horizontal drags back from the browser's own
      touch-scroll recognizer, which can otherwise grab a swipe before the
@@ -35,6 +45,8 @@
 @media (min-width: 32rem) {
   .graph-container {
     padding-top: 0;
+    padding-bottom: 0;
+    align-content: flex-start;
     /* Desktop/tablet: back to natural height — forcing full-viewport here
        would reintroduce the blank-band issue .app-main's own comment
        describes (a short page stretched under the sticky docked panel). No
@@ -163,12 +175,33 @@
   flex: 0 0 100%;
   border-top: 1px solid var(--border-color);
   padding: 0.75rem 0.9rem;
-  /* This is the last thing in the scrollable page, and the compose bar
-     sits fixed over the true bottom of the screen (--agent-bar-height) —
-     without clearing it here, scrolling all the way down would still tuck
-     this (and the last real item above it) partly underneath the bar. */
-  padding-bottom: calc(0.75rem + var(--agent-bar-height, 0px) + env(safe-area-inset-bottom, 0px));
   margin-top: 0.5rem;
+}
+
+/* Where each page opens on phones (useBottomAnchor.ts scrolls this into
+   view): the margin lands it just above the fixed bottom bar. */
+.reach-anchor {
+  flex: 0 0 100%;
+  height: 0;
+  scroll-margin-bottom: calc(var(--agent-bar-height, 0px) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Every tag, at the bottom of graph pages (see TagList.tsx). */
+.tags-list {
+  flex: 0 0 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0.75rem 0.9rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.5rem;
+}
+.tags-list .tag-pill {
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.5rem;
+}
+.tag-count {
+  opacity: 0.6;
 }
 
 @media (min-width: 32rem) {
@@ -545,6 +578,26 @@
   max-width: 9rem;
 }
 
+/* "Add to calendar" button next to a date badge (see Section.tsx, ics.ts). */
+.cal-add {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.25rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #1a73e8;
+  cursor: pointer;
+  vertical-align: middle;
+  line-height: 1;
+}
+.cal-add:hover {
+  filter: brightness(0.85);
+}
+[data-theme='dark'] .cal-add {
+  color: #8ab4f8;
+}
+
 .item-due {
   display: inline-block;
   font-size: 0.625rem;
@@ -646,10 +699,26 @@
   color: #f5a623;
 }
 
-/* Tag view (see TagView.tsx) — an editable tag name with suggestions, then
-   each graph's matching items as normal sections under the graph's name. */
+/* Tag view (see TagView.tsx) — the active tags with an "add tag…" input
+   and suggestions, and each graph's matching items as normal sections
+   under the graph's name. Controls sit above the items on desktop and
+   below them (thumb reach) on phones, suggestions just above the input. */
+.tag-view-page > * {
+  flex: 0 0 100%;
+}
 .tag-view {
+  order: -1;
   margin-bottom: 0.5rem;
+}
+@media (max-width: 31.999rem) {
+  .tag-view {
+    order: 0;
+    display: flex;
+    flex-direction: column-reverse;
+    margin: 0.5rem 0 0;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+  }
 }
 .tag-view-header {
   display: flex;
@@ -716,9 +785,6 @@
 }
 .tag-view-suggestions .tag-pill {
   font-size: 0.75rem;
-}
-.tag-view-suggestion-count {
-  opacity: 0.6;
 }
 .tag-view-graph {
   display: block;
@@ -791,6 +857,15 @@
   font-size: 0.8rem;
   line-height: 1;
   padding: 0 0.15rem;
+}
+.tag-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  flex-basis: 100%;
+}
+.tag-suggestions .tag-pill {
+  font-size: 0.75rem;
 }
 .tag-draft-input {
   border: 1px solid var(--border-color);

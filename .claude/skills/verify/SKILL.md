@@ -15,12 +15,16 @@ through local surfaces instead (see below).
 ```bash
 cd frontend && npm run build     # tsc + vite build
 cd frontend && npm run dev       # dev server on http://localhost:5173
+cd frontend && npm run test:e2e  # browser test suite (starts its own server on :5179)
 ```
 
 ## Drive (headless browser)
 
-No Playwright in the repo. `playwright-core` + system Chrome works:
-`npm i playwright-core` in a scratch dir, then `chromium.launch({ channel: 'chrome', headless: true })`.
+`frontend/e2e/` holds the browser tests (`*.test.mjs`, shared helpers in
+`helpers.mjs`: `seed`, `check`, `shot`, `isoFromToday`, `titles`). They use
+`playwright-core` (a devDependency) with system Chrome:
+`chromium.launch({ channel: 'chrome', headless: true })`. Add a new
+`*.test.mjs` there for new behavior; `SCREENSHOTS=<dir>` saves screenshots.
 
 Seed data before app load with `context.addInitScript`:
 - `offline_graphs` = `'["testg"]'`

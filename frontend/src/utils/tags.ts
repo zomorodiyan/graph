@@ -7,6 +7,15 @@ import { effectiveDate, parseDays } from './recurrence'
 // text format ("#favorite"), just rendered as a star and listed first.
 export const FAVORITE_TAG = 'favorite'
 
+// Stable hash → one of 6 fixed tag palette slots (see .tag-0..5 in App.css) —
+// same tag text always lands on the same color, independent of item/render order.
+const TAG_PALETTE_SIZE = 6
+export function tagColorIndex(tag: string): number {
+  let hash = 0
+  for (let i = 0; i < tag.length; i++) hash = (hash * 31 + tag.charCodeAt(i)) >>> 0
+  return hash % TAG_PALETTE_SIZE
+}
+
 // Value tags: "$50" is an amount of money, "1.5h" a time estimate. Ordinary
 // tags in storage, but grouped under the money/schedule auto tags below
 // instead of being listed one by one.
@@ -84,7 +93,6 @@ export function countTags(trees: Record<string, StructureItem>[]): Map<string, n
   const counts = new Map<string, number>()
   const walk = (items: Record<string, StructureItem>) => {
     for (const item of Object.values(items)) {
-      if (item.originalPath) continue
       for (const tag of tagsOf(item)) counts.set(tag, (counts.get(tag) ?? 0) + 1)
       if (item.children) walk(item.children)
     }
@@ -111,8 +119,8 @@ export function sortTags(counts: Map<string, number>): string[] {
 // A graph's tree filtered down to the items carrying ANY of `tags`, keeping
 // their connections: each match hangs under its nearest MATCHING ancestor
 // (non-matching ones in between are skipped over), so a tag carried by
-// every item reproduces the normal tree. The active tags' own pills are
-// dropped from each item. Keys are synthetic (siblings here can come from
+// every item reproduces the normal tree. Items keep all their own fields
+// (tags included), since the tag view edits them in place. Keys are synthetic (siblings here can come from
 // different real parents, so real keys could collide) — realPaths maps each
 // rendered path back; keyPrefix keeps keys unique when several graphs'
 // results render side by side. Also totals the matches' money/hour tags.
@@ -124,7 +132,6 @@ export function filterTreeByTags(tree: Record<string, StructureItem>, tags: stri
   const build = (items: Record<string, StructureItem>, realBase: string, viewBase: string) => {
     const out: Record<string, StructureItem> = {}
     for (const [key, item] of Object.entries(items)) {
-      if (item.originalPath) continue
       const realPath = realBase ? `${realBase}.${key}` : key
       const itemTags = tagsOf(item)
       if (tags.some(t => itemTags.includes(t))) {
@@ -137,10 +144,8 @@ export function filterTreeByTags(tree: Record<string, StructureItem>, tags: stri
           const h = t.match(HOURS_RE)
           if (h) hours += Number(h[1])
         }
-        const shown = (item.tags ?? []).filter(t => !tags.includes(t))
         out[viewKey] = {
           ...item,
-          tags: shown.length ? shown : undefined,
           children: item.children ? build(item.children, realPath, viewPath) : {},
         }
       } else if (item.children) {
