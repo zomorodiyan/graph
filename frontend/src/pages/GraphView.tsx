@@ -14,6 +14,7 @@ import Notification from '../components/Notification'
 import Section, { getDueCategory, formatDueDate } from '../components/Section'
 import ContextMenu from '../components/ContextMenu'
 import { FAVORITE_TAG, tagTarget, tagsPath } from '../utils/tags'
+import { effectiveDate } from '../utils/recurrence'
 
 // True on touch-primary devices (no on-screen keyboard problem on desktop,
 // so only mobile needs the item-stays-in-place + bottom-sheet editing pattern —
@@ -605,7 +606,8 @@ function GraphView() {
       for (const [key, item] of Object.entries(items)) {
         if (item.originalPath) continue
         const itemPath = basePath ? `${basePath}.${key}` : key
-        if (item.date) results.push({ path: itemPath, title: item.title || key, date: item.date })
+        const date = effectiveDate(item)
+        if (date) results.push({ path: itemPath, title: item.title || key, date })
         if (item.children) walk(item.children, itemPath)
       }
     }
@@ -809,6 +811,7 @@ function GraphView() {
     const newItem: StructureItem = {
       title: data.name,
       ...(data.date && { date: data.date }),
+      ...(data.repeat && { repeat: data.repeat }),
       ...(data.context && { context: data.context }),
       ...(data.tags && data.tags.length > 0 && { tags: data.tags }),
     }
@@ -908,6 +911,10 @@ function GraphView() {
           } else {
             updatedItem.date = data.date
           }
+        }
+        if (data.repeat !== undefined) {
+          if (data.repeat) updatedItem.repeat = data.repeat
+          else delete updatedItem.repeat
         }
         if (data.context !== undefined) {
           if (data.context === '') {

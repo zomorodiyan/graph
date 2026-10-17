@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
 import { parseLocalDate, daysUntil } from '../utils/dates'
 import { FAVORITE_TAG } from '../utils/tags'
+import { effectiveDate, describeRepeat } from '../utils/recurrence'
 import InlineItemEditor from './InlineItemEditor'
 
 // Per-item note disclosure triangle (see .context-toggle in App.css) — points
@@ -165,10 +166,15 @@ export function tagColorIndex(tag: string): number {
 // cross-graph view (see TagView.tsx); the favorite tag shows as a star.
 function DateAndTagBadges({ item, minimal, onTagClick }: { item: StructureItem; minimal: boolean; onTagClick?: (tag: string) => void }) {
   if (minimal) return null
+  // A repeating item shows its next occurrence, marked with ↻ (hover for the rule).
+  const date = effectiveDate(item)
+  const repeat = describeRepeat(item)
   return (
     <>
-      {item.date && (
-        <span className={`item-due due-${getDueCategory(item.date)}`}>{formatDueDate(item.date)}</span>
+      {date && (
+        <span className={`item-due due-${getDueCategory(date)}`} title={repeat}>
+          {formatDueDate(date)}{repeat && ' ↻'}
+        </span>
       )}
       {item.tags && item.tags.length > 0 && (
         <span className="item-tags">

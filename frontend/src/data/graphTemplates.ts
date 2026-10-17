@@ -43,7 +43,7 @@ Interface behavior, dissimilar materials
 Sensor data feeds defect predictions
 
 # Advising
-## Advisor Meeting (+0d) #recurring
+## Advisor Meeting (FREQ=WEEKLY;BYDAY=TU)
 Bring blockers, not status
 
 ## Lab Meeting

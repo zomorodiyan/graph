@@ -58,8 +58,9 @@ const MENTION_TRUNCATE_LENGTH = 24
 const SYSTEM_PREAMBLE = `You are a helpful assistant embedded inside "Knowledge Graph", a personal
 hierarchical thinking/taxonomy/planning app. The user is looking at the view
 described below (as its Markdown representation — heading depth is nesting
-depth, a trailing "(YYYY-MM-DD)" is the item's date, trailing "#word" tokens
-are its tags).
+depth, a trailing "(YYYY-MM-DD)" is the item's date and/or a repeat rule
+like "(FREQ=WEEKLY;BYDAY=MO,WE)" for the weekdays it recurs on, and trailing
+"#word" tokens are its tags).
 
 Default to the shortest reply that actually answers what was asked — a few
 lines, not paragraphs. If asked to list items, list them (plain titles,
@@ -127,9 +128,15 @@ interface UpdateItemArgs {
   name?: string
   context?: string
   date?: string
+  repeat?: string
   tags?: string[]
 }
-interface AddItemArgs { parent_path: string; name: string; context?: string; date?: string; tags?: string[] }
+interface AddItemArgs { parent_path: string; name: string; context?: string; date?: string; repeat?: string; tags?: string[] }
+
+const REPEAT_PARAM = {
+  type: 'string',
+  description: 'Days of the week the item repeats on, as "FREQ=WEEKLY;BYDAY=MO,WE,FR" (SU MO TU WE TH FR SA; same form as Google Calendar). Weekly on chosen days is the only kind of repeat. A date is optional: if set, repeating starts on it. Pass an empty string to stop repeating.',
+}
 interface HighlightItemsArgs { paths: string[] }
 interface RequestDeleteItemsArgs { paths: string[] }
 
@@ -182,7 +189,7 @@ function buildTools(
     makeTool<UpdateItemArgs>({
       name: 'update_item',
       description:
-        'Edit an existing item\'s title, note, date, or tags. Only include the fields you want to change — omitted fields are left untouched.',
+        'Edit an existing item\'s title, note, date, repeat rule, or tags. Only include the fields you want to change — omitted fields are left untouched.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -190,15 +197,17 @@ function buildTools(
           name: { type: 'string', description: 'New title.' },
           context: { type: 'string', description: 'New free-text note. Pass an empty string to clear it.' },
           date: { type: 'string', description: 'New date, "YYYY-MM-DD" — means whatever the user wants (due, scheduled, logged). Pass an empty string to clear it.' },
+          repeat: REPEAT_PARAM,
           tags: { type: 'array', items: { type: 'string' }, description: 'Wholesale replacement for the item\'s tags (short labels: letters, numbers, dash, underscore, dot, optional leading $ or @. "$50" marks an amount of money, "1.5h" a time estimate, "@sara" a person). Pass an empty array to clear all tags.' },
         },
         required: ['path'],
       },
-      run: async ({ path, name, context, date, tags }) => {
+      run: async ({ path, name, context, date, repeat, tags }) => {
         const payload: UpdatePayload = {}
         if (name !== undefined) payload.name = name
         if (context !== undefined) payload.context = context
         if (date !== undefined) payload.date = date
+        if (repeat !== undefined) payload.repeat = repeat
         if (tags !== undefined) payload.tags = tags
         const result = await updateItem(path, payload, graphName)
         onMutate()
@@ -215,14 +224,16 @@ function buildTools(
           name: { type: 'string', description: 'Title for the new item.' },
           context: { type: 'string', description: 'Optional free-text note.' },
           date: { type: 'string', description: 'Optional date, "YYYY-MM-DD".' },
+          repeat: REPEAT_PARAM,
           tags: { type: 'array', items: { type: 'string' }, description: 'Optional tags (short labels: letters, numbers, dash, underscore, dot, optional leading $ or @. "$50" marks an amount of money, "1.5h" a time estimate, "@sara" a person).' },
         },
         required: ['parent_path', 'name'],
       },
-      run: async ({ parent_path, name, context, date, tags }) => {
+      run: async ({ parent_path, name, context, date, repeat, tags }) => {
         const payload: UpdatePayload = { name }
         if (context !== undefined) payload.context = context
         if (date !== undefined) payload.date = date
+        if (repeat !== undefined) payload.repeat = repeat
         if (tags !== undefined) payload.tags = tags
         const result = await createItem(parent_path, payload, graphName)
         onMutate()
