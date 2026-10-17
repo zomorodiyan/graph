@@ -74,29 +74,11 @@ export function clearDeletion(name: string) {
   localStorage.setItem(DELETED_KEY, JSON.stringify(d))
 }
 
-// One-time best-effort cleanup of pre-"date"/"tags" data: a legacy item's
-// checkpoints (if any) collapse into a single `date` — the chronologically
-// last one, same value the old due-date badge would have shown — and its
-// progress/cost are simply dropped (no equivalent). Runs on every load since
-// it's cheap and idempotent; the next save() persists the cleaned shape.
-function migrateLegacyItem(item: StructureItem): void {
-  const legacyCheckpoints = item.checkpoints as { date: string; progress: string }[] | undefined
-  if (item.date === undefined && Array.isArray(legacyCheckpoints) && legacyCheckpoints.length) {
-    item.date = [...legacyCheckpoints].sort((a, b) => a.date.localeCompare(b.date)).pop()!.date
-  }
-  delete item.progress
-  delete item.checkpoints
-  delete item.cost
-  if (item.children) for (const child of Object.values(item.children)) migrateLegacyItem(child)
-}
-
 function loadStructure(graphName = 'default'): Structure {
   try {
     const raw = localStorage.getItem(dataKey(graphName))
     if (raw) {
-      const s = JSON.parse(raw)
-      for (const item of Object.values(s.structure as Record<string, StructureItem>)) migrateLegacyItem(item)
-      return s
+      return JSON.parse(raw)
     }
   } catch { /* fall through */ }
   return { metadata: { title: 'My Graph', description: '', version: '1.0' }, structure: {} }
@@ -170,7 +152,7 @@ function parseTagsSuffix(s: string): { rest: string; tags?: string[] } {
   const tags: string[] = []
   let rest = s
   let m: RegExpMatchArray | null
-  while ((m = rest.match(/^(.*?)\s+#([\w-]+)$/))) {
+  while ((m = rest.match(/^(.*?)\s+#([$@]?[\w.-]+)$/))) {
     tags.unshift(m[2])
     rest = m[1]
   }
@@ -198,7 +180,7 @@ function escapeTitleForSerialize(title: string): string {
   // strips repeatedly from the end, so breaking just its first match (a
   // backslash where it requires plain whitespace before "#") stops it from
   // reaching anything earlier in the title too.
-  let t = title.replace(/(\s)#([\w-]+)$/, '$1\\#$2')
+  let t = title.replace(/(\s)#([$@]?[\w.-]+)$/, '$1\\#$2')
   t = t.replace(/(\s)\((\d{4}-\d{2}-\d{2})\)$/, '$1\\($2)')
   return t
 }
@@ -328,7 +310,7 @@ function validateDateValue(s: string) {
 function validateTagsValue(tags: string[]) {
   for (const t of tags) {
     if (typeof t !== 'string' || !t.trim()) throw new Error('Tags cannot be empty')
-    if (!/^[\w-]+$/.test(t)) throw new Error('Tags may only contain letters, numbers, underscore, and dash')
+    if (!/^[$@]?[\w.-]+$/.test(t)) throw new Error('Tags may only contain letters, numbers, underscore, dash, and dot (plus a leading $ or @)')
   }
 }
 

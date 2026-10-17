@@ -67,18 +67,8 @@ Get advisor feedback first
 ## Publications
 ### Laser Interaction (+67d)
 Pick venue before drafting
-#### Checkpoint 1 (+5d)
-
-#### Checkpoint 2 (+36d)
-
-#### Checkpoint 3 (+67d)
 
 ### Multi-Material Simulation (+67d)
-#### Checkpoint 1 (+5d)
-
-#### Checkpoint 2 (+36d)
-
-#### Checkpoint 3 (+67d)
 
 ## Candidacy Exam (+189d)
 Track committee feedback
@@ -568,8 +558,8 @@ Dropping an item on the body of another item (any level, any parent) makes it th
 ## Swipe & Long-Press
 Touch shortcuts for common actions.
 
-## Fields Simplified #shipped
-Progress, checkpoints, and cost (and the "Time"/"Value" buttons that edited them) are gone — replaced by two flatter fields: Date (a single optional date, no fraction or rollup) and Tags (short labels, hash-colored, cutting across the tree). Nothing set on an item ever affects how its parent renders anymore.
+## Date & Tags #shipped
+Two flat, optional fields per item: Date (a single date, no fraction or rollup) and Tags (short labels, hash-colored, cutting across the tree). Nothing set on an item ever affects how its parent renders.
 
 ## Mobile Interaction Rework #shipped
 On mobile: tap does nothing now — swipe-left on an item navigates into it, swipe-right navigates up the tree (same action no matter where you swipe, item or empty background), long-press opens the editor directly (no menu step). The hardware back button also steps up one level instead of exiting the graph. Pinch-zoom still resizes text, but no longer shifts where the layout reflows. Desktop click/right-click are unchanged. Adding a sub-item to a specific existing item no longer has its own swipe shortcut — right-click it (or long-press on mobile) from its parent's list and choose New.

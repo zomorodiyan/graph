@@ -86,6 +86,20 @@
 [data-theme='dark'] .add-card .add-text { color: var(--slate-light); }
 
 /* Graphs container */
+/* Tag pills below the graph cards (see StructuresView.tsx) */
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  max-width: 75rem;
+  margin: 0.75rem auto 0;
+  padding: 0 1rem;
+}
+.tags-list .tag-pill {
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.5rem;
+}
+
 .graphs-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));

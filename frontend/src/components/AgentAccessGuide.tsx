@@ -44,6 +44,7 @@ then \`write\` the full result back (there's no partial/line-level edit endpoint
   - a trailing \`(YYYY-MM-DD)\` = the item's date, e.g. \`## Ship v2 (2026-07-15)\`
   - trailing \`#word\` tokens = tags, e.g. \`### Server #infra #urgent\`
   - both can appear together, date before tags: \`## Ship v2 (2026-07-15) #launch\`
+  - special tags: \`#favorite\` (starred), \`#$50\` (an amount of money), \`#1.5h\` (a time estimate), \`#@sara\` (a person)
 - Non-heading lines right after a heading = free-text context/description for that item,
   verbatim (blank lines inside preserved).
 - Item keys (used internally, not shown here) are derived from the title — don't worry

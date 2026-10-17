@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useColorScheme } from '../context/ColorSchemeContext'
 import { createGraph, fetchStructureText, updateGraph, deleteGraph, GraphInfo } from '@api'
-import { useGraphs } from '../hooks/useGraph'
+import { useGraphs, useAllStructures } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { loadSyncStatus } from '../hooks/useSyncManager'
 import { getPAT } from '../api/gistClient'
 import Notification from '../components/Notification'
 import InlineGraphEditor from '../components/InlineGraphEditor'
 import { GRAPH_TEMPLATES, GraphTemplate, resolveTemplateDates } from '../data/graphTemplates'
+import { tagColorIndex } from '../components/Section'
+import { FAVORITE_TAG, countTags, sortTags, tagLabel, tagsPath } from '../utils/tags'
 import './StructuresView.css'
 
 // Icons for different graph types (randomly assigned based on name hash)
@@ -25,6 +27,14 @@ function StructuresView() {
   const queryClient = useQueryClient()
   const { toggleColorScheme } = useColorScheme()
   const { data: graphs = [], isLoading, error } = useGraphs()
+  // Every tag across all graphs, each opening its cross-graph view
+  // (TagView.tsx). Favorite is always listed first, even before any item
+  // uses it, so it's one tap away; the auto tags (Today … history, money,
+  // schedule — see utils/tags.ts) follow, each only while some item has it.
+  const { graphs: allStructures } = useAllStructures()
+  const tagCounts = countTags(allStructures.map(g => g.structure.structure))
+  if (!tagCounts.has(FAVORITE_TAG)) tagCounts.set(FAVORITE_TAG, 0)
+  const tags = sortTags(tagCounts)
 
   const [inlineCreate, setInlineCreate] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
@@ -304,6 +314,23 @@ function StructuresView() {
           )
         })}
       </div>
+
+      {/* Tags across all graphs */}
+      {graphs.length > 0 && (
+        <div className="tags-list">
+          {tags.map(tag => (
+            <button
+              key={tag}
+              type="button"
+              className={`tag-pill tag-${tagColorIndex(tag)} tag-pill-clickable${tag === FAVORITE_TAG ? ' tag-favorite' : ''}`}
+              onClick={() => navigate(tagsPath([tag]))}
+              title={`Show all items tagged ${tag}`}
+            >
+              {tag === FAVORITE_TAG ? '★ favorite' : tagLabel(tag)} <span className="tag-view-suggestion-count">{tagCounts.get(tag)}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Empty state */}
       {graphs.length === 0 && (

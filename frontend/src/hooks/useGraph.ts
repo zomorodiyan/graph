@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   fetchStructure,
   fetchGraphs,
@@ -27,6 +27,26 @@ export function useStructure(graphName?: string) {
     queryKey: ['structure', graphName],
     queryFn: () => fetchStructure(graphName),
   })
+}
+
+// Every graph's structure at once (the cross-graph tag list and tag view) —
+// same per-graph cache entries as useStructure, so edits made in a graph
+// invalidate these too.
+export function useAllStructures() {
+  const { data: graphs = [], isLoading } = useGraphs()
+  const results = useQueries({
+    queries: graphs.map(g => ({
+      queryKey: ['structure', g.name],
+      queryFn: () => fetchStructure(g.name),
+    })),
+  })
+  return {
+    isLoading: isLoading || results.some(r => r.isLoading),
+    graphs: graphs.flatMap((graph, i) => {
+      const structure = results[i]?.data
+      return structure ? [{ graph, structure }] : []
+    }),
+  }
 }
 
 // Hook for updating an item with optimistic updates

@@ -119,6 +119,7 @@
   .graph-header-buttons .depth-toggle,
   .graph-header-buttons .ctx-toggle,
   .graph-header-buttons .copy-toggle,
+  .graph-header-buttons .favorite-toggle,
   .graph-header-buttons .delete-toggle,
   .graph-header-buttons .confirm-toggle,
   .graph-header-buttons .reject-toggle,
@@ -663,8 +664,8 @@
 [data-theme='dark'] .tag-4 { background-color: #3d2530; color: #fce4ec; }
 [data-theme='dark'] .tag-5 { background-color: #253d3b; color: #e0f2f1; }
 
-/* Tag pills shared by 2+ items are buttons that open the tag list (see
-   DateAndTagBadges in Section.tsx); the open one gets a ring. */
+/* Tag pills are buttons that open the tag's cross-graph view (see
+   DateAndTagBadges in Section.tsx). The favorite tag renders as a star. */
 .tag-pill-clickable {
   border: none;
   font-family: inherit;
@@ -673,24 +674,31 @@
 .tag-pill-clickable:hover {
   filter: brightness(0.95);
 }
-.tag-pill-clickable.active {
-  box-shadow: 0 0 0 1px currentColor;
+.tag-pill.tag-favorite {
+  background-color: transparent;
+  color: #f5a623;
+  font-size: 0.8125rem;
+  padding: 0 0.125rem;
+}
+.favorite-toggle.active {
+  color: #f5a623;
 }
 
-/* Tag view header (see tagView in GraphView.tsx) — an editable tag name
-   with suggestions; the filtered items render below it as normal sections. */
+/* Tag view (see TagView.tsx) — an editable tag name with suggestions, then
+   each graph's matching items as normal sections under the graph's name. */
 .tag-view {
   margin-bottom: 0.5rem;
 }
 .tag-view-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   padding: 0 0.25rem 0.25rem;
 }
 .tag-view-input {
   flex: 1;
-  min-width: 0;
+  min-width: 6rem;
   border: none;
   border-bottom: 1px solid var(--border-color);
   background: transparent;
@@ -717,6 +725,27 @@
   cursor: pointer;
   padding: 0.25rem;
 }
+.tag-view-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  padding: 0.125rem 0.25rem 0.125rem 0.5rem;
+  white-space: nowrap;
+}
+.tag-view-chip-remove {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+  padding: 0 0.125rem;
+}
+.tag-view-chip-remove:hover {
+  opacity: 1;
+}
 .tag-view-suggestions {
   display: flex;
   flex-wrap: wrap;
@@ -728,6 +757,17 @@
 }
 .tag-view-suggestion-count {
   opacity: 0.6;
+}
+.tag-view-graph {
+  display: block;
+  margin: 0.75rem 0.25rem 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+.tag-view-graph:hover {
+  color: var(--text-primary);
 }
 
 /* Date editor row */
@@ -894,6 +934,7 @@
 .ctx-toggle,
 .sync-toggle,
 .copy-toggle,
+.favorite-toggle,
 .delete-toggle,
 .confirm-toggle,
 .reject-toggle,
@@ -916,6 +957,7 @@
 
 .theme-toggle,
 .copy-toggle,
+.favorite-toggle,
 .delete-toggle,
 .confirm-toggle,
 .reject-toggle,
@@ -976,6 +1018,7 @@
 .depth-toggle:hover,
 .ctx-toggle:hover,
 .copy-toggle:hover,
+.favorite-toggle:hover,
 .delete-toggle:hover,
 .confirm-toggle:hover,
 .reject-toggle:hover,
