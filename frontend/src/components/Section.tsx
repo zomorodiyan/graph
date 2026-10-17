@@ -1,9 +1,11 @@
 import { useRef } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
 import { parseLocalDate, daysUntil } from '../utils/dates'
-import { FAVORITE_TAG } from '../utils/tags'
+import { FAVORITE_TAG, tagColorIndex } from '../utils/tags'
 import { effectiveDate, describeRepeat } from '../utils/recurrence'
 import InlineItemEditor from './InlineItemEditor'
+import { CalendarIcon } from './icons'
+import { downloadIcs } from '../utils/ics'
 
 // Per-item note disclosure triangle (see .context-toggle in App.css) — points
 // right when the note is hidden, rotates to point down when shown. A genuine
@@ -92,7 +94,6 @@ interface SectionProps {
   onItemDrop?: (path: string, zone: 'before' | 'nest' | 'after') => void
   dragEnabled?: boolean
   pendingPaths?: Set<string>
-  isTimeView?: boolean
   showContext?: boolean
   // Per-item note visibility overrides (see isContextShown above) and the
   // handler the row's disclosure triangle calls to flip one — both owned by
@@ -143,22 +144,13 @@ function getDueCategory(dueDate: string | undefined): string | null {
   return 'later'
 }
 
-// Helper to format date display — today shows "Today", tomorrow "2d", etc.
+// Helper to format date display — today shows "Today", tomorrow "1d", up to "7d", then the date.
 function formatDueDate(dueDate: string): string {
   const diffDays = daysUntil(dueDate)
   if (diffDays < 0) return `${Math.abs(diffDays)}d overdue`
   if (diffDays === 0) return 'Today'
-  if (diffDays <= 7) return `${diffDays + 1}d`
+  if (diffDays <= 7) return `${diffDays}d`
   return parseLocalDate(dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-// Stable hash → one of 6 fixed tag palette slots (see .tag-0..5 in App.css) —
-// same tag text always lands on the same color, independent of item/render order.
-const TAG_PALETTE_SIZE = 6
-export function tagColorIndex(tag: string): number {
-  let hash = 0
-  for (let i = 0; i < tag.length; i++) hash = (hash * 31 + tag.charCodeAt(i)) >>> 0
-  return hash % TAG_PALETTE_SIZE
 }
 
 // Date + tags badges, shared by all three layers — hidden entirely in minimal
@@ -175,6 +167,20 @@ function DateAndTagBadges({ item, minimal, onTagClick }: { item: StructureItem; 
         <span className={`item-due due-${getDueCategory(date)}`} title={repeat}>
           {formatDueDate(date)}{repeat && ' ↻'}
         </span>
+      )}
+      {date && (
+        <button
+          type="button"
+          className="cal-add"
+          title="Add to calendar"
+          aria-label="Add to calendar"
+          // Stop pointerdown too, like the tag pills below — mobile rows
+          // capture the pointer on pointerdown (long-press gestures).
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); downloadIcs(item) }}
+        >
+          <CalendarIcon />
+        </button>
       )}
       {item.tags && item.tags.length > 0 && (
         <span className="item-tags">
@@ -236,7 +242,6 @@ function Section({
   onItemDrop,
   dragEnabled = false,
   pendingPaths,
-  isTimeView = false,
   showContext = true,
   contextOverrides,
   onToggleContext,
@@ -253,9 +258,6 @@ function Section({
 
   const sectionRef = useRef<HTMLDivElement>(null)
 
-  // Editable unless it's a virtual time-view item or explicitly non-editable —
-  // gates long-press/right-click, swipe-right, and the Delete button inside the editor.
-  const rowEditable = !isTimeView && !item.nonEditable
   const showLoading = isPending
   // Mobile gesture vocabulary: swipe-left anywhere on the page navigates
   // into whichever item is at that height (see GraphView's usePageSwipe),
@@ -303,7 +305,7 @@ function Section({
             <>
               <div
                 className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}${highlightClasses(itemPath, userHighlights, agentHighlights, agentDeletePending)}`}
-                {...(!isMobile && rowEditable
+                {...(!isMobile
                   ? {
                       onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, itemPath, true),
                       // Ctrl/Cmd+click anywhere on the row (not just the title
@@ -315,7 +317,7 @@ function Section({
                       },
                     }
                   : {})}
-                {...(isMobile && rowEditable
+                {...(isMobile
                   ? makeDragGestureHandlers?.(itemPath, () => onToggleHighlight?.(itemPath))
                   : {})}
               >
@@ -327,12 +329,12 @@ function Section({
                   // into this item's own children (onItemEnter — a no-op on
                   // a leaf item), Ctrl/Cmd+click toggles highlight, Shift/
                   // Alt+click opens the editor directly.
-                  title={!isMobile && rowEditable ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
+                  title={!isMobile ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
                   onClick={isMobile ? undefined : (e) => {
-                    if (rowEditable && (e.ctrlKey || e.metaKey)) {
+                    if (e.ctrlKey || e.metaKey) {
                       e.stopPropagation()
                       onToggleHighlight?.(itemPath)
-                    } else if (rowEditable && (e.shiftKey || e.altKey)) {
+                    } else if (e.shiftKey || e.altKey) {
                       onEditClick(itemPath, title, item)
                     } else {
                       onItemEnter(itemPath)
@@ -360,7 +362,7 @@ function Section({
         {itemContextShown && item.context && (
           <div
             className="item-context"
-            onClick={!isMobile && rowEditable ? (e) => {
+            onClick={!isMobile ? (e) => {
               if (e.ctrlKey || e.metaKey) onToggleHighlight?.(itemPath)
             } : undefined}
           >
@@ -376,14 +378,12 @@ function Section({
           const childTitle = (childItem as StructureItem).title || childKey
           const childContextShown = isContextShown(showContext, contextOverrides, childPath)
           const grandchildren = (childItem as StructureItem).children || {}
-          // Check if this child item is editable
-          const childRowEditable = rowEditable && !(childItem as StructureItem).nonEditable && !(childItem as StructureItem).originalPath
           // Native HTML5 draggable — desktop only, same reason as GraphView.tsx's
           // own canDrag: some mobile browsers translate a long-press-and-move on
           // a draggable="true" element into their own native drag session,
           // which cancels the custom touch-gesture system's pointer tracking
           // mid-drag and leaves the eventual drop finding nothing to move.
-          const childCanDrag = !isMobile && dragEnabled && childRowEditable && !pendingPaths?.has(childPath)
+          const childCanDrag = !isMobile && dragEnabled && !pendingPaths?.has(childPath)
 
           return (
             <div
@@ -432,7 +432,7 @@ function Section({
                       <>
                         <div
                           className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}${highlightClasses(childPath, userHighlights, agentHighlights, agentDeletePending)}`}
-                          {...(!isMobile && childRowEditable
+                          {...(!isMobile
                             ? {
                                 onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, childPath, depth >= 3),
                                 onClick: (e: React.MouseEvent) => {
@@ -440,16 +440,16 @@ function Section({
                                 },
                               }
                             : {})}
-                          {...(isMobile && childRowEditable
+                          {...(isMobile
                             ? makeDragGestureHandlers?.(childPath, () => onToggleHighlight?.(childPath))
                             : {})}
                         >
                           <span
                             className="item-title"
-                            title={!isMobile && childRowEditable ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
+                            title={!isMobile ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
                             onClick={isMobile ? undefined : (e) => {
-                              if (childRowEditable && (e.ctrlKey || e.metaKey)) { e.stopPropagation(); onToggleHighlight?.(childPath) }
-                              else if (childRowEditable && (e.shiftKey || e.altKey)) onEditClick(childPath, childTitle, childItem as StructureItem)
+                              if (e.ctrlKey || e.metaKey) { e.stopPropagation(); onToggleHighlight?.(childPath) }
+                              else if (e.shiftKey || e.altKey) onEditClick(childPath, childTitle, childItem as StructureItem)
                               else onItemClick(childPath)
                             }}
                           >
@@ -474,7 +474,7 @@ function Section({
                   {childContextShown && (childItem as StructureItem).context && (
                     <div
                       className="item-context"
-                      onClick={!isMobile && childRowEditable ? (e) => {
+                      onClick={!isMobile ? (e) => {
                         if (e.ctrlKey || e.metaKey) onToggleHighlight?.(childPath)
                       } : undefined}
                     >
@@ -490,10 +490,8 @@ function Section({
                       const grandPath = `${childPath}.${grandKey}`
                       const grandTitle = (grandItem as StructureItem).title || grandKey
                       const grandContextShown = isContextShown(showContext, contextOverrides, grandPath)
-                      // Check if this grandchild item is editable
-                      const grandRowEditable = rowEditable && !(grandItem as StructureItem).nonEditable && !(grandItem as StructureItem).originalPath
                       // Desktop only — see childCanDrag's comment above.
-                      const grandCanDrag = !isMobile && dragEnabled && grandRowEditable && !pendingPaths?.has(grandPath)
+                      const grandCanDrag = !isMobile && dragEnabled && !pendingPaths?.has(grandPath)
 
                       return (
                         <div
@@ -545,7 +543,7 @@ function Section({
                               <>
                                 <div
                                   className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}${highlightClasses(grandPath, userHighlights, agentHighlights, agentDeletePending)}`}
-                                  {...(!isMobile && grandRowEditable
+                                  {...(!isMobile
                                     ? {
                                         onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, grandPath, false),
                                         onClick: (e: React.MouseEvent) => {
@@ -553,16 +551,16 @@ function Section({
                                         },
                                       }
                                     : {})}
-                                  {...(isMobile && grandRowEditable
+                                  {...(isMobile
                                     ? makeDragGestureHandlers?.(grandPath, () => onToggleHighlight?.(grandPath))
                                     : {})}
                                 >
                                   <span
                                     className="item-title"
-                                    title={!isMobile && grandRowEditable ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
+                                    title={!isMobile ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
                                     onClick={isMobile ? undefined : (e) => {
-                                      if (grandRowEditable && (e.ctrlKey || e.metaKey)) { e.stopPropagation(); onToggleHighlight?.(grandPath) }
-                                      else if (grandRowEditable && (e.shiftKey || e.altKey)) onEditClick(grandPath, grandTitle, grandItem as StructureItem)
+                                      if (e.ctrlKey || e.metaKey) { e.stopPropagation(); onToggleHighlight?.(grandPath) }
+                                      else if (e.shiftKey || e.altKey) onEditClick(grandPath, grandTitle, grandItem as StructureItem)
                                       else onItemClick(grandPath)
                                     }}
                                   >
@@ -588,7 +586,7 @@ function Section({
                             <div
                               className="item-context"
                               style={{ marginLeft: '0.5rem' }}
-                              onClick={!isMobile && grandRowEditable ? (e) => {
+                              onClick={!isMobile ? (e) => {
                                 if (e.ctrlKey || e.metaKey) onToggleHighlight?.(grandPath)
                               } : undefined}
                             >

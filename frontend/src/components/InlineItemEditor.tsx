@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
-import { FAVORITE_TAG } from '../utils/tags'
+import { FAVORITE_TAG, countTags, sortTags, tagColorIndex } from '../utils/tags'
+import { useAllStructures } from '../hooks/useGraph'
 import RepeatEditor from './RepeatEditor'
 
 interface InlineItemEditorProps {
@@ -52,11 +53,29 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
     })
   }
 
-  const addTag = () => {
-    const t = tagDraft.trim().replace(/^#/, '').replace(/\s+/g, '-')
-    if (!t || tags.includes(t)) { setTagDraft(''); return }
-    setTags(ts => [...ts, t])
+  // Tags already used anywhere (all graphs), offered while typing so the
+  // same person/label gets reused instead of drifting into near-duplicates
+  // (@sara vs @Sara vs @sarah). Auto tags and favorite (its own button) are
+  // left out.
+  const { graphs: allGraphs } = useAllStructures()
+  const knownTags = useMemo(
+    () => sortTags(countTags(allGraphs.map(g => g.structure.structure)))
+      .filter(t => !t.startsWith('~') && t !== FAVORITE_TAG),
+    [allGraphs],
+  )
+  const draftQuery = tagDraft.trim().replace(/^#/, '').toLowerCase()
+  const tagSuggestions = draftQuery
+    ? knownTags.filter(t => !tags.includes(t) && t.toLowerCase().includes(draftQuery)).slice(0, 6)
+    : []
+
+  // Adds `value` (default: the draft). A draft that matches a known tag
+  // apart from letter case reuses the known tag's spelling.
+  const addTag = (value = tagDraft) => {
+    let t = value.trim().replace(/^#/, '').replace(/\s+/g, '-')
+    t = knownTags.find(k => k.toLowerCase() === t.toLowerCase()) ?? t
     setTagDraft('')
+    if (!t || tags.includes(t)) return
+    setTags(ts => [...ts, t])
   }
   const removeTag = (idx: number) => setTags(ts => ts.filter((_, i) => i !== idx))
   const isFavorite = tags.includes(FAVORITE_TAG)
@@ -133,6 +152,9 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault()
       addTag()
+    } else if (e.key === 'Tab' && tagSuggestions.length > 0) {
+      e.preventDefault()
+      addTag(tagSuggestions[0])
     } else if (e.key === 'Backspace' && tagDraft === '' && tags.length > 0) {
       removeTag(tags.length - 1)
     } else if (e.key === 'Escape') {
@@ -271,9 +293,26 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
             value={tagDraft}
             onChange={(e) => setTagDraft(e.target.value)}
             onKeyDown={handleTagKeyDown}
-            onBlur={addTag}
+            onBlur={() => addTag()}
             placeholder="add tag…"
           />
+          {tagSuggestions.length > 0 && (
+            <div className="tag-suggestions">
+              {tagSuggestions.map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  className={`tag-pill tag-${tagColorIndex(t)} tag-pill-clickable`}
+                  // Keep focus in the draft input (its blur would add the
+                  // half-typed draft as a tag of its own).
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => addTag(t)}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
