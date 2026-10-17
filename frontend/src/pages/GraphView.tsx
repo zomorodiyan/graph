@@ -11,10 +11,9 @@ import { useDragGestureFactory } from '../hooks/useDragGesture'
 import { StructureItem, Structure, UpdatePayload, pasteItems, serializeItem, serializeStructure, deleteItem, slugify } from '@api'
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
-import Section, { getDueCategory, formatDueDate } from '../components/Section'
+import Section from '../components/Section'
 import ContextMenu from '../components/ContextMenu'
 import { FAVORITE_TAG, tagTarget, tagsPath } from '../utils/tags'
-import { effectiveDate } from '../utils/recurrence'
 
 // True on touch-primary devices (no on-screen keyboard problem on desktop,
 // so only mobile needs the item-stays-in-place + bottom-sheet editing pattern —
@@ -561,8 +560,7 @@ function GraphView() {
   // Paths of every noted item actually rendered right now — respects the
   // depth toggle (a level-3 item isn't in this list, and doesn't get a
   // triangle either, when depth is 2), since the N button is meant to
-  // reflect "what is actually present" on screen, not the whole subtree
-  // (contrast with datedItems below, which is intentionally unlimited-depth).
+  // reflect "what is actually present" on screen, not the whole subtree.
   const visibleNotedPaths = useMemo(() => {
     const paths: string[] = []
     for (const [k1, item1] of Object.entries(displayItems)) {
@@ -595,26 +593,6 @@ function GraphView() {
     if (states.every(s => s === true)) setNoteButtonActive(true)
     else if (states.every(s => s === false)) setNoteButtonActive(false)
   }, [visibleNotedPaths, contextOverrides, viewMode, minimalView])
-
-  // Every dated item under the current page, at any depth (not just the
-  // 3 levels the tree itself renders) — an always-on agenda strip below the
-  // item list, only shown once there's more than one to make it worth
-  // scrolling to (see the render below).
-  const datedItems = useMemo(() => {
-    const results: { path: string; title: string; date: string }[] = []
-    const walk = (items: Record<string, StructureItem>, basePath: string) => {
-      for (const [key, item] of Object.entries(items)) {
-        if (item.originalPath) continue
-        const itemPath = basePath ? `${basePath}.${key}` : key
-        const date = effectiveDate(item)
-        if (date) results.push({ path: itemPath, title: item.title || key, date })
-        if (item.children) walk(item.children, itemPath)
-      }
-    }
-    walk(displayItems, path)
-    results.sort((a, b) => a.date.localeCompare(b.date))
-    return results
-  }, [displayItems, path])
 
   const displayOrder = useMemo(() => localOrder || serverKeys, [localOrder, serverKeys])
 
@@ -1805,24 +1783,6 @@ function GraphView() {
 
         {levelOneKeys.length === 0 && (
           <div className="empty-state">No items at this level</div>
-        )}
-
-        {/* Agenda strip — every dated item under this page, any depth, soonest
-            first. Only worth showing once there's more than one. */}
-        {datedItems.length > 1 && (
-          <div className="time-view">
-            {datedItems.map(({ path: itemPath, title, date }) => (
-              <button
-                key={itemPath}
-                type="button"
-                className="time-view-row"
-                onClick={() => handleItemClick(itemPath)}
-              >
-                <span className="time-view-row-title">{title}</span>
-                <span className={`item-due due-${getDueCategory(date)}`}>{formatDueDate(date)}</span>
-              </button>
-            ))}
-          </div>
         )}
 
         {/* Copy/delete/edit/add-sub/paste-sub — bottom copy, same as the top one. */}

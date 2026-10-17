@@ -595,44 +595,6 @@
   color: #e3f2fd;
 }
 
-/* Agenda strip at the bottom of the page — every dated item under the
-   current page (any depth), soonest first (see datedItems in GraphView.tsx).
-   Only rendered once there's more than one, so it reads as "worth scrolling
-   to" rather than a near-empty section on every page. */
-.time-view {
-  margin-top: 1.5rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border-color);
-}
-.time-view-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.375rem 0.5rem;
-  border: none;
-  background: transparent;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-  color: var(--text-primary);
-}
-.time-view-row:hover {
-  background-color: rgba(0,0,0,0.06);
-}
-[data-theme='dark'] .time-view-row:hover {
-  background-color: rgba(255,255,255,0.06);
-}
-.time-view-row-title {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* Tags — small colored pills next to the title, hashed to one of 6 fixed
    palette slots (see tagColorIndex in Section.tsx) so the same tag text
    always lands on the same color everywhere it appears. */

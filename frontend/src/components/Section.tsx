@@ -134,7 +134,7 @@ function getDropZone(e: React.DragEvent): 'before' | 'nest' | 'after' {
 }
 
 // Helper to calculate due date category for CSS class
-export function getDueCategory(dueDate: string | undefined): string | null {
+function getDueCategory(dueDate: string | undefined): string | null {
   if (!dueDate) return null
   const diffDays = daysUntil(dueDate)
   if (diffDays < 0) return 'overdue'
@@ -144,7 +144,7 @@ export function getDueCategory(dueDate: string | undefined): string | null {
 }
 
 // Helper to format date display — today shows "Today", tomorrow "2d", etc.
-export function formatDueDate(dueDate: string): string {
+function formatDueDate(dueDate: string): string {
   const diffDays = daysUntil(dueDate)
   if (diffDays < 0) return `${Math.abs(diffDays)}d overdue`
   if (diffDays === 0) return 'Today'
