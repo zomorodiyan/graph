@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
+import { FAVORITE_TAG } from '../utils/tags'
 
 interface InlineItemEditorProps {
   itemKey: string
@@ -54,6 +55,9 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
     setTagDraft('')
   }
   const removeTag = (idx: number) => setTags(ts => ts.filter((_, i) => i !== idx))
+  const isFavorite = tags.includes(FAVORITE_TAG)
+  const toggleFavorite = () =>
+    setTags(ts => ts.includes(FAVORITE_TAG) ? ts.filter(t => t !== FAVORITE_TAG) : [...ts, FAVORITE_TAG])
 
   const payload = useMemo<UpdatePayload>(() => {
     const next: UpdatePayload = {}
@@ -72,13 +76,12 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
       next.context = context || ''
     }
 
-    const currentTags = showTagsEditor ? tags : []
-    if (JSON.stringify(currentTags) !== JSON.stringify(initialTags)) {
-      next.tags = currentTags
+    if (JSON.stringify(tags) !== JSON.stringify(initialTags)) {
+      next.tags = tags
     }
 
     return next
-  }, [name, date, showDateEditor, context, tags, showTagsEditor,
+  }, [name, date, showDateEditor, context, tags,
       initialName, initialDate, initialContext, initialTags])
 
   const commit = () => {
@@ -196,6 +199,14 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
         >
           Tags
         </button>
+        <button
+          type="button"
+          className={`inline-tool${isFavorite ? ' active' : ''}`}
+          onClick={toggleFavorite}
+          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          {isFavorite ? '★' : '☆'}
+        </button>
       </div>
 
       <input
@@ -225,7 +236,7 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
         <div className="inline-edit-tags">
           {tags.map((tag, i) => (
             <div className="tag-chip" key={i}>
-              <span>{tag}</span>
+              <span>{tag === FAVORITE_TAG ? '★' : tag}</span>
               <button
                 type="button"
                 className="tag-chip-remove"

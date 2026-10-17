@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
 import { parseLocalDate, daysUntil } from '../utils/dates'
+import { FAVORITE_TAG } from '../utils/tags'
 import InlineItemEditor from './InlineItemEditor'
 
 // Per-item note disclosure triangle (see .context-toggle in App.css) — points
@@ -104,8 +105,6 @@ interface SectionProps {
   depth?: number
   showRaw?: boolean
   rawText?: string
-  sharedTags?: Set<string>
-  activeTag?: string | null
   onTagClick?: (tag: string) => void
 }
 
@@ -161,17 +160,10 @@ export function tagColorIndex(tag: string): number {
   return hash % TAG_PALETTE_SIZE
 }
 
-interface TagClickProps {
-  // Tags carried by more than one item in the graph (see GraphView's
-  // taggedItems) — only these pills are clickable, since a tag on just one
-  // item has nothing else to list. activeTag is the one whose list is open.
-  sharedTags?: Set<string>
-  activeTag?: string | null
-  onTagClick?: (tag: string) => void
-}
-
-// Date + tags badges, shared by all three layers — hidden entirely in minimal view.
-function DateAndTagBadges({ item, minimal, sharedTags, activeTag, onTagClick }: { item: StructureItem; minimal: boolean } & TagClickProps) {
+// Date + tags badges, shared by all three layers — hidden entirely in minimal
+// view. With onTagClick, each tag pill is a button that opens that tag's
+// cross-graph view (see TagView.tsx); the favorite tag shows as a star.
+function DateAndTagBadges({ item, minimal, onTagClick }: { item: StructureItem; minimal: boolean; onTagClick?: (tag: string) => void }) {
   if (minimal) return null
   return (
     <>
@@ -180,23 +172,27 @@ function DateAndTagBadges({ item, minimal, sharedTags, activeTag, onTagClick }: 
       )}
       {item.tags && item.tags.length > 0 && (
         <span className="item-tags">
-          {item.tags.map(tag => onTagClick && sharedTags?.has(tag) ? (
-            <button
-              key={tag}
-              type="button"
-              className={`tag-pill tag-${tagColorIndex(tag)} tag-pill-clickable${activeTag === tag ? ' active' : ''}`}
-              title={activeTag === tag ? 'Hide items with this tag' : 'Show all items with this tag'}
-              // Stop pointerdown too, not just click — mobile rows capture the
-              // pointer on pointerdown (see useDragGesture.ts), which would
-              // retarget this tap's click to the row and toggle its highlight.
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); onTagClick(tag) }}
-            >
-              {tag}
-            </button>
-          ) : (
-            <span key={tag} className={`tag-pill tag-${tagColorIndex(tag)}`}>{tag}</span>
-          ))}
+          {item.tags.map(tag => {
+            const className = `tag-pill tag-${tagColorIndex(tag)}${tag === FAVORITE_TAG ? ' tag-favorite' : ''}`
+            const label = tag === FAVORITE_TAG ? '★' : tag
+            return onTagClick ? (
+              <button
+                key={tag}
+                type="button"
+                className={`${className} tag-pill-clickable`}
+                title={`Show all items tagged ${tag}`}
+                // Stop pointerdown too, not just click — mobile rows capture the
+                // pointer on pointerdown (see useDragGesture.ts), which would
+                // retarget this tap's click to the row and toggle its highlight.
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); onTagClick(tag) }}
+              >
+                {label}
+              </button>
+            ) : (
+              <span key={tag} className={className}>{label}</span>
+            )
+          })}
         </span>
       )}
     </>
@@ -242,14 +238,12 @@ function Section({
   depth = 3,
   showRaw = false,
   rawText,
-  sharedTags,
-  activeTag,
   onTagClick,
 }: SectionProps) {
   const itemPath = parentPath ? `${parentPath}.${itemKey}` : itemKey
   const title = item.title || itemKey
   const itemContextShown = isContextShown(showContext, contextOverrides, itemPath)
-  const tagProps = { sharedTags, activeTag, onTagClick }
+  const tagProps = { onTagClick }
 
   const sectionRef = useRef<HTMLDivElement>(null)
 
