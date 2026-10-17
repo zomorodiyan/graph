@@ -779,6 +779,29 @@
   width: 100%;
 }
 
+/* Repeat editor (see RepeatEditor.tsx) — seven day-of-week toggles. */
+.repeat-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.repeat-day {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 0;
+}
+.repeat-day.active {
+  background: var(--blue-medium);
+  border-color: var(--blue-medium);
+  color: #fff;
+}
+
 /* Tags editor — wrapping row of removable chips plus a trailing draft input */
 .inline-edit-tags {
   display: flex;

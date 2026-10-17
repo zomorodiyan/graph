@@ -1,5 +1,6 @@
 import { StructureItem } from '../api/localClient'
 import { daysUntil } from './dates'
+import { effectiveDate, parseDays } from './recurrence'
 
 // The built-in tag behind the star button (see InlineItemEditor and
 // GraphView's selection toolbar) — an ordinary tag in storage and in the
@@ -36,6 +37,7 @@ const AUTO_TAG_LABELS: Record<string, string> = {
   '~money': 'money',
   '~schedule': 'schedule',
   '~people': 'people',
+  '~routine': 'routine',
 }
 export const AUTO_TAGS = Object.keys(AUTO_TAG_LABELS)
 
@@ -50,8 +52,11 @@ export function tagTarget(tag: string): string {
 
 function autoTagsFor(item: StructureItem): string[] {
   const out: string[] = []
-  if (item.date) {
-    const days = daysUntil(item.date)
+  // A repeating item counts by its next occurrence (see effectiveDate), so
+  // a weekly meeting stays in Today/7days instead of falling into history.
+  const date = effectiveDate(item)
+  if (date) {
+    const days = daysUntil(date)
     if (days < 0) out.push('~history')
     else {
       if (days === 0) out.push('~today')
@@ -64,6 +69,7 @@ function autoTagsFor(item: StructureItem): string[] {
   if (item.tags?.some(t => MONEY_RE.test(t))) out.push('~money')
   if (item.tags?.some(t => HOURS_RE.test(t))) out.push('~schedule')
   if (item.tags?.some(isPersonTag)) out.push('~people')
+  if (item.repeat && parseDays(item.repeat)) out.push('~routine')
   return out
 }
 

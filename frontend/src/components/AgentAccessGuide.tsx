@@ -43,6 +43,8 @@ then \`write\` the full result back (there's no partial/line-level edit endpoint
 - Heading line: \`#+ Title (date)? tags?\`
   - a trailing \`(YYYY-MM-DD)\` = the item's date, e.g. \`## Ship v2 (2026-07-15)\`
   - trailing \`#word\` tokens = tags, e.g. \`### Server #infra #urgent\`
+  - a repeating item names the weekdays it repeats on (same form as Google Calendar), on its own
+    or after a start date: \`## Gym (FREQ=WEEKLY;BYDAY=MO,WE,FR)\`, \`## Standup (2026-10-19 FREQ=WEEKLY;BYDAY=TU)\`
   - both can appear together, date before tags: \`## Ship v2 (2026-07-15) #launch\`
   - special tags: \`#favorite\` (starred), \`#$50\` (an amount of money), \`#1.5h\` (a time estimate), \`#@sara\` (a person)
 - Non-heading lines right after a heading = free-text context/description for that item,

@@ -1,11 +1,14 @@
 // Offline client — all data lives in localStorage, no server required.
 
+import { parseDays } from '../utils/recurrence'
+
 export interface StructureItem {
   id?: string
   title?: string
   context?: string
   date?: string  // plain "YYYY-MM-DD", meaning whatever the user/agent wants (due, scheduled, logged) — no fraction, no rollup
   tags?: string[]  // short labels, cut across the tree independent of parent/child
+  repeat?: string  // weekdays it repeats on, as an iCalendar RRULE: "FREQ=WEEKLY;BYDAY=MO,WE" (see utils/recurrence.ts) — repeating starts at date, if any
   children?: Record<string, StructureItem>
   [key: string]: unknown
 }
@@ -38,6 +41,7 @@ export interface UpdatePayload {
   name?: string; context?: string | ''
   date?: string | ''  // undefined=untouched, ''=cleared
   tags?: string[]  // undefined=untouched, []=cleared, non-empty=wholesale replace
+  repeat?: string | ''  // undefined=untouched, ''=cleared
 }
 
 // ── Storage keys ────────────────────────────────────────────────────────────
@@ -159,9 +163,20 @@ function parseTagsSuffix(s: string): { rest: string; tags?: string[] } {
   return tags.length ? { rest, tags } : { rest: s }
 }
 
-function parseDateSuffix(s: string): { rest: string; date?: string } {
-  const m = s.match(/^(.*?)\s+\((\d{4}-\d{2}-\d{2})\)$/)
-  return m ? { rest: m[1], date: m[2] } : { rest: s }
+// "(2026-10-16)", "(FREQ=WEEKLY;BYDAY=MO,WE)" for a repeating item, or both:
+// "(2026-10-16 FREQ=WEEKLY;BYDAY=MO,WE)" — repeating from that date on.
+function parseDateSuffix(s: string): { rest: string; date?: string; repeat?: string } {
+  const m = s.match(/^(.*?)\s+\((?:(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2}-\d{2})\s+(FREQ=[A-Z=;,]+)|(FREQ=[A-Z=;,]+))\)$/)
+  if (!m) return { rest: s }
+  const date = m[2] ?? m[3]
+  const repeat = m[4] ?? m[5]
+  if (repeat && !parseDays(repeat)) return { rest: s }
+  return { rest: m[1], ...(date && { date }), ...(repeat && { repeat }) }
+}
+
+function dateSuffix(item: StructureItem): string {
+  const parts = [item.date, item.repeat].filter(Boolean)
+  return parts.length ? ` (${parts.join(' ')})` : ''
 }
 
 // The format reuses plain text for structural markers (a "#+ " heading, a
@@ -181,7 +196,7 @@ function escapeTitleForSerialize(title: string): string {
   // backslash where it requires plain whitespace before "#") stops it from
   // reaching anything earlier in the title too.
   let t = title.replace(/(\s)#([$@]?[\w.-]+)$/, '$1\\#$2')
-  t = t.replace(/(\s)\((\d{4}-\d{2}-\d{2})\)$/, '$1\\($2)')
+  t = t.replace(/(\s)\((\d{4}-\d{2}-\d{2}|(?:\d{4}-\d{2}-\d{2}\s+)?FREQ=[A-Z=;,]+)\)$/, '$1\\($2)')
   return t
 }
 
@@ -221,7 +236,7 @@ function parseMarkdownStructure(text: string): Record<string, StructureItem> {
       flushContext()
       const depth = headingMatch[1].length
       const { rest: afterTags, tags } = parseTagsSuffix(headingMatch[2].trim())
-      const { rest: rawTitle, date } = parseDateSuffix(afterTags)
+      const { rest: rawTitle, date, repeat } = parseDateSuffix(afterTags)
       const title = unescapeMarker(rawTitle)
 
       while (stack.length > 1 && stack[stack.length - 1].depth >= depth) stack.pop()
@@ -233,6 +248,7 @@ function parseMarkdownStructure(text: string): Record<string, StructureItem> {
 
       const newItem: StructureItem = { title: title || 'Item', children: {} }
       if (date !== undefined) newItem.date = date
+      if (repeat !== undefined) newItem.repeat = repeat
       if (tags !== undefined) newItem.tags = tags
 
       frame.container[key] = newItem
@@ -251,9 +267,8 @@ function parseMarkdownStructure(text: string): Record<string, StructureItem> {
 export function serializeStructure(items: Record<string, StructureItem>, depth = 1): string {
   const hashes = '#'.repeat(depth)
   const blocks = Object.values(items).map(item => {
-    const dateSuffix = item.date ? ` (${item.date})` : ''
     const tagsSuffix = item.tags && item.tags.length ? ` ${item.tags.map(t => `#${t}`).join(' ')}` : ''
-    let block = `${hashes} ${escapeTitleForSerialize(item.title ?? '')}${dateSuffix}${tagsSuffix}\n`
+    let block = `${hashes} ${escapeTitleForSerialize(item.title ?? '')}${dateSuffix(item)}${tagsSuffix}\n`
     if (item.context) block += `${item.context.split('\n').map(escapeContextLine).join('\n')}\n`
     if (item.children && Object.keys(item.children).length)
       block += serializeStructure(item.children, depth + 1)
@@ -278,9 +293,8 @@ export function serializeItem(key: string, item: StructureItem, depth = 1): stri
 // diverge since it's never parsed back or shown to the user.
 function agentItemBlock(path: string, item: StructureItem, depth: number): string {
   const hashes = '#'.repeat(depth)
-  const dateSuffix = item.date ? ` (${item.date})` : ''
   const tagsSuffix = item.tags && item.tags.length ? ` ${item.tags.map(t => `#${t}`).join(' ')}` : ''
-  let block = `${hashes} ${item.title}${dateSuffix}${tagsSuffix} ⟨${path}⟩\n`
+  let block = `${hashes} ${item.title}${dateSuffix(item)}${tagsSuffix} ⟨${path}⟩\n`
   if (item.context) block += `${item.context}\n`
   if (item.children && Object.keys(item.children).length) {
     block += Object.entries(item.children)
@@ -321,6 +335,7 @@ function validateUpdatePayload(data: UpdatePayload) {
     throw new Error('Context too long (max 10000 chars)')
   }
   if (data.tags !== undefined) validateTagsValue(data.tags)
+  if (data.repeat && !parseDays(data.repeat)) throw new Error('Repeat must look like FREQ=WEEKLY;BYDAY=MO,WE')
 }
 
 // ── Public API (same signatures as client.ts) ────────────────────────────────
@@ -358,6 +373,10 @@ export async function updateItem(path: string, data: UpdatePayload, graphName = 
   if (data.date !== undefined) {
     if (data.date === '') delete item.date
     else item.date = data.date
+  }
+  if (data.repeat !== undefined) {
+    if (data.repeat === '') delete item.repeat
+    else item.repeat = data.repeat
   }
   if (data.context !== undefined) {
     if (data.context === '') delete item.context
@@ -404,6 +423,7 @@ export async function createItem(parentPath: string, data: UpdatePayload, graphN
     title: data.name,
     children: {},
     ...(data.date !== undefined && data.date !== '' && { date: data.date }),
+    ...(data.repeat && { repeat: data.repeat }),
     ...(data.context && { context: data.context }),
     ...(data.tags !== undefined && data.tags.length > 0 && { tags: data.tags }),
   }

@@ -294,6 +294,10 @@ function applyOptimisticUpdate(structure: any, path: string, data: UpdatePayload
       } else if (data.date === '') {
         delete item.date
       }
+      if (data.repeat !== undefined) {
+        if (data.repeat) item.repeat = data.repeat
+        else delete item.repeat
+      }
 
       if (data.context !== undefined && data.context !== '') {
         item.context = data.context
@@ -335,6 +339,7 @@ function applyOptimisticCreate(structure: any, parentPath: string, data: UpdateP
     if (data.date !== undefined && data.date !== '') {
       newItem.date = data.date
     }
+    if (data.repeat) newItem.repeat = data.repeat
     if (data.context !== undefined && data.context !== '') {
       newItem.context = data.context
     }

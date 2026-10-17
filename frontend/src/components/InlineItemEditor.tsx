@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { StructureItem, UpdatePayload } from '../api/localClient'
 import { FAVORITE_TAG } from '../utils/tags'
+import RepeatEditor from './RepeatEditor'
 
 interface InlineItemEditorProps {
   itemKey: string
@@ -17,13 +18,16 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
   const initialContext = item.context || ''
   const initialDate = item.date || ''
   const initialTags = item.tags ?? []
+  const initialRepeat = item.repeat ?? ''
 
   const [name, setName] = useState(defaultName ?? initialName)
   const [context, setContext] = useState(initialContext)
   const [date, setDate] = useState(initialDate)
   const [tags, setTags] = useState(initialTags)
+  const [repeat, setRepeat] = useState(initialRepeat)
   const [tagDraft, setTagDraft] = useState('')
   const [showDateEditor, setShowDateEditor] = useState(initialDate !== '')
+  const [showRepeatEditor, setShowRepeatEditor] = useState(initialRepeat !== '')
   const [showTagsEditor, setShowTagsEditor] = useState(initialTags.length > 0)
   const [showContextEditor, setShowContextEditor] = useState(false)
 
@@ -72,6 +76,10 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
       next.date = currentDate
     }
 
+    if (repeat !== initialRepeat) {
+      next.repeat = repeat
+    }
+
     if (context !== initialContext) {
       next.context = context || ''
     }
@@ -81,8 +89,8 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
     }
 
     return next
-  }, [name, date, showDateEditor, context, tags,
-      initialName, initialDate, initialContext, initialTags])
+  }, [name, date, showDateEditor, context, tags, repeat,
+      initialName, initialDate, initialContext, initialTags, initialRepeat])
 
   const commit = () => {
     if (didCommitRef.current) return
@@ -190,6 +198,14 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
         </button>
         <button
           type="button"
+          className={`inline-tool ${showRepeatEditor || repeat ? 'active' : ''}`}
+          onClick={() => setShowRepeatEditor(true)}
+          title="Repeat on days of the week"
+        >
+          Repeat
+        </button>
+        <button
+          type="button"
           className={`inline-tool ${showTagsEditor || tags.length > 0 ? 'active' : ''}`}
           onClick={() => {
             setShowTagsEditor(true)
@@ -231,6 +247,8 @@ function InlineItemEditor({ itemKey, item, onSave, onCancel, defaultName }: Inli
           />
         </div>
       )}
+
+      {showRepeatEditor && <RepeatEditor value={repeat} onChange={setRepeat} />}
 
       {showTagsEditor && (
         <div className="inline-edit-tags">
