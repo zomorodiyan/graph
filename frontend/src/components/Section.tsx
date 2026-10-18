@@ -5,7 +5,7 @@ import { FAVORITE_TAG, tagColorIndex } from '../utils/tags'
 import { effectiveDate, describeRepeat } from '../utils/recurrence'
 import InlineItemEditor from './InlineItemEditor'
 import { CalendarIcon } from './icons'
-import { downloadIcs } from '../utils/ics'
+import { googleCalendarUrl } from '../utils/googleCalendar'
 
 // Per-item note disclosure triangle (see .context-toggle in App.css) — points
 // right when the note is hidden, rotates to point down when shown. A genuine
@@ -169,18 +169,20 @@ function DateAndTagBadges({ item, minimal, onTagClick }: { item: StructureItem; 
         </span>
       )}
       {date && (
-        <button
-          type="button"
+        <a
           className="cal-add"
-          title="Add to calendar"
-          aria-label="Add to calendar"
+          href={googleCalendarUrl(item) ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Add to Google Calendar"
+          aria-label="Add to Google Calendar"
           // Stop pointerdown too, like the tag pills below — mobile rows
           // capture the pointer on pointerdown (long-press gestures).
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => { e.stopPropagation(); downloadIcs(item) }}
+          onClick={(e) => e.stopPropagation()}
         >
           <CalendarIcon />
-        </button>
+        </a>
       )}
       {item.tags && item.tags.length > 0 && (
         <span className="item-tags">
