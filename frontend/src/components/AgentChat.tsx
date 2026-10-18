@@ -12,6 +12,8 @@ import { useGraphs, getItemByPath } from '../hooks/useGraph'
 import { useSyncManager, SyncAllResult } from '../hooks/useSyncManager'
 import { fetchStructure, serializeItemForAgent, serializeStructureForAgent } from '../api/localClient'
 import AgentAccessGuide from './AgentAccessGuide'
+import KeysPanel, { KeyKind } from './KeysPanel'
+import { KeyIcon } from './icons'
 import Notification from './Notification'
 
 // Smallest the permanent bubble can be dragged down to — two different
@@ -164,10 +166,9 @@ function AgentChat() {
   // the one and only place that calls it.
   const { isSyncing, pat, configure, syncAll } = useSyncManager(queryClient)
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'syncing' } | null>(null)
-  const [showGistConfig, setShowGistConfig] = useState(false)
+  // The Keys panel (API key + GitHub token forms), and which form it focuses.
+  const [keysPanel, setKeysPanel] = useState<KeyKind | null>(null)
   const [showAgentGuide, setShowAgentGuide] = useState(false)
-  const [patInput, setPatInput] = useState('')
-  const patInputRef = useRef<HTMLInputElement>(null)
 
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type })
@@ -182,12 +183,11 @@ function AgentChat() {
   }, [pat])
 
   useModalBackButton(showAgentGuide, () => setShowAgentGuide(false))
+  useModalBackButton(keysPanel !== null, () => setKeysPanel(null))
 
   const handleSyncClick = async () => {
     if (!pat) {
-      setPatInput('')
-      setShowGistConfig(true)
-      setTimeout(() => patInputRef.current?.focus(), 50)
+      setKeysPanel('github')
       return
     }
     const { error, pushed, pulled }: SyncAllResult = await syncAll()
@@ -207,9 +207,10 @@ function AgentChat() {
   // guide instead (independent of connection state).
   const syncLongPress = useLongPress(() => setShowAgentGuide(true), handleSyncClick)
 
-  const handleSaveGistConfig = async () => {
-    configure(patInput, '')
-    setShowGistConfig(false)
+  const handleSavePat = async (token: string) => {
+    configure(token, '')
+    if (!token.trim()) return
+    setKeysPanel(null)
     const { error, pushed, pulled } = await syncAll()
     if (error) {
       showNotification(error, 'error')
@@ -425,14 +426,12 @@ function AgentChat() {
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`
   }, [draft])
 
-  // Same box, two meanings depending on connection state: with no key
-  // saved yet, whatever's typed here IS the key (submitting routes to
-  // saveKey instead of sendMessage) — no separate key-entry form anymore.
+  // With no API key yet, sending opens the Keys panel instead (the draft
+  // stays put, ready to send once the key is in).
   const handleSend = () => {
     if (!draft.trim() || isSending) return
     if (!apiKey) {
-      saveKey(draft)
-      setDraft('')
+      setKeysPanel('anthropic')
       return
     }
     sendMessage(
@@ -556,6 +555,16 @@ function AgentChat() {
               disabled={isSyncing}
             >↻</button>
           )}
+          {!graphName && (
+            <button
+              className={`keys-toggle${apiKey || pat ? ' active' : ''}`}
+              onClick={() => setKeysPanel('anthropic')}
+              title="API key and GitHub token"
+              aria-label="Keys"
+            >
+              <KeyIcon />
+            </button>
+          )}
         </div>
         <textarea
           ref={inputRef}
@@ -572,13 +581,13 @@ function AgentChat() {
               handleSend()
             }
           }}
-          placeholder={apiKey ? 'Message AI…' : 'Enter key'}
+          placeholder="Message AI…"
           rows={1}
         />
         {isSending ? (
           <button className="agent-chat-send stop" onClick={stop} title="Stop">&#9632;</button>
         ) : (
-          <button className="agent-chat-send" onClick={handleSend} disabled={!draft.trim()} title={apiKey ? 'Send' : 'Save key'}>&#10148;</button>
+          <button className="agent-chat-send" onClick={handleSend} disabled={!draft.trim()} title={apiKey ? 'Send' : 'Add your API key to chat'}>&#10148;</button>
         )}
       </div>
 
@@ -596,31 +605,15 @@ function AgentChat() {
 
     {notification && <Notification message={notification.message} type={notification.type} />}
 
-    {showGistConfig && (
-      <div className="gist-config-panel">
-        <div className="gist-config-guide">
-          <p className="gist-guide-title">Connect GitHub Gist for sync</p>
-          <ol className="gist-guide-steps">
-            <li>Go to <a href="https://github.com/settings/tokens/new?scopes=gist&description=Knowledge+Graph+Sync" target="_blank" rel="noreferrer">github.com → Settings → Tokens</a></li>
-            <li>Check only <strong>gist</strong> scope, generate &amp; copy the token</li>
-            <li>Paste it below — your graphs sync to a private Gist only you can see</li>
-          </ol>
-        </div>
-        <div className="gist-config-inputs">
-          <input
-            ref={patInputRef}
-            type="password"
-            placeholder="Paste GitHub token here"
-            value={patInput}
-            onChange={e => setPatInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleSaveGistConfig(); if (e.key === 'Escape') setShowGistConfig(false) }}
-          />
-          <div className="gist-config-actions">
-            <button className="btn-save-url" onClick={handleSaveGistConfig} disabled={!patInput.trim()}>Connect</button>
-            <button className="btn-cancel-url" onClick={() => setShowGistConfig(false)}>Cancel</button>
-          </div>
-        </div>
-      </div>
+    {keysPanel && (
+      <KeysPanel
+        focus={keysPanel}
+        apiKey={apiKey}
+        pat={pat}
+        onSaveApiKey={(key) => { saveKey(key); if (key.trim()) setKeysPanel(null) }}
+        onSavePat={handleSavePat}
+        onClose={() => setKeysPanel(null)}
+      />
     )}
 
     {showAgentGuide && <AgentAccessGuide onClose={() => setShowAgentGuide(false)} />}

@@ -7,6 +7,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import { getItemByPath } from '../hooks/useGraph'
+import { readSecret, writeSecret } from '../utils/secrets'
 import { createItem, fetchStructure, serializeItemForAgent, serializeStructureForAgent, updateItem, UpdatePayload } from './localClient'
 
 // The SDK's own betaTool() helper (helpers/beta/json-schema) builds this
@@ -38,14 +39,13 @@ const MODEL = 'claude-opus-5'
 // can't run away.
 const MAX_TOOL_ITERATIONS = 10
 
+// Session-only, like the GitHub token — see utils/secrets.ts.
 export function getApiKey(): string {
-  return localStorage.getItem(API_KEY_KEY) ?? ''
+  return readSecret(API_KEY_KEY)
 }
 
 export function saveApiKey(key: string) {
-  const t = key.trim()
-  if (t) localStorage.setItem(API_KEY_KEY, t)
-  else localStorage.removeItem(API_KEY_KEY)
+  writeSecret(API_KEY_KEY, key)
 }
 
 export interface AgentChatMessage {

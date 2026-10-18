@@ -2,6 +2,8 @@
 // Each user has one private Gist: one .txt file per graph + one _meta.json.
 // Auth: GitHub personal access token scoped to `gist` only.
 
+import { readSecret, writeSecret } from '../utils/secrets'
+
 const GITHUB_API = 'https://api.github.com'
 
 export const PAT_KEY     = 'gist_pat'
@@ -15,13 +17,12 @@ export interface GistGraphMeta {
   modified_at:  string
 }
 
-export function getPAT():    string { return localStorage.getItem(PAT_KEY)     ?? '' }
+// The token is session-only (see utils/secrets.ts); the Gist id isn't secret.
+export function getPAT():    string { return readSecret(PAT_KEY) }
 export function getGistId(): string { return localStorage.getItem(GIST_ID_KEY) ?? '' }
 
 export function savePAT(token: string) {
-  const t = token.trim()
-  if (t) localStorage.setItem(PAT_KEY, t)
-  else   localStorage.removeItem(PAT_KEY)
+  writeSecret(PAT_KEY, token)
 }
 
 export function saveGistId(id: string) {
