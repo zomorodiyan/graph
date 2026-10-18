@@ -1,22 +1,18 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAllStructures } from '../hooks/useGraph'
+import { useStructure } from '../hooks/useGraph'
 import { FAVORITE_TAG, countTags, sortTags, tagLabel, tagsPath, tagColorIndex } from '../utils/tags'
 
-// Every tag across all graphs, each opening its cross-graph view
-// (TagView.tsx) — shown at the bottom of graph pages. Favorite is always
-// listed first, even before any item uses it, so it's one tap away; the auto
-// tags (Today … history, money, schedule, people, routine — see
-// utils/tags.ts) follow, each only while some item has it.
-function TagList() {
+// The tags used in one graph, with that graph's counts — shown at the bottom
+// of its pages. Favorite first, then the auto tags (Today … history, money,
+// schedule, people, routine — see utils/tags.ts), then the rest; a tag only
+// appears while some item in this graph has it. Each opens its tag view.
+function TagList({ graphName }: { graphName: string }) {
   const navigate = useNavigate()
-  const { graphs } = useAllStructures()
-  const tagCounts = useMemo(() => {
-    const counts = countTags(graphs.map(g => g.structure.structure))
-    if (!counts.has(FAVORITE_TAG)) counts.set(FAVORITE_TAG, 0)
-    return counts
-  }, [graphs])
+  const { data: structure } = useStructure(graphName)
+  const tagCounts = useMemo(() => countTags(structure ? [structure.structure] : []), [structure])
   const tags = sortTags(tagCounts)
+  if (tags.length === 0) return null
 
   return (
     <div className="tags-list">

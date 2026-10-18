@@ -30,7 +30,13 @@ const clickTitle = (re, opts = {}) => page.locator('.item-title', { hasText: re 
 await page.goto(BASE + '/g/g1')
 await page.waitForSelector('.tags-list')
 const menu = await page.$$eval('.tags-list .tag-pill', els => els.map(e => e.textContent.trim()))
-check('menu: favorite first, then by count', menu[0] === '★ favorite 0' && menu[1] === 'proj 5' && menu.some(t => t.startsWith('lonely')), JSON.stringify(menu))
+check("graph page lists only this graph's tags, with its counts", JSON.stringify(menu) === '["proj 4","urgent 1"]', JSON.stringify(menu))
+await page.goto(BASE + '/g/g2')
+await page.waitForSelector('.tags-list')
+const menu2 = await page.$$eval('.tags-list .tag-pill', els => els.map(e => e.textContent.trim()))
+check('another graph lists its own', JSON.stringify(menu2) === '["lonely 1","proj 1"]', JSON.stringify(menu2))
+await page.goto(BASE + '/g/g1')
+await page.waitForSelector('.tags-list')
 await shot(page, 'menu.png')
 
 // Cross-graph view
@@ -88,7 +94,7 @@ check('editor star adds favorite', JSON.stringify(s.structure.work.children.alph
 
 await page.goto(BASE + '/g/g1')
 await page.waitForSelector('.tags-list')
-check('menu favorite count updates', (await page.locator('.tags-list .tag-pill').first().textContent()).trim() === '★ favorite 1')
+check('favorite appears once this graph has one', (await page.locator('.tags-list .tag-pill').first().textContent()).trim() === '★ favorite 1')
 
 const text = await page.evaluate(async () => (await import('/src/api/localClient.ts')).fetchStructureText('g1'))
 check('text format keeps #favorite', /## Alpha #proj #urgent #favorite/.test(text))
