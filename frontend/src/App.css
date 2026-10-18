@@ -993,6 +993,7 @@
 .depth-toggle,
 .ctx-toggle,
 .sync-toggle,
+.keys-toggle,
 .copy-toggle,
 .favorite-toggle,
 .delete-toggle,
@@ -1055,7 +1056,8 @@
 
 .depth-toggle.active,
 .ctx-toggle.active,
-.sync-toggle.active {
+.sync-toggle.active,
+.keys-toggle.active {
   opacity: 1;
 }
 
@@ -1075,6 +1077,7 @@
 }
 
 .theme-toggle:hover,
+.keys-toggle:hover,
 .depth-toggle:hover,
 .ctx-toggle:hover,
 .copy-toggle:hover,
@@ -1702,13 +1705,14 @@
   }
 }
 
-/* Theme/depth/note/sync buttons sit inline in the row (Telegram/WhatsApp-
+/* Theme/depth/note/sync/keys buttons sit inline in the row (Telegram/WhatsApp-
    style) — shrink slightly from their standalone floating-button size so
    they don't crowd out the textarea. */
 .agent-chat-input-row .theme-toggle,
 .agent-chat-input-row .depth-toggle,
 .agent-chat-input-row .ctx-toggle,
-.agent-chat-input-row .sync-toggle {
+.agent-chat-input-row .sync-toggle,
+.agent-chat-input-row .keys-toggle {
   width: 2.25rem;
   height: 2.25rem;
   font-size: 16px;
@@ -1823,4 +1827,53 @@
   .agent-chat-resize-handle {
     display: none;
   }
+}
+
+/* Keys panel (see KeysPanel.tsx) — two small login forms (Anthropic API
+   key, GitHub token) inside the .gist-config-panel popup. */
+.keys-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.keys-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-height: calc(100dvh - 6rem);
+  overflow-y: auto;
+}
+.key-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.key-form .gist-guide-title {
+  margin: 0;
+}
+.key-form-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.key-form-hint a {
+  color: var(--blue-medium);
+}
+.key-form input {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.4rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+/* The fixed "username" that tells the two logins apart for the password
+   manager — shown as plain text, not as something to type in. */
+.key-form input.key-form-user {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }

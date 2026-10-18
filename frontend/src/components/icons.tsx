@@ -88,3 +88,15 @@ export function CalendarIcon() {
     </svg>
   )
 }
+
+// A key — opens the Keys panel (API key + GitHub token, see KeysPanel.tsx).
+export function KeyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="7.5" cy="15.5" r="4.5" />
+      <path d="M10.7 12.3 20 3" />
+      <path d="M16 7l3 3" />
+      <path d="M14 9l2 2" />
+    </svg>
+  )
+}
