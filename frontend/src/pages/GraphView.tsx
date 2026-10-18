@@ -723,9 +723,9 @@ function GraphView() {
             (.breadcrumb--footer), where the header copy is the only one. */}
         {!inlineEdit && !subCreate && <BreadcrumbNav crumbs={breadcrumb} variant="footer" levelOneCount={levelOneKeys.length} />}
         <div ref={anchorRef} className="reach-anchor" />
-        {/* All tags, below the page's own content — on phones just past the
+        {/* This graph's tags, below the page's own content — on phones just past the
             bottom-anchored view, scrolled into reach on demand. */}
-        <TagList />
+        {graphName && <TagList graphName={graphName} />}
       </div>
 
       {/* Notification */}

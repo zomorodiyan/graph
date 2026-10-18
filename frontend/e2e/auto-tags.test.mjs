@@ -20,7 +20,7 @@ const count = async () => (await p.textContent('.tag-view-count')).trim()
 await p.goto(BASE + '/g/ag')
 await p.waitForSelector('.tags-list')
 const menu = await p.$$eval('.tags-list .tag-pill', els => els.map(e => e.textContent.trim()))
-const want = ['★ favorite 0', 'Today 1', '3days 2', '7days 3', '30days 5', 'long-term 1', 'history 1', 'money 2', 'schedule 2', 'people 2', '@sara 2', '@john 1', 'proj 3']
+const want = ['Today 1', '3days 2', '7days 3', '30days 5', 'long-term 1', 'history 1', 'money 2', 'schedule 2', 'people 2', '@sara 2', '@john 1', 'proj 3']
 check('menu tags, order and counts; no $/h pills', JSON.stringify(menu) === JSON.stringify(want), JSON.stringify(menu))
 await shot(p, 'auto-tags-menu.png')
 
