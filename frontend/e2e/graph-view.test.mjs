@@ -1,5 +1,5 @@
-// Graph page editing: rename, add/delete via the right-click menu,
-// select + copy/delete, and drag to reorder or nest.
+// Graph page editing: rename, right-click selection with the toolbar's
+// add/edit/delete, select + copy/delete, and drag to reorder or nest.
 import { BASE, check, done, launch, seed, titles } from './helpers.mjs'
 
 const gv = {
@@ -35,23 +35,39 @@ let s = await stored()
 check('rename saves under a new key', s.gamma_ray?.title === 'Gamma Ray' && !s.gamma, Object.keys(s).join())
 check('rename shows immediately', (await level1()).includes('Gamma Ray'))
 
-// Right-click → New creates a child
-await title(/^Delta/).click({ button: 'right', position: { x: 4, y: 6 } })
-await p.getByText('New', { exact: true }).click()
+// Right-click selects (no menu); the toolbar then acts on the selection
+const rightClick = async re => { await title(re).click({ button: 'right', position: { x: 4, y: 6 } }); await p.waitForTimeout(200) }
+await rightClick(/^Delta/)
+check('right-click selects the item', (await p.locator('.user-highlighted').count()) === 1)
+check('no pop-up menu', (await p.locator('.context-menu').count()) === 0)
+await p.click('.graph-header-buttons .addsub-toggle')
 await p.waitForSelector('.inline-edit-title')
 await p.fill('.inline-edit-title', 'D1')
 await p.locator('.inline-edit-title').press('Enter')
 await p.waitForTimeout(400)
 s = await stored()
-check('right-click New adds a child', s.delta.children?.d1?.title === 'D1', JSON.stringify(s.delta))
+check('add sub-item from the toolbar', s.delta.children?.d1?.title === 'D1', JSON.stringify(s.delta))
 check('new child shows', (await titles(p)).includes('D1'))
+await rightClick(/^Delta/)
+check('right-click again deselects', (await p.locator('.user-highlighted').count()) === 0)
 
-// Right-click → Delete
-await title(/^D1/).click({ button: 'right', position: { x: 4, y: 6 } })
-await p.getByText('Delete', { exact: true }).click()
+// Edit button for a single selection (desktop toolbar)
+await rightClick(/^D1/)
+await p.click('.graph-header-buttons .edit-toggle')
+await p.waitForSelector('.inline-edit-title')
+await p.fill('.inline-edit-title', 'D One')
+await p.locator('.inline-edit-title').press('Enter')
 await p.waitForTimeout(400)
 s = await stored()
-check('right-click Delete removes it', !s.delta.children?.d1 && !(await titles(p)).includes('D1'))
+check('toolbar Edit renames the selected item', s.delta.children?.d_one?.title === 'D One', JSON.stringify(s.delta))
+check('editing ends the selection', (await p.locator('.user-highlighted').count()) === 0)
+
+// Delete the selection from the toolbar
+await rightClick(/^D One/)
+await p.locator('.graph-header-buttons .delete-toggle').click()
+await p.waitForTimeout(400)
+s = await stored()
+check('toolbar Delete removes the selected item', !s.delta.children?.d_one && !(await titles(p)).includes('D One'), JSON.stringify(s.delta))
 
 // Select two items, copy them, delete them
 await title(/^A1/).click({ modifiers: ['Control'], position: { x: 4, y: 6 } })

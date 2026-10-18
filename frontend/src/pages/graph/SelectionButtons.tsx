@@ -6,8 +6,7 @@ interface SelectionButtonsProps {
   onCopy: () => void
   onDelete: () => void
   onToggleFavorite: () => void
-  // Only when exactly one item is selected (mobile only — desktop edits via
-  // Shift/Alt+click or the right-click menu instead).
+  // Only when exactly one item is selected.
   onEdit?: () => void
   // Only when exactly one item is selected and it has room for a sub-item.
   onAddSub?: () => void

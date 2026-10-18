@@ -69,7 +69,7 @@ export function applyLocalMoveToPosition(
 }
 
 // Ordered sibling keys at `parentRelativeParts` (relative to the current view),
-// walking .children the same way applyEdit/handleDelete do below.
+// walking .children the same way the local edits in useItemEdits do.
 export function getSiblingOrder(items: Record<string, StructureItem>, parentRelativeParts: string[]): string[] {
   let container = items
   for (const key of parentRelativeParts) {

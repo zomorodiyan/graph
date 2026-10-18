@@ -1,5 +1,5 @@
 import { StructureItem, UpdatePayload, slugify } from '@api'
-import { useCreateItem, useDeleteItem, useUpdateItem } from '../../hooks/useGraph'
+import { useCreateItem, useUpdateItem } from '../../hooks/useGraph'
 
 type Items = Record<string, StructureItem>
 
@@ -14,7 +14,7 @@ interface ItemEditOptions {
   showNotification: (message: string, type?: 'success' | 'error' | 'syncing') => void
 }
 
-// GraphView's item edits — edit, create a child, delete one, drop deleted
+// GraphView's item edits — edit, create a child, drop deleted
 // paths — each applied to the local (optimistic) tree first for instant
 // feedback, then synced through the item mutations. Paths are absolute;
 // the local tree is relative to the current page (`path`).
@@ -22,7 +22,6 @@ export function useItemEdits({
   graphName, path, rawItems, serverKeys, setLocalItems, setLocalOrder, setPendingItems, showNotification,
 }: ItemEditOptions) {
   const updateItem = useUpdateItem(graphName)
-  const deleteItemMutation = useDeleteItem(graphName)
   const createItem = useCreateItem(graphName)
 
   // Apply edit mutation with optimistic local update
@@ -195,51 +194,8 @@ export function useItemEdits({
     )
   }
 
-  // Deletes one item — local tree first, then the server.
-  const deleteOne = (pathToDelete: string) => {
-    const pathParts = pathToDelete.split('.')
-    const currentPathParts = path ? path.split('.') : []
-    
-    // Calculate relative path from current view
-    const relativeParts = pathParts.slice(currentPathParts.length)
-    const itemKey = relativeParts[relativeParts.length - 1]
-    
-    // IMMEDIATELY update local state for instant visual feedback
-    setLocalItems(prev => {
-      if (!prev) return prev
-      
-      // Deep clone to avoid mutation
-      const newItems = JSON.parse(JSON.stringify(prev))
-      
-      // Navigate to the parent of the item to delete
-      let target = newItems
-      for (let i = 0; i < relativeParts.length - 1; i++) {
-        const key = relativeParts[i]
-        if (target[key]) {
-          target = target[key].children || target[key]
-        } else {
-          return prev // Item not found
-        }
-      }
-      
-      if (!target[itemKey]) return prev
-      delete target[itemKey]
-      return newItems
-    })
-    
-    // Only update local order if deleting a top-level item
-    if (relativeParts.length === 1) {
-      setLocalOrder(prev => prev ? prev.filter(k => k !== itemKey) : prev)
-    }
-    
-    // Then sync to server in background
-    deleteItemMutation.mutate(pathToDelete, {
-      onSuccess: () => showNotification('Deleted!'),
-      onError: () => showNotification('Failed to delete', 'error'),
-    })
-  }
   // Immediately removes the given absolute paths from local state — the
-  // bulk-delete counterpart to handleDelete's single-path version above,
+  // bulk delete,
   // used by handleDeleteSelected/handleConfirmAgentDelete below. Deliberately
   // NOT the null-out-and-let-the-sync-effect-repopulate approach those two
   // used to use: nulling localItems races queryClient.invalidateQueries's own
@@ -275,5 +231,5 @@ export function useItemEdits({
     }
   }
 
-  return { applyEdit, createChild, deleteOne, removePathsFromLocal }
+  return { applyEdit, createChild, removePathsFromLocal }
 }

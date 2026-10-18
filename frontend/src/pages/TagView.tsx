@@ -20,7 +20,7 @@ const isTouchDevice = () => !!window.matchMedia?.('(hover: none) and (pointer: c
 // (see filterTreeByTags), rendered through the normal Section component.
 // Clicking (tapping) an item opens it in its graph — browser back returns
 // here; clicking a tag pill on an item adds that tag to the view. Items can
-// be edited in place: Shift/Alt+click or right-click on desktop, long-press
+// be edited in place: Shift/Alt+click on desktop, long-press
 // on touch (in the same bottom sheet the graph page uses). Swiping right
 // goes home.
 function TagView() {
@@ -136,7 +136,6 @@ function TagView() {
                     editInline={!isMobile}
                     onInlineSave={(viewPath, data) => { const p = real(viewPath); if (p) saveEdit(graph.name, p, data) }}
                     onInlineCancel={() => setEditing(null)}
-                    onContextMenu={(e, viewPath) => { e.preventDefault(); startEdit(viewPath) }}
                     makeDragGestureHandlers={(viewPath) => makeLongPressHandlers(() => startEdit(viewPath), () => handleOpen(viewPath))}
                     showContext={viewMode === 'context' && !minimalView}
                     contextOverrides={contextOverrides}
