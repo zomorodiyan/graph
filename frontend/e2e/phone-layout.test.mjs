@@ -81,10 +81,36 @@ await p.locator('.tag-view-group .item-title', { hasText: /^Alpha Two/ }).tap({ 
 await p.waitForURL(/\/g\/short$/, { timeout: 3000 }).catch(() => {})
 check('tap opens the item in its graph', new URL(p.url()).pathname === '/g/short', p.url())
 
-// Main page: Favorites card, no tag list
+// Tag view: swipe right goes home
+const swipeRight = (pg, sel) => pg.locator(sel).first().evaluate(el => {
+  const touch = (x, y) => new Touch({ identifier: 1, target: el, clientX: x, clientY: y })
+  const fire = (type, x, y) => el.dispatchEvent(new TouchEvent(type, {
+    bubbles: true, cancelable: true, touches: type === 'touchend' ? [] : [touch(x, y)], changedTouches: [touch(x, y)],
+  }))
+  fire('touchstart', 40, 400); fire('touchmove', 120, 402); fire('touchmove', 220, 404); fire('touchend', 240, 404)
+})
+await p.goto(BASE + '/tags/proj')
+await p.waitForSelector('.tag-view-graph')
+await swipeRight(p, '.tag-view-page')
+await p.waitForURL(BASE + '/', { timeout: 3000 }).catch(() => {})
+check('swipe right in a tag view goes home', new URL(p.url()).pathname === '/', p.url())
+
+// Main page: Favorites card, disabled until something is starred; no tag list
 await p.goto(BASE + '/')
 await p.waitForSelector('.graph-card')
 check('main page has no tag list', (await p.locator('.tags-list').count()) === 0)
+check('Favorites shows 0 and is disabled', (await p.locator('.favorites-card').getAttribute('aria-disabled')) === 'true' && (await p.locator('.favorites-count').textContent()) === '0')
+await p.locator('.favorites-card').tap()
+await p.waitForTimeout(400)
+check('tapping empty Favorites does nothing', new URL(p.url()).pathname === '/', p.url())
+await p.evaluate(() => {
+  const g = JSON.parse(localStorage.getItem('offline_graph_short'))
+  g.structure.b.tags = ['favorite']
+  localStorage.setItem('offline_graph_short', JSON.stringify(g))
+})
+await p.reload()
+await p.waitForSelector('.favorites-card')
+check('Favorites count updates', (await p.locator('.favorites-count').textContent()) === '1' && (await p.locator('.favorites-card').getAttribute('aria-disabled')) === 'false')
 await p.locator('.favorites-card').tap()
 await p.waitForURL(/\/tags\/favorite$/, { timeout: 3000 }).catch(() => {})
 check('Favorites card opens the favorite tag view', p.url().endsWith('/tags/favorite'), p.url())

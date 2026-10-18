@@ -6,6 +6,7 @@ import { useAllStructures, getItemByPath } from '../hooks/useGraph'
 import { useViewOptions } from '../hooks/useViewOptions'
 import { useLongPressFactory } from '../hooks/useLongPress'
 import { useBottomAnchor } from '../hooks/useBottomAnchor'
+import { usePageSwipe } from '../hooks/usePageSwipe'
 import Section from '../components/Section'
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
@@ -20,7 +21,8 @@ const isTouchDevice = () => !!window.matchMedia?.('(hover: none) and (pointer: c
 // Clicking (tapping) an item opens it in its graph — browser back returns
 // here; clicking a tag pill on an item adds that tag to the view. Items can
 // be edited in place: Shift/Alt+click or right-click on desktop, long-press
-// on touch (in the same bottom sheet the graph page uses).
+// on touch (in the same bottom sheet the graph page uses). Swiping right
+// goes home.
 function TagView() {
   const { tags: tagsParam = '' } = useParams()
   const activeTags = useMemo(() => tagsParam.split(',').filter(Boolean), [tagsParam])
@@ -39,6 +41,9 @@ function TagView() {
   const [inputFocused, setInputFocused] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const anchorRef = useBottomAnchor<HTMLDivElement>(tagsParam, !isLoading)
+  // Swipe right goes home, same as from a graph's top page (no swipe-left
+  // here — items open with a tap instead).
+  const { ref: pageSwipeRef } = usePageSwipe(() => {}, () => navigate('/'))
 
   // The item being edited: its graph and its (synthetic) path in this view.
   const [editing, setEditing] = useState<{ graph: string; viewPath: string } | null>(null)
@@ -106,7 +111,7 @@ function TagView() {
   const editingItem = editingGroup && editingRealPath ? getItemByPath(editingGroup.structure, editingRealPath) : null
 
   return (
-    <div className="graph-container tag-view-page">
+    <div className="graph-container tag-view-page" ref={pageSwipeRef}>
       <div className="items-grid">
         {groups.map(({ graph, structure, items, realPaths }) => {
           const real = (viewPath: string) => realPaths.get(viewPath)

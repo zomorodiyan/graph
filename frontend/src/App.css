@@ -578,7 +578,7 @@
   max-width: 9rem;
 }
 
-/* "Add to calendar" button next to a date badge (see Section.tsx, ics.ts). */
+/* "Add to Google Calendar" link next to a date badge (see Section.tsx, googleCalendar.ts). */
 .cal-add {
   display: inline-flex;
   align-items: center;
