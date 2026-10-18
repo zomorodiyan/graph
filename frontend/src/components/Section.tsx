@@ -49,16 +49,12 @@ interface SectionProps {
   editInline?: boolean
   onInlineSave?: (path: string, data: UpdatePayload) => void
   onInlineCancel?: () => void
-  // Sub-item creation (via the right-click menu or a right-swipe): parentPath
+  // Sub-item creation (via the selection toolbar's add-sub button): parentPath
   // currently being created under, and its callbacks
   creatingPath?: string | null
   onSubCreateStart?: (parentPath: string) => void
   onSubCreateSave?: (parentPath: string, data: UpdatePayload) => void
   onSubCreateCancel?: () => void
-  // Right-click menu (Delete / New / Paste). canAddSub tells the caller whether
-  // this row supports sub-item creation — false for layer3, which has no "+"/
-  // paste-sub UI to open (there's no layer4 rendering to swap an editor into).
-  onContextMenu?: (e: React.MouseEvent, path: string, canAddSub: boolean) => void
   // Two-way "point at an item" channel with the agent chat (see
   // useHighlights.ts) — desktop: click the row background (not the title,
   // which keeps its own click); mobile: a plain tap (long-press starts a
@@ -228,7 +224,6 @@ function Section({
   onSubCreateStart,
   onSubCreateSave,
   onSubCreateCancel,
-  onContextMenu,
   onToggleHighlight,
   makeDragGestureHandlers,
   userHighlights,
@@ -270,9 +265,17 @@ function Section({
   // can't mean both "open the editor" and "start a drag"). Desktop: plain
   // click navigates (into a level-1 item's own children via onItemEnter, or
   // promoting a level-2/3 item to the top via onItemClick — a no-op on a
-  // leaf level-1 item), Ctrl/Cmd+click toggles highlight, Shift/Alt+click
-  // opens the editor directly, right-click shows the context menu.
+  // leaf level-1 item), right-click or Ctrl/Cmd+click toggles highlight
+  // (the selection toolbar then acts on it), Shift/Alt+click opens the
+  // editor directly.
   const isMobile = !editInline
+  // Right-click selects (only where selection exists — elsewhere, like the
+  // tag view, the browser's own menu is left alone).
+  const selectOnRightClick = (e: React.MouseEvent, path: string) => {
+    if (!onToggleHighlight) return
+    e.preventDefault()
+    onToggleHighlight(path)
+  }
 
   // Get child items for layer2
   const children = item.children || {}
@@ -309,7 +312,7 @@ function Section({
                 className={`layer1${!editInline && (editingPath === itemPath || creatingPath === itemPath) ? ' item-editing' : ''}${highlightClasses(itemPath, userHighlights, agentHighlights, agentDeletePending)}`}
                 {...(!isMobile
                   ? {
-                      onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, itemPath, true),
+                      onContextMenu: (e: React.MouseEvent) => selectOnRightClick(e, itemPath),
                       // Ctrl/Cmd+click anywhere on the row (not just the title
                       // span) toggles highlight — the title's own handler
                       // stops propagation for this case so the toggle doesn't
@@ -331,7 +334,7 @@ function Section({
                   // into this item's own children (onItemEnter — a no-op on
                   // a leaf item), Ctrl/Cmd+click toggles highlight, Shift/
                   // Alt+click opens the editor directly.
-                  title={!isMobile ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
+                  title={!isMobile ? 'Right-click or Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
                   onClick={isMobile ? undefined : (e) => {
                     if (e.ctrlKey || e.metaKey) {
                       e.stopPropagation()
@@ -436,7 +439,7 @@ function Section({
                           className={`layer2${!editInline && (editingPath === childPath || creatingPath === childPath) ? ' item-editing' : ''}${highlightClasses(childPath, userHighlights, agentHighlights, agentDeletePending)}`}
                           {...(!isMobile
                             ? {
-                                onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, childPath, depth >= 3),
+                                onContextMenu: (e: React.MouseEvent) => selectOnRightClick(e, childPath),
                                 onClick: (e: React.MouseEvent) => {
                                   if (e.ctrlKey || e.metaKey) onToggleHighlight?.(childPath)
                                 },
@@ -448,7 +451,7 @@ function Section({
                         >
                           <span
                             className="item-title"
-                            title={!isMobile ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
+                            title={!isMobile ? 'Right-click or Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
                             onClick={isMobile ? undefined : (e) => {
                               if (e.ctrlKey || e.metaKey) { e.stopPropagation(); onToggleHighlight?.(childPath) }
                               else if (e.shiftKey || e.altKey) onEditClick(childPath, childTitle, childItem as StructureItem)
@@ -547,7 +550,7 @@ function Section({
                                   className={`layer3-item${!editInline && editingPath === grandPath ? ' item-editing' : ''}${highlightClasses(grandPath, userHighlights, agentHighlights, agentDeletePending)}`}
                                   {...(!isMobile
                                     ? {
-                                        onContextMenu: (e: React.MouseEvent) => onContextMenu?.(e, grandPath, false),
+                                        onContextMenu: (e: React.MouseEvent) => selectOnRightClick(e, grandPath),
                                         onClick: (e: React.MouseEvent) => {
                                           if (e.ctrlKey || e.metaKey) onToggleHighlight?.(grandPath)
                                         },
@@ -559,7 +562,7 @@ function Section({
                                 >
                                   <span
                                     className="item-title"
-                                    title={!isMobile ? 'Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
+                                    title={!isMobile ? 'Right-click or Ctrl/Cmd+click to select · Shift/Alt+click to edit' : undefined}
                                     onClick={isMobile ? undefined : (e) => {
                                       if (e.ctrlKey || e.metaKey) { e.stopPropagation(); onToggleHighlight?.(grandPath) }
                                       else if (e.shiftKey || e.altKey) onEditClick(grandPath, grandTitle, grandItem as StructureItem)
@@ -599,7 +602,7 @@ function Section({
                       )
                     })}
                     {/* Inline create editor for a new layer3 sub-item, opened via the
-                        right-click menu or a right-swipe on the layer2 row */}
+                        selection toolbar's add-sub button on the layer2 row */}
                     {onSubCreateStart && creatingPath === childPath && editInline && (
                       <div className="layer3-wrapper">
                         <InlineItemEditor
@@ -618,7 +621,7 @@ function Section({
           )
         })}
         {/* Inline create editor for a new layer2 sub-item, opened via the
-            right-click menu or a right-swipe on the layer1 row */}
+            selection toolbar's add-sub button on the layer1 row */}
         {onSubCreateStart && creatingPath === itemPath && editInline && (
           <div className="layer2-container add-sub-container">
             <div className="layer2-l3-frame">

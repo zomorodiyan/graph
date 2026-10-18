@@ -12,7 +12,6 @@ import { StructureItem, UpdatePayload, pasteItems, serializeItem, serializeStruc
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
-import ContextMenu from '../components/ContextMenu'
 import TagList from '../components/TagList'
 import { FAVORITE_TAG, tagTarget, tagsPath } from '../utils/tags'
 import { buildSelectionForest, selectionRoots } from './graph/treeOps'
@@ -151,8 +150,6 @@ function GraphView() {
   // Inline edit state for item editing
   const [inlineEdit, setInlineEdit] = useState<{ path: string } | null>(null)
 
-  // Right-click item menu — path + screen position of the row that was right-clicked
-  const [contextMenu, setContextMenu] = useState<{ path: string; x: number; y: number; canAddSub: boolean } | null>(null)
 
   const [notification, setNotification] = useState<{
     message: string
@@ -256,7 +253,7 @@ function GraphView() {
     graphName, path, levelOneKeys, displayOrder, displayItems, localItems, localOrder,
     rawItems, serverKeys, setLocalItems, setLocalOrder, showNotification,
   })
-  const { applyEdit, createChild, deleteOne, removePathsFromLocal } = useItemEdits({
+  const { applyEdit, createChild, removePathsFromLocal } = useItemEdits({
     graphName, path, rawItems, serverKeys, setLocalItems, setLocalOrder, setPendingItems, showNotification,
   })
 
@@ -366,13 +363,6 @@ function GraphView() {
     }
   }
 
-  // Handle right-click on an item row — open the Delete/New/Paste menu at the cursor
-  const handleItemContextMenu = (e: React.MouseEvent, itemPath: string, canAddSub: boolean) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setContextMenu({ path: itemPath, x: e.clientX, y: e.clientY, canAddSub })
-  }
-
   // Handle "+" chip click — open the sub-create editor under this parent
   const handleSubCreateStart = (parentPath: string) => {
     setInlineEdit(null)
@@ -394,11 +384,6 @@ function GraphView() {
     applyEdit(itemPath, data)
   }
 
-  // Handle delete - uses local state for instant feedback (like handleDrop)
-  const handleDelete = (pathToDelete: string) => {
-    setInlineEdit(null)
-    deleteOne(pathToDelete)
-  }
 
   if (isLoading) {
     return <div className="loading">Loading...</div>
@@ -504,9 +489,9 @@ function GraphView() {
   })()
 
   // Add-sub/Paste-sub-item toolbar buttons — only meaningful with exactly one
-  // item selected, and only when that item has room for a sub-item: same
-  // depth rule the right-click menu's canAddSub uses (layer1 always, layer2
-  // only when the view shows 3 levels, layer3 never — no layer4 to render).
+  // item selected, and only when that item has room for a sub-item (layer1
+  // always, layer2 only when the view shows 3 levels, layer3 never — no
+  // layer4 to render).
   const singleSelectedPath = userHighlights.length === 1 ? userHighlights[0] : null
   const canAddSubToSelected = (() => {
     if (!singleSelectedPath) return false
@@ -545,6 +530,11 @@ function GraphView() {
     onAddSub: canAddSubToSelected ? () => handleSubCreateStart(singleSelectedPath!) : undefined,
     onPasteSub: canAddSubToSelected ? () => handlePasteSubItem(singleSelectedPath!) : undefined,
   }
+  // Editing ends the selection — a rename changes the item's path, which
+  // would leave the selection pointing at a path that no longer exists.
+  const editSelected = singleSelectedPath
+    ? () => { clearUserHighlights(); setInlineEdit({ path: singleSelectedPath }) }
+    : undefined
   const agentDeleteProps = { count: agentDeletePending.length, onConfirm: handleConfirmAgentDelete, onReject: handleRejectAgentDelete }
   // Mobile-only toolbar rows (hidden at >=32rem via CSS, where the header
   // holds the same buttons) — above and below the item list.
@@ -554,7 +544,7 @@ function GraphView() {
         <div className="selection-toolbar">
           <SelectionButtons
             {...selectionProps}
-            onEdit={singleSelectedPath ? () => handleEditClick(singleSelectedPath, '', {} as StructureItem) : undefined}
+            onEdit={editSelected}
           />
         </div>
       )}
@@ -580,7 +570,7 @@ function GraphView() {
               own compose-row copies instead (same shared state either way,
               see useViewOptions.ts). */}
           <div className="graph-header-buttons">
-            <SelectionButtons {...selectionProps} />
+            <SelectionButtons {...selectionProps} onEdit={editSelected} />
             <AgentDeleteButtons {...agentDeleteProps} />
             <button
               className={`depth-toggle active${depth === 0 ? ' raw' : ''}`}
@@ -683,7 +673,6 @@ function GraphView() {
                 onSubCreateStart={handleSubCreateStart}
                 onSubCreateSave={handleSubCreateSave}
                 onSubCreateCancel={() => setSubCreate(null)}
-                onContextMenu={handleItemContextMenu}
                 onToggleHighlight={toggleUserHighlight}
                 userHighlights={userHighlightSet}
                 agentHighlights={agentHighlightSet}
@@ -731,21 +720,6 @@ function GraphView() {
       {/* Notification */}
       {notification && (
         <Notification message={notification.message} type={notification.type} />
-      )}
-
-      {/* Right-click item menu */}
-      {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onClose={() => setContextMenu(null)}
-          items={[
-            { label: 'Edit', onClick: () => setInlineEdit({ path: contextMenu.path }) },
-            ...(contextMenu.canAddSub ? [{ label: 'New', onClick: () => handleSubCreateStart(contextMenu.path) }] : []),
-            ...(contextMenu.canAddSub ? [{ label: 'Paste', onClick: () => handlePasteSubItem(contextMenu.path) }] : []),
-            { label: 'Delete', onClick: () => handleDelete(contextMenu.path), danger: true },
-          ]}
-        />
       )}
 
       {/* Mobile edit/create sheet — see the mobileSheet derivation above */}
