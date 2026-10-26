@@ -9,7 +9,7 @@ import { useViewOptions, DEPTHS } from '../hooks/useViewOptions'
 import { useLongPress } from '../hooks/useLongPress'
 import { useTheme } from '../context/ThemeContext'
 import { useGraphs, getItemByPath } from '../hooks/useGraph'
-import { useSyncManager, SyncAllResult } from '../hooks/useSyncManager'
+import { useSyncManager, SyncAllResult, hasUnsyncedChanges } from '../hooks/useSyncManager'
 import { fetchStructure, serializeItemForAgent, serializeStructureForAgent } from '../api/localClient'
 import AgentAccessGuide from './AgentAccessGuide'
 import KeysPanel, { KeyKind } from './KeysPanel'
@@ -60,6 +60,25 @@ const EDGE_GAP = 32
 const DEFAULT_DOCK_WIDTH = 380
 const DEFAULT_DOCK_HEIGHT_RATIO = 0.45
 
+// The message being typed, saved as it's typed so a closed tab or a sudden
+// shutdown doesn't lose it. Text that looks like an API key or token is
+// never saved (keys belong in the Keys panel, see utils/secrets.ts).
+const DRAFT_KEY = 'agent-chat-draft'
+const SECRET_LIKE_RE = /sk-ant-|ghp_|github_pat_/
+function readDraft(): string {
+  try {
+    return localStorage.getItem(DRAFT_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+function saveDraft(text: string) {
+  try {
+    if (text && !SECRET_LIKE_RE.test(text)) localStorage.setItem(DRAFT_KEY, text)
+    else localStorage.removeItem(DRAFT_KEY)
+  } catch { /* storage unavailable */ }
+}
+
 function readStoredSize(key: string, fallback: number) {
   const saved = Number(localStorage.getItem(key))
   return saved > 0 ? saved : fallback
@@ -94,7 +113,8 @@ function readStoredSize(key: string, fallback: number) {
 // open graph via tools.
 function AgentChat() {
   const { expanded, setExpanded, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop, clearMessages } = useAgentChat()
-  const [draft, setDraft] = useState('')
+  const [draft, setDraft] = useState(readDraft)
+  useEffect(() => saveDraft(draft), [draft])
   const messagesRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const queryClient = useQueryClient()
@@ -125,7 +145,7 @@ function AgentChat() {
   // Long-press to clear the persisted conversation and start fresh (see
   // useAgentChat's MESSAGES_KEY) — theme is the one view-button that's
   // always present regardless of where you are (depth/note are graph-only,
-  // sync is graphs-list-only), so it's the natural home for an always-
+  // sync mostly graphs-list-only), so it's the natural home for an always-
   // available action. confirm() matches the same destructive-action pattern
   // GraphView.tsx's handleDeleteSelected already uses. Also clears any
   // agent highlight ring still showing — the agent only clears its own
@@ -206,6 +226,10 @@ function AgentChat() {
   // Tap runs handleSyncClick as before; long-press opens the agent-access
   // guide instead (independent of connection state).
   const syncLongPress = useLongPress(() => setShowAgentGuide(true), handleSyncClick)
+  // Always on the graphs list; inside a graph only while it has changes the
+  // Gist doesn't have yet (re-checked on every edit — this component
+  // re-renders with the graph's structure query).
+  const showSync = !graphName || isSyncing || (Boolean(pat) && hasUnsyncedChanges(graphName))
 
   const handleSavePat = async (token: string) => {
     configure(token, '')
@@ -547,7 +571,7 @@ function AgentChat() {
                 : `${viewMode === 'context' ? 'Note on' : 'Note off'} — tap to toggle, long-press for minimal view`}
             >N</button>
           )}
-          {!graphName && (
+          {showSync && (
             <button
               className={`sync-toggle${isSyncing ? ' spinning' : ''}${pat ? ' active' : ''}`}
               {...syncLongPress}

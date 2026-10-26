@@ -69,6 +69,21 @@ await p.waitForTimeout(400)
 s = await stored()
 check('toolbar Delete removes the selected item', !s.delta.children?.d_one && !(await titles(p)).includes('D One'), JSON.stringify(s.delta))
 
+// While something is selected the header sticks to the top
+await p.setViewportSize({ width: 1200, height: 150 })
+await rightClick(/^Beta/)
+await p.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+await p.waitForTimeout(200)
+const head = await p.locator('.graph-header').boundingBox()
+check('selection header sticks to the top while scrolled', Math.abs(head.y) < 2 && (await p.evaluate(() => window.scrollY)) > 0, `header y ${head.y}`)
+await rightClick(/^Beta/)
+await p.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+await p.waitForTimeout(200)
+const head2 = await p.locator('.graph-header').boundingBox()
+check('…and scrolls away with nothing selected', head2.y < -2, `header y ${head2.y}`)
+await p.evaluate(() => window.scrollTo(0, 0))
+await p.setViewportSize({ width: 1200, height: 900 })
+
 // Select two items, copy them, delete them
 await title(/^A1/).click({ modifiers: ['Control'], position: { x: 4, y: 6 } })
 await title(/^B1/).click({ modifiers: ['Control'], position: { x: 4, y: 6 } })

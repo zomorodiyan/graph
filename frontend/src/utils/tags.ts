@@ -116,15 +116,27 @@ export function sortTags(counts: Map<string, number>): string[] {
     .map(([tag]) => tag)
 }
 
-// A graph's tree filtered down to the items carrying ANY of `tags`, keeping
-// their connections: each match hangs under its nearest MATCHING ancestor
-// (non-matching ones in between are skipped over), so a tag carried by
-// every item reproduces the normal tree. Items keep all their own fields
-// (tags included), since the tag view edits them in place. Keys are synthetic (siblings here can come from
-// different real parents, so real keys could collide) — realPaths maps each
-// rendered path back; keyPrefix keeps keys unique when several graphs'
-// results render side by side. Also totals the matches' money/hour tags.
-export function filterTreeByTags(tree: Record<string, StructureItem>, tags: string[], keyPrefix = 't') {
+// Whether an item carries any of `tags` (auto tags included).
+export function hasAnyTag(item: StructureItem, tags: string[]): boolean {
+  const itemTags = tagsOf(item)
+  return tags.some(t => itemTags.includes(t))
+}
+
+// Plain-text search: `text` (lowercase) appears in the title or the note.
+export function matchesText(item: StructureItem, text: string): boolean {
+  return (item.title ?? '').toLowerCase().includes(text) || (item.context ?? '').toLowerCase().includes(text)
+}
+
+// A graph's tree filtered down to the items that `match`, keeping their
+// connections: each match hangs under its nearest MATCHING ancestor
+// (non-matching ones in between are skipped over), so a filter every item
+// passes reproduces the normal tree. Items keep all their own fields (tags
+// included), since results are edited in place. Keys are synthetic (siblings
+// here can come from different real parents, so real keys could collide) —
+// realPaths maps each rendered path back; keyPrefix keeps keys unique when
+// several graphs' results render side by side. Also totals the matches'
+// money/hour tags.
+export function filterTree(tree: Record<string, StructureItem>, match: (item: StructureItem) => boolean, keyPrefix = 't') {
   const realPaths = new Map<string, string>()
   let count = 0
   let money = 0
@@ -133,8 +145,7 @@ export function filterTreeByTags(tree: Record<string, StructureItem>, tags: stri
     const out: Record<string, StructureItem> = {}
     for (const [key, item] of Object.entries(items)) {
       const realPath = realBase ? `${realBase}.${key}` : key
-      const itemTags = tagsOf(item)
-      if (tags.some(t => itemTags.includes(t))) {
+      if (match(item)) {
         const viewKey = `${keyPrefix}${count++}`
         const viewPath = viewBase ? `${viewBase}.${viewKey}` : viewKey
         realPaths.set(viewPath, realPath)
@@ -156,9 +167,4 @@ export function filterTreeByTags(tree: Record<string, StructureItem>, tags: stri
   }
   const items = build(tree, '', '')
   return { items, realPaths, count, money, hours }
-}
-
-// URL form of a tag set: /tags/a,b (no tag can contain a comma).
-export function tagsPath(tags: string[]): string {
-  return `/tags/${tags.map(encodeURIComponent).join(',')}`
 }

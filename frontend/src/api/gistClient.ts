@@ -57,9 +57,11 @@ async function ghError(res: Response, fallback: string): Promise<never> {
   }
 }
 
+// From the app's original name ("Knowledge Graph") — it's how the existing
+// Gist is found, so it stays as is.
 export const GIST_DESCRIPTION = 'Knowledge Graph Data'
 
-// Find the existing knowledge-graph Gist or create a new one.
+// Find the app's existing Gist or create a new one.
 // Searches all user Gists so a second device auto-reconnects.
 export async function findOrCreateGist(pat: string): Promise<string> {
   const stored = getGistId()

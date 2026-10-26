@@ -5,7 +5,6 @@ import { ZoomProvider } from './context/ZoomContext'
 import { usePinchZoom } from './hooks/usePinchZoom'
 import GraphView from './pages/GraphView'
 import StructuresView from './pages/StructuresView'
-import TagView from './pages/TagView'
 import IosInstallBanner from './components/IosInstallBanner'
 import AgentChat from './components/AgentChat'
 import './App.css'
@@ -30,9 +29,6 @@ function AppContent() {
 
             {/* Graph view: /g/{graphName}/* */}
             <Route path="/g/:graphName/*" element={<GraphView />} />
-
-            {/* Tag view across all graphs: /tags/{tag},{tag},... */}
-            <Route path="/tags/:tags" element={<TagView />} />
 
             {/* Unmatched routes go home */}
             <Route path="/*" element={<Navigate to="/" replace />} />

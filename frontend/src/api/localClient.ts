@@ -91,7 +91,7 @@ function saveStructure(graphName: string, s: Structure) {
   localStorage.setItem(dataKey(graphName), JSON.stringify(s))
 }
 
-function loadMeta(graphName: string): GraphInfo {
+export function loadMeta(graphName: string): GraphInfo {
   try {
     const raw = localStorage.getItem(metaKey(graphName))
     if (raw) return JSON.parse(raw)
@@ -264,22 +264,28 @@ function parseMarkdownStructure(text: string): Record<string, StructureItem> {
 }
 
 // ── Structure serializer (mirrors parseMarkdownStructure) ─────────────────────
-export function serializeStructure(items: Record<string, StructureItem>, depth = 1): string {
+// `opts` trims the text for the Raw view's note button: notes: false drops
+// the notes, meta: false the dates/repeats and tags. The full text (the
+// default) is what copy, paste and sync use.
+export interface SerializeOptions { notes?: boolean; meta?: boolean }
+
+export function serializeStructure(items: Record<string, StructureItem>, depth = 1, opts: SerializeOptions = {}): string {
+  const { notes = true, meta = true } = opts
   const hashes = '#'.repeat(depth)
   const blocks = Object.values(items).map(item => {
-    const tagsSuffix = item.tags && item.tags.length ? ` ${item.tags.map(t => `#${t}`).join(' ')}` : ''
-    let block = `${hashes} ${escapeTitleForSerialize(item.title ?? '')}${dateSuffix(item)}${tagsSuffix}\n`
-    if (item.context) block += `${item.context.split('\n').map(escapeContextLine).join('\n')}\n`
+    const tagsSuffix = meta && item.tags && item.tags.length ? ` ${item.tags.map(t => `#${t}`).join(' ')}` : ''
+    let block = `${hashes} ${escapeTitleForSerialize(item.title ?? '')}${meta ? dateSuffix(item) : ''}${tagsSuffix}\n`
+    if (notes && item.context) block += `${item.context.split('\n').map(escapeContextLine).join('\n')}\n`
     if (item.children && Object.keys(item.children).length)
-      block += serializeStructure(item.children, depth + 1)
+      block += serializeStructure(item.children, depth + 1, opts)
     return block
   })
   return blocks.join('\n')
 }
 
 // Serialize a single item (and its children) — used for single-item clipboard copy.
-export function serializeItem(key: string, item: StructureItem, depth = 1): string {
-  return serializeStructure({ [key]: item }, depth)
+export function serializeItem(key: string, item: StructureItem, depth = 1, opts: SerializeOptions = {}): string {
+  return serializeStructure({ [key]: item }, depth, opts)
 }
 
 // ── Agent-facing serializer (mirrors serializeStructure, never round-tripped) ─

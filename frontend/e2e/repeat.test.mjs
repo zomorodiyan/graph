@@ -56,12 +56,12 @@ await ctx.addInitScript(g => { if (!sessionStorage.getItem('s')) { localStorage.
 const q = await ctx.newPage(); q.on('pageerror', e => errors.push(e.message))
 const stored = () => q.evaluate(() => JSON.parse(localStorage.getItem('offline_graph_rg')).structure.life.children)
 
-await q.goto(BASE + '/g/rg'); await q.waitForSelector('.tags-list')
-const menu = await q.$$eval('.tags-list .tag-pill', els => els.map(e => e.textContent.trim()))
+await q.goto(BASE + '/g/rg'); await q.click('.search-panel-input'); await q.waitForSelector('.search-panel-tags')
+const menu = await q.$$eval('.search-panel-tags .tag-pill', els => els.map(e => e.textContent.trim()))
 check('menu: routine 1, undated Gym counts as Today', menu.includes('routine 1') && menu.includes('Today 1'), JSON.stringify(menu))
-await q.locator('.tags-list .tag-pill', { hasText: /^routine / }).click()
-await q.waitForSelector('.tag-view-graph')
-check('routine view lists Gym', (await q.$$eval('.item-title', els => els.map(e => (e.childNodes[0]?.textContent ?? '').trim()))).join() === 'Gym')
+await q.locator('.search-panel-tags .tag-pill', { hasText: /^routine / }).click()
+await q.waitForSelector('.results')
+check('routine search lists Gym', (await q.$$eval('.results .item-title', els => els.map(e => (e.childNodes[0]?.textContent ?? '').trim()))).join() === 'Gym')
 
 await q.goto(BASE + '/g/rg'); await q.waitForSelector('.item-title')
 const gymBadge = q.locator('.item-title', { hasText: /^Gym/ }).locator('.item-due')

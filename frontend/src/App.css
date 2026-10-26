@@ -79,12 +79,17 @@
 /* Copy/Delete-selection toolbar — mobile only (hidden at >=32rem, where the
    same two actions live in .graph-header-buttons next to depth/note
    instead, see GraphView.tsx). Two circular icon buttons, same family as
-   .copy-toggle/.delete-toggle below. */
+   .copy-toggle/.delete-toggle below. Sticks just under the agent bubble
+   while scrolling, so it stays in view along with the selected items. */
 .selection-toolbar {
   display: flex;
   justify-content: center;
   gap: 0.6rem;
   padding: 0.4rem 0;
+  position: sticky;
+  top: var(--agent-bubble-height, 0px);
+  z-index: 5;
+  background: var(--bg-primary);
 }
 
 @media (min-width: 32rem) {
@@ -110,6 +115,14 @@
   .graph-header {
     align-items: center;
     padding: 0.75rem 0.75rem 0.5rem;
+  }
+  /* While items are selected, the header (and its selection buttons)
+     sticks to the top of the page as it scrolls. */
+  .graph-header--sticky {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg-primary);
   }
 }
 
@@ -186,20 +199,6 @@
   scroll-margin-bottom: calc(var(--agent-bar-height, 0px) + env(safe-area-inset-bottom, 0px));
 }
 
-/* Every tag, at the bottom of graph pages (see TagList.tsx). */
-.tags-list {
-  flex: 0 0 100%;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-  padding: 0.75rem 0.9rem;
-  border-top: 1px solid var(--border-color);
-  margin-top: 0.5rem;
-}
-.tags-list .tag-pill {
-  font-size: 0.8125rem;
-  padding: 0.25rem 0.5rem;
-}
 .tag-count {
   opacity: 0.6;
 }
@@ -351,7 +350,7 @@
 }
 
 /* Level 1 — same title color as every other level (--item-title, the exact
-   color the "Knowledge Graphs" home header uses); hierarchy between levels
+   color the "Graph Memory" home header uses); hierarchy between levels
    comes from size/weight, not a different hue per level. Transparent
    background throughout, as before. */
 .layer1 {
@@ -699,55 +698,54 @@
   color: #f5a623;
 }
 
-/* Tag view (see TagView.tsx) — the active tags with an "add tag…" input
-   and suggestions, and each graph's matching items as normal sections
-   under the graph's name. Controls sit above the items on desktop and
-   below them (thumb reach) on phones, suggestions just above the input. */
-.tag-view-page > * {
+/* Search panel at the bottom of graph pages (see SearchPanel.tsx): the
+   input bar with its tag chips, the graph's tags as pills, and the
+   matching items. Input first on desktop; on phones it's last, with the
+   pills and results stacked above it (thumb reach). */
+.search-panel {
   flex: 0 0 100%;
-}
-.tag-view {
-  order: -1;
-  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.5rem;
+  padding-top: 0.25rem;
 }
 @media (max-width: 31.999rem) {
-  .tag-view {
-    order: 0;
-    display: flex;
+  .search-panel {
     flex-direction: column-reverse;
-    margin: 0.5rem 0 0;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--border-color);
   }
 }
-.tag-view-header {
+.search-panel-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  padding: 0 0.25rem 0.25rem;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-secondary);
 }
-.tag-view-input {
+.search-panel-bar > svg {
+  flex-shrink: 0;
+}
+.search-panel-input {
   flex: 1;
   min-width: 6rem;
   border: none;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid transparent;
   background: transparent;
   color: var(--text-primary);
   font: inherit;
-  font-weight: 600;
-  padding: 0.25rem 0;
+  padding: 0.35rem 0;
   outline: none;
 }
-.tag-view-input:focus {
+.search-panel-input:focus {
   border-bottom-color: var(--text-secondary);
 }
-.tag-view-count {
+.search-panel-count {
   font-size: 0.75rem;
   color: var(--text-secondary);
   white-space: nowrap;
 }
-.tag-view-close {
+.search-panel-toggle {
   display: flex;
   align-items: center;
   border: none;
@@ -756,7 +754,15 @@
   cursor: pointer;
   padding: 0.25rem;
 }
-.tag-view-chip {
+/* Chevron points up while collapsed (opens), down while open (hides). */
+.search-panel-toggle svg {
+  transform: rotate(180deg);
+  transition: transform 0.15s ease;
+}
+.search-panel.open .search-panel-toggle svg {
+  transform: none;
+}
+.search-panel-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -764,7 +770,7 @@
   padding: 0.125rem 0.25rem 0.125rem 0.5rem;
   white-space: nowrap;
 }
-.tag-view-chip-remove {
+.search-panel-chip-remove {
   border: none;
   background: transparent;
   color: inherit;
@@ -774,30 +780,28 @@
   opacity: 0.6;
   padding: 0 0.125rem;
 }
-.tag-view-chip-remove:hover {
+.search-panel-chip-remove:hover {
   opacity: 1;
 }
-.tag-view-suggestions {
+.search-panel-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 0.375rem;
-  padding: 0.25rem;
+  padding: 0.5rem;
 }
-.tag-view-suggestions .tag-pill {
-  font-size: 0.75rem;
-}
-.tag-view-graph {
-  display: block;
-  margin: 0.75rem 0.25rem 0.25rem;
+.search-panel-tags .tag-pill {
   font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-decoration: none;
-}
-.tag-view-graph:hover {
-  color: var(--text-primary);
+  padding: 0.25rem 0.5rem;
 }
 
+/* The search panel's results (see ItemResults.tsx). */
+.results .section-wrapper {
+  min-width: 0;
+  margin: 1px;
+}
+.results .section {
+  width: 100%;
+}
 /* Date editor row */
 .inline-edit-fields-row {
   display: flex;
@@ -1692,8 +1696,8 @@
 
 /* Depth/note move into GraphView's own header at >=32rem (see
    .graph-header-buttons) — this compose row keeps only theme (always
-   relevant) and sync (graphs-list-only already, via the graphName check in
-   AgentChat.tsx). Mobile keeps all four here, unaffected. */
+   relevant) and sync (in a graph only while it has unsynced changes, see
+   showSync in AgentChat.tsx). Mobile keeps all four here, unaffected. */
 @media (min-width: 32rem) {
   .agent-chat-view-buttons .depth-toggle,
   .agent-chat-view-buttons .ctx-toggle {

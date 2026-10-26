@@ -1,6 +1,6 @@
-# Knowledge Graph
+# Graph Memory
 
-A personal knowledge graph editor that runs entirely in your browser — no server, no subscription, no cost.
+A personal graph of notes, plans and lists that runs entirely in your browser — no server, no subscription, no cost.
 
 **[Open the app →](https://zomorodiyan.github.io/graph/)**
 
@@ -14,7 +14,7 @@ Organize anything as a hierarchy of named nodes. Each node can have a note, a da
 
 Your data lives in your browser. To back it up or use it across devices, connect with a GitHub token:
 
-1. Generate a token at [github.com/settings/tokens](https://github.com/settings/tokens/new?scopes=gist&description=Knowledge+Graph+Sync) — tick **gist** only
+1. Generate a token at [github.com/settings/tokens](https://github.com/settings/tokens/new?scopes=gist&description=Graph+Memory+Sync) — tick **gist** only
 2. Click the **↻** button in the app and paste the token
 3. That's it — your graphs sync to a private Gist only you can see
 

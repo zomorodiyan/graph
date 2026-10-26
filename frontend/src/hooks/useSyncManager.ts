@@ -9,6 +9,7 @@ import {
   parseStructureText,
   getDeletedGraphs,
   clearDeletion,
+  loadMeta,
 } from '../api/localClient'
 import {
   getPAT, getGistId, savePAT, saveGistId,
@@ -39,6 +40,15 @@ export function loadSyncStatus(name: string): GraphSyncStatus | null {
     const raw = localStorage.getItem(STATUS_KEY(name))
     return raw ? (JSON.parse(raw) as GraphSyncStatus) : null
   } catch { return null }
+}
+
+// Whether a graph has changes the Gist doesn't have yet: never synced, last
+// sync failed, or edited since. Read straight from localStorage, so it's
+// current on every render.
+export function hasUnsyncedChanges(name: string): boolean {
+  const status = loadSyncStatus(name)
+  if (!status || status.error) return true
+  return new Date(loadMeta(name).modified_at) > new Date(status.lastSync)
 }
 
 function persistStatus(name: string, status: GraphSyncStatus) {

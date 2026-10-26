@@ -19,7 +19,7 @@
   --text-secondary: #333333;
   --border-color: #e0e0e0;
 
-  /* Item title color — same one the "Knowledge Graphs" home header uses
+  /* Item title color — same one the "Graph Memory" home header uses
      (see .structures-header h1), applied uniformly across all item depths;
      hierarchy comes from size/weight, not a different hue per level */
   --item-title: var(--royal-blue-dark);

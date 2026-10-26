@@ -12,13 +12,13 @@ import { StructureItem, UpdatePayload, pasteItems, serializeItem, serializeStruc
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
-import TagList from '../components/TagList'
-import { FAVORITE_TAG, tagTarget, tagsPath } from '../utils/tags'
+import { FAVORITE_TAG } from '../utils/tags'
 import { buildSelectionForest, selectionRoots } from './graph/treeOps'
 import { buildBreadcrumb, BreadcrumbNav } from './graph/Breadcrumb'
 import { useGraphDragDrop } from './graph/useGraphDragDrop'
 import { useItemEdits } from './graph/useItemEdits'
 import { SelectionButtons, AgentDeleteButtons } from './graph/SelectionButtons'
+import SearchPanel, { useSearchPanel } from './graph/SearchPanel'
 
 // True on touch-primary devices (no on-screen keyboard problem on desktop,
 // so only mobile needs the item-stays-in-place + bottom-sheet editing pattern —
@@ -85,9 +85,11 @@ function GraphView() {
   // (see the sync effect below displayItems). Clicking it forces every
   // visible noted item to the opposite of what it's currently showing.
   const [noteButtonActive, setNoteButtonActive] = useState(() => viewMode === 'context')
+  // Raw view has no per-item triangles, so there the button just shows viewMode.
+  const notesOn = depth === 0 ? viewMode === 'context' : noteButtonActive
   const toggleNoteView = () => {
     if (minimalView) { setMinimalView(false); return }
-    const next = !noteButtonActive
+    const next = !notesOn
     setViewMode(next ? 'context' : 'default')
     setContextOverrides(new Map())
     setNoteButtonActive(next)
@@ -209,6 +211,7 @@ function GraphView() {
   // reflect "what is actually present" on screen, not the whole subtree.
   const visibleNotedPaths = useMemo(() => {
     const paths: string[] = []
+    if (depth === 0) return paths
     for (const [k1, item1] of Object.entries(displayItems)) {
       const p1 = path ? `${path}.${k1}` : k1
       if (item1.context) paths.push(p1)
@@ -285,8 +288,10 @@ function GraphView() {
     }
   }
 
-  // Tag pills open that tag's cross-graph view (see TagView.tsx).
-  const handleTagClick = (tag: string) => navigate(tagsPath([tagTarget(tag)]))
+  // Search panel at the bottom of the page (see SearchPanel.tsx) — a tag
+  // pill opens it on that tag.
+  const searchPanel = useSearchPanel(graphName)
+  const handleTagClick = (tag: string) => searchPanel.addTag(tag)
 
   // Navigate straight into a level-1 item's own children, making them the
   // new level-1 list — level-1 items have no "go to parent" navigation
@@ -564,7 +569,8 @@ function GraphView() {
           list instead (see below), so it scrolls away with the content
           instead of staying permanently pinned on screen. */}
       {!inlineEdit && !subCreate && (
-        <div className="graph-header">
+        // Sticks to the top while something is selected, so its buttons stay in reach.
+        <div className={`graph-header${userHighlights.length || agentDeletePending.length ? ' graph-header--sticky' : ''}`}>
           <BreadcrumbNav crumbs={breadcrumb} variant="header" levelOneCount={levelOneKeys.length} />
           {/* Hidden below 32rem via CSS — mobile gets these from AgentChat's
               own compose-row copies instead (same shared state either way,
@@ -578,11 +584,11 @@ function GraphView() {
               title={depth === 0 ? 'Raw view — tap to return, long-press elsewhere for Raw' : `Showing ${depth} levels — tap to cycle, long-press for Raw`}
             >{depth === 0 ? 'R' : depth}</button>
             <button
-              className={`ctx-toggle${noteButtonActive ? ' active' : ''}${minimalView ? ' minimal' : ''}`}
+              className={`ctx-toggle${notesOn ? ' active' : ''}${minimalView ? ' minimal' : ''}`}
               {...ctxLongPress}
               title={minimalView
                 ? 'Minimal view — tap to return to normal'
-                : `${noteButtonActive ? 'Notes on' : 'Notes off'} — tap to toggle, long-press for minimal view`}
+                : `${notesOn ? 'Notes on' : 'Notes off'} — tap to toggle, long-press for minimal view`}
             >N</button>
           </div>
         </div>
@@ -693,7 +699,11 @@ function GraphView() {
                 minimal={minimalView}
                 depth={depth}
                 showRaw={depth === 0}
-                rawText={depth === 0 ? serializeItem(key, item as StructureItem, 1).trimEnd() : undefined}
+                // Raw text follows the note button too: notes only in Context
+                // view, and Minimal leaves just the titles.
+                rawText={depth === 0
+                  ? serializeItem(key, item as StructureItem, 1, { notes: viewMode === 'context' && !minimalView, meta: !minimalView }).trimEnd()
+                  : undefined}
                 onTagClick={handleTagClick}
               />
             </div>
@@ -711,10 +721,19 @@ function GraphView() {
             the comment on the header copy above. Hidden at >=32rem via CSS
             (.breadcrumb--footer), where the header copy is the only one. */}
         {!inlineEdit && !subCreate && <BreadcrumbNav crumbs={breadcrumb} variant="footer" levelOneCount={levelOneKeys.length} />}
+        {/* Search / tag panel — last on the page, so on phones its input sits
+            just above the bottom bar. Saving an edit from its results resets
+            the local snapshot above so the page shows it too. */}
+        {graphName && (
+          <SearchPanel
+            panel={searchPanel}
+            graphName={graphName}
+            structure={structure}
+            anchorRef={anchorRef}
+            onSaved={() => { setLocalOrder(null); setLocalItems(null) }}
+          />
+        )}
         <div ref={anchorRef} className="reach-anchor" />
-        {/* This graph's tags, below the page's own content — on phones just past the
-            bottom-anchored view, scrolled into reach on demand. */}
-        {graphName && <TagList graphName={graphName} />}
       </div>
 
       {/* Notification */}

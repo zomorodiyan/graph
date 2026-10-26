@@ -55,7 +55,7 @@ export interface AgentChatMessage {
 
 const MENTION_TRUNCATE_LENGTH = 24
 
-const SYSTEM_PREAMBLE = `You are a helpful assistant embedded inside "Knowledge Graph", a personal
+const SYSTEM_PREAMBLE = `You are a helpful assistant embedded inside "Graph Memory", a personal
 hierarchical thinking/taxonomy/planning app. The user is looking at the view
 described below (as its Markdown representation — heading depth is nesting
 depth, a trailing "(YYYY-MM-DD)" is the item's date and/or a repeat rule
