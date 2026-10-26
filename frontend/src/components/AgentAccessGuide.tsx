@@ -8,10 +8,10 @@ const SETUP_COMMAND = `New-Item -ItemType Directory -Force -Path "$HOME\\.graph-
 
 const SKILL_MD = `---
 name: graph
-description: Read and edit the user's Knowledge Graph app data (personal graphs synced via a private GitHub Gist) — list graphs, view one as Markdown, or edit/add items in it
+description: Read and edit the user's Graph Memory app data (personal graphs synced via a private GitHub Gist) — list graphs, view one as Markdown, or edit/add items in it
 ---
 
-# Knowledge Graph access
+# Graph Memory access
 
 The user has a personal graph app (github.com/zomorodiyan/graph) whose data lives
 in one private GitHub Gist — one \`<name>.txt\` file per graph, plus \`_graph_meta.json\`.
@@ -64,7 +64,7 @@ then \`write\` the full result back (there's no partial/line-level edit endpoint
 `
 
 const GIST_MJS = `#!/usr/bin/env node
-// Reads/writes the same GitHub Gist the Knowledge Graph app syncs to.
+// Reads/writes the same GitHub Gist the Graph Memory app syncs to.
 // Config (PAT + cached gist id) lives in ~/.graph-agent/config.json — created
 // by the user directly (see SKILL.md), never written by this script from a
 // value passed on argv/stdin, so the token never has to pass through chat.
@@ -75,6 +75,7 @@ import { join } from 'node:path'
 
 const CONFIG_PATH = join(homedir(), '.graph-agent', 'config.json')
 const GITHUB_API = 'https://api.github.com'
+// The app's original name — kept so existing Gists are still found.
 const GIST_DESCRIPTION = 'Knowledge Graph Data'
 const META_FILE = '_graph_meta.json'
 

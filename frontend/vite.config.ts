@@ -14,9 +14,9 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         manifest: {
-          name: 'Knowledge Graph',
-          short_name: 'Graph',
-          description: 'Offline knowledge graph editor',
+          name: 'Graph Memory',
+          short_name: 'Graph Memory',
+          description: 'Your notes, plans and lists as a graph — offline, in the browser',
           theme_color: '#1a1a2e',
           background_color: '#1a1a2e',
           display: 'standalone',

@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useColorScheme } from '../context/ColorSchemeContext'
 import { createGraph, fetchStructureText, updateGraph, deleteGraph, GraphInfo } from '@api'
-import { useGraphs, useAllStructures } from '../hooks/useGraph'
+import { useGraphs } from '../hooks/useGraph'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { loadSyncStatus } from '../hooks/useSyncManager'
 import { getPAT } from '../api/gistClient'
 import Notification from '../components/Notification'
 import InlineGraphEditor from '../components/InlineGraphEditor'
 import { GRAPH_TEMPLATES, GraphTemplate, resolveTemplateDates } from '../data/graphTemplates'
-import { FAVORITE_TAG, countTags, tagsPath } from '../utils/tags'
 import './StructuresView.css'
 
 // Icons for different graph types (randomly assigned based on name hash)
@@ -26,9 +25,6 @@ function StructuresView() {
   const queryClient = useQueryClient()
   const { toggleColorScheme } = useColorScheme()
   const { data: graphs = [], isLoading, error } = useGraphs()
-  // Starred items across all graphs — the Favorites card is disabled at 0.
-  const { graphs: allStructures } = useAllStructures()
-  const favoriteCount = countTags(allStructures.map(g => g.structure.structure)).get(FAVORITE_TAG) ?? 0
   const [inlineCreate, setInlineCreate] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
   const [inlineEditGraph, setInlineEditGraph] = useState<GraphInfo | null>(null)
@@ -167,7 +163,7 @@ function StructuresView() {
       {/* Header */}
       <header className="structures-header">
         <div className="title-row">
-          <h1 onClick={toggleColorScheme} style={{ cursor: 'pointer', userSelect: 'none' }}>Knowledge Graphs</h1>
+          <h1 onClick={toggleColorScheme} style={{ cursor: 'pointer', userSelect: 'none' }}>Graph Memory</h1>
         </div>
       </header>
 
@@ -306,27 +302,12 @@ function StructuresView() {
             </div>
           )
         })}
-
-        {/* Favorites — every starred item across all graphs (its tag view);
-            disabled until something is starred. */}
-        {graphs.length > 0 && !showTemplates && (
-          <div
-            className={`graph-card favorites-card${favoriteCount === 0 ? ' favorites-card--empty' : ''}`}
-            onClick={favoriteCount > 0 ? () => navigate(tagsPath([FAVORITE_TAG])) : undefined}
-            aria-disabled={favoriteCount === 0}
-            title={favoriteCount === 0 ? 'Star items (☆ in the editor or the selection bar) to see them here' : undefined}
-          >
-            <div className="card-content">
-              <h3 className="graph-name">★ Favorites <span className="favorites-count">{favoriteCount}</span></h3>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Empty state */}
       {graphs.length === 0 && (
         <div className="empty-state">
-          <p>No graphs yet. Create your first knowledge graph!</p>
+          <p>No graphs yet. Create your first graph!</p>
         </div>
       )}
 

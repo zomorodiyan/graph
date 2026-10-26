@@ -118,27 +118,6 @@
   overflow: hidden;
 }
 
-/* Favorites card — opens the favorite tag's view (see StructuresView.tsx). */
-.favorites-card .card-content {
-  padding: 1.25rem 1.1rem;
-}
-.favorites-card .graph-name {
-  color: #f5a623;
-}
-.favorites-count {
-  font-size: 0.8em;
-  opacity: 0.6;
-}
-/* Nothing starred yet: not clickable. */
-.graph-card.favorites-card--empty {
-  cursor: default;
-  opacity: 0.5;
-}
-.graph-card.favorites-card--empty:hover {
-  transform: none;
-  box-shadow: 0 0 0 1px var(--border-color);
-}
-
 .graph-card:hover {
   transform: translateY(-0.25rem);
   box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.15), 0 0 0 1.5px #667eea;

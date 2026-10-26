@@ -150,8 +150,9 @@ function formatDueDate(dueDate: string): string {
 }
 
 // Date + tags badges, shared by all three layers — hidden entirely in minimal
-// view. With onTagClick, each tag pill is a button that opens that tag's
-// cross-graph view (see TagView.tsx); the favorite tag shows as a star.
+// view. With onTagClick, each tag pill is a button that pulls that tag's
+// items into the search panel (see SearchPanel.tsx); the favorite tag shows
+// as a star.
 function DateAndTagBadges({ item, minimal, onTagClick }: { item: StructureItem; minimal: boolean; onTagClick?: (tag: string) => void }) {
   if (minimal) return null
   // A repeating item shows its next occurrence, marked with ↻ (hover for the rule).

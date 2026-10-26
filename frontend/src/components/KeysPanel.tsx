@@ -63,7 +63,7 @@ function KeysPanel({ focus, apiKey, pat, onSaveApiKey, onSavePat, onClose }: Key
       >
         <p className="gist-guide-title">Sync — GitHub token</p>
         <p className="key-form-hint">
-          <a href="https://github.com/settings/tokens/new?scopes=gist&description=Knowledge+Graph+Sync" target="_blank" rel="noreferrer">Create one</a> with only the <strong>gist</strong> scope; your graphs sync to a private Gist.
+          <a href="https://github.com/settings/tokens/new?scopes=gist&description=Graph+Memory+Sync" target="_blank" rel="noreferrer">Create one</a> with only the <strong>gist</strong> scope; your graphs sync to a private Gist.
         </p>
         <input className="key-form-user" name="username" autoComplete="username" value="GitHub token (gist)" readOnly aria-label="Account" />
         <input
