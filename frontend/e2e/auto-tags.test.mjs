@@ -4,7 +4,7 @@ import { BASE, check, done, launch, shot, seed, isoFromToday } from './helpers.m
 const it = (title, off, tags) => ({ title, ...(off !== null && { date: isoFromToday(off) }), ...(tags && { tags }), children: {} })
 const ag = { plans: { title: 'Plans', children: {
   d0: it('D0', 0, ['proj', '$50', '1.5h', '@sara']), d2: it('D2', 2, ['2h']), d5: it('D5', 5, ['$20.5']), d20: it('D20', 20),
-  d29: it('D29', 29), d30: it('D30', 30), dm3: it('Dm3', -3, ['proj']), n: it('N', null, ['proj', '@sara', '@john']),
+  d29: it('D29', 29, ['3', '3.5']), d30: it('D30', 30), dm3: it('Dm3', -3, ['proj']), n: it('N', null, ['proj', '@sara', '@john']),
 } } }
 
 const browser = await launch()
@@ -26,7 +26,7 @@ const openPanel = async () => {
 await openPanel()
 const menu = await p.$$eval('.search-panel-tags .tag-pill', els => els.map(e => e.textContent.trim()))
 const want = ['Today 1', '3days 2', '7days 3', '30days 5', 'long-term 1', 'history 1', 'money 2', 'schedule 2', 'people 2', '@sara 2', '@john 1', 'proj 3']
-check('panel tags, order and counts; no $/h pills', JSON.stringify(menu) === JSON.stringify(want), JSON.stringify(menu))
+check('panel tags, order and counts; no $/h or number pills', JSON.stringify(menu) === JSON.stringify(want), JSON.stringify(menu))
 await shot(p, 'auto-tags-menu.png')
 
 const expected = { 'Today': 'D0', '3days': 'D0,D2', '7days': 'D0,D2,D5', '30days': 'D0,D2,D20,D29,D5', 'long-term': 'D30', 'history': 'Dm3',

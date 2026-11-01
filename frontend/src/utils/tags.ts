@@ -25,6 +25,10 @@ export function isValueTag(tag: string): boolean {
   return MONEY_RE.test(tag) || HOURS_RE.test(tag)
 }
 
+// Bare-number tags ("1", "3.5") mean little on their own, so they're kept
+// out of tag lists too (still shown on their items).
+const NUMBER_RE = /^\d+(?:\.\d+)?$/
+
 // Person tags: "@sara". Unlike value tags each one is meaningful on its own,
 // so they're listed individually too — and also grouped under "people".
 export function isPersonTag(tag: string): boolean {
@@ -103,7 +107,8 @@ export function countTags(trees: Record<string, StructureItem>[]): Map<string, n
 
 // The tags worth listing: favorite first, then the auto tags in their fixed
 // order, then people, then the rest — each group by most-used, then
-// alphabetically. Value tags are left out — money/schedule stand in for them.
+// alphabetically. Value tags are left out — money/schedule stand in for them
+// — and so are bare numbers.
 export function sortTags(counts: Map<string, number>): string[] {
   const rank = (tag: string) =>
     tag === FAVORITE_TAG ? -1
@@ -111,7 +116,7 @@ export function sortTags(counts: Map<string, number>): string[] {
       : isPersonTag(tag) ? AUTO_TAGS.length
       : AUTO_TAGS.length + 1
   return [...counts]
-    .filter(([tag]) => !isValueTag(tag))
+    .filter(([tag]) => !isValueTag(tag) && !NUMBER_RE.test(tag))
     .sort((a, b) => rank(a[0]) - rank(b[0]) || b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([tag]) => tag)
 }
