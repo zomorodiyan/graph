@@ -14,7 +14,8 @@ import { useSyncManager, SyncAllResult, hasUnsyncedChanges } from '../hooks/useS
 import { fetchStructure, lengthPrefs, serializeItemForAgent, serializeStructureForAgent } from '../api/localClient'
 import AgentAccessGuide from './AgentAccessGuide'
 import KeysPanel, { KeyKind } from './KeysPanel'
-import { KeyIcon, MicIcon } from './icons'
+import { KeyIcon, MicIcon, SpeakerIcon } from './icons'
+import { buildReadGraphs, buildReadView, labelsForAgent } from '../utils/readView'
 import Notification from './Notification'
 
 // Smallest the permanent bubble can be dragged down to — two different
@@ -409,6 +410,21 @@ function AgentChat() {
     splitDragRef.current = null
   }
 
+  // What's on screen, as a labeled spoken script (see utils/readView.ts) —
+  // read aloud by the read button, and its labels handed to the agent in
+  // voice mode so "under b2" is meaningful.
+  const readView = useMemo(() => {
+    if (!graphName) return buildReadGraphs(graphs ?? [])
+    const items = structure?.structure
+    if (!items) return { script: 'Still loading.', labels: [] }
+    const prefix = `/g/${graphName}`
+    const remaining = location.pathname.startsWith(prefix) ? location.pathname.slice(prefix.length) : ''
+    const path = remaining === '' || remaining === '/' ? '' : remaining.slice(1).replace(/\//g, '.')
+    const item = path ? getItemByPath(structure, path) : null
+    const visible = path ? (item?.children ?? {}) : items
+    return buildReadView(visible, path, depth, viewMode === 'context')
+  }, [graphName, structure, graphs, location.pathname, depth, viewMode])
+
   const viewContext = useMemo(() => {
     if (!graphName) {
       if (!graphs?.length) return 'The user is on the graphs list, which is empty.'
@@ -514,11 +530,35 @@ function AgentChat() {
     // triggered by a tap — this tap. An empty utterance unlocks it for the
     // replies that follow asynchronously.
     try { window.speechSynthesis?.speak(new SpeechSynthesisUtterance('')) } catch { /* unavailable */ }
+    stopReading()
     voiceModeRef.current = true
     silentTurnsRef.current = 0
     setVoiceMode(true)
     if (isSending) stop()
     voice.startListening()
+  }
+
+  // Read-aloud of the current view (the second voice button). Independent
+  // of the conversation: starting it ends voice mode, and vice versa.
+  const [reading, setReading] = useState(false)
+  const readingRef = useRef(false)
+  const stopReading = () => {
+    if (!readingRef.current) return
+    readingRef.current = false
+    setReading(false)
+    voice.stopSpeaking()
+  }
+  const toggleRead = async () => {
+    if (readingRef.current) {
+      stopReading()
+      return
+    }
+    if (voiceModeRef.current) stopVoiceMode()
+    readingRef.current = true
+    setReading(true)
+    await voice.speak(readView.script)
+    readingRef.current = false
+    setReading(false)
   }
 
   // Without a usable provider yet, sending opens the Keys panel instead
@@ -530,9 +570,10 @@ function AgentChat() {
       return
     }
     setDraft('')
+    const labelNote = voiceModeRef.current ? labelsForAgent(readView.labels) : ''
     const reply = await sendMessage({
       text,
-      viewContext,
+      viewContext: labelNote ? `${viewContext}\n\n${labelNote}` : viewContext,
       graphName,
       lengths,
       voice: voiceModeRef.current,
@@ -635,6 +676,7 @@ function AgentChat() {
           always part of the collapsed-bar/expanded-card's own layout,
           unchanged from before (still keyed on .expanded there). */}
       <div className="agent-chat-input-row">
+        <div className="agent-chat-toolbar">
         <div className="agent-chat-view-buttons">
           <button className="theme-toggle" {...themeLongPress} title="Toggle theme — long-press to clear the conversation" />
           {graphName && (
@@ -672,6 +714,32 @@ function AgentChat() {
             </button>
           )}
         </div>
+        {voice.supported && (
+          <div className="agent-chat-voice-buttons">
+            <button
+              type="button"
+              className={`agent-chat-voice-btn agent-chat-read${reading ? ' active speaking' : ''}`}
+              onClick={toggleRead}
+              title={reading ? 'Stop reading' : 'Read what is on screen aloud, with labels (a, b, a1, a2…)'}
+              aria-label={reading ? 'Stop reading' : 'Read the view aloud'}
+              aria-pressed={reading}
+            >
+              <SpeakerIcon />
+            </button>
+            <button
+              type="button"
+              className={`agent-chat-voice-btn agent-chat-mic${voiceMode ? ' active' : ''}${voice.listening ? ' listening' : ''}${voice.speaking && !reading ? ' speaking' : ''}`}
+              onClick={toggleVoiceMode}
+              title={voiceMode ? 'Stop voice mode' : 'Talk instead of typing — replies are read aloud'}
+              aria-label={voiceMode ? 'Stop voice mode' : 'Start voice mode'}
+              aria-pressed={voiceMode}
+            >
+              <MicIcon />
+            </button>
+          </div>
+        )}
+        </div>
+        <div className="agent-chat-compose">
         <textarea
           ref={inputRef}
           value={draft}
@@ -687,28 +755,19 @@ function AgentChat() {
               handleSend()
             }
           }}
-          placeholder={voiceMode
-            ? (voice.listening ? 'Listening…' : voice.speaking ? 'Speaking…' : isSending ? 'Thinking…' : 'Voice mode')
-            : 'Message AI…'}
+          placeholder={reading
+            ? 'Reading the view aloud…'
+            : voiceMode
+              ? (voice.listening ? 'Listening…' : voice.speaking ? 'Speaking…' : isSending ? 'Thinking…' : 'Voice mode')
+              : 'Message AI…'}
           rows={1}
         />
-        {voice.supported && (
-          <button
-            type="button"
-            className={`agent-chat-mic${voiceMode ? ' active' : ''}${voice.listening ? ' listening' : ''}${voice.speaking ? ' speaking' : ''}`}
-            onClick={toggleVoiceMode}
-            title={voiceMode ? 'Stop voice mode' : 'Talk instead of typing — replies are read aloud'}
-            aria-label={voiceMode ? 'Stop voice mode' : 'Start voice mode'}
-            aria-pressed={voiceMode}
-          >
-            <MicIcon />
-          </button>
-        )}
         {isSending ? (
           <button className="agent-chat-send stop" onClick={stop} title="Stop">&#9632;</button>
         ) : (
           <button className="agent-chat-send" onClick={() => handleSend()} disabled={!draft.trim()} title={ready ? 'Send' : 'Set up a model in the Keys panel to chat'}>&#10148;</button>
         )}
+        </div>
       </div>
 
       <div

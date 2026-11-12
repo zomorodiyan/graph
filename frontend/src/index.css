@@ -10,7 +10,7 @@
      (see the @media override below), so needs a taller value too —
      env(safe-area-inset-bottom) covers the device-specific home-indicator/
      notch part separately, added directly in the consuming rules. */
-  --agent-bar-height: 3.625rem;
+  --agent-bar-height: 6.1rem;
 
   /* Light theme colors */
   --bg-primary: #ffffff;

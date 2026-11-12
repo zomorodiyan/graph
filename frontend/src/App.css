@@ -1599,7 +1599,11 @@
 
 .agent-chat-input-row {
   display: flex;
-  align-items: flex-end;
+  /* Phone: two rows — the toolbar (view buttons, voice buttons) on top and
+     the message box with Send on its own row below, so the box gets the
+     full width. Desktop (>=32rem) lays the same two groups out inline. */
+  flex-direction: column;
+  align-items: stretch;
   gap: 0.4rem;
   padding: 0.6rem 0.75rem;
   border-top: 1px solid var(--border-color);
@@ -1650,6 +1654,32 @@
   display: none;
 }
 
+/* The toolbar row: view buttons on the left, voice buttons (read the view,
+   talk) on the right. Hidden while a real keyboard has pulled the row into
+   the bubble — only the message box matters then. */
+.agent-chat-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+.agent-chat-voice-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+.agent-chat-compose {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+.agent-chat-shell.keyboard-open .agent-chat-input-row .agent-chat-toolbar {
+  display: none;
+}
+
 @media (min-width: 32rem) {
   /* Desktop: the input row is always part of the collapsed-bar/expanded-
      card's own layout — never pulled out to a separate fixed bar. */
@@ -1662,6 +1692,14 @@
   }
   .agent-chat-input-row {
     touch-action: auto;
+    flex-direction: row;
+    align-items: flex-end;
+  }
+  .agent-chat-toolbar {
+    flex: 0 0 auto;
+  }
+  .agent-chat-voice-buttons {
+    margin-left: 0;
   }
 
   /* Desktop's own collapsed<->expanded card toggle hides the view-buttons
@@ -1847,10 +1885,10 @@
   color: var(--text-secondary);
 }
 
-/* Voice mode button in the compose row (see AgentChat.tsx's toggleVoiceMode
-   and useVoice.ts). Pulses while the mic is open, turns green while a reply
-   is being read aloud. */
-.agent-chat-mic {
+/* The two voice buttons (read the view aloud, talk — see AgentChat.tsx's
+   toggleRead/toggleVoiceMode and useVoice.ts). Pulses while the mic is
+   open, turns green while something is being read aloud. */
+.agent-chat-voice-btn {
   width: 2.25rem;
   height: 2.25rem;
   flex-shrink: 0;
@@ -1863,16 +1901,16 @@
   align-items: center;
   justify-content: center;
 }
-.agent-chat-mic.active {
+.agent-chat-voice-btn.active {
   border-color: var(--blue-medium);
   color: var(--blue-medium);
 }
-.agent-chat-mic.listening {
+.agent-chat-voice-btn.listening {
   background: var(--blue-medium);
   color: #fff;
   animation: mic-pulse 1.2s ease-in-out infinite;
 }
-.agent-chat-mic.speaking {
+.agent-chat-voice-btn.speaking {
   border-color: #2e7d32;
   color: #2e7d32;
 }
