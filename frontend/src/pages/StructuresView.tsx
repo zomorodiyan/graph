@@ -8,7 +8,7 @@ import { useModalBackButton } from '../hooks/useModalBackButton'
 import { loadSyncStatus } from '../hooks/useSyncManager'
 import { getPAT } from '../api/gistClient'
 import Notification from '../components/Notification'
-import InlineGraphEditor from '../components/InlineGraphEditor'
+import InlineGraphEditor, { GraphEditorValues } from '../components/InlineGraphEditor'
 import { GRAPH_TEMPLATES, GraphTemplate, resolveTemplateDates } from '../data/graphTemplates'
 import './StructuresView.css'
 
@@ -70,12 +70,15 @@ function StructuresView() {
     }
   }
 
-  const handleCreateGraph = async (displayName: string, description: string) => {
+  const handleCreateGraph = async ({ displayName, description, titleLength, noteLength }: GraphEditorValues) => {
     const graphName = displayName
       ? displayName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '') || generateUniqueName()
       : generateUniqueName()
     try {
       await createGraph(graphName, description)
+      if (titleLength !== undefined || noteLength !== undefined) {
+        await updateGraph(graphName, { title_length: titleLength, note_length: noteLength })
+      }
       showNotification(`Created "${graphName}"!`)
       setInlineCreate(false)
       queryClient.invalidateQueries({ queryKey: ['graphs'] })
@@ -97,12 +100,14 @@ function StructuresView() {
     }
   }
 
-  const handleSaveEdit = async (graph: GraphInfo, displayName: string, description: string) => {
+  const handleSaveEdit = async (graph: GraphInfo, { displayName, description, titleLength, noteLength }: GraphEditorValues) => {
     try {
       await updateGraph(graph.name, {
         display_name: displayName,
         description,
         icon: graph.icon || getIconForGraph(graph.name),
+        title_length: titleLength,
+        note_length: noteLength,
       })
       showNotification('Graph updated!')
       setInlineEditGraph(null)
@@ -242,7 +247,9 @@ function StructuresView() {
                 <InlineGraphEditor
                   displayName={graph.display_name}
                   description={graph.description || ''}
-                  onSave={(displayName, description) => handleSaveEdit(graph, displayName, description)}
+                  titleLength={graph.title_length}
+                  noteLength={graph.note_length}
+                  onSave={(values) => handleSaveEdit(graph, values)}
                   onCancel={() => setInlineEditGraph(null)}
                   onDelete={() => handleDeleteGraph(graph)}
                 />

@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAgentChat } from '../hooks/useAgentChat'
+import { useVoice } from '../hooks/useVoice'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useVisualViewportRect } from '../hooks/useVisualViewportRect'
 import { useHighlights } from '../hooks/useHighlights'
@@ -10,10 +11,10 @@ import { useLongPress } from '../hooks/useLongPress'
 import { useTheme } from '../context/ThemeContext'
 import { useGraphs, getItemByPath } from '../hooks/useGraph'
 import { useSyncManager, SyncAllResult, hasUnsyncedChanges } from '../hooks/useSyncManager'
-import { fetchStructure, serializeItemForAgent, serializeStructureForAgent } from '../api/localClient'
+import { fetchStructure, lengthPrefs, serializeItemForAgent, serializeStructureForAgent } from '../api/localClient'
 import AgentAccessGuide from './AgentAccessGuide'
 import KeysPanel, { KeyKind } from './KeysPanel'
-import { KeyIcon } from './icons'
+import { KeyIcon, MicIcon } from './icons'
 import Notification from './Notification'
 
 // Smallest the permanent bubble can be dragged down to — two different
@@ -112,7 +113,11 @@ function readStoredSize(key: string, fallback: number) {
 // agentClient.ts), which can view, edit, and add items in the currently
 // open graph via tools.
 function AgentChat() {
-  const { expanded, setExpanded, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop, clearMessages } = useAgentChat()
+  const {
+    expanded, setExpanded, messages, isSending, activeTool, error,
+    apiKey, saveKey, otherKey, saveOtherKey, settings, updateSettings, ready,
+    sendMessage, stop, clearMessages,
+  } = useAgentChat()
   const [draft, setDraft] = useState(readDraft)
   useEffect(() => saveDraft(draft), [draft])
   const messagesRef = useRef<HTMLDivElement>(null)
@@ -312,7 +317,7 @@ function AgentChat() {
   // is saved and idle/no-keyboard, neither is true — the row is off in its
   // own fixed bottom bar — so there's nothing to show up top and the bubble
   // collapses to nothing instead of holding open blank space.
-  const visibleBubbleHeight = (apiKey || keyboardOpen) ? panelHeight : 0
+  const visibleBubbleHeight = (ready || keyboardOpen) ? panelHeight : 0
 
   // The permanent mobile bubble is position:fixed, so it doesn't reserve
   // any space in normal page flow — GraphView/StructuresView's own content
@@ -438,8 +443,8 @@ function AgentChat() {
   // always originates FROM focusing the textarea, so no separate effect is
   // needed for that direction.
   useEffect(() => {
-    if (expanded && apiKey) inputRef.current?.focus()
-  }, [apiKey])
+    if (expanded && ready) inputRef.current?.focus()
+  }, [ready])
 
   // Telegram-style grow-with-content input, capped so it can't swallow the
   // whole panel.
@@ -450,19 +455,88 @@ function AgentChat() {
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`
   }, [draft])
 
-  // With no API key yet, sending opens the Keys panel instead (the draft
-  // stays put, ready to send once the key is in).
-  const handleSend = () => {
-    if (!draft.trim() || isSending) return
-    if (!apiKey) {
-      setKeysPanel('anthropic')
+  // The open graph's preferred item lengths, passed along so the agent
+  // writes titles/notes to fit them (see lengthGuidance in agentClient.ts).
+  const lengths = lengthPrefs(graphs?.find(g => g.name === graphName))
+
+  // ── Voice mode ──────────────────────────────────────────────────────────
+  // Hands-free conversation: listen for one utterance, send it, read the
+  // reply aloud, listen again — until the mic button is tapped again, an
+  // error happens, or a few turns pass in silence. Everything runs in the
+  // browser's own speech engines (see useVoice.ts); the model just sees the
+  // transcript as a normal message, with a note that it's being spoken to
+  // (see VOICE_GUIDANCE in agentClient.ts).
+  const [voiceMode, setVoiceMode] = useState(false)
+  const voiceModeRef = useRef(false)
+  const silentTurnsRef = useRef(0)
+  const MAX_SILENT_TURNS = 3
+  const handleSendRef = useRef<(text: string) => void>(() => {})
+
+  const voice = useVoice({
+    onInterim: text => { if (text) setDraft(text) },
+    onTranscript: text => {
+      silentTurnsRef.current = 0
+      setDraft(text)
+      handleSendRef.current(text)
+    },
+    onNoSpeech: () => {
+      if (!voiceModeRef.current) return
+      silentTurnsRef.current += 1
+      if (silentTurnsRef.current >= MAX_SILENT_TURNS) {
+        stopVoiceMode()
+        showNotification('Voice mode ended — no speech heard.')
+      } else {
+        voice.startListening()
+      }
+    },
+    onError: message => {
+      stopVoiceMode()
+      showNotification(message, 'error')
+    },
+  })
+
+  const stopVoiceMode = () => {
+    voiceModeRef.current = false
+    setVoiceMode(false)
+    voice.stopListening()
+    voice.stopSpeaking()
+  }
+  const toggleVoiceMode = () => {
+    if (voiceModeRef.current) {
+      stopVoiceMode()
       return
     }
-    sendMessage(
-      draft,
+    if (!ready) {
+      setKeysPanel(settings.provider === 'openai' ? 'model' : 'anthropic')
+      return
+    }
+    // Some browsers (iOS Safari) only allow speech output that was first
+    // triggered by a tap — this tap. An empty utterance unlocks it for the
+    // replies that follow asynchronously.
+    try { window.speechSynthesis?.speak(new SpeechSynthesisUtterance('')) } catch { /* unavailable */ }
+    voiceModeRef.current = true
+    silentTurnsRef.current = 0
+    setVoiceMode(true)
+    if (isSending) stop()
+    voice.startListening()
+  }
+
+  // Without a usable provider yet, sending opens the Keys panel instead
+  // (the draft stays put, ready to send once it's set up).
+  const handleSend = async (text: string = draft) => {
+    if (!text.trim() || isSending) return
+    if (!ready) {
+      setKeysPanel(settings.provider === 'openai' ? 'model' : 'anthropic')
+      return
+    }
+    setDraft('')
+    const reply = await sendMessage({
+      text,
       viewContext,
       graphName,
-      () => {
+      lengths,
+      voice: voiceModeRef.current,
+      onMutate: () => {
         queryClient.invalidateQueries({ queryKey: ['structure', graphName] })
         // GraphView keeps its own optimistic "localItems" snapshot that a
         // plain invalidation above doesn't reach (see GraphView.tsx's
@@ -470,11 +544,19 @@ function AgentChat() {
         // shows up on screen instead of only landing in localStorage.
         queryClient.setQueryData(['agent-mutation-signal', graphName], (n: number = 0) => n + 1)
       },
-      setAgentHighlights,
-      setAgentDeletePending,
-    )
-    setDraft('')
+      onHighlight: setAgentHighlights,
+      onDeletePending: setAgentDeletePending,
+    })
+    if (!voiceModeRef.current) return
+    if (reply === null) {
+      // The error is on screen; a spoken loop can't recover from it.
+      stopVoiceMode()
+      return
+    }
+    if (reply) await voice.speak(reply)
+    if (voiceModeRef.current) voice.startListening()
   }
+  handleSendRef.current = handleSend
 
   // Collapse when focus leaves the whole panel (not just the textarea) —
   // e.g. tapping Send, which lives in the same container, must NOT collapse
@@ -508,7 +590,7 @@ function AgentChat() {
       style={{ height: visibleBubbleHeight, ...({ '--agent-panel-width': `${dockWidth}px`, '--agent-panel-height': `${dockHeight}px` } as React.CSSProperties) }}
       onBlur={handleContainerBlur}
     >
-      {apiKey && (
+      {ready && (
         // The padding lives on the inner div, not this one — this outer
         // element is the flex item that needs to shrink to true zero when
         // the panel's dragged to MIN_PANEL_HEIGHT (see .agent-chat-messages
@@ -581,7 +663,7 @@ function AgentChat() {
           )}
           {!graphName && (
             <button
-              className={`keys-toggle${apiKey || pat ? ' active' : ''}`}
+              className={`keys-toggle${ready || pat ? ' active' : ''}`}
               onClick={() => setKeysPanel('anthropic')}
               title="API key and GitHub token"
               aria-label="Keys"
@@ -605,13 +687,27 @@ function AgentChat() {
               handleSend()
             }
           }}
-          placeholder="Message AI…"
+          placeholder={voiceMode
+            ? (voice.listening ? 'Listening…' : voice.speaking ? 'Speaking…' : isSending ? 'Thinking…' : 'Voice mode')
+            : 'Message AI…'}
           rows={1}
         />
+        {voice.supported && (
+          <button
+            type="button"
+            className={`agent-chat-mic${voiceMode ? ' active' : ''}${voice.listening ? ' listening' : ''}${voice.speaking ? ' speaking' : ''}`}
+            onClick={toggleVoiceMode}
+            title={voiceMode ? 'Stop voice mode' : 'Talk instead of typing — replies are read aloud'}
+            aria-label={voiceMode ? 'Stop voice mode' : 'Start voice mode'}
+            aria-pressed={voiceMode}
+          >
+            <MicIcon />
+          </button>
+        )}
         {isSending ? (
           <button className="agent-chat-send stop" onClick={stop} title="Stop">&#9632;</button>
         ) : (
-          <button className="agent-chat-send" onClick={handleSend} disabled={!draft.trim()} title={apiKey ? 'Send' : 'Add your API key to chat'}>&#10148;</button>
+          <button className="agent-chat-send" onClick={() => handleSend()} disabled={!draft.trim()} title={ready ? 'Send' : 'Set up a model in the Keys panel to chat'}>&#10148;</button>
         )}
       </div>
 
@@ -634,8 +730,12 @@ function AgentChat() {
         focus={keysPanel}
         apiKey={apiKey}
         pat={pat}
+        otherKey={otherKey}
+        settings={settings}
         onSaveApiKey={(key) => { saveKey(key); if (key.trim()) setKeysPanel(null) }}
         onSavePat={handleSavePat}
+        onSaveOtherKey={(key) => { saveOtherKey(key); if (key.trim()) setKeysPanel(null) }}
+        onChangeSettings={updateSettings}
         onClose={() => setKeysPanel(null)}
       />
     )}

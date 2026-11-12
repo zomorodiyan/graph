@@ -3,6 +3,8 @@
     "display_name": "Sample",
     "description": "",
     "icon": "📊",
-    "modified_at": "2026-07-26T00:00:00.000Z"
+    "modified_at": "2026-07-26T00:00:00.000Z",
+    "title_length": 40,
+    "note_length": 200
   }
 }

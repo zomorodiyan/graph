@@ -9,6 +9,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getItemByPath } from '../hooks/useGraph'
 import { readSecret, writeSecret } from '../utils/secrets'
 import { createItem, fetchStructure, serializeItemForAgent, serializeStructureForAgent, updateItem, UpdatePayload } from './localClient'
+import { addSpend, ANTHROPIC_MODELS, anthropicCost, getOpenAIKey, readAgentSettings } from './agentSettings'
+import { runOpenAICompat } from './openaiCompatClient'
 
 // The SDK's own betaTool() helper (helpers/beta/json-schema) builds this
 // exact shape — {type: 'custom', name, input_schema, description, run,
@@ -33,7 +35,6 @@ function makeTool<Input>(options: {
 }
 
 export const API_KEY_KEY = 'anthropic_api_key'
-const MODEL = 'claude-opus-5'
 // Each tool call the agent makes (view/update/add) burns one iteration —
 // generous enough for a multi-step edit, but bounded so a confused loop
 // can't run away.
@@ -121,6 +122,29 @@ buttons appear in the app; nothing is actually deleted until the user clicks
 Confirm. Say what you're proposing to delete before calling it, and don't
 assume it succeeded — you won't be told the outcome unless the user tells you
 in their next message, so if it matters, ask.`
+
+// Per-graph preferred lengths (see GraphInfo.title_length/note_length in
+// localClient.ts). Targets, not limits: the agent tightens wording to fit
+// but is told never to drop information to do so.
+function lengthGuidance(lengths: { title: number; note: number }): string {
+  return `Length preferences for this graph: item titles about ${lengths.title} characters
+or fewer, notes about ${lengths.note} characters or fewer. When you write or
+edit a title or note, keep to these by wording things tightly — but never
+drop information to fit. If something genuinely needs more room, go over
+the preference rather than lose content; if an item's content is better
+split, add child items instead of writing one long note.`
+}
+
+// When the user is talking rather than typing, the reply is read aloud by
+// text-to-speech — so it has to work for the ear.
+const VOICE_GUIDANCE = `The user is speaking to you by voice and will hear your reply read aloud
+by text-to-speech, not read it on screen. Write for the ear: short natural
+sentences, no symbols, no paths, no abbreviations that sound odd spoken, and
+say numbers and dates the way a person would ("March fifth", "three items").
+When asked to read something, read the titles and notes out in full, in
+order, rather than summarizing. Keep to one or two sentences unless asked to
+read or explain. Their words were transcribed by speech recognition, so
+small mistakes in names are likely — match them to the closest item.`
 
 interface ViewItemArgs { path: string }
 interface UpdateItemArgs {
@@ -304,6 +328,30 @@ function buildTools(
   ]
 }
 
+export interface AgentReplyOptions {
+  messages: AgentChatMessage[]
+  viewContext: string
+  graphName: string | undefined
+  // Preferred title/note lengths of the open graph (app defaults when none
+  // is open) — see lengthGuidance above.
+  lengths: { title: number; note: number }
+  // The user is talking and will hear the reply (see VOICE_GUIDANCE).
+  voice: boolean
+  onMutate: () => void
+  onHighlight: (paths: string[]) => void
+  onDeletePending: (paths: string[]) => void
+  onDelta: (text: string) => void
+  onToolUse: (toolName: string) => void
+  signal?: AbortSignal
+}
+
+function buildSystemPrompt(opts: AgentReplyOptions): string {
+  const parts = [SYSTEM_PREAMBLE, lengthGuidance(opts.lengths)]
+  if (opts.voice) parts.push(VOICE_GUIDANCE)
+  parts.push(`Current view:\n${opts.viewContext}`)
+  return parts.join('\n\n')
+}
+
 // Streams a reply for the given conversation, letting the model call the
 // view/update/add/highlight tools as needed. onDelta fires with each
 // incremental text chunk (across every turn of the tool loop, concatenated
@@ -315,46 +363,75 @@ function buildTools(
 // highlight_items is called (an empty array means "cleared"). onDeletePending
 // fires the same way for request_delete_items — the caller owns actually
 // deleting anything once the user confirms; this call site only ever flags.
+// Which model answers comes from agentSettings.ts: the Claude API through
+// the SDK, or an OpenAI-compatible endpoint (openaiCompatClient.ts) for free
+// models. Every reply's token usage is added to the running spend estimate.
 // Throws on failure (missing/invalid key, network, refusal, etc.) — callers
 // should catch and render an error state.
-export async function streamAgentReply(
-  messages: AgentChatMessage[],
-  viewContext: string,
-  graphName: string | undefined,
-  onMutate: () => void,
-  onHighlight: (paths: string[]) => void,
-  onDeletePending: (paths: string[]) => void,
-  onDelta: (text: string) => void,
-  onToolUse: (toolName: string) => void,
-  signal?: AbortSignal,
-): Promise<string> {
+export async function streamAgentReply(opts: AgentReplyOptions): Promise<string> {
+  const settings = readAgentSettings()
+  const system = buildSystemPrompt(opts)
+  const tools = buildTools(opts.graphName, opts.onMutate, opts.onHighlight, opts.onDeletePending)
+
+  if (settings.provider === 'openai') {
+    const { baseUrl, model } = settings.openai
+    if (!baseUrl.trim() || !model.trim()) throw new Error('NO_API_KEY')
+    const { text, usage } = await runOpenAICompat({
+      baseUrl,
+      apiKey: getOpenAIKey(),
+      model,
+      system,
+      messages: opts.messages,
+      tools,
+      maxIterations: MAX_TOOL_ITERATIONS,
+      onDelta: opts.onDelta,
+      onToolUse: opts.onToolUse,
+      signal: opts.signal,
+    })
+    addSpend({ usd: usage.usd, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens })
+    return text
+  }
+
   const apiKey = getApiKey()
   if (!apiKey) throw new Error('NO_API_KEY')
 
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true })
+  const modelInfo = ANTHROPIC_MODELS.find(m => m.id === settings.model)
 
   const runner = client.beta.messages.toolRunner(
     {
-      model: MODEL,
+      model: settings.model,
       max_tokens: 4096,
-      system: `${SYSTEM_PREAMBLE}\n\nCurrent view:\n${viewContext}`,
-      messages,
-      tools: buildTools(graphName, onMutate, onHighlight, onDeletePending),
+      system,
+      messages: opts.messages,
+      tools,
       max_iterations: MAX_TOOL_ITERATIONS,
       stream: true,
+      // Effort is the cost lever within one model (fewer thinking tokens,
+      // terser replies); unset means the model's own default.
+      ...(settings.effort && { output_config: { effort: settings.effort } }),
+      // If a safety classifier declines the request, the API retries it on
+      // a fallback model inside the same call instead of just stopping.
+      ...(modelInfo?.fallback && { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const }),
     },
-    { signal },
+    { signal: opts.signal },
   )
 
+  let inputTokens = 0, outputTokens = 0, usd = 0
   for await (const messageStream of runner) {
     for await (const event of messageStream) {
       if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') {
-        onToolUse(event.content_block.name)
+        opts.onToolUse(event.content_block.name)
       } else if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-        onDelta(event.delta.text)
+        opts.onDelta(event.delta.text)
       }
     }
+    const turn = await messageStream.finalMessage()
+    inputTokens += turn.usage.input_tokens
+    outputTokens += turn.usage.output_tokens
+    usd += anthropicCost(settings.model, turn.usage)
   }
+  addSpend({ usd, inputTokens, outputTokens })
 
   const final = await runner.done()
   if (final.stop_reason === 'refusal') {

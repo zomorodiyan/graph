@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AgentChatMessage, getApiKey, saveApiKey, streamAgentReply } from '../api/agentClient'
+import { AgentSettings, getOpenAIKey, openAIConfigured, readAgentSettings, saveOpenAIKey, writeAgentSettings } from '../api/agentSettings'
 
 // Persisted in localStorage (like everything else in this app — graphs,
 // theme, the API key) rather than only living in React state, so the
@@ -28,6 +29,17 @@ function capMessages(msgs: AgentChatMessage[], limit = MAX_STORED_MESSAGES): Age
   return msgs.length > limit ? msgs.slice(-limit) : msgs
 }
 
+export interface SendOptions {
+  text: string
+  viewContext: string
+  graphName: string | undefined
+  lengths: { title: number; note: number }
+  voice: boolean
+  onMutate: () => void
+  onHighlight: (paths: string[]) => void
+  onDeletePending: (paths: string[]) => void
+}
+
 export function useAgentChat() {
   const [expanded, setExpanded] = useState(false)
   const [messages, setMessages] = useState<AgentChatMessage[]>(loadMessages)
@@ -35,12 +47,27 @@ export function useAgentChat() {
   const [activeTool, setActiveTool] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [apiKey, setApiKey] = useState(getApiKey)
+  const [otherKey, setOtherKey] = useState(getOpenAIKey)
+  const [settings, setSettings] = useState<AgentSettings>(readAgentSettings)
   const abortRef = useRef<AbortController | null>(null)
 
   const saveKey = useCallback((key: string) => {
     saveApiKey(key)
     setApiKey(getApiKey())
   }, [])
+  const saveOtherKey = useCallback((key: string) => {
+    saveOpenAIKey(key)
+    setOtherKey(getOpenAIKey())
+  }, [])
+  const updateSettings = useCallback((next: AgentSettings) => {
+    writeAgentSettings(next)
+    setSettings(next)
+  }, [])
+
+  // Whether the chosen provider can be talked to right now: a Claude key,
+  // or an OpenAI-compatible endpoint with a URL and model (its key is
+  // optional — a local Ollama has none).
+  const ready = settings.provider === 'openai' ? openAIConfigured(settings) : Boolean(apiKey)
 
   // Debounced persistence — streaming can fire many small deltas per second,
   // and writing the whole array to localStorage on every one is wasted work.
@@ -63,16 +90,11 @@ export function useAgentChat() {
     localStorage.removeItem(MESSAGES_KEY)
   }, [])
 
-  const sendMessage = useCallback(async (
-    text: string,
-    viewContext: string,
-    graphName: string | undefined,
-    onMutate: () => void,
-    onHighlight: (paths: string[]) => void,
-    onDeletePending: (paths: string[]) => void,
-  ) => {
-    const trimmed = text.trim()
-    if (!trimmed || isSending) return
+  // Resolves with the finished reply text, or null if the turn failed (the
+  // error is shown in the panel) — voice mode reads the text aloud.
+  const sendMessage = useCallback(async (opts: SendOptions): Promise<string | null> => {
+    const trimmed = opts.text.trim()
+    if (!trimmed || isSending) return null
 
     // Capped to MAX_STORED_MESSAGES-1 (not the full cap) so the assistant
     // placeholder appended right below never needs a second trim of its own
@@ -94,28 +116,33 @@ export function useAgentChat() {
     abortRef.current = controller
 
     try {
-      await streamAgentReply(
-        history,
-        viewContext,
-        graphName,
-        onMutate,
-        onHighlight,
-        onDeletePending,
-        delta => {
+      const reply = await streamAgentReply({
+        messages: history,
+        viewContext: opts.viewContext,
+        graphName: opts.graphName,
+        lengths: opts.lengths,
+        voice: opts.voice,
+        onMutate: opts.onMutate,
+        onHighlight: opts.onHighlight,
+        onDeletePending: opts.onDeletePending,
+        onDelta: delta => {
           setMessages(m => {
             const next = [...m]
             next[assistantIndex] = { role: 'assistant', content: next[assistantIndex].content + delta }
             return next
           })
         },
-        toolName => setActiveTool(toolName),
-        controller.signal,
-      )
+        onToolUse: toolName => setActiveTool(toolName),
+        signal: controller.signal,
+      })
+      return reply
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setError(
         message === 'NO_API_KEY'
-          ? 'Add your Anthropic API key to start chatting.'
+          ? (settings.provider === 'openai'
+            ? 'Choose a model endpoint and model in the Keys panel.'
+            : 'Add your Anthropic API key to start chatting.')
           : /authentication|invalid.*key|401/i.test(message)
             ? 'That API key was rejected — check it and try again.'
             : message || 'Something went wrong.',
@@ -123,16 +150,21 @@ export function useAgentChat() {
       // Drop the empty/partial assistant placeholder so the error is the
       // only trace of this turn, instead of leaving a blank bubble behind.
       setMessages(m => m.filter((_, i) => i !== assistantIndex || m[i].content))
+      return null
     } finally {
       setIsSending(false)
       setActiveTool(null)
       abortRef.current = null
     }
-  }, [messages, isSending])
+  }, [messages, isSending, settings.provider])
 
   const stop = useCallback(() => {
     abortRef.current?.abort()
   }, [])
 
-  return { expanded, setExpanded, messages, isSending, activeTool, error, apiKey, saveKey, sendMessage, stop, clearMessages }
+  return {
+    expanded, setExpanded, messages, isSending, activeTool, error,
+    apiKey, saveKey, otherKey, saveOtherKey, settings, updateSettings, ready,
+    sendMessage, stop, clearMessages,
+  }
 }

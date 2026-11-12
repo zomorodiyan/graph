@@ -15,6 +15,9 @@ export interface GistGraphMeta {
   description:  string
   icon:         string
   modified_at:  string
+  // Optional preferred item title/note lengths (see GraphInfo in localClient.ts).
+  title_length?: number
+  note_length?:  number
 }
 
 // The token is session-only (see utils/secrets.ts); the Gist id isn't secret.

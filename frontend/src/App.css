@@ -1846,3 +1846,98 @@
   font-size: 0.75rem;
   color: var(--text-secondary);
 }
+
+/* Voice mode button in the compose row (see AgentChat.tsx's toggleVoiceMode
+   and useVoice.ts). Pulses while the mic is open, turns green while a reply
+   is being read aloud. */
+.agent-chat-mic {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border: 1.5px solid var(--border-color);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.agent-chat-mic.active {
+  border-color: var(--blue-medium);
+  color: var(--blue-medium);
+}
+.agent-chat-mic.listening {
+  background: var(--blue-medium);
+  color: #fff;
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+.agent-chat-mic.speaking {
+  border-color: #2e7d32;
+  color: #2e7d32;
+}
+@keyframes mic-pulse {
+  50% { box-shadow: 0 0 0 0.4rem rgba(66, 133, 244, 0.25); }
+}
+
+/* Model/provider section of the Keys panel (see KeysPanel.tsx). */
+.key-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.key-field > span {
+  flex: 0 0 3.2rem;
+}
+.key-field select,
+.key-field input {
+  flex: 1;
+  min-width: 0;
+}
+.key-form select {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.4rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+}
+.link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--blue-medium);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Preferred item lengths in the graph editor (see InlineGraphEditor.tsx). */
+.graph-lengths {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.graph-length-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.graph-length-field input {
+  width: 4.2rem;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.4rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.78rem;
+}
+.graph-length-hint {
+  flex-basis: 100%;
+}

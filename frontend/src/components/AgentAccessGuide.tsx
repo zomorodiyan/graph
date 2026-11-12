@@ -37,6 +37,16 @@ node ~/.claude/skills/graph/scripts/gist.mjs write <name> <file>   # or pipe via
 \`write\` replaces the whole graph's content — always \`read\` first, edit the text,
 then \`write\` the full result back (there's no partial/line-level edit endpoint).
 
+## Preferred lengths
+
+\`list\` prints each graph's preferred item lengths, e.g. \`title ≤ 40, note ≤ 200\`
+(characters; the app's defaults when the user hasn't set their own — they can per graph).
+When you write or rewrite a graph, keep titles and notes within these by wording
+things tightly — but never drop information to fit. If something genuinely needs
+more room, go over the preference rather than lose content; if an item's content
+is better split, add child items instead of one long note. Leave existing text
+that's over the limit alone unless you're editing it anyway.
+
 ## Markdown format (mirrors \`frontend/src/api/localClient.ts\` in the graph repo)
 
 - Heading depth = nesting depth: \`#\` top level, \`##\` its children, \`###\` grandchildren, etc.
@@ -146,7 +156,10 @@ async function cmdList(cfg) {
   const meta = JSON.parse(data.files[META_FILE]?.content ?? '{}')
   for (const name of graphNames(data.files)) {
     const m = meta[name]
-    console.log(\`\${name}\${m ? \`  — \${m.display_name} (modified \${m.modified_at})\` : ''}\`)
+    // Preferred item lengths (characters) — the app's defaults unless the
+    // user set their own for this graph. See "Preferred lengths" in SKILL.md.
+    const lengths = \`title ≤ \${m?.title_length ?? 40}, note ≤ \${m?.note_length ?? 200}\`
+    console.log(\`\${name}\${m ? \`  — \${m.display_name} (modified \${m.modified_at})\` : ''}  [\${lengths}]\`)
   }
 }
 
@@ -163,6 +176,7 @@ async function cmdWrite(cfg, name, content) {
   const meta = JSON.parse(data.files[META_FILE]?.content ?? '{}')
   const now = new Date().toISOString()
   meta[name] = {
+    ...(meta[name] ?? {}),
     display_name: meta[name]?.display_name ?? name,
     description: meta[name]?.description ?? '',
     icon: meta[name]?.icon ?? '',
