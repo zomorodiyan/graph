@@ -13,7 +13,9 @@ to (see `~/.claude/skills/graph/SKILL.md` and its `scripts/gist.mjs`):
   - free-text context lines under a heading (e.g. under `Rent`, `Marathon Training`) —
     dollar amounts now just live in that free text, there's no structured cost field
 - `_graph_meta.json` — the sidecar `_graph_meta.json` file from the same Gist,
-  keyed by the same graph name, holding display metadata (never structure data).
+  keyed by the same graph name, holding display metadata (never structure data),
+  including the optional `title_length` / `note_length` preferences (characters)
+  an agent writing into the graph keeps to without dropping information.
 
 Regenerated/verified against the real parser with:
 `parseStructureText(sample.txt)` → `serializeStructure(...)` round-trips

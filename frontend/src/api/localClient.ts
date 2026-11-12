@@ -31,9 +31,29 @@ export function slugify(title: string): string {
 export interface GraphInfo {
   name: string; display_name: string; path: string
   modified_at: string; size: number; description: string; version: string; icon: string
+  // Preferred lengths, in characters, for this graph's item titles and
+  // notes — targets an agent writing into the graph keeps to when it can
+  // without dropping information (see agentClient.ts's length guidance and
+  // the graph skill's SKILL.md). Absent means the app defaults
+  // (LENGTH_DEFAULTS below); synced through _graph_meta.json like the
+  // other display metadata.
+  title_length?: number
+  note_length?: number
 }
 
-export interface GraphUpdatePayload { display_name?: string; description?: string; icon?: string }
+export interface GraphUpdatePayload { display_name?: string; description?: string; icon?: string; title_length?: number; note_length?: number }
+
+// Defaults for GraphInfo.title_length / note_length — a title that fits on
+// one line of a phone-width card, and a note of a few sentences.
+export const LENGTH_DEFAULTS = { title: 40, note: 200 } as const
+export const LENGTH_LIMITS = { min: 10, max: 2000 } as const
+
+export function lengthPrefs(g: Pick<GraphInfo, 'title_length' | 'note_length'> | undefined): { title: number; note: number } {
+  return {
+    title: g?.title_length ?? LENGTH_DEFAULTS.title,
+    note: g?.note_length ?? LENGTH_DEFAULTS.note,
+  }
+}
 
 export interface ItemResponse { path: string; name: string; data: StructureItem }
 
