@@ -11,6 +11,8 @@ import { readSecret, writeSecret } from '../utils/secrets'
 import { createItem, fetchStructure, serializeItemForAgent, serializeStructureForAgent, updateItem, UpdatePayload } from './localClient'
 import { addSpend, ANTHROPIC_MODELS, anthropicCost, getOpenAIKey, readAgentSettings } from './agentSettings'
 import { runOpenAICompat } from './openaiCompatClient'
+import { formatValue } from '../utils/tags'
+import { bodyPartNames } from '../utils/body'
 
 // The SDK's own betaTool() helper (helpers/beta/json-schema) builds this
 // exact shape — {type: 'custom', name, input_schema, description, run,
@@ -121,7 +123,29 @@ request_delete_items with the path(s) — this flags them with their own ring
 buttons appear in the app; nothing is actually deleted until the user clicks
 Confirm. Say what you're proposing to delete before calling it, and don't
 assume it succeeded — you won't be told the outcome unless the user tells you
-in their next message, so if it matters, ask.`
+in their next message, so if it matters, ask.
+
+Value tags: "$50" is an amount of money, "1.5h" a number of hours (a number
+followed by h: 1h, 2.0h, 0.5h, 0.33h). An item's own value is what it
+costs; an item with no value of its own costs what its descendants add up
+to. When an item has its own value AND its children carry values, its own
+value is the budget those children spend from. Give an item at most one
+value of each kind, and put a shared budget on the parent rather than
+repeating it on every child. The app has a budget panel: clicking a value
+tag shows the page's items as shares of a pool, game-style (tokens handed
+out to items, with +/- buttons that change the tags). The pool is the page
+item's own value, or at the graph root the graph's budget (set in the app;
+listed below when set). When the user talks about a budget, hours left,
+what something costs or how time is split, they likely mean these tags.
+
+Body-part tags: a tag naming a part of the body puts the item on the app's
+body view — an anatomical figure with the page's tagged items laid over it,
+one card per part (head, neck, shoulders, chest & back, arms, hands, core,
+hips & glutes, legs, calves & shins, feet). Use these names:
+${bodyPartNames()}. Muscle names and common synonyms (shoulder, thighs,
+stomach, knee, lower_back) are recognized too.
+Tag exercises, injuries, pain, symptoms, stretches and the like this way, so
+they show up on the figure.`
 
 // Per-graph preferred lengths (see GraphInfo.title_length/note_length in
 // localClient.ts). Targets, not limits: the agent tightens wording to fit
@@ -133,6 +157,17 @@ edit a title or note, keep to these by wording things tightly — but never
 drop information to fit. If something genuinely needs more room, go over
 the preference rather than lose content; if an item's content is better
 split, add child items instead of writing one long note.`
+}
+
+// The open graph's top-level budgets (see GraphInfo.hours_budget /
+// money_budget in localClient.ts) — the pool the budget panel measures the
+// root items against. Nothing when none is set.
+function budgetGuidance(budgets: { hours?: number; money?: number }): string | null {
+  const parts: string[] = []
+  if (budgets.hours !== undefined) parts.push(`${formatValue('hours', budgets.hours)} of hours`)
+  if (budgets.money !== undefined) parts.push(`${formatValue('money', budgets.money)} of money`)
+  if (!parts.length) return null
+  return `This graph's top-level budget: ${parts.join(' and ')}, shared by its root items' value tags.`
 }
 
 // When the user is talking rather than typing, the reply is read aloud by
@@ -335,6 +370,8 @@ export interface AgentReplyOptions {
   // Preferred title/note lengths of the open graph (app defaults when none
   // is open) — see lengthGuidance above.
   lengths: { title: number; note: number }
+  // The graph's top-level budgets, if set (see budgetGuidance above).
+  budgets: { hours?: number; money?: number }
   // The user is talking and will hear the reply (see VOICE_GUIDANCE).
   voice: boolean
   onMutate: () => void
@@ -347,6 +384,8 @@ export interface AgentReplyOptions {
 
 function buildSystemPrompt(opts: AgentReplyOptions): string {
   const parts = [SYSTEM_PREAMBLE, lengthGuidance(opts.lengths)]
+  const budgets = budgetGuidance(opts.budgets)
+  if (budgets) parts.push(budgets)
   if (opts.voice) parts.push(VOICE_GUIDANCE)
   parts.push(`Current view:\n${opts.viewContext}`)
   return parts.join('\n\n')

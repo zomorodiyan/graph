@@ -39,9 +39,20 @@ export interface GraphInfo {
   // other display metadata.
   title_length?: number
   note_length?: number
+  // Budgets for the graph's top level — the pool the budget panel (see
+  // pages/graph/BudgetPanel.tsx) measures the root items' value tags
+  // against, in hours and in money. Deeper pages take their pool from the
+  // page item's own value tag instead. Synced like the lengths; absent
+  // means no budget.
+  hours_budget?: number
+  money_budget?: number
 }
 
-export interface GraphUpdatePayload { display_name?: string; description?: string; icon?: string; title_length?: number; note_length?: number }
+export interface GraphUpdatePayload {
+  display_name?: string; description?: string; icon?: string
+  title_length?: number; note_length?: number
+  hours_budget?: number; money_budget?: number
+}
 
 // Defaults for GraphInfo.title_length / note_length — a title that fits on
 // one line of a phone-width card, and a note of a few sentences.

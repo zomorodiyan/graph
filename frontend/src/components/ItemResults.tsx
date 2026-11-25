@@ -22,14 +22,19 @@ interface ItemResultsProps {
   onOpen?: () => void
   // After an edit is saved.
   onSaved?: () => void
-  onTagClick?: (tag: string) => void
+  // A tag pill clicked on a result, with the real path of its item.
+  onTagClick?: (tag: string, realPath?: string) => void
+  // A click on a node with no real item behind it — a heading the caller
+  // put above the results (the body panel's parts). Such nodes can't be
+  // opened or edited.
+  onSyntheticClick?: (viewPath: string) => void
 }
 
 // The search panel's results, rendered through the normal Section component.
 // Clicking (tapping) an item opens it in the graph; items can be edited in
 // place: Shift/Alt+click on desktop, long-press on touch (in the same bottom
 // sheet the graph page uses).
-function ItemResults({ graphName, structure, items, realPaths, onOpen, onSaved, onTagClick }: ItemResultsProps) {
+function ItemResults({ graphName, structure, items, realPaths, onOpen, onSaved, onTagClick, onSyntheticClick }: ItemResultsProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { depth, viewMode, minimalView } = useViewOptions()
@@ -52,7 +57,10 @@ function ItemResults({ graphName, structure, items, realPaths, onOpen, onSaved, 
   // children, otherwise its parent page.
   const handleOpen = (viewPath: string) => {
     const realPath = realPaths.get(viewPath)
-    if (!realPath) return
+    if (!realPath) {
+      onSyntheticClick?.(viewPath)
+      return
+    }
     const item = getItemByPath(structure, realPath)
     const target = item?.children && Object.keys(item.children).length > 0
       ? realPath
@@ -88,18 +96,18 @@ function ItemResults({ graphName, structure, items, realPaths, onOpen, onSaved, 
             parentPath=""
             onItemClick={handleOpen}
             onItemEnter={handleOpen}
-            onEditClick={setEditing}
+            onEditClick={(p) => { if (realPaths.has(p)) setEditing(p) }}
             editingPath={editing}
             editInline={!isMobile}
             onInlineSave={saveEdit}
             onInlineCancel={() => setEditing(null)}
-            makeDragGestureHandlers={(viewPath) => makeLongPressHandlers(() => setEditing(viewPath), () => handleOpen(viewPath))}
+            makeDragGestureHandlers={(viewPath) => makeLongPressHandlers(() => { if (realPaths.has(viewPath)) setEditing(viewPath) }, () => handleOpen(viewPath))}
             showContext={viewMode === 'context' && !minimalView}
             contextOverrides={contextOverrides}
             onToggleContext={toggleContextOverride}
             minimal={minimalView}
             depth={depth === 0 ? 3 : depth}
-            onTagClick={onTagClick}
+            onTagClick={onTagClick ? (tag, viewPath) => onTagClick(tag, realPaths.get(viewPath)) : undefined}
           />
         </div>
       ))}

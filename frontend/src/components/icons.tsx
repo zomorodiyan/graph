@@ -141,3 +141,46 @@ export function SpeakerIcon() {
     </svg>
   )
 }
+
+// Points right; .budget-expand rotates it down when open (see App.css).
+export function ChevronRightIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 6 15 12 9 18" />
+    </svg>
+  )
+}
+
+// The budget panel's two kinds (see BudgetPanel.tsx): hours and money.
+export function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <polyline points="12 7 12 12 15.5 14" />
+    </svg>
+  )
+}
+
+export function CoinIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 6.5v11" />
+      <path d="M14.5 9.25a2.5 2 0 0 0-2.5-1.5c-1.5 0-2.75.8-2.75 2s1.25 2 2.75 2 2.75.8 2.75 2-1.25 2-2.75 2a2.5 2 0 0 1-2.5-1.5" />
+    </svg>
+  )
+}
+
+// The body panel (see BodyPanel.tsx).
+export function BodyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="4.5" r="2.5" />
+      <path d="M8 9.5h8l-1 6.5h-6z" />
+      <path d="M8 9.5 5 14" />
+      <path d="M16 9.5 19 14" />
+      <path d="M10.5 16 9 22" />
+      <path d="M13.5 16 15 22" />
+    </svg>
+  )
+}

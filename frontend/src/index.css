@@ -54,6 +54,21 @@
 
   --slate-light: #90A4AE;
   --slate-dark: #37474F;
+
+  /* Series colors for the budget panel's bars (see BudgetPanel.tsx): one
+     per top-level item, in a fixed order checked for color-vision
+     deficiency and contrast on both themes; items past the eighth share
+     --series-other. --status-critical marks an overspent budget. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #6250d6;
+  --series-8: #e34948;
+  --series-other: #898781;
+  --status-critical: #d03b3b;
 }
 
 /* Same breakpoint App.css's .agent-chat-shell docks the agent panel at —
@@ -73,6 +88,16 @@
   --text-secondary: #e0e0e0;
   --border-color: #2a2a2a;
   --item-title: var(--sky-light);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #0ca30c;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  --series-other: #898781;
+  --status-critical: #e66767;
 }
 
 /* Color schemes — cycle: blue → indigo → green → red.

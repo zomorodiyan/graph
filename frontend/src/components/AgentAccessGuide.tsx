@@ -47,6 +47,29 @@ more room, go over the preference rather than lose content; if an item's content
 is better split, add child items instead of one long note. Leave existing text
 that's over the limit alone unless you're editing it anyway.
 
+## Value tags and budgets
+
+\`#1.5h\` is a number of hours (a number then \`h\`: 1h, 2.0h, 0.5h, 0.33h), \`#$50\` an amount
+of money. An item's own value is what it costs; with no value of its own it costs what its
+descendants add up to; with its own value AND valued children, its own value is the budget
+those children spend from. Give an item at most one value of each kind, and put a shared
+budget on the parent rather than on every child. In the app, clicking a value tag opens the
+budget panel: the page's items as shares of a pool, game-style — the pool is the page item's
+own value, or at the top level the graph's budget. \`list\` prints that budget when set
+(e.g. \`[budget 40h, $3000]\`); it lives in \`_graph_meta.json\` as \`hours_budget\` /
+\`money_budget\` (plain numbers) and is only set from the app.
+
+## Body-part tags
+
+A tag naming a part of the body (\`#knees\`, \`#lower-back\`, \`#shoulders\`) puts the item on the
+app's body view — an anatomical figure with the page's tagged items laid over it, one card
+per part: head, neck, shoulders, chest & back, arms, hands, core, hips & glutes, legs,
+calves & shins, feet. Tag with these names: head, neck, shoulders, chest, back, arms, hands,
+core, abs, lower-back, hips, glutes, legs, quads, hamstrings, knees, calves, shins, feet,
+full-body. Muscle names and common synonyms (shoulder, thighs, stomach, knee, lower_back)
+work too. Tag exercises, injuries, pain, symptoms and stretches this way so they show up on
+the figure.
+
 ## Markdown format (mirrors \`frontend/src/api/localClient.ts\` in the graph repo)
 
 - Heading depth = nesting depth: \`#\` top level, \`##\` its children, \`###\` grandchildren, etc.
@@ -56,7 +79,7 @@ that's over the limit alone unless you're editing it anyway.
   - a repeating item names the weekdays it repeats on (same form as Google Calendar), on its own
     or after a start date: \`## Gym (FREQ=WEEKLY;BYDAY=MO,WE,FR)\`, \`## Standup (2026-10-19 FREQ=WEEKLY;BYDAY=TU)\`
   - both can appear together, date before tags: \`## Ship v2 (2026-07-15) #launch\`
-  - special tags: \`#favorite\` (starred), \`#$50\` (an amount of money), \`#1.5h\` (a time estimate), \`#@sara\` (a person)
+  - special tags: \`#favorite\` (starred), \`#$50\` (an amount of money), \`#1.5h\` (hours), \`#@sara\` (a person), \`#knees\` (a body part) — see the two sections above
 - Non-heading lines right after a heading = free-text context/description for that item,
   verbatim (blank lines inside preserved).
 - Item keys (used internally, not shown here) are derived from the title — don't worry
@@ -159,7 +182,9 @@ async function cmdList(cfg) {
     // Preferred item lengths (characters) — the app's defaults unless the
     // user set their own for this graph. See "Preferred lengths" in SKILL.md.
     const lengths = \`title ≤ \${m?.title_length ?? 40}, note ≤ \${m?.note_length ?? 200}\`
-    console.log(\`\${name}\${m ? \`  — \${m.display_name} (modified \${m.modified_at})\` : ''}  [\${lengths}]\`)
+    // Top-level budgets, when set (see "Value tags and budgets" in SKILL.md).
+    const budget = [m?.hours_budget !== undefined && \`\${m.hours_budget}h\`, m?.money_budget !== undefined && \`$\${m.money_budget}\`].filter(Boolean).join(', ')
+    console.log(\`\${name}\${m ? \`  — \${m.display_name} (modified \${m.modified_at})\` : ''}  [\${lengths}]\${budget ? \`  [budget \${budget}]\` : ''}\`)
   }
 }
 

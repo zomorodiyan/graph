@@ -225,7 +225,7 @@ export function useSyncManager(queryClient: QueryClient) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function metaFrom(g: { display_name: string; description: string; icon: string; modified_at: string; title_length?: number; note_length?: number }): GistGraphMeta {
+function metaFrom(g: { display_name: string; description: string; icon: string; modified_at: string; title_length?: number; note_length?: number; hours_budget?: number; money_budget?: number }): GistGraphMeta {
   return {
     display_name: g.display_name,
     description: g.description,
@@ -233,6 +233,8 @@ function metaFrom(g: { display_name: string; description: string; icon: string; 
     modified_at: g.modified_at,
     ...(g.title_length !== undefined && { title_length: g.title_length }),
     ...(g.note_length !== undefined && { note_length: g.note_length }),
+    ...(g.hours_budget !== undefined && { hours_budget: g.hours_budget }),
+    ...(g.money_budget !== undefined && { money_budget: g.money_budget }),
   }
 }
 
@@ -257,6 +259,8 @@ async function pullGraph(
     modified_at:  meta?.modified_at,
     title_length: meta?.title_length,
     note_length:  meta?.note_length,
+    hours_budget: meta?.hours_budget,
+    money_budget: meta?.money_budget,
   })
   queryClient.invalidateQueries({ queryKey: ['structure', name] })
 }

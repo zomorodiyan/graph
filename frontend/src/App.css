@@ -1979,3 +1979,433 @@
 .graph-length-hint {
   flex-basis: 100%;
 }
+
+/* ── Budget and body panels (see BudgetPanel.tsx / BodyPanel.tsx) ─────────
+   Same shape as the search panel: a one-line bar that collapses the rest,
+   placed between the item list and the search panel. On phones the bar
+   sits at the bottom of the panel (thumb reach) with the content above
+   it; desktop keeps the bar on top. */
+.tag-panel {
+  flex: 0 0 100%;
+  /* A flex item's minimum width follows its content by default — the body
+     panel sizes its stage to the panel's measured width, which would then
+     widen the panel and the measurement with it, without end. */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.5rem;
+  padding-top: 0.25rem;
+}
+.tag-panel-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-secondary);
+}
+.tag-panel-bar > svg {
+  flex-shrink: 0;
+}
+.tag-panel-title {
+  color: var(--text-primary);
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tag-panel-count {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.tag-panel-spacer {
+  flex: 1;
+}
+.tag-panel-close,
+.tag-panel-toggle {
+  display: flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+.tag-panel-close:hover,
+.tag-panel-toggle:hover {
+  color: var(--text-primary);
+}
+/* Chevron points up while collapsed (opens), down while open (hides). */
+.tag-panel-toggle svg {
+  transform: rotate(180deg);
+  transition: transform 0.15s ease;
+}
+.tag-panel.open .tag-panel-toggle svg {
+  transform: none;
+}
+.panel-note {
+  padding: 0.5rem 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+@media (max-width: 31.999rem) {
+  .tag-panel {
+    flex-direction: column-reverse;
+  }
+}
+
+/* Budget panel: the pool bar (one block per top-level item, token ticks
+   across it, a red mark where an overspent budget ends) and the rows —
+   the legend — each with a bar on the same scale and +/- buttons. */
+.budget-pool-text {
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  padding: 0.25rem 0.375rem;
+  border-radius: 0.25rem;
+}
+.budget-pool-text:hover {
+  background: var(--bg-secondary);
+}
+.budget-pool-note {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+.budget-pool-text.over,
+.budget-pool-text.over .budget-pool-note {
+  color: var(--status-critical);
+}
+.budget-kind {
+  display: inline-flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.budget-kind button {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 0.375rem;
+  padding: 0.2rem 0.3rem;
+  cursor: pointer;
+}
+.budget-kind button.active {
+  background: var(--blue-medium);
+  border-color: var(--blue-medium);
+  color: #fff;
+}
+.budget-body {
+  display: flex;
+  flex-direction: column;
+}
+/* Phones: the pool bar sits right above the panel's bar, the rows above it. */
+@media (max-width: 31.999rem) {
+  .budget-body {
+    flex-direction: column-reverse;
+  }
+}
+.budget-pool {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 20px;
+  margin: 0.25rem 0.75rem 0.5rem;
+  border-radius: 4px;
+  background: var(--bg-secondary);
+}
+.budget-pool-seg {
+  flex: 0 1 auto;
+  min-width: 2px;
+  height: 100%;
+  border-radius: 4px;
+}
+.budget-pool-ticks {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent 0,
+    transparent calc(var(--tick) - 1px),
+    var(--bg-primary) calc(var(--tick) - 1px),
+    var(--bg-primary) var(--tick)
+  );
+  opacity: 0.75;
+}
+.budget-pool-limit {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--status-critical);
+}
+.budget-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0 0.75rem 0.5rem;
+}
+.budget-row.nested {
+  margin-left: 1.25rem;
+}
+.budget-row-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.125rem;
+}
+.budget-row.focus > .budget-row-head {
+  box-shadow: 0 0 0 2px var(--blue-medium);
+  border-radius: 0.375rem;
+}
+.budget-swatch {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border-color);
+}
+/* Rows under a branch share its color, dimmed. */
+.budget-row.nested .budget-swatch,
+.budget-row.nested .budget-bar-fill {
+  opacity: 0.65;
+}
+.budget-row-title {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--item-title);
+  font: inherit;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.budget-row-title:hover {
+  text-decoration: underline;
+}
+.budget-row.empty .budget-row-title {
+  color: var(--text-secondary);
+}
+.budget-expand {
+  display: flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  padding: 0.25rem;
+  cursor: pointer;
+}
+.budget-expand svg {
+  transition: transform 0.15s ease;
+}
+.budget-expand.expanded svg {
+  transform: rotate(90deg);
+}
+.budget-value {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding: 0.1rem 0.25rem;
+  cursor: pointer;
+}
+.budget-value:hover {
+  color: var(--text-primary);
+}
+.budget-input {
+  width: 4.5rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.15rem 0.3rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+.budget-step {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+.budget-step:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+.budget-step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.budget-bar {
+  position: relative;
+  height: 8px;
+  margin: 0 0 0.25rem calc(10px + 0.4rem);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+.budget-bar-track,
+.budget-bar-fill,
+.budget-bar-over {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 0 4px 4px 0;
+}
+/* A branch with its own value: the faint track is its budget, the solid
+   part what its children have taken; red past the end is over-allocation. */
+.budget-bar-track {
+  opacity: 0.25;
+}
+.budget-bar-over {
+  background: var(--status-critical);
+}
+.budget-empty-toggle {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.25rem 0;
+  cursor: pointer;
+}
+.budget-empty-toggle:hover {
+  color: var(--text-primary);
+}
+
+/* Body panel (see BodyPanel.tsx): the anatomy figure (data/bodyFront.ts)
+   with the page's items laid over it as translucent cards, one per part.
+   Standing on phones with the cards down the body; on wide panels the
+   figure lies on its back, head to the left, with the cards along it in
+   two rows. Parts with items are tinted, the selected one solid. */
+/* No side padding: the stage takes the content's measured width. */
+.body-content {
+  padding: 0.25rem 0 0.5rem;
+}
+.body-stage {
+  position: relative;
+  margin: 0 auto;
+}
+.body-figure-wrap {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.body-figure {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.body-figure g.has {
+  cursor: pointer;
+}
+.body-figure .mus {
+  fill: color-mix(in srgb, var(--blue-lighter) 70%, var(--bg-primary));
+  stroke: var(--bg-primary);
+  stroke-width: 2;
+  transition: fill 0.15s ease;
+}
+.body-figure g.has .mus {
+  fill: var(--blue-medium);
+  fill-opacity: 0.55;
+}
+.body-figure g.sel .mus {
+  fill: var(--blue-medium);
+  fill-opacity: 1;
+}
+.body-figure g:focus-visible .mus {
+  stroke: var(--text-primary);
+}
+[data-theme='dark'] .body-figure .mus {
+  fill: color-mix(in srgb, var(--sky-light) 30%, var(--bg-primary));
+}
+[data-theme='dark'] .body-figure g.has .mus {
+  fill: var(--sky-light);
+  fill-opacity: 0.55;
+}
+[data-theme='dark'] .body-figure g.sel .mus {
+  fill: var(--sky-light);
+  fill-opacity: 1;
+}
+/* Empty parts are named on the figure (figure units: the standing figure
+   is 643 wide, so this is about 14px on a phone). */
+.body-plabel {
+  font-size: 22px;
+  fill: var(--text-secondary);
+  text-anchor: middle;
+  dominant-baseline: central;
+  opacity: 0.85;
+  pointer-events: none;
+}
+.body-leaders {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.body-leaders line {
+  stroke: var(--blue-medium);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+.body-leaders circle {
+  fill: var(--blue-medium);
+  opacity: 0.8;
+}
+/* The cards let the body show through. */
+.body-card {
+  position: absolute;
+}
+.body-card .section-wrapper {
+  margin: 0;
+  min-width: 0;
+}
+.body-card .section {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(1.5px);
+}
+.body-stage.lying .body-card .section {
+  background: rgba(255, 255, 255, 0.52);
+}
+[data-theme='dark'] .body-card .section {
+  background: rgba(16, 16, 16, 0.66);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+[data-theme='dark'] .body-stage.lying .body-card .section {
+  background: rgba(16, 16, 16, 0.56);
+}
+.body-card.sel .section {
+  box-shadow: 0 0 0 2px var(--blue-medium);
+}

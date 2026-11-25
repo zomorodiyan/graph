@@ -12,13 +12,16 @@ import { StructureItem, UpdatePayload, pasteItems, serializeItem, serializeStruc
 import MobileEditSheet from '../components/MobileEditSheet'
 import Notification from '../components/Notification'
 import Section from '../components/Section'
-import { FAVORITE_TAG } from '../utils/tags'
+import { FAVORITE_TAG, valueOf } from '../utils/tags'
+import { bodyPartOf } from '../utils/body'
 import { buildSelectionForest, selectionRoots } from './graph/treeOps'
 import { buildBreadcrumb, BreadcrumbNav } from './graph/Breadcrumb'
 import { useGraphDragDrop } from './graph/useGraphDragDrop'
 import { useItemEdits } from './graph/useItemEdits'
 import { SelectionButtons, AgentDeleteButtons } from './graph/SelectionButtons'
 import SearchPanel, { useSearchPanel } from './graph/SearchPanel'
+import BudgetPanel, { useBudgetPanel } from './graph/BudgetPanel'
+import BodyPanel, { useBodyPanel } from './graph/BodyPanel'
 
 // True on touch-primary devices (no on-screen keyboard problem on desktop,
 // so only mobile needs the item-stays-in-place + bottom-sheet editing pattern —
@@ -288,10 +291,29 @@ function GraphView() {
     }
   }
 
-  // Search panel at the bottom of the page (see SearchPanel.tsx) — a tag
-  // pill opens it on that tag.
+  // The panels at the bottom of the page, each opened by clicking a tag
+  // pill: a value tag ("2h", "$50") opens the budget panel on that kind,
+  // focused on the item; a body-part tag ("knees") opens the body panel on
+  // that part; any other tag goes to the search panel (see SearchPanel.tsx,
+  // BudgetPanel.tsx, BodyPanel.tsx).
   const searchPanel = useSearchPanel(graphName)
-  const handleTagClick = (tag: string) => searchPanel.addTag(tag)
+  const budgetPanel = useBudgetPanel(graphName)
+  const bodyPanel = useBodyPanel(graphName)
+  const handleTagClick = (tag: string, itemPath?: string) => {
+    const value = valueOf(tag)
+    if (value) {
+      budgetPanel.show(value.kind, itemPath)
+      return
+    }
+    const part = bodyPartOf(tag)
+    if (part) {
+      bodyPanel.show(part.id)
+      return
+    }
+    searchPanel.addTag(tag)
+  }
+  // After a panel saves an edit: drop the local snapshot so the page shows it.
+  const resetLocal = () => { setLocalOrder(null); setLocalItems(null) }
 
   // Navigate straight into a level-1 item's own children, making them the
   // new level-1 list — level-1 items have no "go to parent" navigation
@@ -724,13 +746,39 @@ function GraphView() {
         {/* Search / tag panel — last on the page, so on phones its input sits
             just above the bottom bar. Saving an edit from its results resets
             the local snapshot above so the page shows it too. */}
+        {/* Budget and body panels (see BudgetPanel.tsx / BodyPanel.tsx) —
+            only while open, between the items and the search panel, so on
+            phones the search input keeps the bottom. */}
+        {graphName && budgetPanel.kind && (
+          <BudgetPanel
+            panel={budgetPanel}
+            graphName={graphName}
+            structure={structure}
+            path={path}
+            graph={graphs.find(g => g.name === graphName)}
+            anchorRef={anchorRef}
+            onSaved={resetLocal}
+          />
+        )}
+        {graphName && bodyPanel.active && (
+          <BodyPanel
+            panel={bodyPanel}
+            graphName={graphName}
+            structure={structure}
+            path={path}
+            anchorRef={anchorRef}
+            onSaved={resetLocal}
+            onTagClick={handleTagClick}
+          />
+        )}
         {graphName && (
           <SearchPanel
             panel={searchPanel}
             graphName={graphName}
             structure={structure}
             anchorRef={anchorRef}
-            onSaved={() => { setLocalOrder(null); setLocalItems(null) }}
+            onSaved={resetLocal}
+            onTagClick={handleTagClick}
           />
         )}
         <div ref={anchorRef} className="reach-anchor" />

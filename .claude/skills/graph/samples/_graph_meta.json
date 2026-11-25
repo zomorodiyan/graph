@@ -5,6 +5,8 @@
     "icon": "📊",
     "modified_at": "2026-07-26T00:00:00.000Z",
     "title_length": 40,
-    "note_length": 200
+    "note_length": 200,
+    "hours_budget": 12,
+    "money_budget": 3500
   }
 }

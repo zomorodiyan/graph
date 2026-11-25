@@ -18,6 +18,9 @@ export interface GistGraphMeta {
   // Optional preferred item title/note lengths (see GraphInfo in localClient.ts).
   title_length?: number
   note_length?:  number
+  // Optional top-level budgets (see GraphInfo in localClient.ts).
+  hours_budget?: number
+  money_budget?: number
 }
 
 // The token is session-only (see utils/secrets.ts); the Gist id isn't secret.

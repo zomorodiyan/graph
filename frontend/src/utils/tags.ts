@@ -58,9 +58,64 @@ export function tagLabel(tag: string): string {
   return AUTO_TAG_LABELS[tag] ?? tag
 }
 
-// Which tag view a pill opens: a value tag opens its group.
+// Which search group a value tag stands for when typed or picked in the
+// search panel (see SearchPanel.tsx) — clicking one on an item opens the
+// budget panel instead (see GraphView's handleTagClick).
 export function tagTarget(tag: string): string {
   return MONEY_RE.test(tag) ? '~money' : HOURS_RE.test(tag) ? '~schedule' : tag
+}
+
+// The two kinds of value tag and what they carry (see BudgetPanel.tsx):
+// "1.5h" is hours, "$50" is money — a number with "h" after it, or "$"
+// before it. An item's own value is what it costs, or, when its children
+// carry values too, the budget they spend from (see utils/budget.ts).
+export type ValueKind = 'hours' | 'money'
+
+export function valueOf(tag: string): { kind: ValueKind; amount: number } | null {
+  const m = tag.match(MONEY_RE)
+  if (m) return { kind: 'money', amount: Number(m[1]) }
+  const h = tag.match(HOURS_RE)
+  if (h) return { kind: 'hours', amount: Number(h[1]) }
+  return null
+}
+
+// An item's own value of one kind — its first such tag — or null.
+export function itemValue(item: StructureItem, kind: ValueKind): number | null {
+  for (const t of item.tags ?? []) {
+    const v = valueOf(t)
+    if (v && v.kind === kind) return v.amount
+  }
+  return null
+}
+
+// Amounts without float noise: 1.5, 2, 0.33.
+export function formatAmount(n: number): string {
+  return String(+n.toFixed(2))
+}
+
+// "$20" / "1.5h" — the display form and the tag text are the same.
+export function formatValue(kind: ValueKind, n: number): string {
+  return kind === 'money' ? `$${formatAmount(n)}` : `${formatAmount(n)}h`
+}
+
+// The tags with this kind's value set to `amount`: the existing tag is
+// replaced where it sits (any extra ones of the kind dropped), a new one
+// goes last; null (or 0) removes it.
+export function withValue(tags: string[] | undefined, kind: ValueKind, amount: number | null): string[] {
+  const out: string[] = []
+  let placed = false
+  for (const t of tags ?? []) {
+    if (valueOf(t)?.kind === kind) {
+      if (amount && !placed) {
+        out.push(formatValue(kind, amount))
+        placed = true
+      }
+      continue
+    }
+    out.push(t)
+  }
+  if (amount && !placed) out.push(formatValue(kind, amount))
+  return out
 }
 
 function autoTagsFor(item: StructureItem): string[] {
@@ -140,8 +195,9 @@ export function matchesText(item: StructureItem, text: string): boolean {
 // here can come from different real parents, so real keys could collide) —
 // realPaths maps each rendered path back; keyPrefix keeps keys unique when
 // several graphs' results render side by side. Also totals the matches'
-// money/hour tags.
-export function filterTree(tree: Record<string, StructureItem>, match: (item: StructureItem) => boolean, keyPrefix = 't') {
+// money/hour tags. `realBase` is the path of `tree`'s parent when the tree
+// is a subtree (a page's children), so realPaths stay absolute.
+export function filterTree(tree: Record<string, StructureItem>, match: (item: StructureItem) => boolean, keyPrefix = 't', realBase = '') {
   const realPaths = new Map<string, string>()
   let count = 0
   let money = 0
@@ -170,6 +226,6 @@ export function filterTree(tree: Record<string, StructureItem>, match: (item: St
     }
     return out
   }
-  const items = build(tree, '', '')
+  const items = build(tree, realBase, '')
   return { items, realPaths, count, money, hours }
 }
