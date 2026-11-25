@@ -34,6 +34,7 @@ export interface SendOptions {
   viewContext: string
   graphName: string | undefined
   lengths: { title: number; note: number }
+  budgets: { hours?: number; money?: number }
   voice: boolean
   onMutate: () => void
   onHighlight: (paths: string[]) => void
@@ -121,6 +122,7 @@ export function useAgentChat() {
         viewContext: opts.viewContext,
         graphName: opts.graphName,
         lengths: opts.lengths,
+        budgets: opts.budgets,
         voice: opts.voice,
         onMutate: opts.onMutate,
         onHighlight: opts.onHighlight,

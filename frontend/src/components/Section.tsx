@@ -103,7 +103,9 @@ interface SectionProps {
   depth?: number
   showRaw?: boolean
   rawText?: string
-  onTagClick?: (tag: string) => void
+  // A tag pill was clicked on the item at `path` — GraphView routes it to
+  // the right panel (search, budget or body).
+  onTagClick?: (tag: string, path: string) => void
 }
 
 // Appends the highlight class(es) for a row — user/agent highlights can both
@@ -150,10 +152,11 @@ function formatDueDate(dueDate: string): string {
 }
 
 // Date + tags badges, shared by all three layers — hidden entirely in minimal
-// view. With onTagClick, each tag pill is a button that pulls that tag's
-// items into the search panel (see SearchPanel.tsx); the favorite tag shows
-// as a star.
-function DateAndTagBadges({ item, minimal, onTagClick }: { item: StructureItem; minimal: boolean; onTagClick?: (tag: string) => void }) {
+// view. With onTagClick, each tag pill is a button: an ordinary tag pulls
+// its items into the search panel, a value tag ("2h", "$50") opens the
+// budget panel, a body-part tag the body panel (see GraphView's
+// handleTagClick); the favorite tag shows as a star.
+function DateAndTagBadges({ item, path, minimal, onTagClick }: { item: StructureItem; path: string; minimal: boolean; onTagClick?: (tag: string, path: string) => void }) {
   if (minimal) return null
   // A repeating item shows its next occurrence, marked with ↻ (hover for the rule).
   const date = effectiveDate(item)
@@ -196,7 +199,7 @@ function DateAndTagBadges({ item, minimal, onTagClick }: { item: StructureItem; 
                 // pointer on pointerdown (see useDragGesture.ts), which would
                 // retarget this tap's click to the row and toggle its highlight.
                 onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => { e.stopPropagation(); onTagClick(tag) }}
+                onClick={(e) => { e.stopPropagation(); onTagClick(tag, path) }}
               >
                 {label}
               </button>
@@ -348,7 +351,7 @@ function Section({
                   }}
                 >
                   {title}
-                  <DateAndTagBadges item={item} minimal={minimal} {...tagProps} />
+                  <DateAndTagBadges item={item} path={itemPath} minimal={minimal} {...tagProps} />
                 </span>
                 {!minimal && item.context && (
                   <button
@@ -460,7 +463,7 @@ function Section({
                             }}
                           >
                             {childTitle}
-                            <DateAndTagBadges item={childItem as StructureItem} minimal={minimal} {...tagProps} />
+                            <DateAndTagBadges item={childItem as StructureItem} path={childPath} minimal={minimal} {...tagProps} />
                           </span>
                           {!minimal && (childItem as StructureItem).context && (
                             <button
@@ -571,7 +574,7 @@ function Section({
                                     }}
                                   >
                                     {grandTitle}
-                                    <DateAndTagBadges item={grandItem as StructureItem} minimal={minimal} {...tagProps} />
+                                    <DateAndTagBadges item={grandItem as StructureItem} path={grandPath} minimal={minimal} {...tagProps} />
                                   </span>
                                   {!minimal && (grandItem as StructureItem).context && (
                                     <button

@@ -58,7 +58,8 @@ check('count and totals cover all shown', (await count()) === '5 items · $70.5 
 await p.locator('.search-panel-chip', { hasText: 'proj' }).locator('.search-panel-chip-remove').click()
 check('removing a chip', JSON.stringify(await chips()) === '["7days"]', JSON.stringify(await chips()))
 await p.locator('.results .tag-pill-clickable', { hasText: '$20.5' }).click()
-check('value pill in the results adds its group', JSON.stringify(await chips()) === '["7days","money"]', JSON.stringify(await chips()))
+await p.waitForSelector('.budget-panel')
+check('value pill in the results opens the budget panel, not a search group', JSON.stringify(await chips()) === '["7days"]' && (await p.locator('.budget-panel[data-kind="money"]').count()) === 1, JSON.stringify(await chips()))
 
 // Person pill on the page opens that person
 await p.goto(BASE + '/g/ag')

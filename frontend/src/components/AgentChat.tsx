@@ -6,6 +6,7 @@ import { useVoice } from '../hooks/useVoice'
 import { useModalBackButton } from '../hooks/useModalBackButton'
 import { useVisualViewportRect } from '../hooks/useVisualViewportRect'
 import { useHighlights } from '../hooks/useHighlights'
+import { usePanelContexts } from '../hooks/usePanelContext'
 import { useViewOptions, DEPTHS } from '../hooks/useViewOptions'
 import { useLongPress } from '../hooks/useLongPress'
 import { useTheme } from '../context/ThemeContext'
@@ -425,6 +426,8 @@ function AgentChat() {
     return buildReadView(visible, path, depth, viewMode === 'context')
   }, [graphName, structure, graphs, location.pathname, depth, viewMode])
 
+  // What the page's extra panels show (see usePanelContext.ts).
+  const panelContext = usePanelContexts(graphName)
   const viewContext = useMemo(() => {
     if (!graphName) {
       if (!graphs?.length) return 'The user is on the graphs list, which is empty.'
@@ -442,13 +445,14 @@ function AgentChat() {
       ? `The user is viewing "${item.title}" inside the graph "${graphName}":\n${serializeItemForAgent(path, item)}`
       : `The user is at the root of the graph "${graphName}":\n${serializeStructureForAgent(items)}`
 
-    if (!userHighlights.length) return base
+    const withPanels = panelContext ? `${base}\n\n${panelContext}` : base
+    if (!userHighlights.length) return withPanels
     const highlightLines = userHighlights.map(p => {
       const h = getItemByPath(structure, p)
       return `- ${p}${h ? ` ("${h.title}")` : ''}`
     })
-    return `${base}\n\nThe user has highlighted these items themselves:\n${highlightLines.join('\n')}`
-  }, [graphName, structure, graphs, location.pathname, userHighlights])
+    return `${withPanels}\n\nThe user has highlighted these items themselves:\n${highlightLines.join('\n')}`
+  }, [graphName, structure, graphs, location.pathname, userHighlights, panelContext])
 
   useEffect(() => {
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight })
@@ -473,7 +477,10 @@ function AgentChat() {
 
   // The open graph's preferred item lengths, passed along so the agent
   // writes titles/notes to fit them (see lengthGuidance in agentClient.ts).
-  const lengths = lengthPrefs(graphs?.find(g => g.name === graphName))
+  const graphMeta = graphs?.find(g => g.name === graphName)
+  const lengths = lengthPrefs(graphMeta)
+  // The graph's top-level budgets, for the agent (see agentClient.ts).
+  const budgets = { hours: graphMeta?.hours_budget, money: graphMeta?.money_budget }
 
   // ── Voice mode ──────────────────────────────────────────────────────────
   // Hands-free conversation: listen for one utterance, send it, read the
@@ -576,6 +583,7 @@ function AgentChat() {
       viewContext: labelNote ? `${viewContext}\n\n${labelNote}` : viewContext,
       graphName,
       lengths,
+      budgets,
       voice: voiceModeRef.current,
       onMutate: () => {
         queryClient.invalidateQueries({ queryKey: ['structure', graphName] })

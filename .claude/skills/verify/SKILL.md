@@ -42,6 +42,15 @@ Clipboard flows (Paste cards, copy handles) need
 - Inline editor: `.inline-edit`, title input `.inline-edit-title`
 - Bottom bar: `.depth-toggle` (3/2/R), `.ctx-toggle`, `.theme-toggle`; breadcrumb `.breadcrumb`
 - Raw view: `.section-raw` (click the `R` depth button)
+- Search panel: `.search-panel-input`, chips `.search-panel-chip`, tag pills `.search-panel-tags .tag-pill`, results `.results`
+- Budget panel (opens when a value tag pill like `2h`/`$50` is clicked): `.budget-panel`, pool text `.budget-pool-text`,
+  pool blocks `.budget-pool-seg`, rows `.budget-row[data-path]` with `.budget-value` and the two `.budget-step` buttons (−/+),
+  kind toggle `.budget-kind button`, budget input `.budget-input`
+- Body panel (opens when a body-part tag pill like `knees` is clicked): `.body-panel`, stage
+  `.body-stage.standing` (narrow) / `.body-stage.lying` (wide), figure parts `.body-figure g[data-part]`
+  (`.has` when the part has items, `.sel` when selected; click a `path` inside), cards
+  `.body-card[data-part]` (the part is the `.layer1` title, its items `.layer2` chips)
+- Both panels: bar `.tag-panel-bar`, collapse `.tag-panel-toggle`, close `.tag-panel-close`
 - Text format round-trip: paste via the `Paste` card exercises `parseMarkdownStructure`;
   the copy handle on the menu page (`/`, `.copy-handle`) exercises `serializeStructure`
 - Verify state via `localStorage.getItem('offline_graph_<name>')` in `page.evaluate`

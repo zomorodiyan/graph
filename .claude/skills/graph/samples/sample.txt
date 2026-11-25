@@ -1,23 +1,30 @@
-# Finances
-## Fixed Costs
-### Rent
+# Finances #$3000
+## Fixed Costs #$1200
+### Rent #$950
 Paid, my share of total — $950/mo
 
-### Insurance
+### Insurance #$55
 Share of total — $55/mo
 
 ## Investments
-### Roth IRA
+### Roth IRA #$50
 Monthly contribution — $50/mo
 
-### Emergency Fund
+### Emergency Fund #$250
 Monthly contribution — lawyer, income gaps, health, gifts — $250/mo
 
 ## Goals
 ### Pay Off Loan (2027-08-01) #debt
 
-# Fitness
-## Marathon Training (2026-10-01) #race
+# Fitness #10h
+## Marathon Training (2026-10-01) #race #8h
 Half-marathon in October; weekly long run distance in miles
-### Cross Training #recurring
+### Long Run #3h #legs
+
+### Tempo Run #1.5h #calves #hamstrings
+
+## Cross Training #recurring #2h
 Yoga + strength, twice a week
+### Core Circuit #core #0.5h
+
+### Hip Mobility #hips #lower-back

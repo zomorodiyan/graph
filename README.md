@@ -10,6 +10,14 @@ A personal graph of notes, plans and lists that runs entirely in your browser �
 
 Organize anything as a hierarchy of named nodes. Each node can have a note, a date, and tags. Navigate by drilling down through levels.
 
+## Views from tags
+
+Tags do more than label. Clicking one on an item opens a panel under the page:
+
+- **Search** — an ordinary tag pulls its items into the search panel.
+- **Budget** — a value tag (`2h`, `0.5h`, `$50`) opens the budget view: the page's items as shares of a pool, like skill points in a game. The pool is the page item's own value (or, at the top of a graph, a budget you set on the panel); each row has a bar and +/- buttons that hand out tokens (half hours, or round amounts of money) by editing the tags. A branch with no value of its own adds up its children; one with its own value is a budget its children spend from.
+- **Body** — a tag naming a body part (`knees`, `lower-back`, `shoulders`, …) opens the body view: an anatomical figure with the page's tagged items laid over it as cards, one per part. The figure stands on a phone, with the cards down the body, and lies down on a wide screen, with the cards along it. Tap a part of the figure to select it.
+
 ## AI chat (optional)
 
 The chat panel can read, edit and add items in the open graph. Pick what answers it from the Keys panel:
@@ -42,3 +50,5 @@ Same token on any device → same data. Save your token somewhere safe — you'l
 ## Tech
 
 React + TypeScript, with React Query for data and React Router for navigation. Deployed as a PWA to GitHub Pages via GitHub Actions on every push to `main`.
+
+The body view's figure uses the muscle shapes from [react-native-body-highlighter](https://github.com/HichamELBSI/react-native-body-highlighter) (MIT, ELABBASSI Hicham).

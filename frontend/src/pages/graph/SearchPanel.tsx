@@ -45,6 +45,9 @@ interface SearchPanelProps {
   // the results above the input change.
   anchorRef: React.RefObject<HTMLElement>
   onSaved: () => void
+  // A tag pill clicked on a result — GraphView's router (a value or body
+  // tag opens its own panel); without it, the tag is added to the search.
+  onTagClick?: (tag: string, realPath?: string) => void
 }
 
 // Collapsible panel at the bottom of every graph page. Plain text searches
@@ -54,7 +57,7 @@ interface SearchPanelProps {
 // them, and text typed next narrows those down. On phones the input sits at
 // the bottom with the results above it (thumb reach); on desktop the input
 // comes first.
-function SearchPanel({ panel, graphName, structure, anchorRef, onSaved }: SearchPanelProps) {
+function SearchPanel({ panel, graphName, structure, anchorRef, onSaved, onTagClick }: SearchPanelProps) {
   const { open, setOpen, query, setQuery, tags, setTags, addTag } = panel
   const inputRef = useRef<HTMLInputElement>(null)
   const barRef = useRef<HTMLDivElement>(null)
@@ -181,7 +184,7 @@ function SearchPanel({ panel, graphName, structure, anchorRef, onSaved }: Search
             realPaths={result.realPaths}
             onOpen={() => setOpen(false)}
             onSaved={onSaved}
-            onTagClick={pickTag}
+            onTagClick={onTagClick ?? pickTag}
           />
           {result.count === 0 && <div className="empty-state">No matches</div>}
         </div>
